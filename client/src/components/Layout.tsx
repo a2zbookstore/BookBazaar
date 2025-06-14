@@ -104,20 +104,21 @@ export default function Layout({ children }: LayoutProps) {
                 Track Order
               </Link>
               
+              {/* Cart - accessible to all users */}
+              <Link
+                href="/cart"
+                className="text-secondary-black hover:text-primary-aqua transition-colors relative"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
               {isAuthenticated ? (
                 <>
-                  <Link
-                    href="/cart"
-                    className="text-secondary-black hover:text-primary-aqua transition-colors relative"
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    {cartCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {cartCount}
-                      </span>
-                    )}
-                  </Link>
-                  
                   {user?.role === "admin" && (
                     <Link href="/admin">
                       <Button className="bg-primary-aqua hover:bg-secondary-aqua">
@@ -136,12 +137,21 @@ export default function Layout({ children }: LayoutProps) {
                   </Button>
                 </>
               ) : (
-                <Button
-                  onClick={() => window.location.href = "/api/login"}
-                  className="bg-primary-aqua hover:bg-secondary-aqua"
-                >
-                  Login
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => window.location.href = "/api/login"}
+                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    onClick={() => window.location.href = "/api/login"}
+                    className="bg-primary-aqua hover:bg-secondary-aqua"
+                  >
+                    Register
+                  </Button>
+                </div>
               )}
             </nav>
           </div>

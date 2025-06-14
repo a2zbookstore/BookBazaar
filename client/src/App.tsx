@@ -41,33 +41,27 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes */}
+      {/* Public routes - accessible to all users including guests */}
       <Route path="/" component={HomePage} />
       <Route path="/catalog" component={CatalogPage} />
       <Route path="/books/:id" component={BookDetailPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/track-order" component={TrackOrderPage} />
+      <Route path="/cart" component={CartPage} />
+      <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/paypal-complete" component={PayPalCompletePage} />
+      <Route path="/orders/:id" component={OrderDetailPage} />
       
-      {/* Protected routes */}
-      {isAuthenticated && (
+      {/* Admin routes - only for authenticated admin users */}
+      {isAuthenticated && user?.role === "admin" && (
         <>
-          <Route path="/cart" component={CartPage} />
-          <Route path="/checkout" component={CheckoutPage} />
-          <Route path="/paypal-complete" component={PayPalCompletePage} />
-          <Route path="/orders/:id" component={OrderDetailPage} />
-          
-          {/* Admin routes */}
-          {user?.role === "admin" && (
-            <>
-              <Route path="/admin" component={AdminDashboard} />
-              <Route path="/admin/inventory" component={InventoryPageNew} />
-              <Route path="/admin/orders" component={OrdersPage} />
-              <Route path="/admin/sales" component={SalesPage} />
-              <Route path="/admin/shipping" component={ShippingPage} />
-              <Route path="/admin/settings" component={SettingsPage} />
-            </>
-          )}
+          <Route path="/admin" component={AdminDashboard} />
+          <Route path="/admin/inventory" component={InventoryPageNew} />
+          <Route path="/admin/orders" component={OrdersPage} />
+          <Route path="/admin/sales" component={SalesPage} />
+          <Route path="/admin/shipping" component={ShippingPage} />
+          <Route path="/admin/settings" component={SettingsPage} />
         </>
       )}
       

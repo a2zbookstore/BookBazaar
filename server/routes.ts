@@ -130,13 +130,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get individual order (protected route)
-  app.get('/api/orders/:id', isAuthenticated, async (req, res) => {
+  // Get individual order (accessible to both authenticated users and guests with email)
+  app.get('/api/orders/:id', async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
       const { id } = req.params;
+      const { email } = req.query;
       
-      const order = await storage.getOrderById(parseInt(id));
+      let order;
+      
+      // If user is authenticated, get order by user ID
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const userId = (req.user as any).claims.sub;
+        order = await storage.getOrderById(parseInt(id));
+        
+        // Check if order belongs to the authenticated user
+        if (order && order.userId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } 
+      // If not authenticated, require email for guest access
+      else if (email) {
+        order = await storage.getOrderByIdAndEmail(parseInt(id), email as string);
+      } else {
+        return res.status(401).json({ message: "Email required for guest access" });
+      }
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -250,13 +271,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await verifyRazorpayPayment(req, res);
   });
 
-  // Order completion route
-  app.post("/api/orders/complete", isAuthenticated, async (req: any, res) => {
+  // Order completion route - supports both guest and authenticated users
+  app.post("/api/orders/complete", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      let userId = null;
+      let user = null;
+      
+      // Check if user is authenticated
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+        user = await storage.getUser(userId);
       }
 
       const {
@@ -291,8 +315,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: `Payment via ${paymentMethod}. Payment ID: ${paymentId}`
       }, items);
 
-      // Clear cart after successful order
-      await storage.clearCart(userId);
+      // Clear cart after successful order (only for authenticated users)
+      if (userId) {
+        await storage.clearCart(userId);
+      }
 
       res.json({ success: true, orderId: order.id });
     } catch (error) {
