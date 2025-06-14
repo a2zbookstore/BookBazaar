@@ -22,8 +22,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const { data: cartItems = [], isLoading } = useQuery({
     queryKey: ["/api/cart"],
-    enabled: isAuthenticated,
+    enabled: !!isAuthenticated,
     retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 
   const cartCount = cartItems.reduce((total: number, item: CartItem) => total + item.quantity, 0);
