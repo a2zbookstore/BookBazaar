@@ -127,6 +127,15 @@ export default function InventoryPage() {
   const totalBooks = booksResponse?.total || 0;
   const totalPages = Math.ceil(totalBooks / itemsPerPage);
 
+  // Debug logging
+  console.log('InventoryPage render:', {
+    isLoading,
+    error,
+    booksResponse,
+    books: books.length,
+    totalBooks
+  });
+
   const createBookMutation = useMutation({
     mutationFn: async (data: BookForm) => {
       const bookData = {
