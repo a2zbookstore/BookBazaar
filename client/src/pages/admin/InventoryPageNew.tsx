@@ -434,17 +434,17 @@ export default function InventoryPageNew() {
                     <div>
                       <Label htmlFor="category">Category</Label>
                       <Select 
-                        value={bookForm.categoryId?.toString() || ""} 
+                        value={bookForm.categoryId?.toString() || "none"} 
                         onValueChange={(value) => setBookForm(prev => ({ 
                           ...prev, 
-                          categoryId: value ? parseInt(value) : null 
+                          categoryId: value === "none" ? null : parseInt(value) 
                         }))}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No Category</SelectItem>
+                          <SelectItem value="none">No Category</SelectItem>
                           {categories.map((category) => (
                             <SelectItem key={category.id} value={category.id.toString()}>
                               {category.name}
