@@ -184,15 +184,34 @@ export class DatabaseStorage implements IStorage {
       .from(books)
       .where(whereClause);
 
-    // Get books
-    const orderColumn = books[sortBy as keyof typeof books] || books.createdAt;
-    const orderBy = sortOrder === "asc" ? asc(orderColumn) : desc(orderColumn);
-
-    const booksList = await db
+    // Get books with proper ordering
+    let query = db
       .select()
       .from(books)
-      .where(whereClause)
-      .orderBy(orderBy)
+      .where(whereClause);
+
+    // Apply ordering based on sortBy and sortOrder
+    switch (sortBy) {
+      case "title":
+        query = sortOrder === "asc" ? query.orderBy(asc(books.title)) : query.orderBy(desc(books.title));
+        break;
+      case "author":
+        query = sortOrder === "asc" ? query.orderBy(asc(books.author)) : query.orderBy(desc(books.author));
+        break;
+      case "price":
+        query = sortOrder === "asc" ? query.orderBy(asc(books.price)) : query.orderBy(desc(books.price));
+        break;
+      case "stock":
+        query = sortOrder === "asc" ? query.orderBy(asc(books.stock)) : query.orderBy(desc(books.stock));
+        break;
+      case "updatedAt":
+        query = sortOrder === "asc" ? query.orderBy(asc(books.updatedAt)) : query.orderBy(desc(books.updatedAt));
+        break;
+      default:
+        query = sortOrder === "asc" ? query.orderBy(asc(books.createdAt)) : query.orderBy(desc(books.createdAt));
+    }
+
+    const booksList = await query
       .limit(limit)
       .offset(offset);
 
