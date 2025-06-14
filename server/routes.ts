@@ -2,6 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import multer from "multer";
+import * as XLSX from "xlsx";
+import { parse } from "csv-parse/sync";
+import { stringify } from "csv-stringify/sync";
 import { 
   insertBookSchema, 
   insertCategorySchema, 
@@ -9,6 +13,26 @@ import {
   insertCartItemSchema 
 } from "@shared/schema";
 import { z } from "zod";
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel', // .xls
+      'text/csv', // .csv
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only Excel (.xlsx, .xls) and CSV files are allowed.'));
+    }
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -360,6 +384,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching low stock books:", error);
       res.status(500).json({ message: "Failed to fetch low stock books" });
+    }
+  });
+
+  // Bulk Import/Export Routes
+  app.post('/api/books/import', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      let data: any[] = [];
+      const buffer = req.file.buffer;
+
+      // Parse file based on type
+      if (req.file.mimetype.includes('sheet') || req.file.mimetype.includes('excel')) {
+        // Excel file
+        const workbook = XLSX.read(buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        data = XLSX.utils.sheet_to_json(worksheet);
+      } else if (req.file.mimetype === 'text/csv') {
+        // CSV file
+        data = parse(buffer.toString(), {
+          columns: true,
+          skip_empty_lines: true,
+        });
+      }
+
+      if (data.length === 0) {
+        return res.status(400).json({ message: "No data found in file" });
+      }
+
+      const results = {
+        success: 0,
+        errors: [] as string[],
+        total: data.length
+      };
+
+      // Process each row
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        try {
+          // Map and validate book data
+          const bookData = {
+            title: row.title || row.Title || '',
+            author: row.author || row.Author || '',
+            isbn: row.isbn || row.ISBN || '',
+            categoryId: row.categoryId || row.CategoryId || null,
+            description: row.description || row.Description || '',
+            condition: row.condition || row.Condition || 'New',
+            price: (row.price || row.Price || '0').toString(),
+            stock: parseInt(row.stock || row.Stock || '1'),
+            imageUrl: row.imageUrl || row.ImageUrl || '',
+            publishedYear: row.publishedYear ? parseInt(row.publishedYear) : null,
+            publisher: row.publisher || row.Publisher || '',
+            pages: row.pages ? parseInt(row.pages) : null,
+            language: row.language || row.Language || 'English',
+            weight: row.weight || row.Weight || '',
+            dimensions: row.dimensions || row.Dimensions || '',
+            featured: Boolean(row.featured || row.Featured || false)
+          };
+
+          // Validate required fields
+          if (!bookData.title || !bookData.author) {
+            results.errors.push(`Row ${i + 1}: Title and Author are required`);
+            continue;
+          }
+
+          // Create book
+          await storage.createBook(bookData);
+          results.success++;
+        } catch (error) {
+          results.errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      res.json(results);
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ message: "Failed to import books" });
+    }
+  });
+
+  app.get('/api/books/export', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const format = req.query.format || 'xlsx';
+      const { books } = await storage.getBooks({ limit: 10000, offset: 0 });
+
+      // Prepare data for export
+      const exportData = books.map(book => ({
+        title: book.title,
+        author: book.author,
+        isbn: book.isbn || '',
+        categoryId: book.categoryId || '',
+        description: book.description || '',
+        condition: book.condition,
+        price: book.price,
+        stock: book.stock,
+        imageUrl: book.imageUrl || '',
+        publishedYear: book.publishedYear || '',
+        publisher: book.publisher || '',
+        pages: book.pages || '',
+        language: book.language || 'English',
+        weight: book.weight || '',
+        dimensions: book.dimensions || '',
+        featured: book.featured
+      }));
+
+      if (format === 'csv') {
+        const csv = stringify(exportData, { header: true });
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="inventory.csv"');
+        res.send(csv);
+      } else {
+        // Excel format
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="inventory.xlsx"');
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ message: "Failed to export books" });
+    }
+  });
+
+  app.get('/api/books/template', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const format = req.query.format || 'xlsx';
+      
+      // Template data with example and empty rows
+      const templateData = [
+        {
+          title: 'Example Book Title',
+          author: 'Example Author',
+          isbn: '9781234567890',
+          categoryId: '1',
+          description: 'Example book description',
+          condition: 'New',
+          price: '19.99',
+          stock: '10',
+          imageUrl: 'https://example.com/image.jpg',
+          publishedYear: '2023',
+          publisher: 'Example Publisher',
+          pages: '300',
+          language: 'English',
+          weight: '0.5kg',
+          dimensions: '15x23cm',
+          featured: 'false'
+        },
+        // Empty row for user to fill
+        {
+          title: '',
+          author: '',
+          isbn: '',
+          categoryId: '',
+          description: '',
+          condition: 'New',
+          price: '',
+          stock: '',
+          imageUrl: '',
+          publishedYear: '',
+          publisher: '',
+          pages: '',
+          language: 'English',
+          weight: '',
+          dimensions: '',
+          featured: 'false'
+        }
+      ];
+
+      if (format === 'csv') {
+        const csv = stringify(templateData, { header: true });
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="import_template.csv"');
+        res.send(csv);
+      } else {
+        // Excel format
+        const worksheet = XLSX.utils.json_to_sheet(templateData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Import Template');
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="import_template.xlsx"');
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Template download error:", error);
+      res.status(500).json({ message: "Failed to download template" });
     }
   });
 
