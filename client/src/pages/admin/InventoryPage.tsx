@@ -315,7 +315,7 @@ export default function InventoryPage() {
                   <div>
                     <Label htmlFor="category">Category</Label>
                     <Select 
-                      value={bookForm.categoryId?.toString() || ""} 
+                      value={bookForm.categoryId?.toString() || undefined} 
                       onValueChange={(value) => setBookForm(prev => ({ 
                         ...prev, 
                         categoryId: value ? parseInt(value) : null 
@@ -325,6 +325,7 @@ export default function InventoryPage() {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">No Category</SelectItem>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
@@ -514,15 +515,15 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              <Select value={selectedCategory} onValueChange={(value) => {
-                setSelectedCategory(value);
+              <Select value={selectedCategory || undefined} onValueChange={(value) => {
+                setSelectedCategory(value === "all" ? "" : value);
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -530,15 +531,15 @@ export default function InventoryPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedCondition} onValueChange={(value) => {
-                setSelectedCondition(value);
+              <Select value={selectedCondition || undefined} onValueChange={(value) => {
+                setSelectedCondition(value === "all" ? "" : value);
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All Conditions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Conditions</SelectItem>
+                  <SelectItem value="all">All Conditions</SelectItem>
                   {conditions.map((condition) => (
                     <SelectItem key={condition} value={condition}>
                       {condition}
