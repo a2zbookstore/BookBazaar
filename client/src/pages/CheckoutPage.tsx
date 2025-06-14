@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -183,6 +189,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!window.Razorpay) {
+      toast({
+        title: "Payment Error",
+        description: "Razorpay payment system not loaded. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -255,9 +270,10 @@ export default function CheckoutPage() {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
+      console.error("Razorpay payment error:", error);
       toast({
         title: "Payment Error",
-        description: "Failed to initialize payment",
+        description: error instanceof Error ? error.message : "Failed to initialize payment",
         variant: "destructive",
       });
     } finally {
