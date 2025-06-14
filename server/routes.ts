@@ -101,7 +101,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const categoryData = insertCategorySchema.parse(req.body);
-      const category = await storage.createCategory(categoryData);
+      
+      // Generate unique slug
+      let baseSlug = categoryData.name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .trim();
+      
+      let slug = baseSlug;
+      let counter = 1;
+      
+      // Check for existing slug and create unique one if needed
+      while (true) {
+        const existingCategories = await storage.getCategories();
+        const slugExists = existingCategories.some(cat => cat.slug === slug);
+        
+        if (!slugExists) {
+          break;
+        }
+        
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+      
+      const categoryWithSlug = { ...categoryData, slug };
+      const category = await storage.createCategory(categoryWithSlug);
       res.json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
