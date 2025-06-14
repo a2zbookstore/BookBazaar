@@ -90,15 +90,11 @@ export default function CheckoutPage() {
 
   // Redirect if cart is empty
   useEffect(() => {
-    if (!isAuthenticated) {
-      setLocation("/");
-      return;
-    }
     if (cartCount === 0) {
       setLocation("/cart");
       return;
     }
-  }, [isAuthenticated, cartCount, setLocation]);
+  }, [cartCount, setLocation]);
 
   const completeOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {

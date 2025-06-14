@@ -46,10 +46,6 @@ export default function PayPalCompletePage() {
   });
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setLocation('/');
-      return;
-    }
 
     const completePayPalOrder = async () => {
       try {
