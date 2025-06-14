@@ -84,7 +84,24 @@ export default function InventoryPage() {
   queryParams.set('sortOrder', 'desc');
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: [`/api/books?${queryParams.toString()}`],
+    queryKey: ["/api/books", {
+      search,
+      categoryId: selectedCategory,
+      condition: selectedCondition,
+      limit: itemsPerPage,
+      offset: (currentPage - 1) * itemsPerPage,
+      sortBy: 'updatedAt',
+      sortOrder: 'desc'
+    }],
+    queryFn: async () => {
+      const response = await fetch(`/api/books?${queryParams.toString()}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
