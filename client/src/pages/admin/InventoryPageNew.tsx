@@ -125,7 +125,7 @@ export default function InventoryPageNew() {
         categoryId: data.categoryId || null,
         publishedYear: data.publishedYear || null,
         pages: data.pages || null,
-        price: data.price, // Keep as string for decimal field
+        price: data.price || "0", // Ensure price is never empty string
       };
       return apiRequest('POST', '/api/books', bookData);
     },
@@ -152,7 +152,7 @@ export default function InventoryPageNew() {
         categoryId: data.categoryId || null,
         publishedYear: data.publishedYear || null,
         pages: data.pages || null,
-        price: data.price, // Keep as string for decimal field
+        price: data.price || "0", // Ensure price is never empty string
       };
       return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
@@ -238,6 +238,35 @@ export default function InventoryPageNew() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!bookForm.title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!bookForm.author.trim()) {
+      toast({
+        title: "Validation Error", 
+        description: "Author is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!bookForm.price || parseFloat(bookForm.price) < 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid price",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (editingBook) {
       updateBookMutation.mutate(bookForm);
     } else {
