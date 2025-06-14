@@ -159,7 +159,7 @@ export default function OrdersPage() {
     );
   }
 
-  const orders = ordersData?.orders || [];
+  const orders = (ordersData as any)?.orders || [];
   const filteredOrders = statusFilter === "all" 
     ? orders 
     : orders.filter((order: Order) => order.status === statusFilter);
