@@ -19,59 +19,134 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const [guestCart, setGuestCart] = useState<CartItem[]>([]);
 
-  const { data: cartItems = [], isLoading } = useQuery({
+  // Load guest cart from localStorage on mount
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const savedCart = localStorage.getItem('guestCart');
+      if (savedCart) {
+        try {
+          setGuestCart(JSON.parse(savedCart));
+        } catch (error) {
+          console.error('Error loading guest cart:', error);
+          localStorage.removeItem('guestCart');
+        }
+      }
+    }
+  }, [isAuthenticated]);
+
+  // Save guest cart to localStorage whenever it changes
+  useEffect(() => {
+    if (!isAuthenticated) {
+      localStorage.setItem('guestCart', JSON.stringify(guestCart));
+    }
+  }, [guestCart, isAuthenticated]);
+
+  const { data: serverCartItems = [], isLoading } = useQuery({
     queryKey: ["/api/cart"],
     enabled: !!isAuthenticated,
     retry: false,
     staleTime: 5 * 60 * 1000,
   }) as { data: CartItem[]; isLoading: boolean };
 
+  // Use server cart for authenticated users, guest cart for non-authenticated
+  const cartItems = isAuthenticated ? serverCartItems : guestCart;
+
   const cartCount = cartItems.reduce((total: number, item: CartItem) => total + item.quantity, 0);
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ bookId, quantity = 1 }: { bookId: number; quantity?: number }) => {
-      await apiRequest("POST", "/api/cart", { bookId, quantity });
+      if (isAuthenticated) {
+        await apiRequest("POST", "/api/cart", { bookId, quantity });
+      } else {
+        // Handle guest cart locally
+        const response = await fetch(`/api/books/${bookId}`);
+        const book = await response.json();
+        
+        setGuestCart(prevCart => {
+          const existingItem = prevCart.find(item => item.bookId === bookId);
+          if (existingItem) {
+            return prevCart.map(item =>
+              item.bookId === bookId
+                ? { ...item, quantity: item.quantity + quantity }
+                : item
+            );
+          } else {
+            const newItem: CartItem = {
+              id: Date.now(),
+              userId: 'guest',
+              bookId,
+              quantity,
+              book,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            return [...prevCart, newItem];
+          }
+        });
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      if (isAuthenticated) {
+        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      }
     },
   });
 
   const updateCartItemMutation = useMutation({
     mutationFn: async ({ id, quantity }: { id: number; quantity: number }) => {
-      await apiRequest("PUT", `/api/cart/${id}`, { quantity });
+      if (isAuthenticated) {
+        await apiRequest("PUT", `/api/cart/${id}`, { quantity });
+      } else {
+        setGuestCart(prevCart =>
+          prevCart.map(item =>
+            item.id === id ? { ...item, quantity } : item
+          )
+        );
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      if (isAuthenticated) {
+        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      }
     },
   });
 
   const removeFromCartMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/cart/${id}`);
+      if (isAuthenticated) {
+        await apiRequest("DELETE", `/api/cart/${id}`);
+      } else {
+        setGuestCart(prevCart => prevCart.filter(item => item.id !== id));
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      if (isAuthenticated) {
+        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      }
     },
   });
 
   const clearCartMutation = useMutation({
     mutationFn: async () => {
-      // Clear all items one by one since we don't have a clear endpoint
-      await Promise.all(cartItems.map((item: CartItem) => 
-        apiRequest("DELETE", `/api/cart/${item.id}`)
-      ));
+      if (isAuthenticated) {
+        await Promise.all(cartItems.map((item: CartItem) => 
+          apiRequest("DELETE", `/api/cart/${item.id}`)
+        ));
+      } else {
+        setGuestCart([]);
+        localStorage.removeItem('guestCart');
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      if (isAuthenticated) {
+        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      }
     },
   });
 
   const addToCart = async (bookId: number, quantity = 1) => {
-    if (!isAuthenticated) {
-      throw new Error("Please log in to add items to cart");
-    }
     await addToCartMutation.mutateAsync({ bookId, quantity });
   };
 
