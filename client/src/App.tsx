@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
+import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -55,17 +56,37 @@ function Router() {
       <Route path="/orders/:id" component={OrderDetailPage} />
       <Route path="/admin-login" component={AdminLoginPage} />
       
-      {/* Admin routes - only for authenticated admin users */}
-      {isAuthenticated && user?.role === "admin" && (
-        <>
-          <Route path="/admin" component={AdminDashboard} />
-          <Route path="/admin/inventory" component={InventoryPageNew} />
-          <Route path="/admin/orders" component={OrdersPage} />
-          <Route path="/admin/sales" component={SalesPage} />
-          <Route path="/admin/shipping" component={ShippingPage} />
-          <Route path="/admin/settings" component={SettingsPage} />
-        </>
-      )}
+      {/* Admin routes - protected by separate admin authentication */}
+      <Route path="/admin">
+        <AdminProtectedRoute>
+          <AdminDashboard />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/inventory">
+        <AdminProtectedRoute>
+          <InventoryPageNew />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/orders">
+        <AdminProtectedRoute>
+          <OrdersPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/sales">
+        <AdminProtectedRoute>
+          <SalesPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/shipping">
+        <AdminProtectedRoute>
+          <ShippingPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/settings">
+        <AdminProtectedRoute>
+          <SettingsPage />
+        </AdminProtectedRoute>
+      </Route>
       
       {/* Fallback */}
       <Route component={NotFound} />
