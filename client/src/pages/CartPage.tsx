@@ -258,7 +258,7 @@ export default function CartPage() {
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span className="text-base-black">Total:</span>
-                      <span className="text-primary-aqua">€{total.toFixed(2)}</span>
+                      <span className="text-primary-aqua">${total.toFixed(2)}</span>
                     </div>
                   </div>
 

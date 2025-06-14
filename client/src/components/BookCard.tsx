@@ -102,7 +102,7 @@ export default function BookCard({ book }: BookCardProps) {
           {/* Price and Add to Cart */}
           <div className="flex items-center justify-between pt-2">
             <span className="text-xl font-bold text-primary-aqua">
-              €{parseFloat(book.price).toFixed(2)}
+              ${parseFloat(book.price).toFixed(2)}
             </span>
             <Button
               size="sm"

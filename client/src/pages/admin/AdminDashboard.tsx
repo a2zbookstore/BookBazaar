@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Euro, Clock, Star, TrendingUp, AlertTriangle, Truck } from "lucide-react";
+import { BookOpen, DollarSign, Clock, Star, TrendingUp, AlertTriangle, Truck } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,11 +78,11 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-secondary-black text-sm font-medium">Monthly Sales</p>
                   <p className="text-2xl font-bold text-base-black">
-                    €{stats?.monthlySales ? parseFloat(stats.monthlySales).toFixed(0) : '0'}
+                    ${stats?.monthlySales ? parseFloat(stats.monthlySales).toFixed(0) : '0'}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Euro className="h-6 w-6 text-green-600" />
+                  <DollarSign className="h-6 w-6 text-green-600" />
                 </div>
               </div>
               <div className="mt-2 flex items-center text-xs">

@@ -517,7 +517,7 @@ export default function ShippingPage() {
             </CardHeader>
             <CardContent>
               <p className="text-yellow-700">
-                <strong>{defaultRate.countryName}</strong> - €{defaultRate.shippingCost} 
+                <strong>{defaultRate.countryName}</strong> - ${defaultRate.shippingCost} 
                 ({defaultRate.minDeliveryDays}-{defaultRate.maxDeliveryDays} days)
               </p>
               <p className="text-sm text-yellow-600 mt-1">
