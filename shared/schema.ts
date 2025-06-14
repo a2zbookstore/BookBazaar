@@ -37,6 +37,19 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Admin table for separate admin authentication
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  username: varchar("username").unique().notNull(),
+  passwordHash: varchar("password_hash").notNull(),
+  name: varchar("name").notNull(),
+  email: varchar("email").unique(),
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Categories table
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -263,3 +276,13 @@ export const insertShippingRateSchema = createInsertSchema(shippingRates).omit({
   updatedAt: true,
 });
 export type InsertShippingRate = z.infer<typeof insertShippingRateSchema>;
+
+// Admin types
+export type Admin = typeof admins.$inferSelect;
+export const insertAdminSchema = createInsertSchema(admins).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLogin: true,
+});
+export type InsertAdmin = z.infer<typeof insertAdminSchema>;

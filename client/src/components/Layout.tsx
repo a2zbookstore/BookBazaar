@@ -121,7 +121,7 @@ export default function Layout({ children }: LayoutProps) {
                 <>
                   {user?.role === "admin" && (
                     <Link href="/admin">
-                      <Button className="bg-primary-aqua hover:bg-secondary-aqua">
+                      <Button size="sm" className="bg-primary-aqua hover:bg-secondary-aqua text-xs px-3 py-1">
                         Admin
                       </Button>
                     </Link>
@@ -138,6 +138,14 @@ export default function Layout({ children }: LayoutProps) {
                 </>
               ) : (
                 <div className="flex items-center space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation('/admin-login')}
+                    className="border-gray-400 text-gray-600 hover:bg-gray-50 text-xs px-2 py-1"
+                  >
+                    Admin
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={() => window.location.href = "/api/login"}
