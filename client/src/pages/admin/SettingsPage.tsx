@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Settings, User, Store, Mail, Plus, Edit, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
@@ -71,6 +71,17 @@ export default function SettingsPage() {
   const { data: contactMessages = [] } = useQuery<ContactMessage[]>({
     queryKey: ["/api/contact"],
   });
+
+  // Sync user profile state when user data loads
+  useEffect(() => {
+    if (user) {
+      setUserProfile({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+      });
+    }
+  }, [user]);
 
   const createCategoryMutation = useMutation({
     mutationFn: async (data: CategoryForm) => {
