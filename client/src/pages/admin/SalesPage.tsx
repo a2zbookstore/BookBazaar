@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, Euro, Calendar, Download } from "lucide-react";
+import { TrendingUp, DollarSign, Calendar, Download } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,7 +93,7 @@ export default function SalesPage() {
                 <div>
                   <p className="text-secondary-black text-sm font-medium">Total Sales</p>
                   <p className="text-2xl font-bold text-base-black">
-                    €{totalSales.toFixed(2)}
+                    ${totalSales.toFixed(2)}
                   </p>
                   <p className="text-xs text-green-600 flex items-center mt-1">
                     <TrendingUp className="h-3 w-3 mr-1" />
@@ -101,7 +101,7 @@ export default function SalesPage() {
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Euro className="h-6 w-6 text-green-600" />
+                  <DollarSign className="h-6 w-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -220,7 +220,7 @@ export default function SalesPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Euro className="h-5 w-5" />
+              <DollarSign className="h-5 w-5" />
               Daily Sales Breakdown
             </CardTitle>
           </CardHeader>
