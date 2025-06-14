@@ -130,6 +130,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get individual order (protected route)
+  app.get('/api/orders/:id', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      
+      const order = await storage.getOrderById(parseInt(id));
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Check if user owns this order or is admin
+      const user = await storage.getUser(userId);
+      if (order.userId !== userId && user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
   // Public order tracking route (no auth required)
   app.post('/api/track-order', async (req, res) => {
     try {

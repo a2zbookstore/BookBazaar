@@ -21,6 +21,7 @@ import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
+import OrderDetailPage from "@/pages/OrderDetailPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -52,6 +53,7 @@ function Router() {
         <>
           <Route path="/cart" component={CartPage} />
           <Route path="/checkout" component={CheckoutPage} />
+          <Route path="/orders/:id" component={OrderDetailPage} />
           
           {/* Admin routes */}
           {user?.role === "admin" && (
