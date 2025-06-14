@@ -127,49 +127,6 @@ export default function InventoryPage() {
   const totalBooks = booksResponse?.total || 0;
   const totalPages = Math.ceil(totalBooks / itemsPerPage);
 
-  // Add error handling and debugging
-  if (error) {
-    console.error('Books query error:', error);
-    return (
-      <AdminLayout>
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-red-600">Error Loading Inventory</h1>
-          <p className="text-gray-600 mt-2">
-            {error instanceof Error ? error.message : 'Failed to load books'}
-          </p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 bg-primary-aqua hover:bg-secondary-aqua"
-          >
-            Reload Page
-          </Button>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  // Add loading state
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="p-6">
-          <h1 className="text-3xl font-bookerly font-bold text-base-black">Inventory Management</h1>
-          <div className="space-y-4 mt-6">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse flex gap-4 p-4 border rounded">
-                <div className="w-12 h-16 bg-gray-200 rounded"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
   const createBookMutation = useMutation({
     mutationFn: async (data: BookForm) => {
       const bookData = {
@@ -750,7 +707,20 @@ export default function InventoryPage() {
             <CardTitle>Books ({totalBooks})</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {error ? (
+              <div className="text-center py-8">
+                <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Books</h3>
+                <p className="text-gray-600 mb-4">
+                  {error instanceof Error ? error.message : 'Failed to load books'}
+                </p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-primary-aqua hover:bg-secondary-aqua"
+                >
+                  Reload Page
+                </Button>
+              </div>
+            ) : isLoading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="animate-pulse flex gap-4 p-4 border rounded">
