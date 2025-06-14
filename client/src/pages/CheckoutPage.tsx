@@ -102,7 +102,7 @@ export default function CheckoutPage() {
 
   const completeOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
-      return await apiRequest("/api/orders/complete", "POST", orderData);
+      return await apiRequest("POST", "/api/orders/complete", orderData);
     },
     onSuccess: (data: any) => {
       clearCart();
@@ -126,7 +126,7 @@ export default function CheckoutPage() {
     
     try {
       // Create PayPal order
-      const orderResponse = await apiRequest("/api/paypal/order", "POST", {
+      const orderResponse = await apiRequest("POST", "/api/paypal/order", {
         amount: total.toFixed(2),
         currency: "USD",
         intent: "CAPTURE"
@@ -203,7 +203,7 @@ export default function CheckoutPage() {
     try {
       // Create Razorpay order
       console.log("Creating Razorpay order with:", { amount: total, currency: "INR" });
-      const orderResponse = await apiRequest("/api/razorpay/order", "POST", {
+      const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
         amount: total,
         currency: "INR",
         receipt: `receipt_${Date.now()}`
@@ -220,7 +220,7 @@ export default function CheckoutPage() {
         handler: async (response: any) => {
           try {
             // Verify payment
-            await apiRequest("/api/razorpay/verify", "POST", {
+            await apiRequest("POST", "/api/razorpay/verify", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature
