@@ -69,7 +69,7 @@ export default function SettingsPage() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryForm>(initialCategoryForm);
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>(initialStoreSettings);
+  const [storeSettings, setStoreSettings] = useState<StoreSettingsForm>(initialStoreSettings);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -84,7 +84,7 @@ export default function SettingsPage() {
     queryKey: ["/api/contact"],
   });
 
-  const { data: storeSettingsData } = useQuery<StoreSettings>({
+  const { data: storeSettingsData } = useQuery<StoreSettingsDB>({
     queryKey: ["/api/settings/store"],
   });
 
@@ -156,7 +156,7 @@ export default function SettingsPage() {
   });
 
   const updateStoreSettingsMutation = useMutation({
-    mutationFn: async (data: StoreSettings) => {
+    mutationFn: async (data: StoreSettingsForm) => {
       await apiRequest("PUT", "/api/settings/store", data);
     },
     onSuccess: () => {
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                       <Input 
                         id="storeName" 
                         value={storeSettings.storeName}
-                        onChange={(e) => setStoreSettings(prev => ({ ...prev, storeName: e.target.value }))}
+                        onChange={(e) => setStoreSettings((prev: StoreSettingsForm) => ({ ...prev, storeName: e.target.value }))}
                       />
                     </div>
                     <div>
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                         id="storeEmail" 
                         type="email" 
                         value={storeSettings.storeEmail}
-                        onChange={(e) => setStoreSettings(prev => ({ ...prev, storeEmail: e.target.value }))}
+                        onChange={(e) => setStoreSettings((prev: StoreSettingsForm) => ({ ...prev, storeEmail: e.target.value }))}
                       />
                     </div>
                   </div>
@@ -282,7 +282,7 @@ export default function SettingsPage() {
                       id="storeDescription" 
                       rows={3}
                       value={storeSettings.storeDescription}
-                      onChange={(e) => setStoreSettings(prev => ({ ...prev, storeDescription: e.target.value }))}
+                      onChange={(e) => setStoreSettings((prev: StoreSettingsForm) => ({ ...prev, storeDescription: e.target.value }))}
                     />
                   </div>
 
@@ -292,7 +292,7 @@ export default function SettingsPage() {
                       <Input 
                         id="storePhone" 
                         value={storeSettings.storePhone}
-                        onChange={(e) => setStoreSettings(prev => ({ ...prev, storePhone: e.target.value }))}
+                        onChange={(e) => setStoreSettings((prev: StoreSettingsForm) => ({ ...prev, storePhone: e.target.value }))}
                       />
                     </div>
                     <div>
@@ -300,7 +300,7 @@ export default function SettingsPage() {
                       <Input 
                         id="currency" 
                         value={storeSettings.currency}
-                        onChange={(e) => setStoreSettings(prev => ({ ...prev, currency: e.target.value }))}
+                        onChange={(e) => setStoreSettings((prev: StoreSettingsForm) => ({ ...prev, currency: e.target.value }))}
                       />
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                       id="storeAddress" 
                       rows={3}
                       value={storeSettings.storeAddress}
-                      onChange={(e) => setStoreSettings(prev => ({ ...prev, storeAddress: e.target.value }))}
+                      onChange={(e) => setStoreSettings((prev: StoreSettingsForm) => ({ ...prev, storeAddress: e.target.value }))}
                     />
                   </div>
 
