@@ -20,6 +20,7 @@ import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
+import CheckoutPage from "@/pages/CheckoutPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -50,6 +51,7 @@ function Router() {
       {isAuthenticated && (
         <>
           <Route path="/cart" component={CartPage} />
+          <Route path="/checkout" component={CheckoutPage} />
           
           {/* Admin routes */}
           {user?.role === "admin" && (

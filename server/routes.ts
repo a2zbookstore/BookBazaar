@@ -168,6 +168,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Payment routes
+  const { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } = await import("./paypal.js");
+  const { createRazorpayOrder, verifyRazorpayPayment, getRazorpayConfig } = await import("./razorpay.js");
+
+  // PayPal routes
+  app.get("/api/paypal/setup", async (req, res) => {
+    await loadPaypalDefault(req, res);
+  });
+
+  app.post("/api/paypal/order", async (req, res) => {
+    // Request body should contain: { intent, amount, currency }
+    await createPaypalOrder(req, res);
+  });
+
+  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
+    await capturePaypalOrder(req, res);
+  });
+
+  // Razorpay routes
+  app.get("/api/razorpay/config", async (req, res) => {
+    await getRazorpayConfig(req, res);
+  });
+
+  app.post("/api/razorpay/order", async (req, res) => {
+    await createRazorpayOrder(req, res);
+  });
+
+  app.post("/api/razorpay/verify", async (req, res) => {
+    await verifyRazorpayPayment(req, res);
+  });
+
+  // Order completion route
+  app.post("/api/orders/complete", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const {
+        customerName,
+        customerEmail,
+        customerPhone,
+        shippingAddress,
+        billingAddress,
+        subtotal,
+        shipping,
+        tax,
+        total,
+        paymentMethod,
+        paymentId,
+        items
+      } = req.body;
+
+      // Create order in database
+      const order = await storage.createOrder({
+        userId,
+        customerName,
+        customerEmail,
+        customerPhone,
+        shippingAddress,
+        billingAddress,
+        subtotal,
+        shipping,
+        tax,
+        total,
+        status: "confirmed",
+        paymentStatus: "paid",
+        notes: `Payment via ${paymentMethod}. Payment ID: ${paymentId}`
+      }, items);
+
+      // Clear cart after successful order
+      await storage.clearCart(userId);
+
+      res.json({ success: true, orderId: order.id });
+    } catch (error) {
+      console.error("Error completing order:", error);
+      res.status(500).json({ message: "Failed to complete order" });
+    }
+  });
+
   // Store settings routes
   app.get('/api/settings/store', isAuthenticated, async (req: any, res) => {
     try {
