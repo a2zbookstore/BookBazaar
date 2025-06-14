@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { ChevronRight, Minus, Plus, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -9,12 +9,49 @@ import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrency } from "@/hooks/useCurrency";
+import CurrencySelector from "@/components/CurrencySelector";
+import ShippingCostDisplay from "@/components/ShippingCostDisplay";
 
 export default function CartPage() {
   const { cartItems, updateCartItem, removeFromCart, clearCart, isLoading } = useCart();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { userCurrency, convertPrice, formatAmount } = useCurrency();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
+  const [convertedTotal, setConvertedTotal] = useState<string>('');
+  const [isConverting, setIsConverting] = useState(false);
+
+  // Calculate cart totals
+  const cartSubtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
+  const cartShipping = cartSubtotal > 50 ? 0 : 5.99;
+  const cartTax = cartSubtotal * 0.21;
+  const cartTotal = cartSubtotal + cartShipping + cartTax;
+
+  // Convert total to user's currency
+  useEffect(() => {
+    const convertCartTotal = async () => {
+      if (userCurrency !== 'USD' && cartTotal > 0) {
+        setIsConverting(true);
+        try {
+          const converted = await convertPrice(cartTotal);
+          if (converted) {
+            setConvertedTotal(formatAmount(converted.convertedAmount, userCurrency));
+          } else {
+            setConvertedTotal(formatAmount(cartTotal, 'USD'));
+          }
+        } catch (error) {
+          setConvertedTotal(formatAmount(cartTotal, 'USD'));
+        } finally {
+          setIsConverting(false);
+        }
+      } else {
+        setConvertedTotal(formatAmount(cartTotal, 'USD'));
+      }
+    };
+
+    convertCartTotal();
+  }, [cartTotal, userCurrency, convertPrice, formatAmount]);
 
   if (!isAuthenticated) {
     return (
@@ -71,13 +108,6 @@ export default function CartPage() {
       });
     }
   };
-
-  const subtotal = cartItems.reduce((sum, item) => 
-    sum + (parseFloat(item.book.price) * item.quantity), 0
-  );
-  const shipping = subtotal > 50 ? 0 : 4.99;
-  const tax = subtotal * 0.21; // 21% VAT
-  const total = subtotal + shipping + tax;
 
   if (isLoading) {
     return (
