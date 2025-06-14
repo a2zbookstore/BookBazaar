@@ -293,7 +293,10 @@ export default function CartPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Button className="w-full bg-primary-aqua hover:bg-secondary-aqua py-3">
+                    <Button 
+                      className="w-full bg-primary-aqua hover:bg-secondary-aqua py-3"
+                      onClick={() => window.location.href = '/checkout'}
+                    >
                       Proceed to Checkout
                     </Button>
                     <Link href="/catalog">
