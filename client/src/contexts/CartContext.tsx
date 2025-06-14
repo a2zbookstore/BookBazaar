@@ -25,7 +25,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     enabled: !!isAuthenticated,
     retry: false,
     staleTime: 5 * 60 * 1000,
-  });
+  }) as { data: CartItem[]; isLoading: boolean };
 
   const cartCount = cartItems.reduce((total: number, item: CartItem) => total + item.quantity, 0);
 
