@@ -6,6 +6,7 @@ import fs from "fs";
 import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { requireAdminAuth } from "./adminAuth";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
@@ -988,14 +989,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin dashboard routes
-  app.get("/api/admin/stats", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/stats", requireAdminAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const stats = await storage.getDashboardStats();
       res.json(stats);
     } catch (error) {
@@ -1004,14 +999,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/sales-data", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/sales-data", requireAdminAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const days = parseInt(req.query.days as string) || 30;
       const salesData = await storage.getSalesData(days);
       res.json(salesData);
@@ -1021,14 +1010,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/low-stock", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/low-stock", requireAdminAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const threshold = parseInt(req.query.threshold as string) || 5;
       const lowStockBooks = await storage.getLowStockBooks(threshold);
       res.json(lowStockBooks);
