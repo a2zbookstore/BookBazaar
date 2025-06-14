@@ -429,7 +429,7 @@ export default function ShippingPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="shippingCost">Shipping Cost (EUR)</Label>
+                  <Label htmlFor="shippingCost">Shipping Cost (USD)</Label>
                   <Input
                     id="shippingCost"
                     type="number"
