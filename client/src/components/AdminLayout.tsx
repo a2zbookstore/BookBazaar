@@ -9,6 +9,7 @@ import {
   Settings,
   Menu,
   LogOut,
+  Truck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const sidebarItems = [
   { href: "/admin/inventory", icon: BookOpen, label: "Inventory" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
   { href: "/admin/sales", icon: TrendingUp, label: "Sales Reports" },
+  { href: "/admin/shipping", icon: Truck, label: "Shipping Rates" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
