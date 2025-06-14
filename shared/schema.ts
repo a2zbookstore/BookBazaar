@@ -55,6 +55,7 @@ export const books = pgTable("books", {
   categoryId: integer("category_id").references(() => categories.id),
   description: text("description"),
   condition: varchar("condition", { length: 50 }).notNull(), // New, Like New, Very Good, Good, Fair
+  binding: varchar("binding", { length: 50 }).default("No Binding"), // Softcover, Hardcover, No Binding
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").default(0),
   imageUrl: varchar("image_url", { length: 500 }),

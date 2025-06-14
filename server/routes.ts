@@ -433,14 +433,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const row = data[i];
         try {
           // Map and validate book data
+          const priceValue = row.price || row.Price || '0';
           const bookData = {
             title: row.title || row.Title || '',
             author: row.author || row.Author || '',
             isbn: row.isbn || row.ISBN || '',
-            categoryId: row.categoryId || row.CategoryId || null,
+            categoryId: row.categoryId || row.CategoryId ? parseInt(row.categoryId || row.CategoryId) : null,
             description: row.description || row.Description || '',
             condition: row.condition || row.Condition || 'New',
-            price: (row.price || row.Price || '0').toString(),
+            price: typeof priceValue === 'number' ? priceValue.toString() : priceValue.toString(),
             stock: parseInt(row.stock || row.Stock || '1'),
             imageUrl: row.imageUrl || row.ImageUrl || '',
             publishedYear: row.publishedYear ? parseInt(row.publishedYear) : null,

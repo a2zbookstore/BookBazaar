@@ -6,6 +6,7 @@ export interface Book {
   categoryId?: number;
   description?: string;
   condition: string;
+  binding?: string;
   price: string;
   stock: number;
   imageUrl?: string;

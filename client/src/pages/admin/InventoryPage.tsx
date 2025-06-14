@@ -27,6 +27,7 @@ interface BookForm {
   categoryId: number | null;
   description: string;
   condition: string;
+  binding: string;
   price: string;
   stock: number;
   imageUrl: string;
@@ -46,6 +47,7 @@ const initialBookForm: BookForm = {
   categoryId: null,
   description: "",
   condition: "New",
+  binding: "No Binding",
   price: "",
   stock: 1,
   imageUrl: "",
@@ -59,6 +61,7 @@ const initialBookForm: BookForm = {
 };
 
 const conditions = ["New", "Like New", "Very Good", "Good", "Fair"];
+const bindings = ["Softcover", "Hardcover", "No Binding"];
 
 export default function InventoryPage() {
   const { toast } = useToast();
@@ -70,6 +73,10 @@ export default function InventoryPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [bookForm, setBookForm] = useState<BookForm>(initialBookForm);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [importResults, setImportResults] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const itemsPerPage = 10;
 
