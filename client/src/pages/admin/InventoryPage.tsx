@@ -83,7 +83,7 @@ export default function InventoryPage() {
   queryParams.set('sortBy', 'updatedAt');
   queryParams.set('sortOrder', 'desc');
 
-  const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
+  const { data: booksResponse, isLoading, error } = useQuery<BooksResponse>({
     queryKey: ["/api/books", {
       search,
       categoryId: selectedCategory,
@@ -94,14 +94,22 @@ export default function InventoryPage() {
       sortOrder: 'desc'
     }],
     queryFn: async () => {
-      const response = await fetch(`/api/books?${queryParams.toString()}`, {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error(`${response.status}: ${response.statusText}`);
+      try {
+        const response = await fetch(`/api/books?${queryParams.toString()}`, {
+          credentials: "include",
+        });
+        if (!response.ok) {
+          throw new Error(`${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data;
+      } catch (err) {
+        console.error('Error fetching books:', err);
+        throw err;
       }
-      return response.json();
     },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
