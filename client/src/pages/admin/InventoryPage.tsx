@@ -224,6 +224,7 @@ export default function InventoryPage() {
       categoryId: book.categoryId || null,
       description: book.description || "",
       condition: book.condition,
+      binding: book.binding || "No Binding",
       price: book.price,
       stock: book.stock,
       imageUrl: book.imageUrl || "",
@@ -247,6 +248,52 @@ export default function InventoryPage() {
   const resetForm = () => {
     setBookForm(initialBookForm);
     setEditingBook(null);
+  };
+
+  const handleImport = async () => {
+    if (!fileInputRef.current?.files?.[0]) {
+      toast({
+        title: "Error",
+        description: "Please select a file to import",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', fileInputRef.current.files[0]);
+
+    try {
+      const response = await fetch('/api/books/import', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+
+      const results = await response.json();
+      setImportResults(results);
+      
+      toast({
+        title: "Import Complete",
+        description: `Successfully imported ${results.success} books`,
+      });
+
+      // Refresh the books list
+      queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: error instanceof Error ? error.message : "Failed to import file",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const getConditionColor = (condition: string) => {
@@ -275,14 +322,89 @@ export default function InventoryPage() {
             <h1 className="text-3xl font-bookerly font-bold text-base-black">Inventory Management</h1>
             <p className="text-secondary-black">Manage your book collection and stock levels.</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm} className="bg-primary-aqua hover:bg-secondary-aqua">
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Book
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex gap-2">
+            <Button
+              onClick={() => window.open('/api/books/export?format=xlsx', '_blank')}
+              variant="outline"
+              className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export Excel
+            </Button>
+            <Button
+              onClick={() => window.open('/api/books/template?format=xlsx', '_blank')}
+              variant="outline"
+              className="border-secondary-aqua text-secondary-aqua hover:bg-secondary-aqua hover:text-white"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Books
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Import Books from File</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Upload Excel or CSV file</Label>
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="mt-2"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Supports .xlsx, .xls, and .csv files. Download template for proper format.
+                    </p>
+                  </div>
+                  {importResults && (
+                    <div className="border rounded p-4 bg-gray-50">
+                      <h4 className="font-medium mb-2">Import Results:</h4>
+                      <p className="text-green-600">✓ {importResults.success} books imported successfully</p>
+                      {importResults.errors.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-red-600">⚠ {importResults.errors.length} errors:</p>
+                          <ul className="text-sm text-red-500 mt-1 max-h-20 overflow-y-auto">
+                            {importResults.errors.slice(0, 5).map((error: string, i: number) => (
+                              <li key={i}>• {error}</li>
+                            ))}
+                            {importResults.errors.length > 5 && (
+                              <li>• ... and {importResults.errors.length - 5} more errors</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleImport}
+                      disabled={isUploading}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isUploading ? "Importing..." : "Import"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm} className="bg-primary-aqua hover:bg-secondary-aqua">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Book
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingBook ? "Edit Book" : "Add New Book"}
@@ -353,7 +475,7 @@ export default function InventoryPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="condition">Condition *</Label>
                     <Select 
@@ -372,6 +494,27 @@ export default function InventoryPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label htmlFor="binding">Binding</Label>
+                    <Select 
+                      value={bookForm.binding} 
+                      onValueChange={(value) => setBookForm(prev => ({ ...prev, binding: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bindings.map((binding) => (
+                          <SelectItem key={binding} value={binding}>
+                            {binding}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="price">Price (€) *</Label>
                     <Input
