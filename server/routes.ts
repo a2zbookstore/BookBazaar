@@ -164,8 +164,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if user owns this order or is admin
-      const user = await storage.getUser(userId);
-      if (order.userId !== userId && user?.role !== "admin") {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (order.userId !== req.user?.claims?.sub && user?.role !== "admin") {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -360,6 +360,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Admin password change error:", error);
       res.status(500).json({ message: "Password change failed" });
+    }
+  });
+
+  // Admin session check route
+  app.get("/api/admin/user", async (req, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      res.json({ 
+        id: admin.id, 
+        username: admin.username, 
+        name: admin.name, 
+        email: admin.email 
+      });
+    } catch (error) {
+      console.error("Admin session check error:", error);
+      res.status(500).json({ message: "Session check failed" });
     }
   });
 
