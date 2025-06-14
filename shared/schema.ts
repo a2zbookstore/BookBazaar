@@ -123,6 +123,19 @@ export const contactMessages = pgTable("contact_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Store Settings table
+export const storeSettings = pgTable("store_settings", {
+  id: serial("id").primaryKey(),
+  storeName: varchar("store_name", { length: 255 }).notNull(),
+  storeEmail: varchar("store_email", { length: 255 }).notNull(),
+  storeDescription: text("store_description"),
+  storePhone: varchar("store_phone", { length: 50 }),
+  currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
+  storeAddress: text("store_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -219,3 +232,11 @@ export const insertContactMessageSchema = createInsertSchema(contactMessages).om
   createdAt: true,
 });
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+
+export type StoreSettings = typeof storeSettings.$inferSelect;
+export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;

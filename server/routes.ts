@@ -86,11 +86,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { firstName, lastName, email } = req.body;
       
+      // Get current user data to preserve existing fields
+      const currentUser = await storage.getUser(userId);
+      
       const updatedUser = await storage.upsertUser({
         id: userId,
         firstName,
         lastName,
         email,
+        profileImageUrl: currentUser?.profileImageUrl, // Preserve existing profile image
+        role: currentUser?.role, // Preserve existing role
       });
       
       res.json(updatedUser);

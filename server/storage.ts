@@ -6,6 +6,7 @@ import {
   orderItems,
   cartItems,
   contactMessages,
+  storeSettings,
   type User,
   type UpsertUser,
   type Book,
@@ -20,6 +21,8 @@ import {
   type InsertCartItem,
   type ContactMessage,
   type InsertContactMessage,
+  type StoreSettings,
+  type InsertStoreSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
