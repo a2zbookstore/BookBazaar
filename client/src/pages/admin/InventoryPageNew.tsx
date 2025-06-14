@@ -125,7 +125,7 @@ export default function InventoryPageNew() {
         pages: data.pages || null,
         price: parseFloat(data.price) || 0,
       };
-      return apiRequest('/api/books', 'POST', bookData);
+      return apiRequest('POST', '/api/books', bookData);
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Book created successfully!" });
@@ -152,11 +152,7 @@ export default function InventoryPageNew() {
         pages: data.pages || null,
         price: parseFloat(data.price) || 0,
       };
-      return apiRequest(`/api/books/${editingBook.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(bookData),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Book updated successfully!" });
@@ -176,7 +172,7 @@ export default function InventoryPageNew() {
 
   const deleteBookMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/books/${id}`, { method: 'DELETE' });
+      return apiRequest('DELETE', `/api/books/${id}`);
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Book deleted successfully!" });
