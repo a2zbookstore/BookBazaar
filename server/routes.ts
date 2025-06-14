@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import * as XLSX from "xlsx";
@@ -286,7 +287,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Simple password hash check (SHA256)
-      const crypto = require('crypto');
       const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
       
       if (admin.passwordHash !== passwordHash) {
@@ -345,7 +345,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify current password
-      const crypto = require('crypto');
       const currentPasswordHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
       
       if (admin.passwordHash !== currentPasswordHash) {
