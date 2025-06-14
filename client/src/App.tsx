@@ -19,6 +19,7 @@ import OrdersPage from "@/pages/admin/OrdersPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
+import TrackOrderPage from "@/pages/TrackOrderPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/books/:id" component={BookDetailPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/track-order" component={TrackOrderPage} />
       
       {/* Protected routes */}
       {isAuthenticated && (

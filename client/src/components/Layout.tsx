@@ -95,6 +95,14 @@ export default function Layout({ children }: LayoutProps) {
               >
                 Contact
               </Link>
+              <Link
+                href="/track-order"
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                  isActive("/track-order") ? "text-primary-aqua font-semibold" : ""
+                }`}
+              >
+                Track Order
+              </Link>
               
               {isAuthenticated ? (
                 <>

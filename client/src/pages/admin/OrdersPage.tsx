@@ -80,7 +80,7 @@ export default function OrdersPage() {
   const [notes, setNotes] = useState("");
 
   const { data: ordersData, isLoading } = useQuery({
-    queryKey: ["/api/orders", statusFilter],
+    queryKey: ["/api/orders"],
     enabled: !!user && user.role === "admin",
   });
 
