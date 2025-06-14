@@ -22,6 +22,7 @@ import ShippingPage from "@/pages/admin/ShippingPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";
+import PayPalCompletePage from "@/pages/PayPalCompletePage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -53,6 +54,7 @@ function Router() {
         <>
           <Route path="/cart" component={CartPage} />
           <Route path="/checkout" component={CheckoutPage} />
+          <Route path="/paypal-complete" component={PayPalCompletePage} />
           <Route path="/orders/:id" component={OrderDetailPage} />
           
           {/* Admin routes */}

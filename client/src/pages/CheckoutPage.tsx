@@ -123,34 +123,74 @@ export default function CheckoutPage() {
   });
 
   const handlePayPalPayment = async () => {
+    if (!isFormValid) {
+      toast({
+        title: "Invalid Form",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
-      // Create PayPal order
+      // Create PayPal order with return URLs
       const orderResponse = await apiRequest("POST", "/api/paypal/order", {
         amount: total.toFixed(2),
         currency: "USD",
-        intent: "CAPTURE"
-      }) as any;
-
-      // Simulate PayPal redirect and completion
-      toast({
-        title: "PayPal Payment",
-        description: "Redirecting to PayPal for secure payment...",
+        intent: "CAPTURE",
+        return_url: `${window.location.origin}/api/paypal/success`,
+        cancel_url: `${window.location.origin}/checkout`
       });
 
-      // For demo purposes, complete the order directly
-      // In production, this would happen after PayPal redirect
-      setTimeout(() => {
-        handlePayPalSuccess({ id: orderResponse.id });
-      }, 2000);
+      const orderData = await orderResponse.json();
+      
+      // Get approval URL from PayPal order response
+      const approvalUrl = orderData.links?.find((link: any) => link.rel === 'approve')?.href;
+      
+      if (approvalUrl) {
+        // Store order data in session storage for completion after redirect
+        sessionStorage.setItem('pendingOrder', JSON.stringify({
+          customerName,
+          customerEmail,
+          customerPhone,
+          shippingAddress,
+          billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
+          subtotal: subtotal.toFixed(2),
+          shipping: shippingCost.toFixed(2),
+          tax: tax.toFixed(2),
+          total: total.toFixed(2),
+          paymentMethod: "PayPal",
+          items: cartItems.map(item => ({
+            bookId: item.book.id,
+            quantity: item.quantity,
+            price: item.book.price,
+            title: item.book.title,
+            author: item.book.author
+          }))
+        }));
+
+        toast({
+          title: "Redirecting to PayPal",
+          description: "Please complete your payment on PayPal's secure website...",
+        });
+
+        // Redirect to PayPal for payment
+        setTimeout(() => {
+          window.location.href = approvalUrl;
+        }, 1000);
+      } else {
+        throw new Error("No approval URL received from PayPal");
+      }
+      
     } catch (error) {
+      console.error("PayPal payment error:", error);
       toast({
         title: "Payment Error",
-        description: "Failed to initialize PayPal payment",
+        description: error instanceof Error ? error.message : "Failed to create PayPal order",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
     }
   };

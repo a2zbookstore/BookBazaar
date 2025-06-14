@@ -69,7 +69,7 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
-    const { amount, currency, intent } = req.body;
+    const { amount, currency, intent, return_url, cancel_url } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res
@@ -102,8 +102,15 @@ export async function createPaypalOrder(req: Request, res: Response) {
             },
           },
         ],
+        applicationContext: {
+          returnUrl: return_url || `${req.protocol}://${req.get('host')}/paypal-complete`,
+          cancelUrl: cancel_url || `${req.protocol}://${req.get('host')}/checkout`,
+          brandName: "A2Z BOOKSHOP",
+          landingPage: "LOGIN" as any,
+          userAction: "PAY_NOW" as any
+        }
       },
-      prefer: "return=minimal",
+      prefer: "return=representation",
     };
 
     const { body, ...httpResponse } =

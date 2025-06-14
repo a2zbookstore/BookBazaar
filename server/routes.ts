@@ -211,6 +211,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await capturePaypalOrder(req, res);
   });
 
+  // PayPal success route - handle return from PayPal
+  app.get("/api/paypal/success", async (req, res) => {
+    try {
+      const { token, PayerID } = req.query;
+      
+      if (!token) {
+        return res.redirect('/checkout?error=missing_token');
+      }
+
+      // Capture the payment
+      const captureResponse = await capturePaypalOrder(
+        { params: { orderID: token } } as any,
+        {
+          json: (data: any) => data,
+          status: (code: number) => ({ json: (data: any) => data })
+        } as any
+      );
+
+      // Redirect to a success page with order completion
+      res.redirect(`/paypal-complete?token=${token}&PayerID=${PayerID}`);
+    } catch (error) {
+      console.error("PayPal success error:", error);
+      res.redirect('/checkout?error=payment_failed');
+    }
+  });
+
   // Razorpay routes
   app.get("/api/razorpay/config", async (req, res) => {
     await getRazorpayConfig(req, res);
