@@ -10,6 +10,7 @@ import {
   Menu,
   LogOut,
   Truck,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const sidebarItems = [
   { href: "/admin/sales", icon: TrendingUp, label: "Sales Reports" },
   { href: "/admin/shipping", icon: Truck, label: "Shipping Rates" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
+  { href: "/admin/account", icon: User, label: "Account" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

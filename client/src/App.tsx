@@ -20,6 +20,7 @@ import OrdersPage from "@/pages/admin/OrdersPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
+import AdminAccountPage from "@/pages/admin/AdminAccountPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";
@@ -85,6 +86,11 @@ function Router() {
       <Route path="/admin/settings">
         <AdminProtectedRoute>
           <SettingsPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/account">
+        <AdminProtectedRoute>
+          <AdminAccountPage />
         </AdminProtectedRoute>
       </Route>
       
