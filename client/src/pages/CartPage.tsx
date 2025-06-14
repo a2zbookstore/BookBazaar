@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ChevronRight, Minus, Plus, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import CurrencySelector from "@/components/CurrencySelector";
 import ShippingCostDisplay from "@/components/ShippingCostDisplay";
 
 export default function CartPage() {
+  const [, setLocation] = useLocation();
   const { cartItems, updateCartItem, removeFromCart, clearCart, isLoading } = useCart();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -295,7 +296,7 @@ export default function CartPage() {
                   <div className="space-y-2">
                     <Button 
                       className="w-full bg-primary-aqua hover:bg-secondary-aqua py-3"
-                      onClick={() => window.location.href = '/checkout'}
+                      onClick={() => setLocation('/checkout')}
                     >
                       Proceed to Checkout
                     </Button>
