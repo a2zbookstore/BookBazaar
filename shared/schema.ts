@@ -139,7 +139,7 @@ export const storeSettings = pgTable("store_settings", {
 // Shipping Rates table
 export const shippingRates = pgTable("shipping_rates", {
   id: serial("id").primaryKey(),
-  countryCode: varchar("country_code", { length: 2 }).notNull(), // ISO 3166-1 alpha-2 code
+  countryCode: varchar("country_code", { length: 20 }).notNull(), // ISO 3166-1 alpha-2 code or special codes like REST_OF_WORLD
   countryName: varchar("country_name", { length: 100 }).notNull(),
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).notNull(),
   minDeliveryDays: integer("min_delivery_days").notNull(),
