@@ -102,7 +102,8 @@ export default function CheckoutPage() {
 
   const completeOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
-      return await apiRequest("POST", "/api/orders/complete", orderData);
+      const response = await apiRequest("POST", "/api/orders/complete", orderData);
+      return await response.json();
     },
     onSuccess: (data: any) => {
       clearCart();
