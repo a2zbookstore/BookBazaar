@@ -121,11 +121,23 @@ export default function InventoryPageNew() {
   const createBookMutation = useMutation({
     mutationFn: async (data: BookForm) => {
       const bookData = {
-        ...data,
+        title: data.title,
+        author: data.author,
+        isbn: data.isbn || "",
         categoryId: data.categoryId || null,
+        description: data.description || "",
+        condition: data.condition,
+        binding: data.binding,
+        price: data.price && data.price.trim() !== "" ? data.price : "0",
+        stock: data.stock || 0,
+        imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null,
+        publisher: data.publisher || "",
         pages: data.pages || null,
-        price: data.price || "0", // Ensure price is never empty string
+        language: data.language || "English",
+        weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
+        dimensions: data.dimensions || "",
+        featured: data.featured || false,
       };
       return apiRequest('POST', '/api/books', bookData);
     },
@@ -148,11 +160,23 @@ export default function InventoryPageNew() {
     mutationFn: async (data: BookForm) => {
       if (!editingBook) throw new Error("No book selected for editing");
       const bookData = {
-        ...data,
+        title: data.title,
+        author: data.author,
+        isbn: data.isbn || "",
         categoryId: data.categoryId || null,
+        description: data.description || "",
+        condition: data.condition,
+        binding: data.binding,
+        price: data.price && data.price.trim() !== "" ? data.price : "0",
+        stock: data.stock || 0,
+        imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null,
+        publisher: data.publisher || "",
         pages: data.pages || null,
-        price: data.price || "0", // Ensure price is never empty string
+        language: data.language || "English",
+        weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
+        dimensions: data.dimensions || "",
+        featured: data.featured || false,
       };
       return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
