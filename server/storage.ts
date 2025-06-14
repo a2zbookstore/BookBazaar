@@ -22,7 +22,7 @@ import {
   type InsertContactMessage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, like, and, or, sql, count } from "drizzle-orm";
+import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -421,29 +421,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSalesData(days: number): Promise<{ date: string; sales: string }[]> {
-    const result = await db
-      .select({
-        date: sql<string>`DATE(${orders.createdAt})`,
-        sales: sql<string>`COALESCE(SUM(${orders.total}), 0)`,
-      })
-      .from(orders)
-      .where(
-        and(
-          eq(orders.paymentStatus, "paid"),
-          sql`${orders.createdAt} >= CURRENT_DATE - INTERVAL '${days} days'`
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      
+      const result = await db
+        .select({
+          date: sql<string>`DATE(${orders.createdAt})`,
+          sales: sql<string>`COALESCE(SUM(CAST(${orders.total} AS DECIMAL)), 0)`,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.paymentStatus, "paid"),
+            gte(orders.createdAt, cutoffDate)
+          )
         )
-      )
-      .groupBy(sql`DATE(${orders.createdAt})`)
-      .orderBy(sql`DATE(${orders.createdAt})`);
+        .groupBy(sql`DATE(${orders.createdAt})`)
+        .orderBy(sql`DATE(${orders.createdAt})`);
 
-    return result;
+      return result;
+    } catch (error) {
+      console.error("Error fetching sales data:", error);
+      return [];
+    }
   }
 
   async getLowStockBooks(threshold: number = 5): Promise<Book[]> {
     return await db
       .select()
       .from(books)
-      .where(sql`${books.stock} <= ${threshold}`)
+      .where(lt(books.stock, threshold))
       .orderBy(asc(books.stock));
   }
 }
