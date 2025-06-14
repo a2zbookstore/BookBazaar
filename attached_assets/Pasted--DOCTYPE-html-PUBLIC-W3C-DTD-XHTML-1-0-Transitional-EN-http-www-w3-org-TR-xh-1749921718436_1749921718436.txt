@@ -1,0 +1,477 @@
+
+
+
+
+
+
+    
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+
+<html  lang="en" dir="ltr" >
+<head>
+      
+    
+    
+  <script>
+    window["abebooks"] = window["abebooks"] || {};
+    window["abeDomain"] = "https://www.abebooks.com";
+    window["abeCDN"] = "//assets.prod.abebookscdn.com";
+    window["abeLang"] = {locale: "com", lang: "en"};     window["basketAction"] = "d";     window["basketCount"] = "";         window["responsiveConf"] = {isResponsive: false, isStaticPage: false, host: "www.abebooks.com", url: "http://www.abebooks.com" + window.location.pathname};     window["timerPix"] = {             layout: "d",
+      isMobile: "false",
+      template: "SellersMenu"
+    }
+  </script>
+
+          
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+  
+     <script  data-test-id="script-utils" src="//assets.prod.abebookscdn.com/cdn/com/scripts/combined/global-utils-52b11abb40.js" ></script> <script defer data-test-id="script-analytics" src="//assets.prod.abebookscdn.com/cdn/com/scripts/digitaldata/analytics-2d1e76a8f3.js" ></script> <script defer data-test-id="script-csa" src="//assets.prod.abebookscdn.com/cdn/com/scripts/combined/csa-init-24af2bba7a.js" ></script> <script defer data-test-id="script-base" src="//assets.prod.abebookscdn.com/cdn/com/scripts/combined/global-base-223fb08ad8.js" ></script> <script defer data-test-id="script-toggle" src="//assets.prod.abebookscdn.com/cdn/com/scripts/sitenavtoggle-451a235902.js" ></script> <script defer data-test-id="script-ie" src="//assets.prod.abebookscdn.com/cdn/com/scripts/vendor/ie-polyfill.bundle-8ea21bfcae.js" ></script> <script defer data-test-id="script-react" src="//assets.prod.abebookscdn.com/cdn/com/scripts/vendor/react16.bundle-2afa8456c8.js" ></script> <script defer data-test-id="script-suggest-vendor" src="//assets.prod.abebookscdn.com/cdn/com/scripts/vendor/react-autosuggest.bundle-12fc2eb96c.js" charset="UTF-8" ></script> <script defer data-test-id="script-suggest" src="//assets.prod.abebookscdn.com/cdn/com/scripts/components/autosuggest-c41a8e0d9e.js" charset="UTF-8" ></script> <script defer data-test-id="script-eventbus" src="//assets.prod.abebookscdn.com/cdn/com/scripts/components/eventbus-fa0557f0e8.js" charset="UTF-8" ></script> <script defer data-test-id="script-bootstrap-native" src="//assets.prod.abebookscdn.com/cdn/com/scripts/bootstrap.native-607a86600b.js" charset="UTF-8" ></script> <script defer data-test-id="script-change-currency-modal" src="//assets.prod.abebookscdn.com/cdn/com/scripts/components/changecurrencymodalv2-28a52d5aeb.js" charset="UTF-8" ></script> <script defer data-test-id="script-shopping-preferences-button" src="//assets.prod.abebookscdn.com/cdn/com/scripts/components/shoppingpreferencesbutton-2b2813039e.js" charset="UTF-8" ></script>  <link data-test-id="global-css-import" rel="stylesheet" href="//assets.prod.abebookscdn.com/cdn/com/docs/CSS/global/base-2da91803db.css" />   
+            
+  
+      
+    
+    
+
+
+
+      
+              
+    
+  
+  <meta charset="ISO-8859-1"/>
+  <meta name="dcterms.audience" content="global"/>
+
+      <meta name="dcterms.rightsHolder" content="1996 - 2025 AbeBooks, Inc."/>
+  <meta name="format-detection" content="telephone=no"/>
+
+  
+
+  
+  
+  
+
+  
+  
+
+
+
+
+      <script>
+      //<![CDATA[
+              var awsDomain = 'abebooks.com';
+      var twoLetterISOCode = 'en';
+      //]]>
+    </script>
+  
+  
+      <title>AbeBooks Members Menu</title>
+  
+  
+    
+    
+        <link rel="stylesheet" href="//assets.prod.abebookscdn.com/cdn/com/docs/CSS/legacy/primary-ae3a1f6cc4.css" type="text/css" media="all"/>
+    <link rel="stylesheet" href="//assets.prod.abebookscdn.com/cdn/com/docs/CSS/XHTML/tools-2c2b3075cf.css" type="text/css" media="all"/>
+    <link rel="stylesheet" href="//assets.prod.abebookscdn.com/cdn/com/docs/CSS/legacy/abe-xhtml-7bfbca03f9.css"/>
+
+                      <link rel="stylesheet" href="//assets.prod.abebookscdn.com/cdn/com/docs/CSS/framework/abelayout-2col-right-48e9013fea.css" type="text/css" media="all"/>
+              <link rel="stylesheet" href="//assets.prod.abebookscdn.com/cdn/com/docs/CSS/XHTML/xhtml-widget-20081d1d29.css" type="text/css" media="all"/>
+          
+    
+    
+    
+          <script type="text/javascript" src="//assets.prod.abebookscdn.com/cdn/com/scripts/jquery/jquery-3.6.0.min.js"></script>
+
+
+
+
+
+
+<!-- SERVLET_SPECIFIC_JAVASCRIPT -->
+
+
+<script type="text/javascript" src="//assets.prod.abebookscdn.com/cdn/com/scripts/dwr-shim/interface/seller-menu-service-b0739ef2f7.js"></script>
+<script type="text/javascript" src="//assets.prod.abebookscdn.com/cdn/com/scripts/dwr-shim/engine-0897f4b776.js"></script>
+
+<!-- JS LIST -->
+<script type="text/javascript" src="//assets.prod.abebookscdn.com/cdn/com/scripts/utilities/iframesize-eae74fbfac.js"></script>
+<script type="text/javascript" src="//assets.prod.abebookscdn.com/cdn/com/scripts/ajax/services/SellersMenuToDoListServiceClient-1e1a216239.js"></script>
+
+
+
+
+<script type="text/javascript">
+<!--
+var isButtonClicked = false;
+function checkForClick() {
+  /**
+  * Example of use: onSubmit="return checkForClick();" in the form tag
+  */
+   if( isButtonClicked == true ) {
+      alert("Please do not click more than once.")
+      return false;
+   } else {
+	 isButtonClicked = true;
+	 return true;
+   }
+}
+
+function disableSubmit() {
+  /**
+  * Example of use: onClick="setTimeout('disableSubmit()', 1);" in the input tag
+  */
+  var formInputs = document.getElementsByTagName("INPUT");
+  for(var i = 0; i < formInputs.length; i++) {
+    var formInput = formInputs[i];
+    if(formInput.getAttribute('type') == "submit" || formInput.getAttribute('type') == "image") {
+        formInput.disabled = true;
+    }
+  }
+  var buttons = document.getElementsByTagName("BUTTON");
+  for(var i = 0; i < buttons.length; i++) {
+    var button = buttons[i];
+    if(button.getAttribute('type') == "submit") {
+        button.disabled = true;
+    }
+  }
+  return true;
+}
+
+
+function openNewWindow( link_URL, width, height, scrollbars ) {
+	openNewWindow(link_URL, width, height, scrollbars, 'no');
+}
+
+function openNewWindow( link_URL, width, height, scrollbars, resize ) {
+	windowAttributes ='width=' + width + ',height=' + height + ',scrollbars=' + scrollbars + ',resizable=' + resize;
+	window.open( link_URL, 'plain', windowAttributes);}
+
+function openWindow(linkURL, menubar, toolbar, location, status, scrollbars, resizable, width, height, top, left) {
+  windowAttributes = 'width=' + width + ',height=' + height + ',menubar=' + menubar + ',toolbar=' + toolbar + ',location=' + location + ',status=' + status + ',scrollbars=' + scrollbars + ',resizable=' + resizable + ',top=' + top + ',left=' + left;
+  window.open( linkURL, 'plain', windowAttributes);
+  return false;
+}
+//-->
+</script>
+        
+
+
+  
+  
+      <link rel="stylesheet" href="//assets.prod.abebookscdn.com/cdn/com/docs/CSS/Servlets/SellersMenu-7462c981ab.css" type="text/css"
+          media="all"/>
+  
+  
+</head>
+<body>
+
+
+  
+  
+                    <div id="wrapper">  <header id="abe-top" data-test-id="header" role="banner" class="locale-com">  <!-- /// --> <div id="abe-gdpr-banner"></div> <a id="skip-main-nav-link" class="skip-link" href="#content-main" >Skip to main content</a> <div id="abe-header"> <div class="top-nav"> <div class="wrapper cf abenav-belt"> <div class="abenav-belt-left"> <a id="logo" href="/"> <span class="sr-only">AbeBooks.com</span> </a> </div> <div class="abenav-belt-fill"> <form id="header-searchbox-form" method="post" action="/servlet/SearchResults" name="quickSearch_B" role="search" accept-charset="ISO-8859-1"> <input type="hidden" value="t" name="sts" /> <input type="hidden" value="on" name="searchprefs" /> <input name="ds" value="20" type="hidden" /> <fieldset class="gnav-searchbox"> <div class="gnav-searchbox-left"> <div class="gnav-searchbox-field"> <input class="gnav-searchbox-input" id="header-searchbox-input" type="text" maxlength="100" name="kn" aria-label="Search AbeBooks" spellcheck="false" /> <div class="abeui-autosuggest" data-id="header-searchbox-input" data-name="kn" data-replace-id="header-searchbox-input" data-class-name="gnav-searchbox-input" data-auto-submit="true" data-placeholder="Enter keyword, title, author or ISBN"></div> </div> <div class="gnav-searchbox-right"> <button class="gnav-searchbox-button" id="header-searchbox-button" type="submit" aria-label="Find"><span>Search</span></button> </div> </div> </fieldset> </form> </div> <div class="abenav-belt-right"> <ul id="account-nav" class="cf " ><li><a id="sign-on" href="/servlet/LoginDirector">Sign in</a></li><li><a id="my-account" class="hidden-xs" href="/servlet/MembersMainMenu">My Account</a></li><li><a id="basket" href="/servlet/ShopBasketPL"><span class="deftext">Basket</span><span class="basket-icon">&nbsp;</span><span id="bskc" class="hide"></span></a></li><li><a id="help" class="hidden-xs" href="https://support.abebooks.com/s/?language=en_US">Help</a></li></ul> </div> </div> </div> <div id="main-navigation"> <div class="wrapper"> <nav class="cf"> <button id="mobile-menu" aria-controls="nav-wrapper" aria-expanded="false" type="button" aria-label="Open main menu"> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="toggle-text">Menu</span> </button> <div id="header-searchbox-container-m" class="gnav-searchbox-container-m"> <form id="header-searchbox-form-m" method="post" action="/servlet/SearchResults" name="nav-mobile-search" accept-charset="ISO-8859-1"> <input type="hidden" value="t" name="sts" /> <input type="hidden" value="on" name="searchprefs" /> <fieldset class="gnav-searchbox-m"> <div class="gnav-searchbox-left-m"> <input id="header-searchbox-input-m" class="gnav-searchbox-input-m" type="text" maxlength="100" name="kn" aria-label="Search AbeBooks" placeholder="" spellcheck="false" /> <div class="abeui-autosuggest" data-id="header-searchbox-input-m" data-name="kn" data-replace-id="header-searchbox-input-m" data-class-name="gnav-searchbox-input-m" data-placeholder="Search AbeBooks" data-auto-submit="true"></div> </div> <div class="gnav-searchbox-right-m"> <button id="header-searchbox-button-m" class="gnav-searchbox-button-m" type="submit" aria-label="Find"><span>Find</span></button> </div> </fieldset> </form> </div> <div class="nav-bar cf"> <div id="nav-wrapper" class="nav-wrapper cf abenav-slideout" tabindex="-1" aria-label="Menu principal"> <ul id="global-nav-links" > <li id="mobile-menu-account" class="visible-xs-block"><a href="/servlet/MembersMainMenu">My Account</a></li> <li id="mobile-menu-orders" class="visible-xs-block"><a href="/my-account/purchases">My Purchases</a></li> <li id="mobile-menu-signon" class="visible-xs-block"><a href="/servlet/SignOff?ph=2">Sign Off</a></li> <li id="search-entry" class="search-entry"><a href="/servlet/SearchEntry" title="Search millions of items for sale">Advanced Search</a></li> <li id="collections-link" class="collections-link"><a href="/collections/" title="Browse books, fine art &amp; collectibles">Browse Collections</a></li> <li id="rare-books" ><a href="/books/rarebooks/" title="Find rare &amp; collectible books">Rare Books</a></li> <li id="hdr-nbc" ><a href="/collectibles/" title="Search fine art &amp; collectibles">Art &amp; Collectibles</a></li> <li id="text-books" ><a href="/books/textbooks/" title="Buy cheap new and used textbooks">Textbooks</a></li> <li id="hdr-sellers" ><a href="/servlet/BookstoreSearch" title="Search AbeBooks sellers from around the world">Sellers</a></li> <li id="hdr-sell" ><a href="/books/sell/" title="Become a professional AbeBooks seller">Start Selling</a></li> <li id="mobile-menu-help" class="visible-xs-block"><a href="https://support.abebooks.com/s/?language=en_US">Help</a></li> <li id="mobile-menu-close" class="visible-xs-block text-center mobile-close"><a href="javascript:void(0)" aria-controls="nav-wrapper" aria-expanded="true" role="button" tabindex="0"><span>CLOSE</span></a></li> </ul> </div> </div> </nav> </div> </div> </div> </header>  <main id="abe-content" class="abe-content" data-test-id="main" data-templateId="">
+    
+
+       
+    <div class="indent">
+  
+
+<div id="content-pane">
+  <div id="pageHeader">
+    <div id="breadcrumbs"><div id="breadcrumb-trail" class="text-xs-sm text-sm-default">
+  
+
+
+
+
+                <a data-test-id="breadcrumb-book-name-link-0" href="/"   title="abebooks.com"  class="breadcrumb">Home</a>
+    
+
+
+
+  
+
+
+
+
+              <span class="breadcrumb">My Account</span>
+    
+
+
+
+  </div>
+</div>
+    <h1>My Account - Welcome Page-Turning BookStore</h1>
+  </div>
+  <div id="main">
+    <div class="row">
+      <div class="account-stats col-md-4 col-xs-4">
+        <h2>My Account Stats:</h2>
+        <p id="booksellerRating" class="quick-info">
+            <span class="bookseller-rating" data-test-id="bookseller-rating" aria-hidden="true">(5-star seller)</span>
+  <span class="sr-only">Seller rating 5 out of 5 stars</span>
+      <a rel="nofollow"
+       href="javascript:openNewWindow('/servlet/FrameBase?content=%2Fservlet%2FViewSellerRatingsHelp',500, 550,'yes');"
+       data-csa-c-type="action"
+       data-csa-c-action="info"
+       data-csa-c-info="seller-rating"
+    >
+        <img
+            src="//assets.prod.abebookscdn.com/cdn/shared/images/Shared/css/seller-rating/fivestar.png"
+            alt="5-star rating, Learn more about seller ratings"
+            width="80"
+            height="16"
+            style="position:relative;top:2px;"
+        />
+    </a>
+        </p>
+                <p class="quick-info">
+          <a href="/servlet/DisplaySellerRating">Completion Rate:</a> <b>97%</b>
+          <br />
+                      <span class="completion-over">You are above the minimum requirement</span>
+                  </p>
+        <p class="quick-info"><a href="/servlet/BookCountReport">Searchable Book Count:</a> <b>193</b></p>
+
+        <p class="quick-info"><a href="/my-account/payments">Current Balance:</a> <nobr><b>EUR 158,89</b></nobr>
+                      </br>
+            AbeBooks currently owes you this amount.
+                  </p>
+      </div>
+    </div>
+
+    <br/>
+          <div class="main-menu box-nofill-withtitle" id="to-do-list-container">
+        <div class="head"><h2>My To-Do List:</h2></div>
+        <div class="body" id="to-do-list">
+                      <div class="alert-container alert-type-danger">
+              <img alt="" class="alert-icon alert-type-danger" src="//assets.prod.abebookscdn.com/cdn/shared/images/logos/icon_error.png"/>
+              <div class="alert-data">
+                <div class="alert-header">
+                  <b>Action required</b>
+                </div>
+                <div class="alert-body">
+                  Update the required information.
+                </div>
+              </div>
+            </div>
+                    <ul>
+                          <li>
+                <a href="/servlet/InventoryListResults?ds=30&n=162&p_stype=OLN&sortby=14">
+                  <span class='carat'>&rsaquo;</span> Items without seller-supplied images: 192
+                </a>
+                              </li>
+                          <li>
+                <a href="/my-account/epr">
+                  <span class='carat'>&rsaquo;</span> Extended Producer Responsibility 
+                </a>
+                                  <span class="required-text">(required)</span>
+                              </li>
+                      </ul>
+        </div>
+      </div>
+    
+          <div class="main-menu box-nofill-withtitle abebooks-msg">
+        <div class="head"><h2>Messages From AbeBooks:</h2></div>
+        <div class="body">
+          <ul><li><b>Canada Post Strike</b><br><p>Canada Post has given notice that it could initiate strike action as early as May 23, 2025. Delays to Canada Post deliveries and services are expected. The <a href="https://www.canadapost-postescanada.ca/cpc/en/our-company/news-and-media/corporate-news/negotiations-list.page">Canada Post website</a> is providing updates on the strike action.<p></li></ul>
+        </div>
+      </div>
+            <div class="main-menu box-nofill-withtitle">
+      <div class="head"><h2>Members Menu</h2></div>
+      <div class="body" id="body-content">
+        <div class="clearAll"></div>
+        <div class="member-col first-col">
+          <span>My Sales</span>
+          <ul id="sales">
+            <li><a href="/servlet/OrderList?&status=All">View and Process Orders</a></li>
+            <li><a href="/servlet/ReviewReturnsVendor">View All Returns</a></li>
+            <li><a href="/servlet/EmailList?clientid=88351531">View AbeBooks Emails</a></li>
+            <li><a href="/servlet/DisplaySellerRating">Completion Rate and Seller Rating</a></li>
+            <!-- Create a link here (only if clientid is in zvab client link table - ie. was a ZVAB seller) to ZvabHistoricOrderTrack for sellers -->
+                       </ul>
+
+          <span>My Payments</span>
+          <ul id="payments">
+            <li><a href="/servlet/SellersMenu?ph=2&amp;cm_sp=SellerLinks-_-MMM-_-tax-reports">Statements and Reporting</a></li>
+            <li><a href="/my-account/banking/bank-info">My Banking Information</a></li>
+            <li><a href="/servlet/VendorCreditCardDisplayOptions">My Credit Card (for fee payments only)</a></li>
+            <li><a href="/servlet/CSTranInsert">Add a One-Time Payment to My Account</a></li>
+
+                      </ul>
+
+          <span>My Purchases</span>
+          <ul id="purchases">
+            <li><a href="/servlet/BuyerOrderTrack">My Purchases</a></li>
+            <li><a href="/checkout/basket">My Shopping Basket</a></li>
+            <li><a href="/servlet/CCManagementPL">My Credit Card</a></li>
+            <li><a href="/servlet/EmailList">My AbeBooks Emails</a></li>
+            <li><a href="/servlet/ShippingAddress">My Address Book</a></li>
+                                        <li><a href="/servlet/BuyerDetailsPL">My Shopping Preferences</a></li>
+                      </ul>
+
+          <span>Compliance items</span>
+          <ul id="compliance">
+            <li><a href="/my-account/tax/hub/">Tax compliance hub</a></li>
+            <li><a href="/my-account/tax-info">Tax registration numbers</a></li>
+            <li><a href="/my-account/epr">Extended Producer Responsibility</a></li>
+          </ul>
+        </div>
+        <div class="member-col mid-col">
+          <span>My Personal Information</span>
+          <ul id="personal">
+            <li><a href="/my-account">Account Details</a></li>
+                        <li><a href="/shipping/templates">My Shipping Rates</a></li>
+            <li><a href="/my-account/seller-account/returnless-refunds/rules">Manage Returnless Refund Rules</a></li>
+                          <li><a href="/servlet/AcceptablePaymentMethods">My Accepted Payment Methods</a></li>
+                        <li><a href="/servlet/ChangePassword">My Password</a></li>
+                          <li><a href="/servlet/ApiKey">My API Key</a></li>
+                        <li><a href="/servlet/ViewSellerAgreement?clientId=88351531">View Bookseller Agreement</a></li>
+            <li><a href="/servlet/StoreFrontDisplay?cid=88351531">View My Storefront</a></li>
+            <li><a href="/servlet/CreateStaticHomePage?phase=2">Edit My Storefront</a></li>
+          </ul>
+          <span>My Wants</span>
+          <ul id="wants">
+            <li><a href="/servlet/WantMaintList?ph=2">My Wants</a></li>
+            <li><a href="/my-account/file-upload">Upload Want Records</a></li>
+            <li><a href="/servlet/ClientMatchesList?clientid=88351531">Recently Matched Wants</a></li>
+            <li><a href="/servlet/BookOrWantPurge?purgetype=want&clientid=88351531">Purge All Wants</a></li>
+            <li><a href="/servlet/WantReportDump">Download My Want Reports</a></li>
+          </ul>
+        </div>
+        <div class="member-col">
+          <span>My Books</span>
+          <ul class="books">
+            <li><a href="/servlet/BookCountReport">Book Count Report</a></li>
+                          <li><a href="/servlet/InventoryListEntry">Manage My Books &amp; Images</a></li>
+                                    <li><a href="/shipping/notifications">Books with shipping template<br>warnings (0)</a></li>
+            <li><a href="/my-account/file-upload">Upload a Book or Picture File</a></li>
+            <li><a href="/servlet/BookOrWantPurge?purgetype=book&clientid=88351531">Purge All Listed Books</a></li>
+            <li>
+              <a href="/servlet/SearchFilterCheck">Filtered Books</a>
+              <nobr class="annotation">(<label class="price">20</label>)</nobr>
+            </li>
+            <li><a href="/servlet/StoreFrontDisplay?cid=88351531">Search &amp; Browse My Books</a></li>
+            <li><a href="/servlet/Vacation">Put My Books on Vacation</a></li>
+            <li><a href="/servlet/ISBNPreferences?from=MembersMainMenu">My ISBN Lookup Preferences</a></li>
+            <li><a href="/servlet/ClientBookMatchList">My Books Matched Against Wants</a></li>
+          </ul>
+          <span>My Downloads</span>
+          <ul class="downloads">
+            <li><a href="/servlet/HomeBaseBookExport?comma=n&clientId=88351531">Request HomeBase Inventory Report</a></li>
+            <li><a href="/servlet/HomeBaseBookExport?rt=2&clientId=88351531">Request Book Report (Listing ID, Title, Author, Price, Status)</a></li>
+            <li><a href="/servlet/HomeBaseBookExport?rt=4&clientId=88351531">Request Listings Report (Listing ID, Price, Quantity)</a></li>
+            <li><a href="/my-account/listing-reports">Download Pending Files</a></li>
+            <li><a href="/homebase/software-inventory-management-system-catalog/homebase3.shtml">Download HomeBase</a></li>
+            <li><a href="/my-account/shared-files">Download AbeBooks Shared Files</a></li>
+          </ul>
+        </div>
+        <div class="clearAll"></div>
+      </div>
+    </div>
+  </div>
+  <div id="side1">
+    <script type="text/javascript">
+      minIframeHeight = 900;
+    </script>
+    <iframe name="quickLinks" id="quickLinks" scrolling="no" src="/service-content/members-menu/seller/quick-links/?ts=395431340" frameborder="0" width="100%"></iframe>
+  </div>
+</div>
+<br clear="all" />
+
+
+ </div> <br />
+
+
+
+          </main> </div>  <footer data-test-id="footer">  <!-- // --> <div id="footer-container"> <div> <a class="to-top" href="#abe-top">Back to top</a> </div> <div id="site-links" class="cf"> <div id="footer-col1" class="footer-col"> <h4 id="footer-shop-header" aria-controls="footer-shop-list">Shop With Us</h4> <ul id="footer-shop-list" class="list-unstyled abenav-slideout" tabindex="-1" aria-labelledby="footer-shop-header"> <li id="ft-shop-1" ><a href="/servlet/SearchEntry">Advanced Search</a></li> <li id="ft-shop-2" ><a href="/collections/" title="Browse books by subject and genre">Browse Collections</a></li> <li id="ft-shop-3" ><a href="/servlet/MembersMainMenu">My Account</a></li> <li id="ft-shop-4" ><a href="/my-account/purchases/">My Orders</a></li> <li id="ft-shop-5" ><a href="/servlet/ShopBasketPL">View Basket</a></li> </ul> </div> <div id="footer-col2" class="footer-col"> <h4 id="footer-sell-header" aria-controls="footer-sell-list">Sell With Us</h4> <ul id="footer-sell-list" class="list-unstyled abenav-slideout" tabindex="-1" aria-labelledby="footer-sell-header"> <li id="ft-sell-1" ><a href="/books/sell/">Start Selling</a></li> <li id="ft-sell-2" ><a href="/books/affiliateprogram/">Join Our Affiliate Program</a></li> <li id="ft-sell-3" ><a href="/books/buyback/">Book Buyback</a></li> <li id="ft-sell-4" ><a href="/books/sell/refer-seller">Refer a seller</a></li> </ul> </div> <div id="footer-col3" class="footer-col"> <h4 id="footer-about-header" aria-controls="footer-about-list">About Us</h4> <ul id="footer-about-list" class="list-unstyled abenav-slideout" tabindex="-1" aria-labelledby="footer-about-header"> <li id="ft-about-1" ><a href="/about/">About AbeBooks</a></li> <li id="ft-about-2" ><a href="/books/companyinformation/contact.shtml">Media</a></li> <li id="ft-about-3" ><a href="https://www.amazon.jobs/team/abebooks/">Careers</a></li> <li id="ft-about-4" ><a href="https://forums.abebooks.com/abecom/">Forums</a></li> <li id="ft-about-5" ><a href="/docs/legal/privacypolicy.shtml">Privacy Policy</a></li> <li id="ft-about-ads" ><a href="/docs/legal/advertising-preferences/">Your Ads Privacy Choices</a></li> <li id="ft-about-6" ><a href="/books/digital-millennium-copyright-act.shtml">Designated Agent</a></li> <li id="ft-about-7" ><a href="/accessibility/">Accessibility</a></li> </ul> </div> <div id="footer-col4" class="footer-col"> <h4 id="footer-help-header" aria-controls="footer-help-list">Find Help</h4> <ul id="footer-help-list" class="list-unstyled abenav-slideout" tabindex="-1" aria-labelledby="footer-help-header"> <li id="ft-help-1" ><a href="https://support.abebooks.com/s/?language=en_US">Help</a></li> <li id="ft-help-2" ><a href="/servlet/ActionRequestInsert">Customer Support</a></li> </ul> </div> <div id="mobile-footer-companies" class="footer-col"> <h4 id="mobile-footer-companies-header" aria-controls="mobile-footer-companies-list">Other AbeBooks Companies</h4> <ul id="mobile-footer-companies-list" class="list-unstyled abenav-slideout" tabindex="-1" aria-labelledby="mobile-footer-companies-header"> <li id="mob-company-uk" ><a href="https://www.abebooks.co.uk/">AbeBooks.co.uk</a></li> <li id="mob-company-de" ><a href="https://www.abebooks.de/">AbeBooks.de</a></li> <li id="mob-company-fr" ><a href="https://www.abebooks.fr/">AbeBooks.fr</a></li> <li id="mob-company-it" ><a href="https://www.abebooks.it/">AbeBooks.it</a></li> <li id="mob-company-anz" ><a href="https://www.abebooks.com/docs/anz/" title="AbeBooks.com: Australia &amp; New Zealand Books">AbeBooks Aus/NZ</a></li> <li id="mob-company-ca" ><a href="https://www.abebooks.ca/">AbeBooks.ca</a></li> <li id="mob-company-es" ><a href="https://www.iberlibro.com/">IberLibro.com</a></li> <li id="mob-company-zvab" ><a href="https://www.zvab.com/">ZVAB.com</a></li> <li id="mob-company-sub" ><a href="http://www.bookfinder.com/">BookFinder.com<span class="desc-block">Find any book at the best price</span></a></li> </ul> </div> <div id="footer-col5" class="footer-col"> <h4 id="footer-social-header" aria-controls="footer-social-list">Follow AbeBooks</h4> <ul id="footer-social-list" class="list-unstyled abenav-slideout" tabindex="-1" aria-labelledby="footer-social-header"> <li id="ft-social-1" ><a href="https://www.facebook.com/abebooks/" aria-label="Visit our Facebook page"><img src="//assets.prod.abebookscdn.com/cdn/shared/images/common/social/facebook.svg" alt="Facebook" width="24"/></a></li> <li id="ft-social-2" ><a href="https://twitter.com/abebooks/" aria-label="Follow AbeBooks on X"><img src="//assets.prod.abebookscdn.com/cdn/shared/images/common/social/x-twitter.svg" alt="X" width="24"/></a></li> <li id="ft-social-3" ><a href="https://www.instagram.com/abebooks/" aria-label="Follow AbeBooks on Instagram"><img src="//assets.prod.abebookscdn.com/cdn/shared/images/common/social/instagram.svg" alt="Instagram" width="24"/></a></li> </ul> </div> </div> <div class="text-center"> <img class="footer-logo" alt="" src="//assets.prod.abebookscdn.com/cdn/shared/images/common/footer/abebooks-footer-logo.png" role="presentation" aria-hidden="true"> </div> <div id="footer-companies" > <ul id="footer-companies-list" class="list-unstyled list-inline"> <li id="site-company-uk" ><a href="https://www.abebooks.co.uk/">AbeBooks.co.uk</a></li> <li id="site-company-de" ><a href="https://www.abebooks.de/">AbeBooks.de</a></li> <li id="site-company-fr" ><a href="https://www.abebooks.fr/">AbeBooks.fr</a></li> <li id="site-company-it" ><a href="https://www.abebooks.it/">AbeBooks.it</a></li> <li id="site-company-anz" ><a href="https://www.abebooks.com/docs/anz/" title="AbeBooks.com: Australia &amp; New Zealand Books">AbeBooks Aus/NZ</a></li> <li id="site-company-ca" ><a href="https://www.abebooks.ca/">AbeBooks.ca</a></li> <li id="site-company-es" ><a href="https://www.iberlibro.com/">IberLibro.com</a></li> <li id="site-company-zvab" ><a href="https://www.zvab.com/">ZVAB.com</a></li> </ul> </div> <div id="footer-abebooks-subs" > <ul class="list-unstyled list-inline"> <li id="site-company-sub" ><a href="http://www.bookfinder.com/">BookFinder.com<span class="desc-block">Find any book at the best price</span></a></li> </ul> </div> <div id="footer-legal" class="legal" role="contentinfo"> <span class="small">By using the Web site, you confirm that you have read, understood, and agreed to be bound by the <a href="https://www.abebooks.com/docs/Legal/termsAndConditions.shtml" rel="nofollow" title="Terms and Conditions">Terms&nbsp;and&nbsp;Conditions</a>.<br/><br/>&copy; 1996 - 2025 AbeBooks Inc. All Rights Reserved. AbeBooks, the AbeBooks logo, AbeBooks.com, "Passion for books." and "Passion for books. Books for your passion." are registered trademarks with the Registered US Patent &amp; Trademark Office.</span> </div> </div> </footer>   <div hidden class="modal fade in" id="change-currency-modal-v2" role="dialog" aria-hidden="true" aria-modal="true"> <div class="modal-dialog"> <form method="post" name="changeCurrency" id="change-currency-selection-form"> <div class="modal-content"> <div class="modal-header"> <button type="button" class="close" data-dismiss="modal" aria-label=Close>&times;</button> <h3 class="modal-title"> Change currency </h3> </div> <div class="modal-body"> <div class="form-group"> <div class="currency-selector-container"> <label for="currency-selector-v2" class="description" aria-hidden="true"> Choose your preferred currency </label> <select name="selectedcurrency" class="form-control currency-selector" id="currency-selector-v2" data-test-id="currency-selector" aria-label=Choose your preferred currency > <optgroup id="supported-currency-group-v2" label="Payment Currencies"> <option value="US$" data-localized-name="American Dollars" data-currencyiso3="USD" data-currency-disclaimer-id="supported-currency-disclaimer" >American Dollars (USD)</option> <option value="C$" data-localized-name="Canadian Dollars" data-currencyiso3="CAD" data-currency-disclaimer-id="supported-currency-disclaimer" >Canadian Dollars (CAD)</option> <option value="A$" data-localized-name="Australian Dollars" data-currencyiso3="AUD" data-currency-disclaimer-id="supported-currency-disclaimer" >Australian Dollars (AUD)</option> <option value="£" data-localized-name="United Kingdom Pounds" data-currencyiso3="GBP" data-currency-disclaimer-id="supported-currency-disclaimer" >United Kingdom Pounds (GBP)</option> <option value="S$" data-localized-name="Singapore Dollars" data-currencyiso3="SGD" data-currency-disclaimer-id="supported-currency-disclaimer" >Singapore Dollars (SGD)</option> <option value="K" data-localized-name="Swedish Krona" data-currencyiso3="SEK" data-currency-disclaimer-id="supported-currency-disclaimer" >Swedish Krona (SEK)</option> <option value="HKD" data-localized-name="Hong Kong Dollars" data-currencyiso3="HKD" data-currency-disclaimer-id="supported-currency-disclaimer" >Hong Kong Dollars (HKD)</option> <option value="DKK" data-localized-name="Danish Kroner" data-currencyiso3="DKK" data-currency-disclaimer-id="supported-currency-disclaimer" >Danish Kroner (DKK)</option> <option value="CZK" data-localized-name="Czech Republic Koruna" data-currencyiso3="CZK" data-currency-disclaimer-id="supported-currency-disclaimer" >Czech Republic Koruna (CZK)</option> <option value="PLN" data-localized-name="Polish Zlotych" data-currencyiso3="PLN" data-currency-disclaimer-id="supported-currency-disclaimer" >Polish Zlotych (PLN)</option> <option value="ILS" data-localized-name="Israeli New Shekels" data-currencyiso3="ILS" data-currency-disclaimer-id="supported-currency-disclaimer" >Israeli New Shekels (ILS)</option> <option value="CHF" data-localized-name="Swiss Francs" data-currencyiso3="CHF" data-currency-disclaimer-id="supported-currency-disclaimer" >Swiss Francs (CHF)</option> <option value="NZ$" data-localized-name="New Zealand Dollars" data-currencyiso3="NZD" data-currency-disclaimer-id="supported-currency-disclaimer" >New Zealand Dollars (NZD)</option> <option value="NOK" data-localized-name="Norwegian Kroner" data-currencyiso3="NOK" data-currency-disclaimer-id="supported-currency-disclaimer" >Norwegian Kroner (NOK)</option> <option value="EUR" data-localized-name="Euros" data-currencyiso3="EUR" data-currency-disclaimer-id="supported-currency-disclaimer" >Euros (EUR)</option> </optgroup> <optgroup id="non-supported-currency-group-v2" label="Other currencies"> <option value="¥" data-localized-name="Japanese Yen" data-currencyiso3="JPY" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Japanese Yen</option> <option value="R" data-localized-name="South African Rand" data-currencyiso3="ZAR" data-currency-disclaimer-id="non-supported-currency-disclaimer" >South African Rand</option> <option value="Rup" data-localized-name="Indian Rupees" data-currencyiso3="INR" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Indian Rupees</option> <option value="Won" data-localized-name="Korean (South) Won" data-currencyiso3="KRW" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Korean (South) Won</option> <option value="Phi" data-localized-name="Philippine Pesos" data-currencyiso3="PHP" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Philippine Pesos</option> <option value="CLP" data-localized-name="Chilean Pesos" data-currencyiso3="CLP" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Chilean Pesos</option> <option value="DZD" data-localized-name="Algerian Dinars" data-currencyiso3="DZD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Algerian Dinars</option> <option value="CNY" data-localized-name="Chinese Yuan Renmimbi" data-currencyiso3="CNY" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Chinese Yuan Renmimbi</option> <option value="EGP" data-localized-name="Egyptian Pounds" data-currencyiso3="EGP" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Egyptian Pounds</option> <option value="FJD" data-localized-name="Fiji Dollars" data-currencyiso3="FJD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Fiji Dollars</option> <option value="ISK" data-localized-name="Iceland Krona" data-currencyiso3="ISK" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Iceland Krona</option> <option value="IDR" data-localized-name="Indonesian Rupiah" data-currencyiso3="IDR" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Indonesian Rupiah</option> <option value="JMD" data-localized-name="Jamaican Dollars" data-currencyiso3="JMD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Jamaican Dollars</option> <option value="JOD" data-localized-name="Jordanian Dinar" data-currencyiso3="JOD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Jordanian Dinar</option> <option value="LBP" data-localized-name="Lebanese Pounds" data-currencyiso3="LBP" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Lebanese Pounds</option> <option value="MYR" data-localized-name="Malaysian Ringgit" data-currencyiso3="MYR" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Malaysian Ringgit</option> <option value="PKR" data-localized-name="Pakistan Rupees" data-currencyiso3="PKR" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Pakistan Rupees</option> <option value="ARS" data-localized-name="Argentinian Pesos" data-currencyiso3="ARS" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Argentinian Pesos</option> <option value="SAR" data-localized-name="Saudi Arabian Riyal" data-currencyiso3="SAR" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Saudi Arabian Riyal</option> <option value="TWD" data-localized-name="Taiwanese Dollars" data-currencyiso3="TWD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Taiwanese Dollars</option> <option value="THB" data-localized-name="Thai Baht" data-currencyiso3="THB" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Thai Baht</option> <option value="TTD" data-localized-name="Trinidad and Tobago Dollars" data-currencyiso3="TTD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Trinidad and Tobago Dollars</option> <option value="XCD" data-localized-name="Eastern Caribbean Dollars" data-currencyiso3="XCD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Eastern Caribbean Dollars</option> <option value="Real" data-localized-name="Brazil Real" data-currencyiso3="BRL" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Brazil Real</option> <option value="MXN" data-localized-name="Mexican Pesos" data-currencyiso3="MXN" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Mexican Pesos</option> <option value="BSD" data-localized-name="Bahamian Dollars" data-currencyiso3="BSD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Bahamian Dollars</option> <option value="HUF" data-localized-name="Hungarian Forint" data-currencyiso3="HUF" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Hungarian Forint</option> <option value="BBD" data-localized-name="Barbados Dollars" data-currencyiso3="BBD" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Barbados Dollars</option> <option value="RUB" data-localized-name="Russian Rubles" data-currencyiso3="RUB" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Russian Rubles</option> <option value="RON" data-localized-name="Romanian Leu" data-currencyiso3="RON" data-currency-disclaimer-id="non-supported-currency-disclaimer" >Romanian Leu</option> </optgroup> </select> </div> <div id="currency-disclaimer-v2" class="currency-disclaimer"> <img class="currency-message-icon" aria-hidden="true" src="//assets.prod.abebookscdn.com/cdn/shared/images/common/meridian/info.svg" alt="info-icon"> <div> <p style="display: none" id="supported-currency-disclaimer-template-v2"> You will be charged in {0}. </p> <p style="display: none" id="non-supported-currency-disclaimer-template-v2"> You will be shown prices in {0} as a reference only. Your orders will process in {1}. </p> <p class="currency-disclaimer-text" id="currency-disclaimer-message-v2" aria-live="polite" aria-atomic="true"> </p> <p class="currency-disclaimer-text"> <span aria-hidden="true">Learn more about </span><a href="/docs/currency-preferences" class="currency-help-link" target="_blank" aria-label="Learn more about currency preferences.">currency preferences</a><span aria-hidden="true">.</span> </p> </div> </div> </div> </div> <div class="modal-footer"> <input type="hidden" name="ac" value="changeCurrency"/> <button type="button" class="modal-btn cancel-btn" data-dismiss="modal"> Cancel </button> <button type="submit" class="modal-btn save-btn" data-test-id="confirm-cancel-button"> Save </button> </div> </div> </form> </div> </div>   <script> function getPixelConfig() { window.pixelConfig = window.pixelConfig || { "origin": location.href, "cdn": "//assets.prod.abebookscdn.com/cdn/com", "rel": "?v=", "pixels": [], "scripts": { "AbeCookie": "/scripts/utilities/global/AbeCookie-8954a5518b.js", "CookieConsentUtil": "/scripts/utilities/global/cookie-consent-util-a8b6bbaa72.js", "PixelRenderer": "/scripts/utilities/PixelRenderer-7a12163030.js", "PixelRendererV2": "/scripts/utilities/PixelRenderer.v2-bfb0afa06e.js", } }; return window.pixelConfig; } </script> <script defer data-test-id="script-csa-tier3" src="//assets.prod.abebookscdn.com/cdn/com/scripts/csa-temp/tier3-e6bde42938.js"></script> <script defer data-test-id="script-rum" src="//assets.prod.abebookscdn.com/cdn/com/scripts/cwrumclient-d26f79e6c7.js"></script>
+    
+
+
+    <script>
+      window.abebooks.awsRumConfig = {
+        guestRoleArn: 'arn:aws:iam::767397890288:role/rum-app-monitor-unauthenticated-role',
+        identityPoolId: 'us-east-1:f13a4d50-4dfe-4d56-aef3-a044e663246b',
+        appMonitorId: '02eded21-893c-4681-8a72-2c9af912ad5b',
+        appVersion: '25.8.1.45',
+        sessionSampleRate: 0.1,
+        endpoint: 'https://dataplane.rum.us-east-1.amazonaws.com',
+        region: 'us-east-1',
+        pageId: 'SellersMenu',
+        pageTags: ['SellersMenu']
+      };
+    </script>
+
+
+
+
+    
+
+
+
+
+    <script>
+        var digitalData = {"site":{"id":"90022313","dataUrl":"data.abebooks.com","domain":"abebooks.com"},"tags":{"pageView":{"categoryId":null,"attributes":{"12":null,"13":"","15":"88351531","18":"DESKTOP","8":"","20":null},"searchTerm":null,"resultCount":null,"pageId":null}}} 
+        var csaData = {
+            "site": {
+                "Application": "PROD:abebooks.com",
+                "Events.Namespace": "csa_other",
+                "ObfuscatedMarketplaceId": "A1851UULDVMTBO",
+                "Events.SushiEndpoint": "https://unagi.amazon.com/1/events/com.amazon.csm.csa.prod",
+                "CacheDetection.RequestID": null,
+                "CacheDetection.Callback": null,
+                "LCP.elementDedup": 1,
+                "lob": "22"
+            },
+
+            "page": {
+                "pageType": "SellersMenu",
+                "subPageType": "",
+                "pageTypeId": ""             },
+
+            "request": {
+                "requestId": "",
+                "sessionId": ""
+            },
+            
+            "info": {
+                "deviceType": "DESKTOP"
+            }
+            
+                        
+                    }
+    </script>
+
+
+  
+                    <script>
+      getPixelConfig().pixels.push({
+  "pixel_type" : "google",
+  "google_conversion_id" : "1070988817",
+  "google_custom_params" : {
+    "event" : "gtag.config",
+    "ecomm_cacct" : "0"
+  },
+  "google_remarketing_only" : true,
+  "allow_ad_personalization_signals" : true,
+  "conversionPixel" : false
+});
+    </script>
+              <script>
+      getPixelConfig().pixels.push({
+  "pixel_type" : "bing",
+  "bing_tag_id" : "5268667",
+  "bing_custom_params" : {
+    "evt" : "pageLoad"
+  },
+  "conversionPixel" : false
+});
+    </script>
+              
+</body>
+  </html>
+
+
