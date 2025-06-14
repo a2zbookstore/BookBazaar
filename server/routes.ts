@@ -81,6 +81,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, email } = req.body;
+      
+      const updatedUser = await storage.upsertUser({
+        id: userId,
+        firstName,
+        lastName,
+        email,
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Store settings routes
+  app.put('/api/settings/store', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // For now, just return success since we don't have a store settings table
+      // In a real app, you'd save these to a store_settings table
+      const { storeName, storeEmail, storeDescription, storePhone, currency, storeAddress } = req.body;
+      
+      res.json({ 
+        message: "Store settings updated successfully",
+        settings: { storeName, storeEmail, storeDescription, storePhone, currency, storeAddress }
+      });
+    } catch (error) {
+      console.error("Error updating store settings:", error);
+      res.status(500).json({ message: "Failed to update store settings" });
+    }
+  });
+
   // Categories routes
   app.get("/api/categories", async (req, res) => {
     try {

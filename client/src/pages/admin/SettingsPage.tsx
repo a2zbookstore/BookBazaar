@@ -20,10 +20,34 @@ interface CategoryForm {
   description: string;
 }
 
+interface StoreSettings {
+  storeName: string;
+  storeEmail: string;
+  storeDescription: string;
+  storePhone: string;
+  currency: string;
+  storeAddress: string;
+}
+
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 const initialCategoryForm: CategoryForm = {
   name: "",
   slug: "",
   description: "",
+};
+
+const initialStoreSettings: StoreSettings = {
+  storeName: "A2Z BOOKSHOP",
+  storeEmail: "hello@a2zbookshop.com",
+  storeDescription: "Your premier destination for rare, collectible, and contemporary books from around the world.",
+  storePhone: "+31 (20) 123-BOOK",
+  currency: "EUR",
+  storeAddress: "123 Book Street\nLiterary District\nBooktown, BT 12345\nEurope",
 };
 
 export default function SettingsPage() {
@@ -33,6 +57,12 @@ export default function SettingsPage() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryForm>(initialCategoryForm);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(initialStoreSettings);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+  });
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -64,6 +94,45 @@ export default function SettingsPage() {
     },
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: UserProfile) => {
+      await apiRequest("PUT", "/api/auth/user", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update profile",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateStoreSettingsMutation = useMutation({
+    mutationFn: async (data: StoreSettings) => {
+      await apiRequest("PUT", "/api/settings/store", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Store settings updated",
+        description: "Store settings have been saved successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update store settings",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCategorySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -76,6 +145,16 @@ export default function SettingsPage() {
       ...categoryForm,
       slug,
     });
+  };
+
+  const handleStoreSettingsSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateStoreSettingsMutation.mutate(storeSettings);
+  };
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate(userProfile);
   };
 
   const resetCategoryForm = () => {
@@ -134,49 +213,74 @@ export default function SettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="storeName">Store Name</Label>
-                    <Input id="storeName" defaultValue="A2Z BOOKSHOP" />
+                <form onSubmit={handleStoreSettingsSubmit} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="storeName">Store Name</Label>
+                      <Input 
+                        id="storeName" 
+                        value={storeSettings.storeName}
+                        onChange={(e) => setStoreSettings(prev => ({ ...prev, storeName: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="storeEmail">Store Email</Label>
+                      <Input 
+                        id="storeEmail" 
+                        type="email" 
+                        value={storeSettings.storeEmail}
+                        onChange={(e) => setStoreSettings(prev => ({ ...prev, storeEmail: e.target.value }))}
+                      />
+                    </div>
                   </div>
+
                   <div>
-                    <Label htmlFor="storeEmail">Store Email</Label>
-                    <Input id="storeEmail" type="email" defaultValue="hello@a2zbookshop.com" />
+                    <Label htmlFor="storeDescription">Store Description</Label>
+                    <Textarea 
+                      id="storeDescription" 
+                      rows={3}
+                      value={storeSettings.storeDescription}
+                      onChange={(e) => setStoreSettings(prev => ({ ...prev, storeDescription: e.target.value }))}
+                    />
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="storeDescription">Store Description</Label>
-                  <Textarea 
-                    id="storeDescription" 
-                    rows={3}
-                    defaultValue="Your premier destination for rare, collectible, and contemporary books from around the world."
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="storePhone">Phone Number</Label>
+                      <Input 
+                        id="storePhone" 
+                        value={storeSettings.storePhone}
+                        onChange={(e) => setStoreSettings(prev => ({ ...prev, storePhone: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="currency">Currency</Label>
+                      <Input 
+                        id="currency" 
+                        value={storeSettings.currency}
+                        onChange={(e) => setStoreSettings(prev => ({ ...prev, currency: e.target.value }))}
+                      />
+                    </div>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="storePhone">Phone Number</Label>
-                    <Input id="storePhone" defaultValue="+31 (20) 123-BOOK" />
+                    <Label htmlFor="storeAddress">Store Address</Label>
+                    <Textarea 
+                      id="storeAddress" 
+                      rows={3}
+                      value={storeSettings.storeAddress}
+                      onChange={(e) => setStoreSettings(prev => ({ ...prev, storeAddress: e.target.value }))}
+                    />
                   </div>
-                  <div>
-                    <Label htmlFor="currency">Currency</Label>
-                    <Input id="currency" defaultValue="EUR" />
-                  </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="storeAddress">Store Address</Label>
-                  <Textarea 
-                    id="storeAddress" 
-                    rows={3}
-                    defaultValue="123 Book Street&#10;Literary District&#10;Booktown, BT 12345&#10;Europe"
-                  />
-                </div>
-
-                <Button className="bg-primary-aqua hover:bg-secondary-aqua">
-                  Save Store Settings
-                </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-primary-aqua hover:bg-secondary-aqua"
+                    disabled={updateStoreSettingsMutation.isPending}
+                  >
+                    {updateStoreSettingsMutation.isPending ? "Saving..." : "Save Store Settings"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
@@ -367,44 +471,64 @@ export default function SettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleProfileSubmit} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input 
+                        id="firstName" 
+                        value={userProfile.firstName}
+                        onChange={(e) => setUserProfile(prev => ({ ...prev, firstName: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input 
+                        id="lastName" 
+                        value={userProfile.lastName}
+                        onChange={(e) => setUserProfile(prev => ({ ...prev, lastName: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" defaultValue={user?.firstName || ""} />
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      value={userProfile.email}
+                      onChange={(e) => setUserProfile(prev => ({ ...prev, email: e.target.value }))}
+                    />
                   </div>
+
                   <div>
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" defaultValue={user?.lastName || ""} />
+                    <Label htmlFor="role">Role</Label>
+                    <Input id="role" value={user?.role || "admin"} disabled />
+                    <p className="text-xs text-secondary-black mt-1">
+                      Contact support to change your role.
+                    </p>
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" defaultValue={user?.email || ""} />
-                </div>
-
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Input id="role" defaultValue={user?.role || "admin"} disabled />
-                  <p className="text-xs text-secondary-black mt-1">
-                    Contact support to change your role.
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <h3 className="font-semibold text-base-black mb-4">Account Actions</h3>
-                  <div className="flex gap-4">
-                    <Button className="bg-primary-aqua hover:bg-secondary-aqua">
-                      Update Profile
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.location.href = "/api/logout"}
-                    >
-                      Sign Out
-                    </Button>
+                  <div className="pt-4 border-t">
+                    <h3 className="font-semibold text-base-black mb-4">Account Actions</h3>
+                    <div className="flex gap-4">
+                      <Button 
+                        type="submit" 
+                        className="bg-primary-aqua hover:bg-secondary-aqua"
+                        disabled={updateProfileMutation.isPending}
+                      >
+                        {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => window.location.href = "/api/logout"}
+                      >
+                        Sign Out
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                </form>
 
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold text-base-black mb-2">Account Information</h3>
