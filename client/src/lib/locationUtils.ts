@@ -71,6 +71,7 @@ export async function getUserLocation(): Promise<LocationInfo | null> {
 
 /**
  * Get shipping information for a specific country
+ * Falls back to "Rest of Countries" default rate if country-specific rate not found
  */
 export async function getShippingInfo(countryCode: string): Promise<ShippingInfo | null> {
   try {
@@ -81,7 +82,7 @@ export async function getShippingInfo(countryCode: string): Promise<ShippingInfo
         cost: data.shippingCost,
         minDeliveryDays: data.minDeliveryDays,
         maxDeliveryDays: data.maxDeliveryDays,
-        isDefault: data.isDefault
+        isDefault: data.countryCode === 'REST_OF_WORLD' || data.isDefault
       };
     }
     return null;

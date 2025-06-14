@@ -272,6 +272,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Shipping rate lookup by country
+  app.get('/api/shipping-rates/country/:countryCode', async (req, res) => {
+    try {
+      const { countryCode } = req.params;
+      
+      // First try to find specific country rate
+      let shippingRate = await storage.getShippingRateByCountry(countryCode.toUpperCase());
+      
+      // If no specific rate found, try to get REST_OF_WORLD default rate
+      if (!shippingRate) {
+        shippingRate = await storage.getShippingRateByCountry('REST_OF_WORLD');
+      }
+      
+      // If still no rate found, get any default rate
+      if (!shippingRate) {
+        shippingRate = await storage.getDefaultShippingRate();
+      }
+      
+      if (!shippingRate) {
+        return res.status(404).json({ message: "No shipping rate found" });
+      }
+      
+      res.json(shippingRate);
+    } catch (error) {
+      console.error("Error fetching shipping rate for country:", error);
+      res.status(500).json({ message: "Failed to fetch shipping rate" });
+    }
+  });
+
   // Categories routes
   app.get("/api/categories", async (req, res) => {
     try {

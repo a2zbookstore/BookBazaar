@@ -372,13 +372,21 @@ export default function ShippingPage() {
   };
 
   const handleCountrySelect = (countryCode: string) => {
-    const country = COUNTRIES.find(c => c.code === countryCode);
-    if (country) {
+    if (countryCode === "REST_OF_WORLD") {
       setForm(prev => ({
         ...prev,
-        countryCode: country.code,
-        countryName: country.name,
+        countryCode: "REST_OF_WORLD",
+        countryName: "Rest of Countries (Default)",
       }));
+    } else {
+      const country = COUNTRIES.find(c => c.code === countryCode);
+      if (country) {
+        setForm(prev => ({
+          ...prev,
+          countryCode: country.code,
+          countryName: country.name,
+        }));
+      }
     }
   };
 
@@ -419,6 +427,9 @@ export default function ShippingPage() {
                       <SelectValue placeholder="Select a country" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
+                      <SelectItem value="REST_OF_WORLD" className="font-semibold text-primary-aqua">
+                        🌍 Rest of Countries (Default Rate)
+                      </SelectItem>
                       {COUNTRIES.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
                           {country.name}
@@ -545,12 +556,25 @@ export default function ShippingPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-gray-500" />
-                        <span className="font-medium text-base-black">{rate.countryName}</span>
-                        <span className="text-sm text-secondary-black">({rate.countryCode})</span>
+                        {rate.countryCode === 'REST_OF_WORLD' ? (
+                          <span className="text-lg">🌍</span>
+                        ) : (
+                          <Globe className="h-4 w-4 text-gray-500" />
+                        )}
+                        <span className={`font-medium ${rate.countryCode === 'REST_OF_WORLD' ? 'text-primary-aqua' : 'text-base-black'}`}>
+                          {rate.countryName}
+                        </span>
+                        {rate.countryCode !== 'REST_OF_WORLD' && (
+                          <span className="text-sm text-secondary-black">({rate.countryCode})</span>
+                        )}
                       </div>
                       <div className="flex gap-2">
-                        {rate.isDefault && (
+                        {rate.countryCode === 'REST_OF_WORLD' && (
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            Global Default
+                          </Badge>
+                        )}
+                        {rate.isDefault && rate.countryCode !== 'REST_OF_WORLD' && (
                           <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                             Default
                           </Badge>
