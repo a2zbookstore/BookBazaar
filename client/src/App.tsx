@@ -14,7 +14,7 @@ import CartPage from "@/pages/CartPage";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
-import InventoryPageSimple from "@/pages/admin/InventoryPageSimple";
+import InventoryPageNew from "@/pages/admin/InventoryPageNew";
 import OrdersPage from "@/pages/admin/OrdersPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
@@ -52,7 +52,7 @@ function Router() {
           {user?.role === "admin" && (
             <>
               <Route path="/admin" component={AdminDashboard} />
-              <Route path="/admin/inventory" component={InventoryPageSimple} />
+              <Route path="/admin/inventory" component={InventoryPageNew} />
               <Route path="/admin/orders" component={OrdersPage} />
               <Route path="/admin/sales" component={SalesPage} />
               <Route path="/admin/settings" component={SettingsPage} />
