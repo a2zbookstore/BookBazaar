@@ -18,6 +18,7 @@ import InventoryPageNew from "@/pages/admin/InventoryPageNew";
 import OrdersPage from "@/pages/admin/OrdersPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
+import ShippingPage from "@/pages/admin/ShippingPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -55,6 +56,7 @@ function Router() {
               <Route path="/admin/inventory" component={InventoryPageNew} />
               <Route path="/admin/orders" component={OrdersPage} />
               <Route path="/admin/sales" component={SalesPage} />
+              <Route path="/admin/shipping" component={ShippingPage} />
               <Route path="/admin/settings" component={SettingsPage} />
             </>
           )}

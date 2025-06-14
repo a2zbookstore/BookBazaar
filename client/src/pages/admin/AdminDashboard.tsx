@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Euro, Clock, Star, TrendingUp, AlertTriangle } from "lucide-react";
+import { BookOpen, Euro, Clock, Star, TrendingUp, AlertTriangle, Truck } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-4 gap-4">
+            <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
               <a href="/admin/inventory" className="block">
                 <div className="p-4 border border-gray-200 rounded-lg hover:border-primary-aqua hover:bg-primary-aqua/5 transition-colors cursor-pointer">
                   <BookOpen className="h-8 w-8 text-primary-aqua mb-2" />
@@ -229,6 +229,14 @@ export default function AdminDashboard() {
                   <TrendingUp className="h-8 w-8 text-primary-aqua mb-2" />
                   <h3 className="font-semibold text-base-black">View Reports</h3>
                   <p className="text-sm text-secondary-black">Sales analytics</p>
+                </div>
+              </a>
+              
+              <a href="/admin/shipping" className="block">
+                <div className="p-4 border border-gray-200 rounded-lg hover:border-primary-aqua hover:bg-primary-aqua/5 transition-colors cursor-pointer">
+                  <Truck className="h-8 w-8 text-primary-aqua mb-2" />
+                  <h3 className="font-semibold text-base-black">Shipping Rates</h3>
+                  <p className="text-sm text-secondary-black">Manage delivery costs</p>
                 </div>
               </a>
               
