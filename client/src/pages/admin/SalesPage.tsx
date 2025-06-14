@@ -132,7 +132,7 @@ export default function SalesPage() {
                 <div>
                   <p className="text-secondary-black text-sm font-medium">Average Daily Sales</p>
                   <p className="text-2xl font-bold text-base-black">
-                    €{averageDailySales.toFixed(2)}
+                    ${averageDailySales.toFixed(2)}
                   </p>
                   <p className="text-xs text-secondary-black mt-1">
                     Last {timeRange} days
@@ -151,7 +151,7 @@ export default function SalesPage() {
                 <div>
                   <p className="text-secondary-black text-sm font-medium">Best Day</p>
                   <p className="text-2xl font-bold text-base-black">
-                    €{parseFloat(bestDay.sales || '0').toFixed(2)}
+                    ${parseFloat(bestDay.sales || '0').toFixed(2)}
                   </p>
                   <p className="text-xs text-secondary-black mt-1">
                     {bestDay.date ? new Date(bestDay.date).toLocaleDateString() : 'N/A'}
@@ -188,10 +188,10 @@ export default function SalesPage() {
                     />
                     <YAxis 
                       tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => `€${value}`}
+                      tickFormatter={(value) => `$${value}`}
                     />
                     <Tooltip 
-                      formatter={(value) => [`€${Number(value).toFixed(2)}`, 'Sales']}
+                      formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Sales']}
                       labelFormatter={(label) => `Date: ${label}`}
                     />
                     <Line 
@@ -239,10 +239,10 @@ export default function SalesPage() {
                     />
                     <YAxis 
                       tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => `€${value}`}
+                      tickFormatter={(value) => `$${value}`}
                     />
                     <Tooltip 
-                      formatter={(value) => [`€${Number(value).toFixed(2)}`, 'Sales']}
+                      formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Sales']}
                       labelFormatter={(label) => `Date: ${label}`}
                     />
                     <Bar 
@@ -256,7 +256,7 @@ export default function SalesPage() {
             ) : (
               <div className="h-80 flex items-center justify-center">
                 <div className="text-center">
-                  <Euro className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <DollarSign className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-secondary-black">No sales data available for the selected period</p>
                 </div>
               </div>
@@ -298,7 +298,7 @@ export default function SalesPage() {
                             })}
                           </td>
                           <td className="p-2 text-right font-semibold text-base-black">
-                            €{salesAmount.toFixed(2)}
+                            ${salesAmount.toFixed(2)}
                           </td>
                           <td className={`p-2 text-right text-sm ${
                             vsAverage >= 0 ? 'text-green-600' : 'text-red-600'

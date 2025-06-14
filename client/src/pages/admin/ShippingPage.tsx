@@ -565,7 +565,7 @@ export default function ShippingPage() {
                     
                     <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <div className="font-medium text-base-black">€{rate.shippingCost}</div>
+                        <div className="font-medium text-base-black">${rate.shippingCost}</div>
                         <div className="text-sm text-secondary-black">
                           {rate.minDeliveryDays}-{rate.maxDeliveryDays} days
                         </div>

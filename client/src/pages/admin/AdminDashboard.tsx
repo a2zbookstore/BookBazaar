@@ -151,7 +151,7 @@ export default function AdminDashboard() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-primary-aqua">€{parseFloat(order.total).toFixed(2)}</p>
+                        <p className="font-semibold text-primary-aqua">${parseFloat(order.total).toFixed(2)}</p>
                         <Badge className={`text-xs ${getStatusColor(order.status)}`}>
                           {order.status}
                         </Badge>

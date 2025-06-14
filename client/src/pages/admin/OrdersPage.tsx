@@ -211,7 +211,7 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <p className="font-semibold text-primary-aqua">
-                            €{parseFloat(order.total).toFixed(2)}
+                            ${parseFloat(order.total).toFixed(2)}
                           </p>
                           <Badge className={`${getStatusColor(order.status)} flex items-center gap-1`}>
                             {getStatusIcon(order.status)}
@@ -382,9 +382,9 @@ export default function OrdersPage() {
                           <p className="text-sm text-tertiary-black">Quantity: {item.quantity}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">€{parseFloat(item.price).toFixed(2)}</p>
+                          <p className="font-semibold">${parseFloat(item.price).toFixed(2)}</p>
                           <p className="text-sm text-secondary-black">
-                            Total: €{(parseFloat(item.price) * item.quantity).toFixed(2)}
+                            Total: ${(parseFloat(item.price) * item.quantity).toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -397,19 +397,19 @@ export default function OrdersPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal:</span>
-                      <span>€{parseFloat(selectedOrder.subtotal).toFixed(2)}</span>
+                      <span>${parseFloat(selectedOrder.subtotal).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Shipping:</span>
-                      <span>€{parseFloat(selectedOrder.shipping).toFixed(2)}</span>
+                      <span>${parseFloat(selectedOrder.shipping).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tax:</span>
-                      <span>€{parseFloat(selectedOrder.tax).toFixed(2)}</span>
+                      <span>${parseFloat(selectedOrder.tax).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
                       <span>Total:</span>
-                      <span className="text-primary-aqua">€{parseFloat(selectedOrder.total).toFixed(2)}</span>
+                      <span className="text-primary-aqua">${parseFloat(selectedOrder.total).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

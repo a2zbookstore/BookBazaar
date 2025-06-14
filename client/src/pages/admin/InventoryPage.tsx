@@ -525,7 +525,7 @@ export default function InventoryPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="price">Price (€) *</Label>
+                    <Label htmlFor="price">Price ($) *</Label>
                     <Input
                       id="price"
                       type="number"
@@ -781,7 +781,7 @@ export default function InventoryPage() {
                           </div>
                         </div>
                         <div className="text-right ml-4">
-                          <p className="font-semibold text-primary-aqua">€{parseFloat(book.price).toFixed(2)}</p>
+                          <p className="font-semibold text-primary-aqua">${parseFloat(book.price).toFixed(2)}</p>
                           <p className="text-sm text-secondary-black">Stock: {book.stock}</p>
                         </div>
                       </div>

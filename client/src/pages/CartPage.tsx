@@ -213,7 +213,7 @@ export default function CartPage() {
                       {/* Price and Remove */}
                       <div className="text-right">
                         <p className="text-xl font-bold text-primary-aqua">
-                          €{(parseFloat(item.book.price) * item.quantity).toFixed(2)}
+                          ${(parseFloat(item.book.price) * item.quantity).toFixed(2)}
                         </p>
                         <Button
                           variant="ghost"
@@ -240,20 +240,20 @@ export default function CartPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Subtotal:</span>
-                      <span className="text-base-black">€{subtotal.toFixed(2)}</span>
+                      <span className="text-base-black">${subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Shipping:</span>
                       <span className="text-base-black">
-                        {shipping === 0 ? "Free" : `€${shipping.toFixed(2)}`}
+                        {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
                       </span>
                     </div>
                     {shipping === 0 && (
-                      <p className="text-xs text-green-600">Free shipping on orders over €50!</p>
+                      <p className="text-xs text-green-600">Free shipping on orders over $50!</p>
                     )}
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Tax (21%):</span>
-                      <span className="text-base-black">€{tax.toFixed(2)}</span>
+                      <span className="text-base-black">${tax.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">

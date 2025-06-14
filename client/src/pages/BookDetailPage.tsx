@@ -170,7 +170,7 @@ export default function BookDetailPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold text-primary-aqua">
-                  €{parseFloat(book.price).toFixed(2)}
+                  ${parseFloat(book.price).toFixed(2)}
                 </span>
                 {book.stock > 0 && book.stock <= 5 && (
                   <span className="text-sm text-abe-red font-medium">

@@ -121,12 +121,12 @@ export function formatDeliveryTime(minDays: number, maxDays: number): string {
 /**
  * Format shipping cost
  */
-export function formatShippingCost(cost: string, currency: string = 'EUR'): string {
+export function formatShippingCost(cost: string, currency: string = 'USD'): string {
   const numericCost = parseFloat(cost);
   if (numericCost === 0) {
     return 'Free shipping';
   }
-  return `${currency === 'EUR' ? '€' : currency}${numericCost.toFixed(2)}`;
+  return `$${numericCost.toFixed(2)}`;
 }
 
 /**
