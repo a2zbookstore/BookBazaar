@@ -271,6 +271,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await verifyRazorpayPayment(req, res);
   });
 
+  // Admin authentication routes
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password required" });
+      }
+
+      const admin = await storage.getAdminByUsername(username);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Simple password hash check (SHA256)
+      const crypto = require('crypto');
+      const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+      
+      if (admin.passwordHash !== passwordHash) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Update last login
+      await storage.updateAdminLastLogin(admin.id);
+
+      // Set admin session
+      (req.session as any).adminId = admin.id;
+      (req.session as any).isAdmin = true;
+
+      res.json({ 
+        success: true, 
+        admin: { 
+          id: admin.id, 
+          username: admin.username, 
+          name: admin.name, 
+          email: admin.email 
+        } 
+      });
+    } catch (error) {
+      console.error("Admin login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/admin/logout", async (req, res) => {
+    try {
+      (req.session as any).adminId = null;
+      (req.session as any).isAdmin = false;
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Admin logout error:", error);
+      res.status(500).json({ message: "Logout failed" });
+    }
+  });
+
+  app.post("/api/admin/change-password", async (req, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      if (!adminId) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current and new password required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin) {
+        return res.status(404).json({ message: "Admin not found" });
+      }
+
+      // Verify current password
+      const crypto = require('crypto');
+      const currentPasswordHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
+      
+      if (admin.passwordHash !== currentPasswordHash) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+
+      // Update password
+      const newPasswordHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+      await storage.updateAdminPassword(adminId, newPasswordHash);
+
+      res.json({ success: true, message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Admin password change error:", error);
+      res.status(500).json({ message: "Password change failed" });
+    }
+  });
+
   // Order completion route - supports both guest and authenticated users
   app.post("/api/orders/complete", async (req: any, res) => {
     try {

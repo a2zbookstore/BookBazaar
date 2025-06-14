@@ -1,5 +1,6 @@
 import {
   users,
+  admins,
   books,
   categories,
   orders,
@@ -10,6 +11,7 @@ import {
   shippingRates,
   type User,
   type UpsertUser,
+  type Admin,
   type Book,
   type InsertBook,
   type Category,
@@ -106,6 +108,12 @@ export interface IStorage {
   }>;
   getSalesData(days: number): Promise<{ date: string; sales: string }[]>;
   getLowStockBooks(threshold?: number): Promise<Book[]>;
+
+  // Admin operations
+  getAdminByUsername(username: string): Promise<Admin | undefined>;
+  getAdminById(id: number): Promise<Admin | undefined>;
+  updateAdminLastLogin(id: number): Promise<void>;
+  updateAdminPassword(id: number, passwordHash: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -591,6 +599,29 @@ export class DatabaseStorage implements IStorage {
       .from(books)
       .where(lt(books.stock, threshold))
       .orderBy(asc(books.stock));
+  }
+
+  // Admin operations
+  async getAdminByUsername(username: string): Promise<Admin | undefined> {
+    const [admin] = await db.select().from(admins).where(eq(admins.username, username));
+    return admin;
+  }
+
+  async getAdminById(id: number): Promise<Admin | undefined> {
+    const [admin] = await db.select().from(admins).where(eq(admins.id, id));
+    return admin;
+  }
+
+  async updateAdminLastLogin(id: number): Promise<void> {
+    await db.update(admins)
+      .set({ lastLogin: new Date() })
+      .where(eq(admins.id, id));
+  }
+
+  async updateAdminPassword(id: number, passwordHash: string): Promise<void> {
+    await db.update(admins)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(admins.id, id));
   }
 }
 
