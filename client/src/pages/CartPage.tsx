@@ -270,25 +270,25 @@ export default function CartPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Subtotal:</span>
-                      <span className="text-base-black">${subtotal.toFixed(2)}</span>
+                      <span className="text-base-black">${cartSubtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Shipping:</span>
                       <span className="text-base-black">
-                        {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
+                        {cartShipping === 0 ? "Free" : `$${cartShipping.toFixed(2)}`}
                       </span>
                     </div>
-                    {shipping === 0 && (
+                    {cartShipping === 0 && (
                       <p className="text-xs text-green-600">Free shipping on orders over $50!</p>
                     )}
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Tax (21%):</span>
-                      <span className="text-base-black">${tax.toFixed(2)}</span>
+                      <span className="text-base-black">${cartTax.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span className="text-base-black">Total:</span>
-                      <span className="text-primary-aqua">${total.toFixed(2)}</span>
+                      <span className="text-primary-aqua">${cartTotal.toFixed(2)}</span>
                     </div>
                   </div>
 
