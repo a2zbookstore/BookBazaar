@@ -7,6 +7,7 @@ import {
   cartItems,
   contactMessages,
   storeSettings,
+  shippingRates,
   type User,
   type UpsertUser,
   type Book,
@@ -23,6 +24,8 @@ import {
   type InsertContactMessage,
   type StoreSettings,
   type InsertStoreSettings,
+  type ShippingRate,
+  type InsertShippingRate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -83,6 +86,15 @@ export interface IStorage {
   // Store settings operations
   getStoreSettings(): Promise<StoreSettings | undefined>;
   upsertStoreSettings(settings: InsertStoreSettings): Promise<StoreSettings>;
+
+  // Shipping rates operations
+  getShippingRates(): Promise<ShippingRate[]>;
+  getShippingRateByCountry(countryCode: string): Promise<ShippingRate | undefined>;
+  getDefaultShippingRate(): Promise<ShippingRate | undefined>;
+  createShippingRate(rate: InsertShippingRate): Promise<ShippingRate>;
+  updateShippingRate(id: number, rate: Partial<InsertShippingRate>): Promise<ShippingRate>;
+  deleteShippingRate(id: number): Promise<void>;
+  setDefaultShippingRate(id: number): Promise<void>;
 
   // Analytics
   getDashboardStats(): Promise<{
@@ -419,6 +431,73 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newSettings;
     }
+  }
+
+  // Shipping rates operations
+  async getShippingRates(): Promise<ShippingRate[]> {
+    return await db.select().from(shippingRates).orderBy(asc(shippingRates.countryName));
+  }
+
+  async getShippingRateByCountry(countryCode: string): Promise<ShippingRate | undefined> {
+    const [rate] = await db
+      .select()
+      .from(shippingRates)
+      .where(and(
+        eq(shippingRates.countryCode, countryCode.toUpperCase()),
+        eq(shippingRates.isActive, true)
+      ))
+      .limit(1);
+    return rate;
+  }
+
+  async getDefaultShippingRate(): Promise<ShippingRate | undefined> {
+    const [rate] = await db
+      .select()
+      .from(shippingRates)
+      .where(and(
+        eq(shippingRates.isDefault, true),
+        eq(shippingRates.isActive, true)
+      ))
+      .limit(1);
+    return rate;
+  }
+
+  async createShippingRate(rateData: InsertShippingRate): Promise<ShippingRate> {
+    const [newRate] = await db
+      .insert(shippingRates)
+      .values(rateData)
+      .returning();
+    return newRate;
+  }
+
+  async updateShippingRate(id: number, rateData: Partial<InsertShippingRate>): Promise<ShippingRate> {
+    const [updatedRate] = await db
+      .update(shippingRates)
+      .set({
+        ...rateData,
+        updatedAt: new Date(),
+      })
+      .where(eq(shippingRates.id, id))
+      .returning();
+    return updatedRate;
+  }
+
+  async deleteShippingRate(id: number): Promise<void> {
+    await db.delete(shippingRates).where(eq(shippingRates.id, id));
+  }
+
+  async setDefaultShippingRate(id: number): Promise<void> {
+    // First, unset all existing defaults
+    await db
+      .update(shippingRates)
+      .set({ isDefault: false })
+      .where(eq(shippingRates.isDefault, true));
+    
+    // Then set the new default
+    await db
+      .update(shippingRates)
+      .set({ isDefault: true })
+      .where(eq(shippingRates.id, id));
   }
 
   // Analytics

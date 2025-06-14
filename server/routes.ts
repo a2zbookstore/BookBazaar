@@ -148,6 +148,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Shipping rates routes
+  app.get('/api/shipping-rates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const rates = await storage.getShippingRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching shipping rates:", error);
+      res.status(500).json({ message: "Failed to fetch shipping rates" });
+    }
+  });
+
+  app.get('/api/shipping-rates/country/:countryCode', async (req, res) => {
+    try {
+      const { countryCode } = req.params;
+      const rate = await storage.getShippingRateByCountry(countryCode);
+      
+      if (!rate) {
+        // Return default rate if specific country rate not found
+        const defaultRate = await storage.getDefaultShippingRate();
+        return res.json(defaultRate);
+      }
+      
+      res.json(rate);
+    } catch (error) {
+      console.error("Error fetching shipping rate for country:", error);
+      res.status(500).json({ message: "Failed to fetch shipping rate" });
+    }
+  });
+
+  app.post('/api/shipping-rates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { countryCode, countryName, shippingCost, minDeliveryDays, maxDeliveryDays, isDefault, isActive } = req.body;
+      
+      const newRate = await storage.createShippingRate({
+        countryCode: countryCode.toUpperCase(),
+        countryName,
+        shippingCost,
+        minDeliveryDays,
+        maxDeliveryDays,
+        isDefault: isDefault || false,
+        isActive: isActive !== false,
+      });
+      
+      res.json(newRate);
+    } catch (error) {
+      console.error("Error creating shipping rate:", error);
+      res.status(500).json({ message: "Failed to create shipping rate" });
+    }
+  });
+
+  app.put('/api/shipping-rates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      const { countryCode, countryName, shippingCost, minDeliveryDays, maxDeliveryDays, isDefault, isActive } = req.body;
+      
+      const updatedRate = await storage.updateShippingRate(parseInt(id), {
+        countryCode: countryCode?.toUpperCase(),
+        countryName,
+        shippingCost,
+        minDeliveryDays,
+        maxDeliveryDays,
+        isDefault,
+        isActive,
+      });
+      
+      res.json(updatedRate);
+    } catch (error) {
+      console.error("Error updating shipping rate:", error);
+      res.status(500).json({ message: "Failed to update shipping rate" });
+    }
+  });
+
+  app.delete('/api/shipping-rates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      await storage.deleteShippingRate(parseInt(id));
+      res.json({ message: "Shipping rate deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting shipping rate:", error);
+      res.status(500).json({ message: "Failed to delete shipping rate" });
+    }
+  });
+
+  app.post('/api/shipping-rates/:id/set-default', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      await storage.setDefaultShippingRate(parseInt(id));
+      res.json({ message: "Default shipping rate updated successfully" });
+    } catch (error) {
+      console.error("Error setting default shipping rate:", error);
+      res.status(500).json({ message: "Failed to set default shipping rate" });
+    }
+  });
+
   // Categories routes
   app.get("/api/categories", async (req, res) => {
     try {

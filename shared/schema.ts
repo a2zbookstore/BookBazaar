@@ -136,6 +136,20 @@ export const storeSettings = pgTable("store_settings", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Shipping Rates table
+export const shippingRates = pgTable("shipping_rates", {
+  id: serial("id").primaryKey(),
+  countryCode: varchar("country_code", { length: 2 }).notNull(), // ISO 3166-1 alpha-2 code
+  countryName: varchar("country_name", { length: 100 }).notNull(),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).notNull(),
+  minDeliveryDays: integer("min_delivery_days").notNull(),
+  maxDeliveryDays: integer("max_delivery_days").notNull(),
+  isDefault: boolean("is_default").default(false).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -240,3 +254,11 @@ export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit(
   updatedAt: true,
 });
 export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;
+
+export type ShippingRate = typeof shippingRates.$inferSelect;
+export const insertShippingRateSchema = createInsertSchema(shippingRates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertShippingRate = z.infer<typeof insertShippingRateSchema>;
