@@ -7,6 +7,8 @@ import {
   type LocationInfo,
   type ShippingInfo 
 } from '@/lib/locationUtils';
+import { useCurrency } from '@/hooks/useCurrency';
+import { getCurrencyForCountry } from '@/lib/currencyUtils';
 
 export interface UseShippingReturn {
   location: LocationInfo | null;

@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Star, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/hooks/useCurrency";
 import { Book } from "@/types";
 
 interface BookCardProps {
@@ -14,6 +15,34 @@ interface BookCardProps {
 export default function BookCard({ book }: BookCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { userCurrency, convertPrice, formatAmount } = useCurrency();
+  const [displayPrice, setDisplayPrice] = useState<string>('');
+  const [isConverting, setIsConverting] = useState(false);
+
+  // Convert price to user's currency
+  useEffect(() => {
+    const convertBookPrice = async () => {
+      if (userCurrency !== 'USD') {
+        setIsConverting(true);
+        try {
+          const converted = await convertPrice(parseFloat(book.price));
+          if (converted) {
+            setDisplayPrice(formatAmount(converted.convertedAmount, userCurrency));
+          } else {
+            setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+          }
+        } catch (error) {
+          setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+        } finally {
+          setIsConverting(false);
+        }
+      } else {
+        setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+      }
+    };
+
+    convertBookPrice();
+  }, [book.price, userCurrency, convertPrice, formatAmount]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -101,9 +130,25 @@ export default function BookCard({ book }: BookCardProps) {
 
           {/* Price and Add to Cart */}
           <div className="flex items-center justify-between pt-2">
-            <span className="text-xl font-bold text-primary-aqua">
-              ${parseFloat(book.price).toFixed(2)}
-            </span>
+            <div className="flex flex-col">
+              {isConverting ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  <span className="text-xs text-secondary-black">Converting...</span>
+                </div>
+              ) : (
+                <>
+                  <span className="text-xl font-bold text-primary-aqua">
+                    {displayPrice || `$${parseFloat(book.price).toFixed(2)}`}
+                  </span>
+                  {userCurrency !== 'USD' && displayPrice && (
+                    <span className="text-xs text-secondary-black">
+                      from ${parseFloat(book.price).toFixed(2)} USD
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
             <Button
               size="sm"
               onClick={handleAddToCart}
