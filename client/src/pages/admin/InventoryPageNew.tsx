@@ -125,7 +125,7 @@ export default function InventoryPageNew() {
         categoryId: data.categoryId || null,
         publishedYear: data.publishedYear || null,
         pages: data.pages || null,
-        price: parseFloat(data.price) || 0,
+        price: data.price, // Keep as string for decimal field
       };
       return apiRequest('POST', '/api/books', bookData);
     },
@@ -152,7 +152,7 @@ export default function InventoryPageNew() {
         categoryId: data.categoryId || null,
         publishedYear: data.publishedYear || null,
         pages: data.pages || null,
-        price: parseFloat(data.price) || 0,
+        price: data.price, // Keep as string for decimal field
       };
       return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
