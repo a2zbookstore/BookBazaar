@@ -80,6 +80,10 @@ export interface IStorage {
   getContactMessages(): Promise<ContactMessage[]>;
   updateContactMessageStatus(id: number, status: string): Promise<ContactMessage>;
 
+  // Store settings operations
+  getStoreSettings(): Promise<StoreSettings | undefined>;
+  upsertStoreSettings(settings: InsertStoreSettings): Promise<StoreSettings>;
+
   // Analytics
   getDashboardStats(): Promise<{
     totalBooks: number;
@@ -384,6 +388,37 @@ export class DatabaseStorage implements IStorage {
       .where(eq(contactMessages.id, id))
       .returning();
     return updatedMessage;
+  }
+
+  // Store settings operations
+  async getStoreSettings(): Promise<StoreSettings | undefined> {
+    const [settings] = await db.select().from(storeSettings).limit(1);
+    return settings;
+  }
+
+  async upsertStoreSettings(settingsData: InsertStoreSettings): Promise<StoreSettings> {
+    // Check if settings exist
+    const existingSettings = await this.getStoreSettings();
+    
+    if (existingSettings) {
+      // Update existing settings
+      const [updatedSettings] = await db
+        .update(storeSettings)
+        .set({
+          ...settingsData,
+          updatedAt: new Date(),
+        })
+        .where(eq(storeSettings.id, existingSettings.id))
+        .returning();
+      return updatedSettings;
+    } else {
+      // Create new settings
+      const [newSettings] = await db
+        .insert(storeSettings)
+        .values(settingsData)
+        .returning();
+      return newSettings;
+    }
   }
 
   // Analytics

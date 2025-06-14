@@ -14,13 +14,25 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Category, ContactMessage } from "@/types";
 
+interface StoreSettingsDB {
+  id: number;
+  storeName: string;
+  storeEmail: string;
+  storeDescription?: string;
+  storePhone?: string;
+  currency: string;
+  storeAddress?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface CategoryForm {
   name: string;
   slug: string;
   description: string;
 }
 
-interface StoreSettings {
+interface StoreSettingsForm {
   storeName: string;
   storeEmail: string;
   storeDescription: string;
@@ -41,7 +53,7 @@ const initialCategoryForm: CategoryForm = {
   description: "",
 };
 
-const initialStoreSettings: StoreSettings = {
+const initialStoreSettings: StoreSettingsForm = {
   storeName: "A2Z BOOKSHOP",
   storeEmail: "hello@a2zbookshop.com",
   storeDescription: "Your premier destination for rare, collectible, and contemporary books from around the world.",
@@ -72,6 +84,10 @@ export default function SettingsPage() {
     queryKey: ["/api/contact"],
   });
 
+  const { data: storeSettingsData } = useQuery<StoreSettings>({
+    queryKey: ["/api/settings/store"],
+  });
+
   // Sync user profile state when user data loads
   useEffect(() => {
     if (user) {
@@ -82,6 +98,20 @@ export default function SettingsPage() {
       });
     }
   }, [user]);
+
+  // Sync store settings state when data loads
+  useEffect(() => {
+    if (storeSettingsData) {
+      setStoreSettings({
+        storeName: storeSettingsData.storeName || "",
+        storeEmail: storeSettingsData.storeEmail || "",
+        storeDescription: storeSettingsData.storeDescription || "",
+        storePhone: storeSettingsData.storePhone || "",
+        currency: storeSettingsData.currency || "EUR",
+        storeAddress: storeSettingsData.storeAddress || "",
+      });
+    }
+  }, [storeSettingsData]);
 
   const createCategoryMutation = useMutation({
     mutationFn: async (data: CategoryForm) => {
@@ -134,6 +164,7 @@ export default function SettingsPage() {
         title: "Store settings updated",
         description: "Store settings have been saved successfully.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/store"] });
     },
     onError: (error) => {
       toast({

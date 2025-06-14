@@ -106,6 +106,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Store settings routes
+  app.get('/api/settings/store', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const settings = await storage.getStoreSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching store settings:", error);
+      res.status(500).json({ message: "Failed to fetch store settings" });
+    }
+  });
+
   app.put('/api/settings/store', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -114,14 +130,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      // For now, just return success since we don't have a store settings table
-      // In a real app, you'd save these to a store_settings table
       const { storeName, storeEmail, storeDescription, storePhone, currency, storeAddress } = req.body;
       
-      res.json({ 
-        message: "Store settings updated successfully",
-        settings: { storeName, storeEmail, storeDescription, storePhone, currency, storeAddress }
+      const updatedSettings = await storage.upsertStoreSettings({
+        storeName,
+        storeEmail,
+        storeDescription,
+        storePhone,
+        currency,
+        storeAddress,
       });
+      
+      res.json(updatedSettings);
     } catch (error) {
       console.error("Error updating store settings:", error);
       res.status(500).json({ message: "Failed to update store settings" });
