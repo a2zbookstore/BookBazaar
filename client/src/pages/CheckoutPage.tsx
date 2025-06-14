@@ -187,11 +187,13 @@ export default function CheckoutPage() {
 
     try {
       // Create Razorpay order
+      console.log("Creating Razorpay order with:", { amount: total, currency: "INR" });
       const orderResponse = await apiRequest("/api/razorpay/order", "POST", {
         amount: total,
         currency: "INR",
         receipt: `receipt_${Date.now()}`
       }) as any;
+      console.log("Razorpay order created:", orderResponse);
 
       const options = {
         key: (razorpayConfig as any).key_id,
