@@ -83,9 +83,10 @@ export const orders = pgTable("orders", {
   shipping: decimal("shipping", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  status: varchar("status", { length: 50 }).default("pending"), // pending, processing, shipped, delivered, cancelled
+  status: varchar("status", { length: 50 }).default("pending"), // pending, confirmed, processing, shipped, delivered, cancelled
   paymentStatus: varchar("payment_status", { length: 50 }).default("pending"), // pending, paid, failed, refunded
   trackingNumber: varchar("tracking_number", { length: 100 }),
+  shippingCarrier: varchar("shipping_carrier", { length: 100 }), // FedEx, UPS, DHL, etc.
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

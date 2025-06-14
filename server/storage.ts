@@ -68,8 +68,9 @@ export interface IStorage {
     offset?: number;
   }): Promise<{ orders: Order[]; total: number }>;
   getOrderById(id: number): Promise<(Order & { items: OrderItem[] }) | undefined>;
+  getOrderByIdAndEmail(id: number, email: string): Promise<(Order & { items: OrderItem[] }) | undefined>;
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
-  updateOrderStatus(id: number, status: string): Promise<Order>;
+  updateOrderStatus(id: number, status: string, trackingInfo?: { trackingNumber?: string; shippingCarrier?: string; notes?: string }): Promise<Order>;
 
   // Cart operations
   getCartItems(userId: string): Promise<(CartItem & { book: Book })[]>;
@@ -295,6 +296,17 @@ export class DatabaseStorage implements IStorage {
     return { ...order, items };
   }
 
+  async getOrderByIdAndEmail(id: number, email: string): Promise<(Order & { items: OrderItem[] }) | undefined> {
+    const [order] = await db.select().from(orders).where(
+      and(eq(orders.id, id), eq(orders.customerEmail, email))
+    );
+    if (!order) return undefined;
+
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
+
+    return { ...order, items };
+  }
+
   async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
     return await db.transaction(async (tx) => {
       const [newOrder] = await tx.insert(orders).values(order).returning();
@@ -318,10 +330,22 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async updateOrderStatus(id: number, status: string): Promise<Order> {
+  async updateOrderStatus(id: number, status: string, trackingInfo?: { trackingNumber?: string; shippingCarrier?: string; notes?: string }): Promise<Order> {
+    const updateData: any = { status, updatedAt: new Date() };
+    
+    if (trackingInfo?.trackingNumber) {
+      updateData.trackingNumber = trackingInfo.trackingNumber;
+    }
+    if (trackingInfo?.shippingCarrier) {
+      updateData.shippingCarrier = trackingInfo.shippingCarrier;
+    }
+    if (trackingInfo?.notes) {
+      updateData.notes = trackingInfo.notes;
+    }
+
     const [updatedOrder] = await db
       .update(orders)
-      .set({ status, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(orders.id, id))
       .returning();
     return updatedOrder;

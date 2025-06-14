@@ -105,6 +105,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order management routes
+  app.put('/api/orders/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      const { status, trackingNumber, shippingCarrier, notes } = req.body;
+      
+      const updatedOrder = await storage.updateOrderStatus(parseInt(id), status, {
+        trackingNumber,
+        shippingCarrier,
+        notes
+      });
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  // Public order tracking route (no auth required)
+  app.post('/api/track-order', async (req, res) => {
+    try {
+      const { orderId, email } = req.body;
+      
+      if (!orderId || !email) {
+        return res.status(400).json({ message: "Order ID and email are required" });
+      }
+      
+      const order = await storage.getOrderByIdAndEmail(parseInt(orderId), email);
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found or email doesn't match" });
+      }
+      
+      // Return limited order info for tracking
+      const trackingInfo = {
+        id: order.id,
+        status: order.status,
+        trackingNumber: order.trackingNumber,
+        shippingCarrier: order.shippingCarrier,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+        items: order.items?.map(item => ({
+          title: item.title,
+          author: item.author,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      };
+      
+      res.json(trackingInfo);
+    } catch (error) {
+      console.error("Error tracking order:", error);
+      res.status(500).json({ message: "Failed to track order" });
+    }
+  });
+
   // Store settings routes
   app.get('/api/settings/store', isAuthenticated, async (req: any, res) => {
     try {
