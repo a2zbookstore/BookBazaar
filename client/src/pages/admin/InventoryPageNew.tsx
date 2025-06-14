@@ -52,7 +52,9 @@ export default function InventoryPageNew() {
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const [importResults, setImportResults] = useState<any>(null);
 
   const [bookForm, setBookForm] = useState<BookForm>({
@@ -240,6 +242,65 @@ export default function InventoryPageNew() {
       updateBookMutation.mutate(bookForm);
     } else {
       createBookMutation.mutate(bookForm);
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file (PNG, JPG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImageUploading(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch('/api/books/upload-image', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // Update the form with the uploaded image URL
+      setBookForm(prev => ({ ...prev, imageUrl: result.imageUrl }));
+      
+      toast({
+        title: "Image Uploaded",
+        description: "Book cover image uploaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImageUploading(false);
     }
   };
 
@@ -551,13 +612,50 @@ export default function InventoryPageNew() {
                   </div>
 
                   <div>
-                    <Label htmlFor="imageUrl">Image URL</Label>
-                    <Input
-                      id="imageUrl"
-                      type="url"
-                      value={bookForm.imageUrl}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                      placeholder="https://example.com/book-cover.jpg"
+                    <Label htmlFor="imageUrl">Book Cover Image</Label>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <Input
+                          id="imageUrl"
+                          type="url"
+                          value={bookForm.imageUrl}
+                          onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                          placeholder="https://example.com/book-cover.jpg"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={isImageUploading}
+                          className="whitespace-nowrap"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {isImageUploading ? "Uploading..." : "Upload"}
+                        </Button>
+                      </div>
+                      {bookForm.imageUrl && (
+                        <div className="w-20 h-28 border rounded overflow-hidden">
+                          <img
+                            src={bookForm.imageUrl}
+                            alt="Book cover preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iMTEyIiB2aWV3Qm94PSIwIDAgODAgMTEyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iMTEyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zNS41IDQySDQ0LjVWNTFIMzUuNVY0MlpNMjYuNSA2MEg1My41VjUxSDI2LjVWNjBaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=";
+                            }}
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        You can either paste an image URL or upload an image file (max 5MB)
+                      </p>
+                    </div>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
                     />
                   </div>
 
