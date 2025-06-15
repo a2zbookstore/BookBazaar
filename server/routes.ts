@@ -133,36 +133,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { email } = req.query;
       
-      let order;
+      console.log(`Order access request - ID: ${id}, Email: ${email}`);
       
-      // If user is authenticated, get order by user ID
-      if (req.isAuthenticated && req.isAuthenticated()) {
-        const userId = (req.user as any).claims.sub;
+      let order;
+      let isAuthorized = false;
+      
+      // Check for session-based customer authentication
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      
+      console.log(`Session auth - UserId: ${sessionUserId}, IsAuth: ${isCustomerAuth}`);
+      
+      if (sessionUserId && isCustomerAuth) {
         order = await storage.getOrderById(parseInt(id));
-        
-        // Check if order belongs to the authenticated user
-        if (order && order.userId !== userId) {
-          return res.status(403).json({ message: "Access denied" });
+        console.log(`Session order check - Order found: ${order ? 'Yes' : 'No'}, Order userId: ${order?.userId}`);
+        if (order && order.userId === sessionUserId) {
+          isAuthorized = true;
         }
-      } 
-      // If not authenticated, require email for guest access
+      }
+      // Check for Replit authentication
+      else if (req.isAuthenticated && req.isAuthenticated()) {
+        const userId = (req.user as any).claims.sub;
+        console.log(`Replit auth - UserId: ${userId}`);
+        order = await storage.getOrderById(parseInt(id));
+        if (order && order.userId === userId) {
+          isAuthorized = true;
+        }
+      }
+      // Guest access with email
       else if (email) {
+        console.log(`Guest access attempt for order ${id} with email: ${email}`);
         order = await storage.getOrderByIdAndEmail(parseInt(id), email as string);
+        console.log(`Guest order lookup result:`, order ? `Found order ${order.id}` : 'Not found');
+        if (order) {
+          isAuthorized = true;
+          console.log(`Guest access authorized for order ${order.id}`);
+        }
       } else {
+        console.log(`No authentication method provided`);
         return res.status(401).json({ message: "Email required for guest access" });
       }
       
-      if (!order) {
-        return res.status(404).json({ message: "Order not found" });
-      }
+      console.log(`Final auth status - Order: ${order ? 'Found' : 'Not found'}, Authorized: ${isAuthorized}`);
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
       
-      // Check if user owns this order or is admin
-      const user = await storage.getUser(req.user?.claims?.sub);
-      if (order.userId !== req.user?.claims?.sub && user?.role !== "admin") {
+      if (!isAuthorized) {
         return res.status(403).json({ message: "Access denied" });
       }
       
