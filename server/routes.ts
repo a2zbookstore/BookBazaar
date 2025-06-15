@@ -599,14 +599,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Get guest cart from session
         const guestCart = (req.session as any).guestCart || [];
-        cartItems = guestCart.map((item: any) => ({
-          bookId: item.bookId,
-          quantity: item.quantity,
-          price: item.price.toString(),
-          title: item.title,
-          author: item.author
-        }));
+        console.log("Guest cart from session:", JSON.stringify(guestCart, null, 2));
+        console.log("Session keys:", Object.keys(req.session));
+        
+        // For guest cart, use existing book data or fetch from database
+        cartItems = [];
+        for (const item of guestCart) {
+          try {
+            let book = item.book;
+            if (!book) {
+              book = await storage.getBookById(item.bookId);
+            }
+            
+            if (book) {
+              cartItems.push({
+                bookId: book.id,
+                quantity: item.quantity,
+                price: book.price.toString(),
+                title: book.title,
+                author: book.author
+              });
+            }
+          } catch (error) {
+            console.error("Error processing guest cart item:", error);
+          }
+        }
+        
+        console.log("Final cart items for order:", cartItems.length);
       }
+
+      // Validate cart items
+      if (!cartItems || cartItems.length === 0) {
+        return res.status(400).json({ message: "Cart is empty. Cannot create order." });
+      }
+
+      console.log("Creating order with cart items:", cartItems.length);
 
       // Create order in database
       const order = await storage.createOrder({
