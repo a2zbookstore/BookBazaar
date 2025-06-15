@@ -1651,6 +1651,246 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Return and Refund Management Routes
+  
+  // Customer routes - Get eligible orders for return
+  app.get("/api/returns/eligible-orders", async (req: any, res) => {
+    try {
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      let email = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      } else {
+        // Guest user - require email parameter
+        email = req.query.email;
+        if (!email) {
+          return res.status(400).json({ message: "Email required for guest users" });
+        }
+      }
+
+      const eligibleOrders = await storage.getEligibleOrdersForReturn(userId, email);
+      res.json(eligibleOrders);
+    } catch (error) {
+      console.error("Error fetching eligible orders:", error);
+      res.status(500).json({ message: "Failed to fetch eligible orders" });
+    }
+  });
+
+  // Customer route - Create return request
+  app.post("/api/returns/request", async (req: any, res) => {
+    try {
+      const { orderId, returnReason, returnDescription, itemsToReturn, customerName, customerEmail } = req.body;
+      
+      if (!orderId || !returnReason || !returnDescription || !itemsToReturn || !customerName || !customerEmail) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Get order to validate and calculate refund
+      const order = await storage.getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Check if order is eligible for return (delivered and within 30 days)
+      if (order.status !== "delivered") {
+        return res.status(400).json({ message: "Only delivered orders can be returned" });
+      }
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      if (new Date(order.createdAt) < thirtyDaysAgo) {
+        return res.status(400).json({ message: "Return window has expired (30 days)" });
+      }
+
+      // Calculate total refund amount based on items to return
+      let totalRefundAmount = 0;
+      for (const item of itemsToReturn) {
+        const orderItem = order.items.find(oi => oi.bookId === item.bookId);
+        if (orderItem && item.quantity <= orderItem.quantity) {
+          totalRefundAmount += parseFloat(orderItem.price) * item.quantity;
+        }
+      }
+
+      // Set return deadline (30 days from now for customer to ship back)
+      const returnDeadline = new Date();
+      returnDeadline.setDate(returnDeadline.getDate() + 30);
+
+      // Check for authenticated user
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+
+      const returnRequest = await storage.createReturnRequest({
+        orderId,
+        userId,
+        customerEmail,
+        customerName,
+        returnReason,
+        returnDescription,
+        itemsToReturn,
+        totalRefundAmount: totalRefundAmount.toString(),
+        returnDeadline,
+      });
+
+      res.json(returnRequest);
+    } catch (error) {
+      console.error("Error creating return request:", error);
+      res.status(500).json({ message: "Failed to create return request" });
+    }
+  });
+
+  // Customer route - Get return requests for user
+  app.get("/api/returns/my-requests", async (req: any, res) => {
+    try {
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      } else {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { returnRequests } = await storage.getReturnRequests({ userId });
+      res.json(returnRequests);
+    } catch (error) {
+      console.error("Error fetching user return requests:", error);
+      res.status(500).json({ message: "Failed to fetch return requests" });
+    }
+  });
+
+  // Admin routes - Get all return requests
+  app.get("/api/admin/returns", async (req: any, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const status = req.query.status;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const result = await storage.getReturnRequests({ status, limit, offset });
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching return requests:", error);
+      res.status(500).json({ message: "Failed to fetch return requests" });
+    }
+  });
+
+  // Admin route - Update return request status
+  app.put("/api/admin/returns/:id/status", async (req: any, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const { id } = req.params;
+      const { status, adminNotes } = req.body;
+
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const returnRequest = await storage.updateReturnRequestStatus(parseInt(id), status, adminNotes);
+      res.json(returnRequest);
+    } catch (error) {
+      console.error("Error updating return request status:", error);
+      res.status(500).json({ message: "Failed to update return request status" });
+    }
+  });
+
+  // Admin route - Process refund
+  app.post("/api/admin/returns/:id/refund", async (req: any, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const { id } = req.params;
+      const { refundMethod, refundReason } = req.body;
+
+      // Get return request details
+      const returnRequest = await storage.getReturnRequestById(parseInt(id));
+      if (!returnRequest) {
+        return res.status(404).json({ message: "Return request not found" });
+      }
+
+      if (returnRequest.status !== "approved") {
+        return res.status(400).json({ message: "Return request must be approved first" });
+      }
+
+      // Create refund transaction record
+      const refundTransaction = await storage.createRefundTransaction({
+        returnRequestId: parseInt(id),
+        orderId: returnRequest.orderId,
+        refundAmount: returnRequest.totalRefundAmount,
+        refundMethod,
+        refundReason,
+        processedBy: adminId,
+      });
+
+      // Update return request status to refund_processed
+      await storage.updateReturnRequestStatus(parseInt(id), "refund_processed");
+
+      // Here you would integrate with actual payment gateways
+      // For now, we'll simulate successful refund processing
+      await storage.updateRefundTransaction(refundTransaction.id, {
+        refundStatus: "completed",
+        processedAt: new Date(),
+        refundTransactionId: `REF_${Date.now()}`,
+      });
+
+      res.json({ 
+        message: "Refund processed successfully",
+        refundTransaction: refundTransaction
+      });
+    } catch (error) {
+      console.error("Error processing refund:", error);
+      res.status(500).json({ message: "Failed to process refund" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

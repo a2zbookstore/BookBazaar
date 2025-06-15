@@ -707,6 +707,189 @@ export class DatabaseStorage implements IStorage {
       .set({ passwordHash, updatedAt: new Date() })
       .where(eq(admins.id, id));
   }
+
+  // Return and refund operations
+  async getReturnRequests(options: {
+    status?: string;
+    userId?: string;
+    orderId?: number;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ returnRequests: (ReturnRequest & { order: Order & { items: OrderItem[] } })[], total: number }> {
+    const { status, userId, orderId, limit = 50, offset = 0 } = options;
+    
+    let query = db
+      .select({
+        returnRequest: returnRequests,
+        order: orders,
+      })
+      .from(returnRequests)
+      .innerJoin(orders, eq(returnRequests.orderId, orders.id))
+      .orderBy(desc(returnRequests.createdAt));
+
+    const conditions = [];
+    if (status) conditions.push(eq(returnRequests.status, status));
+    if (userId) conditions.push(eq(returnRequests.userId, userId));
+    if (orderId) conditions.push(eq(returnRequests.orderId, orderId));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const [results, [{ count: total }]] = await Promise.all([
+      query.limit(limit).offset(offset),
+      db.select({ count: count() }).from(returnRequests).where(conditions.length > 0 ? and(...conditions) : undefined),
+    ]);
+
+    // Get order items for each order
+    const returnRequestsWithItems = await Promise.all(
+      results.map(async ({ returnRequest, order }) => {
+        const items = await db
+          .select({
+            id: orderItems.id,
+            orderId: orderItems.orderId,
+            bookId: orderItems.bookId,
+            quantity: orderItems.quantity,
+            price: orderItems.price,
+            title: books.title,
+            author: books.author,
+          })
+          .from(orderItems)
+          .innerJoin(books, eq(orderItems.bookId, books.id))
+          .where(eq(orderItems.orderId, order.id));
+
+        return {
+          ...returnRequest,
+          order: {
+            ...order,
+            items,
+          },
+        };
+      })
+    );
+
+    return {
+      returnRequests: returnRequestsWithItems,
+      total: parseInt(total.toString()),
+    };
+  }
+
+  async getReturnRequestById(id: number): Promise<(ReturnRequest & { order: Order & { items: OrderItem[] } }) | undefined> {
+    const [result] = await db
+      .select({
+        returnRequest: returnRequests,
+        order: orders,
+      })
+      .from(returnRequests)
+      .innerJoin(orders, eq(returnRequests.orderId, orders.id))
+      .where(eq(returnRequests.id, id));
+
+    if (!result) return undefined;
+
+    const items = await db
+      .select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        bookId: orderItems.bookId,
+        quantity: orderItems.quantity,
+        price: orderItems.price,
+        title: books.title,
+        author: books.author,
+      })
+      .from(orderItems)
+      .innerJoin(books, eq(orderItems.bookId, books.id))
+      .where(eq(orderItems.orderId, result.order.id));
+
+    return {
+      ...result.returnRequest,
+      order: {
+        ...result.order,
+        items,
+      },
+    };
+  }
+
+  async createReturnRequest(returnRequestData: InsertReturnRequest): Promise<ReturnRequest> {
+    const [returnRequest] = await db
+      .insert(returnRequests)
+      .values(returnRequestData)
+      .returning();
+    return returnRequest;
+  }
+
+  async updateReturnRequestStatus(id: number, status: string, adminNotes?: string): Promise<ReturnRequest> {
+    const updateData: any = { status, updatedAt: new Date() };
+    if (adminNotes) updateData.adminNotes = adminNotes;
+    if (status === 'refund_processed') updateData.refundProcessedAt = new Date();
+
+    const [returnRequest] = await db
+      .update(returnRequests)
+      .set(updateData)
+      .where(eq(returnRequests.id, id))
+      .returning();
+    return returnRequest;
+  }
+
+  async getEligibleOrdersForReturn(userId?: string, email?: string): Promise<Order[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    let query = db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.status, "delivered"),
+          gte(orders.createdAt, thirtyDaysAgo)
+        )
+      )
+      .orderBy(desc(orders.createdAt));
+
+    if (userId) {
+      query = query.where(
+        and(
+          eq(orders.userId, userId),
+          eq(orders.status, "delivered"),
+          gte(orders.createdAt, thirtyDaysAgo)
+        )
+      );
+    } else if (email) {
+      query = query.where(
+        and(
+          eq(orders.customerEmail, email),
+          eq(orders.status, "delivered"),
+          gte(orders.createdAt, thirtyDaysAgo)
+        )
+      );
+    }
+
+    return await query;
+  }
+
+  async createRefundTransaction(refundData: InsertRefundTransaction): Promise<RefundTransaction> {
+    const [refund] = await db
+      .insert(refundTransactions)
+      .values(refundData)
+      .returning();
+    return refund;
+  }
+
+  async updateRefundTransaction(id: number, updates: Partial<RefundTransaction>): Promise<RefundTransaction> {
+    const [refund] = await db
+      .update(refundTransactions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(refundTransactions.id, id))
+      .returning();
+    return refund;
+  }
+
+  async getRefundTransactionsByReturnId(returnRequestId: number): Promise<RefundTransaction[]> {
+    return await db
+      .select()
+      .from(refundTransactions)
+      .where(eq(refundTransactions.returnRequestId, returnRequestId))
+      .orderBy(desc(refundTransactions.createdAt));
+  }
 }
 
 export const storage = new DatabaseStorage();
