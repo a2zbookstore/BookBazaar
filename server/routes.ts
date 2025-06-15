@@ -1362,11 +1362,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/orders/:id/status", async (req: any, res) => {
     try {
       // Check for admin session authentication
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
+      const adminId = (req.session as any)?.adminId;
+      const isAdmin = (req.session as any)?.isAdmin;
       
       if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
       const admin = await storage.getAdminById(adminId);
