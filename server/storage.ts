@@ -218,11 +218,13 @@ export class DatabaseStorage implements IStorage {
     if (condition) conditions.push(eq(books.condition, condition));
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
     if (search) {
+      const searchTerm = search.toLowerCase();
       conditions.push(
         or(
-          like(books.title, `%${search}%`),
-          like(books.author, `%${search}%`),
-          like(books.isbn, `%${search}%`)
+          sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
+          sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`,
+          sql`LOWER(${books.isbn}) LIKE ${`%${searchTerm}%`}`,
+          sql`LOWER(${books.description}) LIKE ${`%${searchTerm}%`}`
         )
       );
     }
