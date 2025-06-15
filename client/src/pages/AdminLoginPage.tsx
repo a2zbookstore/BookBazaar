@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
             Admin Login
           </CardTitle>
           <p className="text-gray-600">
-            Access the A2Z BOOKSHOP Admin Panel
+            Access the A<span className="text-red-500">2</span>Z BOOKSHOP Admin Panel
           </p>
         </CardHeader>
         
