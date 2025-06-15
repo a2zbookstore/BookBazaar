@@ -1046,9 +1046,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const cartItems = await storage.getCartItems(userId);
         res.json(cartItems);
       } else {
-        // Guest user - return session-based cart
+        // Guest user - return session-based cart with book details
         const guestCart = (req.session as any).guestCart || [];
-        res.json(guestCart);
+        
+        // Ensure each cart item has complete book data
+        const cartWithBooks = await Promise.all(guestCart.map(async (item: any) => {
+          if (!item.book || !item.book.id) {
+            const book = await storage.getBookById(item.bookId);
+            return { ...item, book };
+          }
+          return item;
+        }));
+        
+        res.json(cartWithBooks);
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -1094,7 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           guestCart[existingItemIndex].quantity += parseInt(quantity);
         } else {
           guestCart.push({
-            id: Date.now(), // Temporary ID for guest cart
+            id: `guest_${Date.now()}`, // String-based ID for guest cart
             bookId: parseInt(bookId),
             quantity: parseInt(quantity),
             book: book
@@ -1116,10 +1126,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/cart/:id", async (req: any, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const { quantity } = req.body;
-      const cartItem = await storage.updateCartItem(id, quantity);
-      res.json(cartItem);
+      
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (userId) {
+        // Authenticated user - update database cart
+        const cartItem = await storage.updateCartItem(parseInt(id), quantity);
+        res.json(cartItem);
+      } else {
+        // Guest user - update session cart
+        const guestCart = (req.session as any).guestCart || [];
+        const itemIndex = guestCart.findIndex((item: any) => item.id.toString() === id);
+        
+        if (itemIndex >= 0) {
+          guestCart[itemIndex].quantity = parseInt(quantity);
+          req.session.save(() => {
+            res.json(guestCart[itemIndex]);
+          });
+        } else {
+          res.status(404).json({ message: "Cart item not found" });
+        }
+      }
     } catch (error) {
       console.error("Error updating cart item:", error);
       res.status(500).json({ message: "Failed to update cart item" });
@@ -1128,9 +1166,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart/:id", async (req: any, res) => {
     try {
-      const id = parseInt(req.params.id);
-      await storage.removeFromCart(id);
-      res.json({ message: "Item removed from cart" });
+      const id = req.params.id;
+      
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (userId) {
+        // Authenticated user - remove from database cart
+        await storage.removeFromCart(parseInt(id));
+        res.json({ message: "Item removed from cart" });
+      } else {
+        // Guest user - remove from session cart
+        const guestCart = (req.session as any).guestCart || [];
+        const filteredCart = guestCart.filter((item: any) => item.id.toString() !== id);
+        (req.session as any).guestCart = filteredCart;
+        
+        req.session.save(() => {
+          res.json({ message: "Item removed from cart" });
+        });
+      }
     } catch (error) {
       console.error("Error removing from cart:", error);
       res.status(500).json({ message: "Failed to remove from cart" });
@@ -1154,7 +1216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.clearCart(userId);
       } else {
         // Clear guest cart from session
-        (req.session as any).cartItems = [];
+        (req.session as any).guestCart = [];
       }
       
       res.json({ message: "Cart cleared" });
