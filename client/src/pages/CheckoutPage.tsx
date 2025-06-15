@@ -270,7 +270,14 @@ export default function CheckoutPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // Get shipping rate for the selected country
+  // Calculate totals - Use detected location's shipping rate as primary source
+  const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
+  
+  // Priority order for shipping cost:
+  // 1. User's detected location shipping rate (from useShipping hook)
+  // 2. Selected country in form (if different from detected)
+  // 3. Default shipping rate
+  
   const getShippingCountryCode = (countryName: string): string => {
     const countryCodeMap: { [key: string]: string } = {
       "United States": "US", "India": "IN", "United Kingdom": "GB", "Canada": "CA",
@@ -290,23 +297,34 @@ export default function CheckoutPage() {
     return countryCodeMap[countryName] || "XX";
   };
 
-  const { data: countryShipping } = useQuery({
+  const { data: selectedCountryShipping } = useQuery({
     queryKey: ["/api/shipping-rates/country", getShippingCountryCode(shippingAddress.country)],
     enabled: !!shippingAddress.country,
   });
 
-  const { data: defaultShipping } = useQuery({
-    queryKey: ["/api/shipping-rates/default"],
-    enabled: !shippingAddress.country,
-  });
+  // Calculate shipping cost with proper priority
+  let shippingCost = 5.99; // Default fallback
+  
+  if (shipping?.cost) {
+    // Use detected location's shipping rate (primary)
+    shippingCost = parseFloat(shipping.cost.toString());
+  } else if (selectedCountryShipping?.shippingCost) {
+    // Use selected country's shipping rate (if form country is different)
+    shippingCost = parseFloat(selectedCountryShipping.shippingCost.toString());
+  }
 
-  // Calculate totals
-  const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
-  const actualShippingRate = shippingAddress.country ? countryShipping : defaultShipping;
-  const shippingCost = (actualShippingRate as any)?.shippingCost ? parseFloat((actualShippingRate as any).shippingCost.toString()) : 
-                     (shipping?.cost ? parseFloat(shipping.cost.toString()) : 5.99);
   const tax = subtotal * 0.01; // 1% tax
   const total = subtotal + shippingCost + tax;
+
+  // Debug shipping cost in checkout
+  console.log('Checkout Page - Shipping Debug:', {
+    detectedLocationShipping: shipping,
+    selectedCountry: shippingAddress.country,
+    selectedCountryShipping: selectedCountryShipping,
+    finalShippingCost: shippingCost,
+    shippingSource: shipping?.cost ? 'detected_location' : 
+                   selectedCountryShipping?.shippingCost ? 'selected_country' : 'fallback'
+  });
 
   // Razorpay config
   const { data: razorpayConfig } = useQuery({
