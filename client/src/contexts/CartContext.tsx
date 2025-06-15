@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { CartItem } from "@/types";
@@ -11,12 +11,22 @@ interface CartContextType {
   removeFromCart: (id: number) => Promise<void>;
   clearCart: () => Promise<void>;
   isLoading: boolean;
+  isCartAnimating: boolean;
+  triggerCartAnimation: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
+  const [isCartAnimating, setIsCartAnimating] = useState(false);
+
+  const triggerCartAnimation = useCallback(() => {
+    setIsCartAnimating(true);
+    setTimeout(() => {
+      setIsCartAnimating(false);
+    }, 3000); // Animation lasts for 3 seconds
+  }, []);
 
   // Always use server-side cart (supports both guest sessions and authenticated users)
   const { data: cartItems = [], isLoading } = useQuery({
