@@ -22,7 +22,7 @@ export default function BookCard({ book }: BookCardProps) {
   const [shippingCost, setShippingCost] = useState<string>('');
 
   // Fetch default shipping rate for display
-  const { data: defaultShippingRate } = useQuery({
+  const { data: defaultShippingRate } = useQuery<ShippingRate>({
     queryKey: ["/api/shipping-rates/default"],
   });
 

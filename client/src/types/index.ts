@@ -111,3 +111,16 @@ export interface ContactMessage {
   status: string;
   createdAt: string;
 }
+
+export interface ShippingRate {
+  id: number;
+  countryCode: string;
+  countryName: string;
+  shippingCost: string;
+  minDeliveryDays: number;
+  maxDeliveryDays: number;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
