@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -67,7 +67,7 @@ const statusIcons = {
 };
 
 export default function OrdersPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { admin, isLoading: authLoading, isAuthenticated } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -81,7 +81,7 @@ export default function OrdersPage() {
 
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ["/api/orders"],
-    enabled: !!user && user.role === "admin",
+    enabled: isAuthenticated,
   });
 
   const updateOrderMutation = useMutation({
@@ -148,7 +148,7 @@ export default function OrdersPage() {
     );
   }
 
-  if (!user || user.role !== "admin") {
+  if (!isAuthenticated) {
     return (
       <AdminLayout>
         <div className="text-center py-8">
