@@ -8,7 +8,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration } from "./emailService";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
@@ -672,6 +672,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Clear guest cart from session
         (req.session as any).guestCart = [];
+      }
+
+      // Send order confirmation email
+      try {
+        const orderWithItems = await storage.getOrderById(order.id);
+        if (orderWithItems) {
+          await sendOrderConfirmationEmail({
+            order: orderWithItems,
+            customerEmail,
+            customerName
+          });
+          console.log(`Order confirmation email sent for order #${order.id}`);
+        }
+      } catch (emailError) {
+        console.error("Failed to send order confirmation email:", emailError);
+        // Don't fail the order if email fails
       }
 
       res.json({ success: true, orderId: order.id });
@@ -1497,6 +1513,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           shippingCarrier,
           notes
         });
+
+        // Send status update email to customer
+        try {
+          await sendStatusUpdateEmail({
+            order: updatedOrder,
+            customerEmail: updatedOrder.customerEmail,
+            customerName: updatedOrder.customerName,
+            newStatus: status,
+            trackingNumber,
+            shippingCarrier,
+            notes
+          });
+          console.log(`Status update email sent for order #${id}, new status: ${status}`);
+        } catch (emailError) {
+          console.error("Failed to send status update email:", emailError);
+          // Don't fail the status update if email fails
+        }
         
         return res.json(updatedOrder);
       }

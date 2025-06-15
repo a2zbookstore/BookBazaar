@@ -218,11 +218,11 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
           </tr>
           <tr>
             <td style="padding: 8px 0;"><strong>Order Total:</strong></td>
-            <td style="padding: 8px 0;">$${order.total.toFixed(2)}</td>
+            <td style="padding: 8px 0;">$${parseFloat(order.total.toString()).toFixed(2)}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0;"><strong>Order Date:</strong></td>
-            <td style="padding: 8px 0;">${new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+            <td style="padding: 8px 0;">${order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</td>
           </tr>
         </table>
       </div>
@@ -268,7 +268,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
       to: data.customerEmail,
       subject: `Order Confirmation #${data.order.id} - A2Z BOOKSHOP`,
       html: htmlContent,
-      text: `Thank you for your order #${data.order.id}! Your order total is $${data.order.total.toFixed(2)}. We'll process your order within 1-2 business days and send you tracking information once it ships.`
+      text: `Thank you for your order #${data.order.id}! Your order total is $${parseFloat(data.order.total.toString()).toFixed(2)}. We'll process your order within 1-2 business days and send you tracking information once it ships.`
     };
 
     // Copy to admin
@@ -280,7 +280,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
       to: 'orders@a2zbookshop.com',
       subject: `New Order #${data.order.id} - Admin Copy`,
       html: htmlContent,
-      text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${data.order.total.toFixed(2)}`
+      text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${parseFloat(data.order.total.toString()).toFixed(2)}`
     };
 
     // Send both emails
