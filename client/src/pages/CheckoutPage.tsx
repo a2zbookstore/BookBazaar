@@ -270,9 +270,41 @@ export default function CheckoutPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
+  // Get shipping rate for the selected country
+  const getShippingCountryCode = (countryName: string): string => {
+    const countryCodeMap: { [key: string]: string } = {
+      "United States": "US", "India": "IN", "United Kingdom": "GB", "Canada": "CA",
+      "Australia": "AU", "Germany": "DE", "France": "FR", "Italy": "IT", "Spain": "ES",
+      "Netherlands": "NL", "Japan": "JP", "China": "CN", "Brazil": "BR", "Mexico": "MX",
+      "Russia": "RU", "South Korea": "KR", "Turkey": "TR", "Saudi Arabia": "SA",
+      "South Africa": "ZA", "Nigeria": "NG", "Egypt": "EG", "Thailand": "TH",
+      "Malaysia": "MY", "Singapore": "SG", "Philippines": "PH", "Indonesia": "ID",
+      "Vietnam": "VN", "Pakistan": "PK", "Bangladesh": "BD", "Sri Lanka": "LK",
+      "Nepal": "NP", "Afghanistan": "AF", "Iran": "IR", "Iraq": "IQ", "Israel": "IL",
+      "UAE": "AE", "Switzerland": "CH", "Austria": "AT", "Belgium": "BE",
+      "Sweden": "SE", "Norway": "NO", "Denmark": "DK", "Finland": "FI",
+      "Poland": "PL", "Czech Republic": "CZ", "Hungary": "HU", "Greece": "GR",
+      "Portugal": "PT", "Ireland": "IE", "Ukraine": "UA", "Argentina": "AR",
+      "Chile": "CL", "Colombia": "CO", "Peru": "PE", "Venezuela": "VE"
+    };
+    return countryCodeMap[countryName] || "XX";
+  };
+
+  const { data: countryShipping } = useQuery({
+    queryKey: ["/api/shipping-rates/country", getShippingCountryCode(shippingAddress.country)],
+    enabled: !!shippingAddress.country,
+  });
+
+  const { data: defaultShipping } = useQuery({
+    queryKey: ["/api/shipping-rates/default"],
+    enabled: !shippingAddress.country,
+  });
+
   // Calculate totals
   const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
-  const shippingCost = shipping?.cost ? parseFloat(shipping.cost) : 5.99;
+  const actualShippingRate = shippingAddress.country ? countryShipping : defaultShipping;
+  const shippingCost = (actualShippingRate as any)?.cost ? parseFloat((actualShippingRate as any).cost.toString()) : 
+                     (shipping?.cost ? parseFloat(shipping.cost.toString()) : 5.99);
   const tax = subtotal * 0.01; // 1% tax
   const total = subtotal + shippingCost + tax;
 
