@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Star, ShoppingCart } from "lucide-react";
+import { Star, ShoppingCart, Truck, Clock, Book as BookIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
-import { Book } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { Book, ShippingRate } from "@/types";
 
 interface BookCardProps {
   book: Book;
@@ -18,10 +19,16 @@ export default function BookCard({ book }: BookCardProps) {
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
   const [displayPrice, setDisplayPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
+  const [shippingCost, setShippingCost] = useState<string>('');
 
-  // Convert price to user's currency
+  // Fetch default shipping rate for display
+  const { data: defaultShippingRate } = useQuery({
+    queryKey: ["/api/shipping-rates/default"],
+  });
+
+  // Convert price and shipping cost to user's currency
   useEffect(() => {
-    const convertBookPrice = async () => {
+    const convertPrices = async () => {
       if (userCurrency !== 'USD') {
         setIsConverting(true);
         try {
@@ -31,18 +38,34 @@ export default function BookCard({ book }: BookCardProps) {
           } else {
             setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
           }
+          
+          // Convert shipping cost if available
+          if (defaultShippingRate) {
+            const convertedShipping = await convertPrice(parseFloat(defaultShippingRate.shippingCost));
+            if (convertedShipping) {
+              setShippingCost(formatAmount(convertedShipping.convertedAmount, userCurrency));
+            } else {
+              setShippingCost(formatAmount(parseFloat(defaultShippingRate.shippingCost), 'USD'));
+            }
+          }
         } catch (error) {
           setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+          if (defaultShippingRate) {
+            setShippingCost(formatAmount(parseFloat(defaultShippingRate.shippingCost), 'USD'));
+          }
         } finally {
           setIsConverting(false);
         }
       } else {
         setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+        if (defaultShippingRate) {
+          setShippingCost(formatAmount(parseFloat(defaultShippingRate.shippingCost), 'USD'));
+        }
       }
     };
 
-    convertBookPrice();
-  }, [book.price, userCurrency, convertPrice, formatAmount]);
+    convertPrices();
+  }, [book.price, userCurrency, convertPrice, formatAmount, defaultShippingRate]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -104,18 +127,50 @@ export default function BookCard({ book }: BookCardProps) {
         </div>
 
         {/* Book Info */}
-        <div className="space-y-2">
-          <h3 className="font-bookerly font-semibold text-base-black line-clamp-2 group-hover:text-primary-aqua transition-colors">
-            {book.title}
-          </h3>
-          <p className="text-secondary-black text-sm">{book.author}</p>
+        <div className="space-y-3">
+          <div>
+            <h3 className="font-bookerly font-semibold text-base-black line-clamp-2 group-hover:text-primary-aqua transition-colors">
+              {book.title}
+            </h3>
+            <p className="text-secondary-black text-sm">{book.author}</p>
+          </div>
           
-          {/* Condition Badge */}
-          <Badge variant="secondary" className={`text-xs ${getConditionColor(book.condition)}`}>
-            {book.condition}
-          </Badge>
+          {/* Book Details Grid */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {/* Condition */}
+            <div className="flex items-center gap-1">
+              <Badge variant="secondary" className={`text-xs ${getConditionColor(book.condition)}`}>
+                {book.condition}
+              </Badge>
+            </div>
+            
+            {/* Binding */}
+            <div className="flex items-center gap-1">
+              <BookIcon className="h-3 w-3 text-gray-500" />
+              <span className="text-secondary-black">{book.binding || 'Paperback'}</span>
+            </div>
+          </div>
 
-          {/* Rating (placeholder - you might want to add this to your schema) */}
+          {/* Shipping & Delivery Info */}
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-1">
+              <Truck className="h-3 w-3 text-green-600" />
+              <span className="text-secondary-black">
+                Shipping: {shippingCost || '$25.00'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3 text-blue-600" />
+              <span className="text-secondary-black">
+                {defaultShippingRate?.minDeliveryDays && defaultShippingRate?.maxDeliveryDays ? 
+                  `${defaultShippingRate.minDeliveryDays}-${defaultShippingRate.maxDeliveryDays} days delivery` : 
+                  '5-7 days delivery'
+                }
+              </span>
+            </div>
+          </div>
+
+          {/* Rating */}
           <div className="flex items-center gap-1">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -129,7 +184,7 @@ export default function BookCard({ book }: BookCardProps) {
           </div>
 
           {/* Price and Add to Cart */}
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
             <div className="flex flex-col">
               {isConverting ? (
                 <div className="flex items-center gap-2">
@@ -152,14 +207,14 @@ export default function BookCard({ book }: BookCardProps) {
             <Button
               size="sm"
               onClick={handleAddToCart}
-              className="bg-primary-aqua hover:bg-secondary-aqua text-white px-3 py-1 text-xs"
+              className="bg-primary-aqua hover:bg-secondary-aqua text-white px-3 py-2 text-xs flex items-center gap-1"
               disabled={book.stock === 0}
             >
               {book.stock === 0 ? (
                 "Out of Stock"
               ) : (
                 <>
-                  <ShoppingCart className="h-3 w-3 mr-1" />
+                  <ShoppingCart className="h-4 w-4" />
                   Add to Cart
                 </>
               )}
@@ -167,7 +222,7 @@ export default function BookCard({ book }: BookCardProps) {
           </div>
 
           {book.stock > 0 && book.stock <= 5 && (
-            <p className="text-xs text-abe-red">Only {book.stock} left in stock!</p>
+            <p className="text-xs text-abe-red font-medium">Only {book.stock} left in stock!</p>
           )}
         </div>
       </div>
