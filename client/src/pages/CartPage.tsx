@@ -28,7 +28,7 @@ export default function CartPage() {
 
   // Get shipping rate from admin panel - default to India if no location detected
   const { data: adminShippingRate } = useQuery({
-    queryKey: ["/api/shipping-rates/country", "IN"],
+    queryKey: ["/api/shipping-rates/country/IN"],
   });
 
   // Calculate cart totals using admin panel shipping rates

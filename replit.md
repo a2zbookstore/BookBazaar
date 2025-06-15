@@ -123,6 +123,7 @@ Changelog:
 - June 15, 2025. Enhanced book cards with location-based shipping - implemented dynamic shipping cost and delivery time display based on user's country location, integrated with admin-configured shipping rate module, automatic location detection with fallback to "Rest of World" rates for unconfigured countries, real-time currency conversion for shipping costs
 - June 15, 2025. Implemented comprehensive checkout form validation - added email format validation with regex patterns, phone number validation with country code selector supporting 150+ countries, country dropdown with auto-suggestions and search functionality, made postal code mandatory, name validation allowing only letters/spaces/hyphens/apostrophes, real-time error messages with field highlighting
 - June 15, 2025. Enhanced phone country code selector with advanced interaction - hover to open dropdown showing all countries, keyboard search without typing in field (press letters to filter), arrow key navigation, enter to select, escape to close, visual highlighting of selected items, displays both country code and full country name
+- June 15, 2025. Fixed cart and checkout shipping cost integration - both pages now directly fetch shipping rates from admin panel shipping module instead of fallback calculations, India shipping rate correctly displays $35.00 as configured, eliminated incorrect shipping cost calculations throughout checkout flow
 ```
 
 ## User Preferences

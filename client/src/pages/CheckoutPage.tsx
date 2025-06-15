@@ -297,33 +297,32 @@ export default function CheckoutPage() {
     return countryCodeMap[countryName] || "XX";
   };
 
-  const { data: selectedCountryShipping } = useQuery({
-    queryKey: ["/api/shipping-rates/country", getShippingCountryCode(shippingAddress.country)],
-    enabled: !!shippingAddress.country,
+  // Get shipping rate from admin panel for India (matching cart page)
+  const { data: adminShippingRate } = useQuery({
+    queryKey: ["/api/shipping-rates/country/IN"],
   });
 
-  // Calculate shipping cost with proper priority
+  // Calculate shipping cost using admin panel rates
   let shippingCost = 5.99; // Default fallback
   
-  if (shipping?.cost) {
-    // Use detected location's shipping rate (primary)
+  if ((adminShippingRate as any)?.shippingCost) {
+    // Use admin panel India shipping rate (primary)
+    shippingCost = parseFloat((adminShippingRate as any).shippingCost.toString());
+  } else if (shipping?.cost) {
+    // Fallback to detected location shipping
     shippingCost = parseFloat(shipping.cost.toString());
-  } else if (selectedCountryShipping?.shippingCost) {
-    // Use selected country's shipping rate (if form country is different)
-    shippingCost = parseFloat(selectedCountryShipping.shippingCost.toString());
   }
 
   const tax = subtotal * 0.01; // 1% tax
   const total = subtotal + shippingCost + tax;
 
   // Debug shipping cost in checkout
-  console.log('Checkout Page - Shipping Debug:', {
-    detectedLocationShipping: shipping,
-    selectedCountry: shippingAddress.country,
-    selectedCountryShipping: selectedCountryShipping,
+  console.log('Checkout Page - Admin Shipping Debug:', {
+    adminShippingRate: adminShippingRate,
     finalShippingCost: shippingCost,
-    shippingSource: shipping?.cost ? 'detected_location' : 
-                   selectedCountryShipping?.shippingCost ? 'selected_country' : 'fallback'
+    isUsingAdminRate: !!(adminShippingRate as any)?.shippingCost,
+    shippingSource: (adminShippingRate as any)?.shippingCost ? 'admin_panel' : 
+                   shipping?.cost ? 'fallback_shipping' : 'hardcoded_fallback'
   });
 
   // Razorpay config
