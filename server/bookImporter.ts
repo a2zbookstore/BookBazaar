@@ -249,10 +249,11 @@ export class BookImporter {
           };
 
           // Save to database
-          await storage.createBook(insertBook);
+          const createdBook = await storage.createBook(insertBook);
           results.success++;
           
           console.log(`Successfully imported: ${bookData.title} by ${bookData.author}`);
+          console.log(`Book ID: ${createdBook.id}, ISBN: ${bookData.isbn || 'N/A'}`);
 
         } catch (error) {
           results.failed++;
