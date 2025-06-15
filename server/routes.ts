@@ -684,12 +684,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shipping rates routes
-  app.get('/api/shipping-rates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/shipping-rates', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
       }
 
       const rates = await storage.getShippingRates();
@@ -718,12 +724,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/shipping-rates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/shipping-rates', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
       }
 
       const { countryCode, countryName, shippingCost, minDeliveryDays, maxDeliveryDays, isDefault, isActive } = req.body;
@@ -745,12 +757,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/shipping-rates/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/shipping-rates/:id', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
       }
 
       const { id } = req.params;
@@ -773,12 +791,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/shipping-rates/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/shipping-rates/:id', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
       }
 
       const { id } = req.params;
@@ -790,12 +814,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/shipping-rates/:id/set-default', isAuthenticated, async (req: any, res) => {
+  app.post('/api/shipping-rates/:id/set-default', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
       }
 
       const { id } = req.params;
