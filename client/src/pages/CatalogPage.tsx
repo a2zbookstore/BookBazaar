@@ -82,7 +82,22 @@ export default function CatalogPage() {
   console.log("Current search state:", search);
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: [apiUrl],
+    queryKey: ['/api/books', {
+      search,
+      categoryId: selectedCategories[0],
+      condition: selectedConditions[0], 
+      minPrice,
+      maxPrice,
+      sortBy,
+      sortOrder,
+      limit: itemsPerPage,
+      offset: (currentPage - 1) * itemsPerPage
+    }],
+    queryFn: async () => {
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error('Failed to fetch books');
+      return response.json();
+    }
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
