@@ -1361,17 +1361,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/orders/:id/status", async (req: any, res) => {
     try {
-      // Check admin session directly like other working admin routes
       const adminId = (req.session as any)?.adminId;
       const isAdmin = (req.session as any)?.isAdmin;
-      
-      console.log('Order update session:', { 
-        hasSession: !!req.session,
-        adminId, 
-        isAdmin,
-        sessionStore: !!req.session?.store,
-        cookies: req.headers.cookie?.substring(0, 50) + '...'
-      });
       
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Unauthorized" });

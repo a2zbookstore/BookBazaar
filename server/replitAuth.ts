@@ -36,11 +36,13 @@ export function getSession() {
     store: sessionStore,
     resave: true,
     saveUninitialized: false,
+    name: 'connect.sid',
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
       sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      path: '/',
     },
   });
 }
