@@ -1,20 +1,53 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Book, Category } from "@/types";
+import { Search, Star, TrendingUp, Award } from "lucide-react";
 
 export default function HomePage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
   const { data: featuredBooks = [] } = useQuery<Book[]>({
-    queryKey: ["/api/books?featured=true&limit=8"],
+    queryKey: ["/api/books?featured=true&limit=12"],
+  });
+
+  const { data: bestsellerBooks = [] } = useQuery<Book[]>({
+    queryKey: ["/api/books?sortBy=createdAt&sortOrder=desc&limit=10"],
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  // Auto-scroll for moving sections
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % Math.max(1, Math.ceil(featuredBooks.length / 4)));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [featuredBooks.length]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/catalog?search=${encodeURIComponent(searchQuery.trim())}`;
+    }
+  };
+
+  const bookImages = [
+    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+  ];
 
   const categoryImages = [
     "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
@@ -27,40 +60,105 @@ export default function HomePage() {
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="bg-site-bg py-16">
-        <div className="container-custom">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-4xl font-bookerly font-bold text-base-black mb-6">
-                Welcome to A2Z BOOKSHOP
-              </h2>
-              <p className="text-lg text-secondary-black mb-8">
-                Discover a curated collection of rare, collectible, and contemporary books. 
-                From first editions to everyday reads, find your next literary treasure with us.
-              </p>
+      {/* Hero Section with Search */}
+      <section className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 py-20 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="grid grid-cols-6 gap-4 h-full">
+            {bookImages.map((img, i) => (
+              <div key={i} className="animate-pulse">
+                <img src={img} alt="books" className="w-full h-full object-cover opacity-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="container-custom relative z-10">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-5xl md:text-6xl font-bookerly font-bold text-base-black mb-6">
+              A2Z BOOKSHOP
+            </h1>
+            <p className="text-xl text-secondary-black mb-8 leading-relaxed">
+              Your ultimate destination for rare books, bestsellers, and literary treasures from around the world
+            </p>
+            
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search by title, author, ISBN, or description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-14 pl-6 pr-16 text-lg border-2 border-primary-aqua rounded-full focus:ring-2 focus:ring-secondary-aqua"
+                />
+                <Button
+                  type="submit"
+                  className="absolute right-2 top-2 h-10 w-10 rounded-full bg-primary-aqua hover:bg-secondary-aqua p-0"
+                >
+                  <Search className="h-5 w-5" />
+                </Button>
+              </div>
+            </form>
+
+            <div className="flex flex-wrap justify-center gap-4">
               <Link href="/catalog">
-                <Button className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3">
-                  Browse Our Collection
+                <Button className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3 rounded-full">
+                  Browse All Books
                 </Button>
               </Link>
-            </div>
-            <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
-                alt="Cozy bookshop interior"
-                className="rounded-lg shadow-lg w-full h-auto"
-              />
+              <Link href="/catalog?featured=true">
+                <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white px-8 py-3 rounded-full">
+                  Featured Collection
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Books */}
+      {/* Bestsellers Section - Moving Carousel */}
+      <section className="py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+        <div className="container-custom">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-8 w-8 text-primary-aqua" />
+              <h3 className="text-3xl font-bookerly font-bold text-base-black">Bestsellers</h3>
+            </div>
+            <Link href="/catalog?sortBy=createdAt&sortOrder=desc">
+              <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white">
+                View All Bestsellers
+              </Button>
+            </Link>
+          </div>
+          
+          {bestsellerBooks.length > 0 ? (
+            <div className="relative overflow-hidden">
+              <div 
+                className="flex transition-transform duration-1000 ease-in-out gap-6"
+                style={{ transform: `translateX(-${currentSlide * 25}%)` }}
+              >
+                {bestsellerBooks.map((book) => (
+                  <div key={book.id} className="flex-none w-72">
+                    <BookCard book={book} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-secondary-black text-lg">Loading bestsellers...</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Featured Books Section - Moving Carousel */}
       <section className="py-16">
         <div className="container-custom">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">Featured Books</h3>
+            <div className="flex items-center gap-3">
+              <Star className="h-8 w-8 text-yellow-500" />
+              <h3 className="text-3xl font-bookerly font-bold text-base-black">Featured Books</h3>
+            </div>
             <Link href="/catalog?featured=true">
               <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white">
                 View All Featured
@@ -69,10 +167,17 @@ export default function HomePage() {
           </div>
           
           {featuredBooks.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredBooks.map((book) => (
-                <BookCard key={book.id} book={book} />
-              ))}
+            <div className="relative overflow-hidden">
+              <div 
+                className="flex transition-transform duration-1000 ease-in-out gap-6"
+                style={{ transform: `translateX(-${(currentSlide * 25) % 100}%)` }}
+              >
+                {featuredBooks.map((book) => (
+                  <div key={book.id} className="flex-none w-72">
+                    <BookCard book={book} />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-12">
@@ -88,23 +193,31 @@ export default function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="bg-site-bg py-16">
+      <section className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-16">
         <div className="container-custom">
-          <h3 className="text-3xl font-bookerly font-bold text-base-black text-center mb-8">
-            Browse by Category
-          </h3>
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Award className="h-8 w-8 text-primary-aqua" />
+              <h3 className="text-3xl font-bookerly font-bold text-base-black">
+                Browse by Category
+              </h3>
+            </div>
+            <p className="text-lg text-secondary-black max-w-2xl mx-auto">
+              Discover your next favorite book from our carefully curated categories
+            </p>
+          </div>
           
           {categories.length > 0 ? (
             <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6">
               {categories.slice(0, 6).map((category, index) => (
                 <Link key={category.id} href={`/catalog?category=${category.slug}`}>
-                  <Card className="group cursor-pointer hover:shadow-lg transition-all duration-200">
+                  <Card className="group cursor-pointer hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary-aqua">
                     <CardContent className="p-4 text-center">
-                      <div className="aspect-square mb-4 overflow-hidden rounded-lg">
+                      <div className="aspect-square mb-4 overflow-hidden rounded-xl">
                         <img
                           src={categoryImages[index % categoryImages.length]}
                           alt={category.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       </div>
                       <h4 className="font-bookerly font-semibold text-base-black group-hover:text-primary-aqua transition-colors">
@@ -124,44 +237,80 @@ export default function HomePage() {
       </section>
 
       {/* About Section */}
-      <section className="py-16">
+      <section className="py-20 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50">
         <div className="container-custom">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <img
-                src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
-                alt="Reading corner"
-                className="rounded-lg shadow-lg w-full h-auto"
-              />
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="order-2 lg:order-1">
+              <div className="grid grid-cols-2 gap-4">
+                <img
+                  src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500"
+                  alt="Beautiful library"
+                  className="rounded-2xl shadow-lg w-full h-80 object-cover"
+                />
+                <div className="flex flex-col gap-4">
+                  <img
+                    src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
+                    alt="Reading books"
+                    className="rounded-2xl shadow-lg w-full h-36 object-cover"
+                  />
+                  <img
+                    src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
+                    alt="Book collection"
+                    className="rounded-2xl shadow-lg w-full h-40 object-cover"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-3xl font-bookerly font-bold text-base-black mb-6">
-                About A2Z BOOKSHOP
+            <div className="order-1 lg:order-2">
+              <h3 className="text-4xl font-bookerly font-bold text-base-black mb-6">
+                Why Choose A2Z BOOKSHOP?
               </h3>
-              <p className="text-secondary-black mb-6">
+              <p className="text-lg text-secondary-black mb-8 leading-relaxed">
                 We're passionate about connecting readers with extraordinary books. Our carefully 
                 curated collection spans from rare first editions to contemporary bestsellers, 
                 ensuring every book lover finds their perfect literary companion.
               </p>
-              <div className="grid grid-cols-3 gap-6 mb-8">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary-aqua">1,200+</p>
-                  <p className="text-secondary-black text-sm">Books Available</p>
+              <div className="grid grid-cols-1 gap-6 mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-primary-aqua rounded-full flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">1K+</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-base-black">Books Available</p>
+                    <p className="text-secondary-black text-sm">Curated collection of quality books</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary-aqua">4.8/5</p>
-                  <p className="text-secondary-black text-sm">Customer Rating</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">4.8</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-base-black">Customer Rating</p>
+                    <p className="text-secondary-black text-sm">Trusted by thousands of readers</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary-aqua">50+</p>
-                  <p className="text-secondary-black text-sm">Countries Served</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">50+</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-base-black">Countries Served</p>
+                    <p className="text-secondary-black text-sm">Worldwide shipping available</p>
+                  </div>
                 </div>
               </div>
-              <Link href="/about">
-                <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white">
-                  Learn More About Us
-                </Button>
-              </Link>
+              <div className="flex gap-4">
+                <Link href="/about">
+                  <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white px-8 py-3 rounded-full">
+                    Learn More About Us
+                  </Button>
+                </Link>
+                <Link href="/contact">
+                  <Button className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3 rounded-full">
+                    Contact Us
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
