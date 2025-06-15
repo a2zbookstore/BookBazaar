@@ -1022,12 +1022,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/books", isAuthenticated, async (req: any, res) => {
+  app.post("/api/books", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      // Check admin session first
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (adminId && isAdmin) {
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        // Fallback to Replit auth
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user?.role !== "admin") {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        return res.status(401).json({ message: "Admin authentication required" });
       }
 
       const bookData = insertBookSchema.parse(req.body);
