@@ -236,16 +236,16 @@ export default function BookDetailPage() {
 
             <Separator />
 
-            {/* 30-Day Return Policy */}
+            {/* 15-Day Return Policy */}
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <RotateCcw className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-green-800 mb-2">30-Day Return Policy</h3>
+                  <h3 className="font-semibold text-green-800 mb-2">15-Day Return Policy</h3>
                   <p className="text-sm text-green-700 leading-relaxed">
-                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund. 
+                    Not satisfied with your purchase? Return this book within <strong>15 days</strong> of delivery for a full refund. 
                     Books must be in the same condition as when received. Return shipping is free for damaged or incorrectly described items.
                   </p>
                   <Link href="/return-request" className="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium mt-2">

@@ -166,7 +166,7 @@ export default function BookCard({ book }: BookCardProps) {
             </div>
             <div className="flex items-center gap-1">
               <RotateCcw className="h-3 w-3 text-green-600" />
-              <span className="text-secondary-black">30-day returns</span>
+              <span className="text-secondary-black">15-day returns</span>
             </div>
           </div>
 
