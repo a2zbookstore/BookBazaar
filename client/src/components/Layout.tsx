@@ -129,7 +129,15 @@ export default function Layout({ children }: LayoutProps) {
                   
                   <Button
                     variant="ghost"
-                    onClick={() => window.location.href = "/api/logout"}
+                    onClick={async () => {
+                      try {
+                        await fetch("/api/auth/logout", { method: "POST" });
+                        window.location.href = "/";
+                      } catch (error) {
+                        // Fallback to Replit logout
+                        window.location.href = "/api/logout";
+                      }
+                    }}
                     className="text-secondary-black hover:text-primary-aqua"
                   >
                     <User className="h-4 w-4 mr-2" />
@@ -148,13 +156,13 @@ export default function Layout({ children }: LayoutProps) {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => window.location.href = "/api/login"}
+                    onClick={() => setLocation('/login')}
                     className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
                   >
                     Login
                   </Button>
                   <Button
-                    onClick={() => window.location.href = "/api/login"}
+                    onClick={() => setLocation('/register')}
                     className="bg-primary-aqua hover:bg-secondary-aqua"
                   >
                     Register

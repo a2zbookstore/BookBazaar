@@ -113,6 +113,7 @@ A2Z BOOKSHOP is a full-stack web application for an online bookstore built with 
 Changelog:
 - June 14, 2025. Initial setup
 - June 14, 2025. Completed separate admin authentication system with database table, login/logout endpoints, session management, and web-based account management interface
+- June 15, 2025. Implemented complete customer registration and login system with email authentication, password hashing, session management, and updated navigation
 ```
 
 ## User Preferences
