@@ -114,6 +114,7 @@ Changelog:
 - June 14, 2025. Initial setup
 - June 14, 2025. Completed separate admin authentication system with database table, login/logout endpoints, session management, and web-based account management interface
 - June 15, 2025. Implemented complete customer registration and login system with email authentication, password hashing, session management, and updated navigation
+- June 15, 2025. Added comprehensive guest checkout system - users can browse, add to cart, and complete orders without registration, with optional account creation during checkout
 ```
 
 ## User Preferences
