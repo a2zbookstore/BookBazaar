@@ -958,6 +958,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search suggestions endpoint
+  app.get("/api/books/search-suggestions", async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string' || q.length < 2) {
+        return res.json([]);
+      }
+
+      const suggestions = await storage.getSearchSuggestions(q);
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+      res.status(500).json({ message: "Failed to fetch suggestions" });
+    }
+  });
+
   app.get("/api/books/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

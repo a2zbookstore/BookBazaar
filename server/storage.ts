@@ -63,6 +63,7 @@ export interface IStorage {
   updateBook(id: number, book: Partial<InsertBook>): Promise<Book>;
   deleteBook(id: number): Promise<void>;
   updateBookStock(id: number, quantity: number): Promise<void>;
+  getSearchSuggestions(query: string): Promise<string[]>;
 
   // Order operations
   getOrders(options?: {
@@ -289,6 +290,38 @@ export class DatabaseStorage implements IStorage {
       .update(books)
       .set({ stock: quantity, updatedAt: new Date() })
       .where(eq(books.id, id));
+  }
+
+  async getSearchSuggestions(query: string): Promise<string[]> {
+    const searchTerm = query.toLowerCase();
+    
+    // Get unique suggestions from titles and authors
+    const titleSuggestions = await db
+      .selectDistinct({ value: books.title })
+      .from(books)
+      .where(sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`)
+      .limit(5);
+    
+    const authorSuggestions = await db
+      .selectDistinct({ value: books.author })
+      .from(books)
+      .where(sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`)
+      .limit(5);
+    
+    // Combine and deduplicate suggestions
+    const allSuggestions = [
+      ...titleSuggestions.map(s => s.value),
+      ...authorSuggestions.map(s => s.value)
+    ];
+    
+    // Remove duplicates and return top 8 suggestions
+    const uniqueSuggestions: string[] = [];
+    for (const suggestion of allSuggestions) {
+      if (!uniqueSuggestions.includes(suggestion)) {
+        uniqueSuggestions.push(suggestion);
+      }
+    }
+    return uniqueSuggestions.slice(0, 8);
   }
 
   // Order operations
