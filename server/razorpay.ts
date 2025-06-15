@@ -1,5 +1,6 @@
 import Razorpay from "razorpay";
 import { Request, Response } from "express";
+import crypto from "crypto";
 
 const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = process.env;
 
@@ -79,20 +80,34 @@ export async function createRazorpayOrder(req: Request, res: Response) {
 
 export async function verifyRazorpayPayment(req: Request, res: Response) {
   try {
+    console.log("Razorpay verification request body:", req.body);
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      console.log("Missing required parameters for verification");
+      return res.status(400).json({ 
+        status: "failed", 
+        message: "Missing required parameters: razorpay_order_id, razorpay_payment_id, razorpay_signature" 
+      });
+    }
+
     // Verify signature using crypto
-    const crypto = require("crypto");
     const body = razorpay_order_id + "|" + razorpay_payment_id;
+    console.log("Creating signature for body:", body);
+    
     const expectedSignature = crypto
-      .createHmac("sha256", RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", RAZORPAY_KEY_SECRET as string)
       .update(body.toString())
       .digest("hex");
 
+    console.log("Expected signature:", expectedSignature);
+    console.log("Received signature:", razorpay_signature);
+
     if (expectedSignature === razorpay_signature) {
-      // Payment is valid
+      console.log("Payment verified successfully");
       res.json({ status: "success", message: "Payment verified successfully" });
     } else {
+      console.log("Signature verification failed");
       res.status(400).json({ status: "failed", message: "Invalid payment signature" });
     }
   } catch (error) {
