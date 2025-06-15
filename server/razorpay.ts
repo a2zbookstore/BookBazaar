@@ -22,8 +22,18 @@ export async function createRazorpayOrder(req: Request, res: Response) {
       });
     }
 
+    // Ensure minimum amount for live Razorpay (₹1.00 = 100 paise)
+    if (parseFloat(amount) < 1) {
+      return res.status(400).json({
+        error: "Minimum transaction amount is ₹1.00",
+      });
+    }
+
+    const amountInPaise = Math.round(parseFloat(amount) * 100);
+    console.log(`Creating Razorpay order: ${amount} ${currency} = ${amountInPaise} paise`);
+    
     const options = {
-      amount: Math.round(parseFloat(amount) * 100), // Razorpay expects amount in paise
+      amount: amountInPaise, // Razorpay expects amount in paise
       currency: currency,
       receipt: receipt || `receipt_${Date.now()}`,
       payment_capture: 1, // Auto capture

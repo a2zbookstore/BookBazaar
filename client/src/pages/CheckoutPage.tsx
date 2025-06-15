@@ -253,10 +253,10 @@ export default function CheckoutPage() {
 
       const options = {
         key: (razorpayConfig as any).key_id,
-        amount: orderResponse.amount,
+        amount: orderResponse.amount, // Amount in paise from server
         currency: orderResponse.currency,
         name: "A2Z BOOKSHOP",
-        description: "Book Purchase",
+        description: `Book Purchase - ₹${totalInINR.toFixed(2)}`,
         order_id: orderResponse.id,
         handler: async (response: any) => {
           try {
@@ -305,7 +305,7 @@ export default function CheckoutPage() {
           contact: customerPhone
         },
         theme: {
-          color: "#0EA5E9"
+          color: "#2563eb"
         }
       };
 

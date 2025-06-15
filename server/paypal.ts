@@ -98,7 +98,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
           {
             amount: {
               currencyCode: currency,
-              value: amount,
+              value: amount.toString(),
             },
           },
         ],
