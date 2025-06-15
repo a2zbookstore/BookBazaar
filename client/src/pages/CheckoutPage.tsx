@@ -239,12 +239,17 @@ export default function CheckoutPage() {
       const usdToInrRate = 83; // Current exchange rate
       const totalInINR = Math.round(total * usdToInrRate * 100) / 100; // Round to 2 decimal places
       
+      console.log("Payment Debug - USD Total:", total);
+      console.log("Payment Debug - INR Total:", totalInINR);
+      
       const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
         amount: totalInINR,
         currency: "INR",
         receipt: `receipt_${Date.now()}`
       }) as any;
-      console.log("Razorpay order created:", orderResponse);
+      
+      console.log("Payment Debug - Razorpay Response:", orderResponse);
+      console.log("Payment Debug - Amount in paise:", orderResponse.amount);
 
       const options = {
         key: (razorpayConfig as any).key_id,
