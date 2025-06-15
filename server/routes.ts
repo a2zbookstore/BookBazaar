@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail } from "./emailService";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
