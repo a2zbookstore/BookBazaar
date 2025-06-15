@@ -1114,7 +1114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/cart/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/cart/:id", async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const { quantity } = req.body;
@@ -1126,7 +1126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/cart/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/cart/:id", async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.removeFromCart(id);
@@ -1134,6 +1134,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing from cart:", error);
       res.status(500).json({ message: "Failed to remove from cart" });
+    }
+  });
+
+  app.delete("/api/cart", async (req: any, res) => {
+    try {
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (userId) {
+        await storage.clearCart(userId);
+      } else {
+        // Clear guest cart from session
+        (req.session as any).cartItems = [];
+      }
+      
+      res.json({ message: "Cart cleared" });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ message: "Failed to clear cart" });
     }
   });
 

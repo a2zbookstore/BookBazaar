@@ -25,8 +25,8 @@ export default function CartPage() {
 
   // Calculate cart totals
   const cartSubtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
-  const cartShipping = cartSubtotal > 50 ? 0 : 5.99;
-  const cartTax = cartSubtotal * 0.21;
+  const cartShipping = 5.99; // Standard shipping rate
+  const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
 
   // Convert total to user's currency
@@ -258,9 +258,7 @@ export default function CartPage() {
                         {cartShipping === 0 ? "Free" : `$${cartShipping.toFixed(2)}`}
                       </span>
                     </div>
-                    {cartShipping === 0 && (
-                      <p className="text-xs text-green-600">Free shipping on orders over $50!</p>
-                    )}
+
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Tax (21%):</span>
                       <span className="text-base-black">${cartTax.toFixed(2)}</span>
