@@ -1273,15 +1273,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders routes
-  app.get("/api/orders", isAuthenticated, async (req: any, res) => {
+  app.get("/api/orders", async (req: any, res) => {
     try {
+      // Check for admin session authentication first
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (adminId && isAdmin) {
+        // Admin can see all orders
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
+
+        const options: any = {};
+        // Add query parameters
+        if (req.query.status) options.status = req.query.status as string;
+        if (req.query.limit) options.limit = parseInt(req.query.limit as string);
+        if (req.query.offset) options.offset = parseInt(req.query.offset as string);
+
+        const result = await storage.getOrders(options);
+        return res.json(result);
+      }
+      
+      // Check for regular user authentication
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      const options: any = {};
-      if (user?.role !== "admin") {
-        options.userId = userId; // Regular users can only see their own orders
-      }
+      const options: any = { userId }; // Regular users can only see their own orders
       
       // Add query parameters
       if (req.query.status) options.status = req.query.status as string;
@@ -1296,7 +1319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/orders/:id", isAuthenticated, async (req: any, res) => {
+  app.get("/api/orders/:id", async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const order = await storage.getOrderById(id);
@@ -1304,11 +1327,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
+      // Check for admin session authentication
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (adminId && isAdmin) {
+        // Admin can access any order
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
+        return res.json(order);
+      }
+
+      // Check for regular user authentication
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
       
       // Check if user can access this order
-      if (user?.role !== "admin" && order.userId !== userId) {
+      if (order.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -1319,18 +1359,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/orders/:id/status", isAuthenticated, async (req: any, res) => {
+  app.put("/api/orders/:id/status", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      // Check for admin session authentication
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
       }
 
       const id = parseInt(req.params.id);
-      const { status } = req.body;
-      const order = await storage.updateOrderStatus(id, status);
-      res.json(order);
+      const { status, trackingNumber, shippingCarrier, notes } = req.body;
+      
+      const updatedOrder = await storage.updateOrderStatus(id, status, {
+        trackingNumber,
+        shippingCarrier,
+        notes
+      });
+      
+      res.json(updatedOrder);
     } catch (error) {
       console.error("Error updating order status:", error);
       res.status(500).json({ message: "Failed to update order status" });
