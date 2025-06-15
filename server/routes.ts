@@ -1361,13 +1361,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/orders/:id/status", async (req: any, res) => {
     try {
-      const adminId = (req.session as any)?.adminId;
-      const isAdmin = (req.session as any)?.isAdmin;
-      
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Unauthorized" });
+      // Get session ID from cookie and load session manually
+      const cookieHeader = req.headers.cookie;
+      if (!cookieHeader) {
+        return res.status(401).json({ message: "No session cookie found" });
       }
 
+      // Extract session ID from cookie
+      const sessionMatch = cookieHeader.match(/connect\.sid=([^;]+)/);
+      if (!sessionMatch) {
+        return res.status(401).json({ message: "Invalid session cookie" });
+      }
+
+      const sessionId = decodeURIComponent(sessionMatch[1]);
+      const actualSessionId = sessionId.replace(/^s:/, '').split('.')[0];
+
+      // Query session store directly
+      const sessionStore = req.sessionStore;
+      const sessionData = await new Promise((resolve, reject) => {
+        sessionStore.get(actualSessionId, (err: any, session: any) => {
+          if (err) reject(err);
+          else resolve(session);
+        });
+      });
+
+      if (!sessionData || !(sessionData as any).adminId || !(sessionData as any).isAdmin) {
+        return res.status(401).json({ message: "Invalid admin session" });
+      }
+
+      const adminId = (sessionData as any).adminId;
       const admin = await storage.getAdminById(adminId);
       if (!admin || !admin.isActive) {
         return res.status(401).json({ message: "Admin account inactive" });
