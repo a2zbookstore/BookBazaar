@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
@@ -12,6 +12,7 @@ import { Search, Star, TrendingUp, Award } from "lucide-react";
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [, setLocation] = useLocation();
   
   const { data: featuredBooks = [] } = useQuery<Book[]>({
     queryKey: ["/api/books?featured=true&limit=12"],
@@ -36,8 +37,7 @@ export default function HomePage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log("Homepage search for:", searchQuery.trim());
-      window.location.href = `/catalog?search=${encodeURIComponent(searchQuery.trim())}`;
+      setLocation(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 

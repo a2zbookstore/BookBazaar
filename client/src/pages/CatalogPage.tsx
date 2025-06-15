@@ -39,8 +39,18 @@ export default function CatalogPage() {
     const params = new URLSearchParams(location.split('?')[1] || '');
     setSearchParams(params);
     const searchParam = params.get('search') || '';
-    console.log("Catalog page received search param:", searchParam);
     setSearch(searchParam);
+    
+    // Reset to first page when search changes
+    setCurrentPage(1);
+    
+    // Reset other filters when coming from homepage search
+    if (searchParam) {
+      setSelectedCategories([]);
+      setSelectedConditions([]);
+      setMinPrice('');
+      setMaxPrice('');
+    }
     
     if (params.get('category')) {
       setSelectedCategories([params.get('category')!]);
@@ -63,8 +73,6 @@ export default function CatalogPage() {
   queryParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
 
   const apiUrl = `/api/books?${queryParams.toString()}`;
-  console.log("API call URL:", apiUrl);
-  console.log("Search value:", search);
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
     queryKey: [apiUrl],
