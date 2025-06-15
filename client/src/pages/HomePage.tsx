@@ -14,13 +14,15 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [, setLocation] = useLocation();
   
-  const { data: featuredBooks = [] } = useQuery<Book[]>({
+  const { data: featuredBooksResponse } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
   });
+  const featuredBooks = featuredBooksResponse?.books || [];
 
-  const { data: bestsellerBooks = [] } = useQuery<Book[]>({
+  const { data: bestsellerBooksResponse } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?sortBy=createdAt&sortOrder=desc&limit=10"],
   });
+  const bestsellerBooks = bestsellerBooksResponse?.books || [];
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
