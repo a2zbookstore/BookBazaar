@@ -92,6 +92,7 @@ export default function OrdersPage() {
       shippingCarrier?: string; 
       notes?: string; 
     }) => {
+      console.log('Order update data:', data);
       return await apiRequest(`/api/orders/${data.orderId}/status`, "PUT", {
         status: data.status,
         trackingNumber: data.trackingNumber,
@@ -99,7 +100,8 @@ export default function OrdersPage() {
         notes: data.notes,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Order update success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: "Success",
@@ -108,6 +110,7 @@ export default function OrdersPage() {
       setSelectedOrder(null);
     },
     onError: (error: any) => {
+      console.error('Order update error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update order status",
@@ -119,11 +122,14 @@ export default function OrdersPage() {
   const handleUpdateOrder = () => {
     if (!selectedOrder || !newStatus) return;
 
+    // Convert "none" to empty string for shipping carrier
+    const carrierValue = shippingCarrier === "none" ? "" : shippingCarrier;
+
     updateOrderMutation.mutate({
       orderId: selectedOrder.id,
       status: newStatus,
       trackingNumber: trackingNumber || undefined,
-      shippingCarrier: shippingCarrier || undefined,
+      shippingCarrier: carrierValue || undefined,
       notes: notes || undefined,
     });
   };
@@ -133,7 +139,7 @@ export default function OrdersPage() {
     if (selectedOrder) {
       setNewStatus(selectedOrder.status);
       setTrackingNumber(selectedOrder.trackingNumber || "");
-      setShippingCarrier(selectedOrder.shippingCarrier || "");
+      setShippingCarrier(selectedOrder.shippingCarrier || "none");
       setNotes(selectedOrder.notes || "");
     }
   }, [selectedOrder]);
