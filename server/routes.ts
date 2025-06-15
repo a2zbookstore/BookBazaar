@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
+import { BookImporter } from "./bookImporter";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
@@ -1622,6 +1623,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(results);
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ message: "Failed to import books" });
+    }
+  });
+
+  // New admin route for book importing with automatic image fetching
+  app.post('/api/admin/import-books', upload.single('file'), async (req: any, res) => {
+    try {
+      // Check admin authentication
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Save the uploaded file temporarily
+      const tempFilePath = path.join(__dirname, '../temp', `import-${Date.now()}.xlsx`);
+      const tempDir = path.dirname(tempFilePath);
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      fs.writeFileSync(tempFilePath, req.file.buffer);
+
+      // Process the file using BookImporter
+      const result = await BookImporter.importFromExcel(tempFilePath);
+
+      // Clean up temp file
+      fs.unlinkSync(tempFilePath);
+
+      res.json(result);
     } catch (error) {
       console.error("Import error:", error);
       res.status(500).json({ message: "Failed to import books" });
