@@ -121,6 +121,7 @@ Changelog:
 - June 15, 2025. Enhanced search functionality and redesigned homepage - fixed case-sensitive search issues with proper SQL LIKE queries for title/author/ISBN/description searches, completely redesigned homepage with beautiful book-related imagery, integrated search bar in hero section, added moving carousel sections for bestsellers and featured books with auto-scroll animations
 - June 15, 2025. Implemented advanced search with auto-suggestions - created SearchInput component with dropdown suggestions, added backend API endpoint for search suggestions, fixed bestsellers loading issue by correcting API response structure, customized store branding with red "2" in A2Z BOOKSHOP throughout website
 - June 15, 2025. Enhanced book cards with location-based shipping - implemented dynamic shipping cost and delivery time display based on user's country location, integrated with admin-configured shipping rate module, automatic location detection with fallback to "Rest of World" rates for unconfigured countries, real-time currency conversion for shipping costs
+- June 15, 2025. Implemented comprehensive checkout form validation - added email format validation with regex patterns, phone number validation with country code selector supporting 50+ countries, country dropdown with auto-suggestions and search functionality, made postal code mandatory, name validation allowing only letters/spaces/hyphens/apostrophes, real-time error messages with field highlighting
 ```
 
 ## User Preferences

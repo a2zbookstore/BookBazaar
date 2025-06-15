@@ -231,6 +231,21 @@ export default function CheckoutPage() {
     }
   }, [cartCount, setLocation]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.country-dropdown-container')) {
+        setShowCountryDropdown(false);
+      }
+    };
+
+    if (showCountryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showCountryDropdown]);
+
   const completeOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
       const response = await apiRequest("POST", "/api/orders/complete", orderData);
@@ -600,7 +615,7 @@ export default function CheckoutPage() {
                       required
                     />
                   </div>
-                  <div className="space-y-2 relative">
+                  <div className="space-y-2 relative country-dropdown-container">
                     <Label htmlFor="country">Country *</Label>
                     <Input
                       id="country"
