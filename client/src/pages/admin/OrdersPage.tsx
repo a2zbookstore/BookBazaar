@@ -324,7 +324,7 @@ export default function OrdersPage() {
                                         <SelectValue placeholder="Select carrier" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
+                                        <SelectItem value="none">None</SelectItem>
                                         <SelectItem value="FedEx">FedEx</SelectItem>
                                         <SelectItem value="UPS">UPS</SelectItem>
                                         <SelectItem value="DHL">DHL</SelectItem>
