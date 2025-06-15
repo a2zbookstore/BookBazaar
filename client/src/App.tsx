@@ -26,6 +26,8 @@ import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";
 import PayPalCompletePage from "@/pages/PayPalCompletePage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -56,6 +58,8 @@ function Router() {
       <Route path="/paypal-complete" component={PayPalCompletePage} />
       <Route path="/orders/:id" component={OrderDetailPage} />
       <Route path="/admin-login" component={AdminLoginPage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
       
       {/* Admin routes - protected by separate admin authentication */}
       <Route path="/admin">

@@ -72,11 +72,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      // Check for email-based authentication first
+      const userId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      
+      if (userId && isCustomerAuth) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          return res.json(user);
+        }
+      }
+      
+      // Check for Replit authentication
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const replitUserId = req.user.claims.sub;
+        const user = await storage.getUser(replitUserId);
+        if (user) {
+          return res.json(user);
+        }
+      }
+      
+      res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -271,6 +289,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/razorpay/verify", async (req, res) => {
     await verifyRazorpayPayment(req, res);
+  });
+
+  // Customer authentication routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { firstName, lastName, email, password } = req.body;
+      
+      if (!firstName || !lastName || !email || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ message: "User already exists with this email" });
+      }
+
+      // Hash password
+      const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+
+      // Create user
+      const user = await storage.createEmailUser({
+        email,
+        firstName,
+        lastName,
+        passwordHash
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Account created successfully",
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName
+        }
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Registration failed" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user || user.authProvider !== "email") {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Verify password
+      const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+      if (user.passwordHash !== passwordHash) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Set user session (similar to Replit auth)
+      (req.session as any).userId = user.id;
+      (req.session as any).isCustomerAuth = true;
+
+      // Save session before responding
+      req.session.save((err: any) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        
+        res.json({ 
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      req.logout(() => {
+        (req.session as any).userId = null;
+        (req.session as any).isCustomerAuth = false;
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ message: "Logout failed" });
+    }
   });
 
   // Admin authentication routes
