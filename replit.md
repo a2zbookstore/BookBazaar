@@ -126,6 +126,7 @@ Changelog:
 - June 15, 2025. Fixed cart and checkout shipping cost integration - both pages now directly fetch shipping rates from admin panel shipping module instead of fallback calculations, India shipping rate correctly displays $35.00 as configured, eliminated incorrect shipping cost calculations throughout checkout flow
 - June 15, 2025. Fixed admin panel orders module access issue - modified /api/orders, /api/orders/:id, and /api/orders/:id/status routes to support admin session authentication instead of requiring Replit authentication, updated OrdersPage component to use useAdminAuth hook instead of useAuth, admin can now access orders management without "Access Denied" errors
 - June 15, 2025. Enhanced orders management with custom shipping carriers - fixed Select component empty value error, added "Other" option in shipping carrier dropdown with dynamic custom carrier input field, improved form state initialization to handle existing custom carriers, resolved order update functionality issues by implementing manual session authentication via direct cookie extraction and session store querying to bypass middleware session persistence issues
+- June 15, 2025. Fixed order status update 401 authentication error - removed duplicate PUT /api/orders/:id/status route that was using Replit authentication and causing conflicts, kept only the admin session authenticated route for proper order management functionality
 ```
 
 ## User Preferences
