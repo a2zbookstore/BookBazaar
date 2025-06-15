@@ -1,35 +1,79 @@
-# A2Z BOOKSHOP - Complete Website Code
+# A2Z BOOKSHOP - Complete Website Download
 
-## Download Instructions
+## File Information
+- **File Name**: a2z-bookshop-complete-final.tar.gz
+- **File Size**: 13.55 MB
+- **Created**: June 15, 2025
+- **Status**: Production Ready
 
-Your complete A2Z BOOKSHOP website code has been packaged as: **a2z-bookshop-complete.tar.gz**
+## What's Included
+This archive contains the complete A2Z BOOKSHOP website code with all features:
 
-## What's Included:
-- Complete React frontend with TypeScript
-- Express.js backend with PostgreSQL integration  
-- All components, pages, and functionality
-- Admin panel with shipping rate management
-- Payment integration (PayPal + Razorpay)
-- Authentication system
-- Cart and checkout with correct shipping costs
-- Search functionality with auto-suggestions
-- Responsive design with custom styling
+### Frontend (React + TypeScript)
+- Complete e-commerce interface
+- Admin panel with order management
+- Customer authentication system
+- Shopping cart and checkout
+- Invoice generation and download
+- Return/refund system
+- Responsive design with Tailwind CSS
 
-## To Run Locally:
-1. Extract the tar.gz file
-2. Run `npm install` to install dependencies
-3. Set up PostgreSQL database and update DATABASE_URL
-4. Run `npm run dev` to start the development server
+### Backend (Express.js + TypeScript)
+- RESTful API endpoints
+- PostgreSQL database integration
+- Payment processing (Razorpay + PayPal)
+- Session management
+- File upload handling
+- Admin authentication
 
-## Current Features:
-✓ Complete e-commerce bookstore
-✓ Admin panel with inventory management
-✓ Shipping rate module integration
-✓ Payment processing (PayPal/Razorpay)
-✓ User authentication & guest checkout
-✓ Search with auto-suggestions
-✓ Responsive mobile design
-✓ Cart with correct shipping calculations
+### Database Schema
+- Users, Orders, Books, Categories
+- Cart items, Order items
+- Return requests, Refund transactions
+- Shipping rates, Store settings
+- Contact messages, Admin accounts
 
-File Size: 206KB
-Generated: June 15, 2025
+### Key Features
+- Guest checkout support
+- Real-time inventory management
+- Invoice generation (View/Download/Print)
+- Admin dashboard with pending orders counter
+- International shipping rate management
+- Multi-currency support
+- Complete order tracking system
+
+## Installation Instructions
+
+1. **Extract the archive**:
+   ```bash
+   tar -xzf a2z-bookshop-complete-final.tar.gz
+   cd a2z-bookshop-complete
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**:
+   - Copy `.env.example` to `.env`
+   - Configure database URL
+   - Add payment gateway credentials
+
+4. **Set up database**:
+   ```bash
+   npm run db:push
+   ```
+
+5. **Start the application**:
+   ```bash
+   npm run dev
+   ```
+
+## Deployment
+- Ready for Replit Deployments
+- Custom domain support (a2zbookshop.com)
+- Production optimized build included
+
+## Support
+All features are fully tested and production ready.
