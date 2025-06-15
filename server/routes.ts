@@ -133,8 +133,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { email } = req.query;
       
-      console.log(`Order access request - ID: ${id}, Email: ${email}`);
-      
       let order;
       let isAuthorized = false;
       
@@ -142,11 +140,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       
-      console.log(`Session auth - UserId: ${sessionUserId}, IsAuth: ${isCustomerAuth}`);
-      
       if (sessionUserId && isCustomerAuth) {
         order = await storage.getOrderById(parseInt(id));
-        console.log(`Session order check - Order found: ${order ? 'Yes' : 'No'}, Order userId: ${order?.userId}`);
         if (order && order.userId === sessionUserId) {
           isAuthorized = true;
         }
@@ -154,7 +149,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for Replit authentication
       else if (req.isAuthenticated && req.isAuthenticated()) {
         const userId = (req.user as any).claims.sub;
-        console.log(`Replit auth - UserId: ${userId}`);
         order = await storage.getOrderById(parseInt(id));
         if (order && order.userId === userId) {
           isAuthorized = true;
@@ -162,19 +156,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Guest access with email
       else if (email) {
-        console.log(`Guest access attempt for order ${id} with email: ${email}`);
         order = await storage.getOrderByIdAndEmail(parseInt(id), email as string);
-        console.log(`Guest order lookup result:`, order ? `Found order ${order.id}` : 'Not found');
         if (order) {
           isAuthorized = true;
-          console.log(`Guest access authorized for order ${order.id}`);
         }
       } else {
-        console.log(`No authentication method provided`);
         return res.status(401).json({ message: "Email required for guest access" });
       }
-      
-      console.log(`Final auth status - Order: ${order ? 'Found' : 'Not found'}, Authorized: ${isAuthorized}`);
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
