@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Star, ShoppingCart, Truck, Shield, ChevronRight } from "lucide-react";
+import { Star, ShoppingCart, Truck, Shield, ChevronRight, RotateCcw } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -232,6 +232,27 @@ export default function BookDetailPage() {
                   <p className="text-secondary-black">{book.dimensions}</p>
                 </div>
               )}
+            </div>
+
+            <Separator />
+
+            {/* 30-Day Return Policy */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <RotateCcw className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-green-800 mb-2">30-Day Return Policy</h3>
+                  <p className="text-sm text-green-700 leading-relaxed">
+                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund. 
+                    Books must be in the same condition as when received. Return shipping is free for damaged or incorrectly described items.
+                  </p>
+                  <Link href="/return-request" className="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium mt-2">
+                    Start a return request <ChevronRight className="h-3 w-3 ml-1" />
+                  </Link>
+                </div>
+              </div>
             </div>
 
             <Separator />

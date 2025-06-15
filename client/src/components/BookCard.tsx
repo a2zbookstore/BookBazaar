@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Star, ShoppingCart, Truck, Clock, Book as BookIcon } from "lucide-react";
+import { Star, ShoppingCart, Truck, Clock, Book as BookIcon, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
@@ -163,6 +163,10 @@ export default function BookCard({ book }: BookCardProps) {
                   '5-7 days delivery'
                 }
               </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <RotateCcw className="h-3 w-3 text-green-600" />
+              <span className="text-secondary-black">30-day returns</span>
             </div>
           </div>
 
