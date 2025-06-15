@@ -1,16 +1,22 @@
-import { useParams } from "wouter";
+import { useParams, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Clock, Package, Truck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Clock, Package, Truck, Download, Printer } from "lucide-react";
 
 export default function OrderDetailPage() {
   const { id } = useParams();
+  const search = useSearch();
+  
+  // Get email from URL parameters for guest access
+  const urlParams = new URLSearchParams(search);
+  const email = urlParams.get('email');
 
   const { data: order, isLoading } = useQuery({
-    queryKey: [`/api/orders/${id}`],
+    queryKey: [`/api/orders/${id}${email ? `?email=${email}` : ''}`],
     enabled: !!id,
   });
 
@@ -74,12 +80,130 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownloadInvoice = () => {
+    // Create a printable invoice content
+    const invoiceContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - Order #${order.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .order-info { margin-bottom: 20px; }
+          .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          .items-table th { background-color: #f2f2f2; }
+          .total-section { text-align: right; }
+          .company-info { margin-bottom: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>A<span style="color: #dc2626;">2</span>Z BOOKSHOP</h1>
+          <h2>INVOICE</h2>
+        </div>
+        
+        <div class="company-info">
+          <strong>A2Z BOOKSHOP</strong><br>
+          Online Bookstore<br>
+          Email: support@a2zbookshop.com
+        </div>
+        
+        <div class="order-info">
+          <strong>Order #:</strong> ${order.id}<br>
+          <strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}<br>
+          <strong>Customer:</strong> ${order.customerName}<br>
+          <strong>Email:</strong> ${order.customerEmail}<br>
+          <strong>Phone:</strong> ${order.customerPhone || 'N/A'}
+        </div>
+        
+        <h3>Shipping Address:</h3>
+        <p>
+          ${order.shippingAddress.street}<br>
+          ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zip}<br>
+          ${order.shippingAddress.country}
+        </p>
+        
+        <h3>Order Items:</h3>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Book Title</th>
+              <th>Author</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items?.map((item: any) => `
+              <tr>
+                <td>${item.title}</td>
+                <td>${item.author}</td>
+                <td>${item.quantity}</td>
+                <td>$${parseFloat(item.price).toFixed(2)}</td>
+                <td>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="total-section">
+          <p><strong>Subtotal: $${parseFloat(order.subtotal).toFixed(2)}</strong></p>
+          <p><strong>Shipping: $${parseFloat(order.shipping).toFixed(2)}</strong></p>
+          <p><strong>Tax: $${parseFloat(order.tax).toFixed(2)}</strong></p>
+          <p><strong>Total: $${parseFloat(order.total).toFixed(2)}</strong></p>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+          <p>Thank you for your business!</p>
+          <p>For support, contact us at support@a2zbookshop.com</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob([invoiceContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `invoice-${order.id}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-base-black mb-2">Order Details</h1>
-          <p className="text-secondary-black">Order #{order.id}</p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-base-black mb-2">Order Details</h1>
+            <p className="text-secondary-black">Order #{order.id}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handlePrint}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Print
+            </Button>
+            <Button
+              onClick={handleDownloadInvoice}
+              className="flex items-center gap-2 bg-primary-aqua hover:bg-secondary-aqua"
+            >
+              <Download className="w-4 h-4" />
+              Download Invoice
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-6">

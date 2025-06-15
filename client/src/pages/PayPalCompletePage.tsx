@@ -32,7 +32,9 @@ export default function PayPalCompletePage() {
       
       // Redirect to order detail page after 3 seconds
       setTimeout(() => {
-        setLocation(`/orders/${data.orderId}`);
+        const orderData = JSON.parse(sessionStorage.getItem('pendingOrder') || '{}');
+        const email = orderData.customerEmail;
+        setLocation(`/orders/${data.orderId}${email ? `?email=${encodeURIComponent(email)}` : ''}`);
       }, 3000);
     },
     onError: (error: any) => {

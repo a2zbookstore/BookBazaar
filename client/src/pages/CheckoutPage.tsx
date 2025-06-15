@@ -483,7 +483,8 @@ export default function CheckoutPage() {
         title: "Order Placed Successfully!",
         description: `Your order #${data.orderId} has been confirmed.`,
       });
-      setLocation(`/orders/${data.orderId}`);
+      // Navigate to order detail page with email for guest access
+      setLocation(`/orders/${data.orderId}?email=${encodeURIComponent(customerEmail)}`);
     },
     onError: (error: any) => {
       toast({
