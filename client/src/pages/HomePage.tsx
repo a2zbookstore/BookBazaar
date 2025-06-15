@@ -6,6 +6,7 @@ import BookCard from "@/components/BookCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import SearchInput from "@/components/SearchInput";
+import Logo from "@/components/Logo";
 import { Book, Category } from "@/types";
 import { Search, Star, TrendingUp, Award } from "lucide-react";
 
@@ -69,9 +70,10 @@ export default function HomePage() {
         </div>
         <div className="container-custom relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-bookerly font-bold text-base-black mb-6">
-              A<span className="text-red-500">2</span>Z BOOKSHOP
-            </h1>
+            {/* Featured Logo */}
+            <div className="flex justify-center mb-8">
+              <Logo size="xl" variant="default" showText={true} />
+            </div>
             <p className="text-xl text-secondary-black mb-8 leading-relaxed">
               Your ultimate destination for rare books, bestsellers, and literary treasures from around the world
             </p>

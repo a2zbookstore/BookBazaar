@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/SearchInput";
+import Logo from "@/components/Logo";
 import { useState } from "react";
 
 interface LayoutProps {
@@ -30,7 +31,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <h1 className="text-2xl font-bookerly font-bold text-base-black">A<span className="text-red-500">2</span>Z BOOKSHOP</h1>
+              <Logo size="md" variant="default" showText={true} />
             </Link>
 
             {/* Search Bar */}
