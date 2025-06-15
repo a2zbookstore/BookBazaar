@@ -54,28 +54,7 @@ export default function CartPage() {
     convertCartTotal();
   }, [cartTotal, userCurrency, convertPrice, formatAmount]);
 
-  if (!isAuthenticated) {
-    return (
-      <Layout>
-        <div className="container-custom py-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bookerly font-bold text-base-black mb-4">
-              Please Log In
-            </h2>
-            <p className="text-secondary-black mb-6">
-              You need to be logged in to view your cart.
-            </p>
-            <Button
-              onClick={() => window.location.href = "/api/login"}
-              className="bg-primary-aqua hover:bg-secondary-aqua"
-            >
-              Log In
-            </Button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+
 
   const handleUpdateQuantity = async (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
