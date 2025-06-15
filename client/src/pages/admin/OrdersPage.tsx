@@ -77,6 +77,7 @@ export default function OrdersPage() {
   const [newStatus, setNewStatus] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
+  const [customCarrier, setCustomCarrier] = useState("");
   const [notes, setNotes] = useState("");
 
   const { data: ordersData, isLoading } = useQuery({
@@ -122,8 +123,15 @@ export default function OrdersPage() {
   const handleUpdateOrder = () => {
     if (!selectedOrder || !newStatus) return;
 
-    // Convert "none" to empty string for shipping carrier
-    const carrierValue = shippingCarrier === "none" ? "" : shippingCarrier;
+    // Handle shipping carrier: use custom carrier if "other" is selected
+    let carrierValue = "";
+    if (shippingCarrier === "none") {
+      carrierValue = "";
+    } else if (shippingCarrier === "other") {
+      carrierValue = customCarrier;
+    } else {
+      carrierValue = shippingCarrier;
+    }
 
     updateOrderMutation.mutate({
       orderId: selectedOrder.id,
@@ -139,7 +147,22 @@ export default function OrdersPage() {
     if (selectedOrder) {
       setNewStatus(selectedOrder.status);
       setTrackingNumber(selectedOrder.trackingNumber || "");
-      setShippingCarrier(selectedOrder.shippingCarrier || "none");
+      
+      // Handle shipping carrier initialization
+      const carrier = selectedOrder.shippingCarrier || "";
+      const predefinedCarriers = ["FedEx", "UPS", "DHL", "USPS", "India Post", "Blue Dart", "Delhivery"];
+      
+      if (!carrier) {
+        setShippingCarrier("none");
+        setCustomCarrier("");
+      } else if (predefinedCarriers.includes(carrier)) {
+        setShippingCarrier(carrier);
+        setCustomCarrier("");
+      } else {
+        setShippingCarrier("other");
+        setCustomCarrier(carrier);
+      }
+      
       setNotes(selectedOrder.notes || "");
     }
   }, [selectedOrder]);
@@ -338,10 +361,24 @@ export default function OrdersPage() {
                                         <SelectItem value="India Post">India Post</SelectItem>
                                         <SelectItem value="Blue Dart">Blue Dart</SelectItem>
                                         <SelectItem value="Delhivery">Delhivery</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
                                 </div>
+
+                                {/* Custom carrier field - shows when "other" is selected */}
+                                {shippingCarrier === "other" && (
+                                  <div className="space-y-2">
+                                    <Label htmlFor="customCarrier">Custom Carrier Name</Label>
+                                    <Input
+                                      id="customCarrier"
+                                      value={customCarrier}
+                                      onChange={(e) => setCustomCarrier(e.target.value)}
+                                      placeholder="Enter carrier name"
+                                    />
+                                  </div>
+                                )}
 
                                 <div className="space-y-2">
                                   <Label htmlFor="tracking">Tracking Number</Label>
