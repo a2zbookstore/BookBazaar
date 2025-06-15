@@ -89,7 +89,7 @@ export const books = pgTable("books", {
 // Orders table
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id").references(() => users.id),
   customerEmail: varchar("customer_email").notNull(),
   customerName: varchar("customer_name").notNull(),
   customerPhone: varchar("customer_phone"),

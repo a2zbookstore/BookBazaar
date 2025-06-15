@@ -585,6 +585,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Get cart items for order
+      let cartItems = [];
+      if (userId) {
+        const userCartItems = await storage.getCartItems(userId);
+        cartItems = userCartItems.map(item => ({
+          bookId: item.book.id,
+          quantity: item.quantity,
+          price: item.book.price.toString(),
+          title: item.book.title,
+          author: item.book.author
+        }));
+      } else {
+        // Get guest cart from session
+        const guestCart = (req.session as any).guestCart || [];
+        cartItems = guestCart.map((item: any) => ({
+          bookId: item.bookId,
+          quantity: item.quantity,
+          price: item.price.toString(),
+          title: item.title,
+          author: item.author
+        }));
+      }
+
       // Create order in database
       const order = await storage.createOrder({
         userId,
@@ -600,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "confirmed",
         paymentStatus: "paid",
         notes: `Payment via ${paymentMethod}. Payment ID: ${paymentId}`
-      }, items);
+      }, cartItems);
 
       // Clear cart after successful order
       if (userId) {
