@@ -112,7 +112,29 @@ export async function setupAuth(app: Express) {
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
-    })(req, res, next);
+    })(req, res, async () => {
+      // Transfer guest cart items after successful Replit login
+      if (req.isAuthenticated()) {
+        const guestCartItems = (req.session as any).cartItems || [];
+        if (guestCartItems.length > 0) {
+          try {
+            const userId = (req.user as any).claims.sub;
+            for (const guestItem of guestCartItems) {
+              await storage.addToCart({
+                userId: userId,
+                bookId: guestItem.bookId,
+                quantity: guestItem.quantity
+              });
+            }
+            // Clear guest cart from session
+            (req.session as any).cartItems = [];
+          } catch (error) {
+            console.error("Error transferring guest cart after Replit login:", error);
+          }
+        }
+      }
+      next();
+    });
   });
 
   app.get("/api/logout", (req, res) => {

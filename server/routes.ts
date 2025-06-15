@@ -356,9 +356,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
+      // Get guest cart items before login
+      const guestCartItems = (req.session as any).cartItems || [];
+
       // Set user session (similar to Replit auth)
       (req.session as any).userId = user.id;
       (req.session as any).isCustomerAuth = true;
+
+      // Transfer guest cart items to authenticated user's cart
+      if (guestCartItems.length > 0) {
+        try {
+          for (const guestItem of guestCartItems) {
+            await storage.addToCart({
+              userId: user.id,
+              bookId: guestItem.bookId,
+              quantity: guestItem.quantity
+            });
+          }
+          // Clear guest cart from session
+          (req.session as any).cartItems = [];
+        } catch (error) {
+          console.error("Error transferring guest cart:", error);
+        }
+      }
 
       // Save session before responding
       req.session.save((err: any) => {
