@@ -718,7 +718,12 @@ export class DatabaseStorage implements IStorage {
   } = {}): Promise<{ returnRequests: (ReturnRequest & { order: Order & { items: OrderItem[] } })[], total: number }> {
     const { status, userId, orderId, limit = 50, offset = 0 } = options;
     
-    let query = db
+    const conditions = [];
+    if (status) conditions.push(eq(returnRequests.status, status));
+    if (userId) conditions.push(eq(returnRequests.userId, userId));
+    if (orderId) conditions.push(eq(returnRequests.orderId, orderId));
+
+    let baseQuery = db
       .select({
         returnRequest: returnRequests,
         order: orders,
@@ -727,17 +732,12 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(orders, eq(returnRequests.orderId, orders.id))
       .orderBy(desc(returnRequests.createdAt));
 
-    const conditions = [];
-    if (status) conditions.push(eq(returnRequests.status, status));
-    if (userId) conditions.push(eq(returnRequests.userId, userId));
-    if (orderId) conditions.push(eq(returnRequests.orderId, orderId));
-
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      baseQuery = baseQuery.where(and(...conditions));
     }
 
     const [results, [{ count: total }]] = await Promise.all([
-      query.limit(limit).offset(offset),
+      baseQuery.limit(limit).offset(offset),
       db.select({ count: count() }).from(returnRequests).where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
 
@@ -834,36 +834,48 @@ export class DatabaseStorage implements IStorage {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    let query = db
-      .select()
-      .from(orders)
-      .where(
-        and(
-          eq(orders.status, "delivered"),
-          gte(orders.createdAt, thirtyDaysAgo)
-        )
-      )
-      .orderBy(desc(orders.createdAt));
+    const conditions = [
+      eq(orders.status, "delivered"),
+      gte(orders.createdAt, thirtyDaysAgo)
+    ];
 
     if (userId) {
-      query = query.where(
-        and(
-          eq(orders.userId, userId),
-          eq(orders.status, "delivered"),
-          gte(orders.createdAt, thirtyDaysAgo)
-        )
-      );
+      conditions.push(eq(orders.userId, userId));
     } else if (email) {
-      query = query.where(
-        and(
-          eq(orders.customerEmail, email),
-          eq(orders.status, "delivered"),
-          gte(orders.createdAt, thirtyDaysAgo)
-        )
-      );
+      conditions.push(eq(orders.customerEmail, email));
     }
 
-    return await query;
+    const eligibleOrders = await db
+      .select()
+      .from(orders)
+      .where(and(...conditions))
+      .orderBy(desc(orders.createdAt));
+
+    // Get order items for each order
+    const ordersWithItems = await Promise.all(
+      eligibleOrders.map(async (order) => {
+        const items = await db
+          .select({
+            id: orderItems.id,
+            orderId: orderItems.orderId,
+            bookId: orderItems.bookId,
+            quantity: orderItems.quantity,
+            price: orderItems.price,
+            title: books.title,
+            author: books.author,
+          })
+          .from(orderItems)
+          .innerJoin(books, eq(orderItems.bookId, books.id))
+          .where(eq(orderItems.orderId, order.id));
+
+        return {
+          ...order,
+          items,
+        };
+      })
+    );
+
+    return ordersWithItems;
   }
 
   async createRefundTransaction(refundData: InsertRefundTransaction): Promise<RefundTransaction> {

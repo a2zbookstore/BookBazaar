@@ -20,6 +20,7 @@ import OrdersPage from "@/pages/admin/OrdersPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
+import ReturnsPage from "@/pages/admin/ReturnsPage";
 import AdminAccountPage from "@/pages/admin/AdminAccountPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/paypal-complete" component={PayPalCompletePage} />
       <Route path="/orders/:id" component={OrderDetailPage} />
+      <Route path="/returns" component={ReturnRequestPage} />
       <Route path="/admin-login" component={AdminLoginPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
@@ -86,6 +88,11 @@ function Router() {
       <Route path="/admin/shipping">
         <AdminProtectedRoute>
           <ShippingPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/returns">
+        <AdminProtectedRoute>
+          <ReturnsPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/settings">
