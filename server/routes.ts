@@ -161,8 +161,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if user owns this order or is admin
-      const user = await storage.getUser(req.user?.id);
-      if (order.userId !== req.user?.id && user?.role !== "admin") {
+      const user = await storage.getUser(req.user?.claims?.sub);
+      if (order.userId !== req.user?.claims?.sub && user?.role !== "admin") {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -985,12 +985,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/books/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/books/:id", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      // Check admin session first
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (adminId && isAdmin) {
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        // Fallback to Replit auth
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user?.role !== "admin") {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        return res.status(401).json({ message: "Admin authentication required" });
       }
 
       const id = parseInt(req.params.id);
@@ -1006,12 +1020,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/books/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/books/:id", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      // Check admin session first
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (adminId && isAdmin) {
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        // Fallback to Replit auth
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user?.role !== "admin") {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        return res.status(401).json({ message: "Admin authentication required" });
       }
 
       const id = parseInt(req.params.id);
@@ -1024,12 +1052,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image upload route for book covers
-  app.post("/api/books/upload-image", isAuthenticated, imageUpload.single('image'), async (req: any, res) => {
+  app.post("/api/books/upload-image", imageUpload.single('image'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      // Check admin session first
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (adminId && isAdmin) {
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        // Fallback to Replit auth
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user?.role !== "admin") {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        return res.status(401).json({ message: "Admin authentication required" });
       }
 
       if (!req.file) {
@@ -1665,7 +1707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.id;
+        userId = req.user.claims.sub;
       } else {
         // Guest user - require email parameter
         email = req.query.email;
@@ -1730,7 +1772,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.id;
+        userId = req.user.claims.sub;
       }
 
       const returnRequest = await storage.createReturnRequest({
@@ -1763,7 +1805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.id;
+        userId = req.user.claims.sub;
       } else {
         return res.status(401).json({ message: "Authentication required" });
       }
