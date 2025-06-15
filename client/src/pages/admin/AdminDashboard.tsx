@@ -1,12 +1,16 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, DollarSign, Clock, Star, TrendingUp, AlertTriangle, Truck } from "lucide-react";
+import { useLocation } from "wouter";
+import { BookOpen, DollarSign, Clock, Star, TrendingUp, AlertTriangle, Truck, Package } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DashboardStats, Book, Order } from "@/types";
 
 export default function AdminDashboard() {
+  const [, setLocation] = useLocation();
+  
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/admin/stats"],
   });
@@ -19,7 +23,15 @@ export default function AdminDashboard() {
     queryKey: ["/api/orders?limit=5"],
   });
 
+  // Query for pending orders count with auto-refresh
+  const { data: pendingOrdersData } = useQuery<{ orders: Order[] }>({
+    queryKey: ["/api/orders?status=pending"],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   const recentOrders = recentOrdersData?.orders || [];
+  const pendingOrders = pendingOrdersData?.orders || [];
+  const pendingOrdersCount = pendingOrders.length;
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -92,19 +104,38 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-yellow-200"
+            onClick={() => setLocation('/admin/orders')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-secondary-black text-sm font-medium">Pending Orders</p>
                   <p className="text-2xl font-bold text-base-black">
-                    {stats?.pendingOrders || 0}
+                    {pendingOrdersCount}
                   </p>
+                  <p className="text-xs text-yellow-600 mt-1">Click to view & process</p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-yellow-600" />
+                  <Package className="h-6 w-6 text-yellow-600" />
                 </div>
               </div>
+              {pendingOrdersCount > 0 && (
+                <div className="mt-3">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation('/admin/orders');
+                    }}
+                  >
+                    Process {pendingOrdersCount} Order{pendingOrdersCount !== 1 ? 's' : ''}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

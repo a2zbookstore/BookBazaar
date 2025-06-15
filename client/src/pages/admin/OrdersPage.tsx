@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from "@/components/ui/separator";
 import { Package, Truck, CheckCircle, XCircle, Clock, AlertCircle, Download, Printer, Edit, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { useLocation } from "wouter";
 
 interface Order {
   id: number;
@@ -70,8 +71,17 @@ export default function OrdersPage() {
   const { admin, isLoading: authLoading, isAuthenticated } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [location] = useLocation();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Auto-set filter to pending if coming from dashboard
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('status') === 'pending' || location.includes('pending')) {
+      setStatusFilter('pending');
+    }
+  }, [location]);
 
   // Form states for order update
   const [newStatus, setNewStatus] = useState("");
