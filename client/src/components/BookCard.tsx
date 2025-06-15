@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useQuery } from "@tanstack/react-query";
-import { Book, ShippingRate } from "@/types";
+import { useShipping } from "@/hooks/useShipping";
+import { Book } from "@/types";
 
 interface BookCardProps {
   book: Book;
@@ -17,14 +17,10 @@ export default function BookCard({ book }: BookCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
+  const { shipping } = useShipping();
   const [displayPrice, setDisplayPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
   const [shippingCost, setShippingCost] = useState<string>('');
-
-  // Fetch default shipping rate for display
-  const { data: defaultShippingRate } = useQuery<ShippingRate>({
-    queryKey: ["/api/shipping-rates/default"],
-  });
 
   // Convert price and shipping cost to user's currency
   useEffect(() => {
@@ -39,33 +35,33 @@ export default function BookCard({ book }: BookCardProps) {
             setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
           }
           
-          // Convert shipping cost if available
-          if (defaultShippingRate) {
-            const convertedShipping = await convertPrice(parseFloat(defaultShippingRate.shippingCost));
+          // Convert shipping cost if available from location-based shipping
+          if (shipping?.cost) {
+            const convertedShipping = await convertPrice(parseFloat(shipping.cost));
             if (convertedShipping) {
               setShippingCost(formatAmount(convertedShipping.convertedAmount, userCurrency));
             } else {
-              setShippingCost(formatAmount(parseFloat(defaultShippingRate.shippingCost), 'USD'));
+              setShippingCost(formatAmount(parseFloat(shipping.cost), 'USD'));
             }
           }
         } catch (error) {
           setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
-          if (defaultShippingRate) {
-            setShippingCost(formatAmount(parseFloat(defaultShippingRate.shippingCost), 'USD'));
+          if (shipping?.cost) {
+            setShippingCost(formatAmount(parseFloat(shipping.cost), 'USD'));
           }
         } finally {
           setIsConverting(false);
         }
       } else {
         setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
-        if (defaultShippingRate) {
-          setShippingCost(formatAmount(parseFloat(defaultShippingRate.shippingCost), 'USD'));
+        if (shipping?.cost) {
+          setShippingCost(formatAmount(parseFloat(shipping.cost), 'USD'));
         }
       }
     };
 
     convertPrices();
-  }, [book.price, userCurrency, convertPrice, formatAmount, defaultShippingRate]);
+  }, [book.price, userCurrency, convertPrice, formatAmount, shipping]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -162,8 +158,8 @@ export default function BookCard({ book }: BookCardProps) {
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 text-blue-600" />
               <span className="text-secondary-black">
-                {defaultShippingRate?.minDeliveryDays && defaultShippingRate?.maxDeliveryDays ? 
-                  `${defaultShippingRate.minDeliveryDays}-${defaultShippingRate.maxDeliveryDays} days delivery` : 
+                {shipping?.minDeliveryDays && shipping?.maxDeliveryDays ? 
+                  `${shipping.minDeliveryDays}-${shipping.maxDeliveryDays} days delivery` : 
                   '5-7 days delivery'
                 }
               </span>
