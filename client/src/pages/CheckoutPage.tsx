@@ -129,6 +129,8 @@ export default function CheckoutPage() {
   const [nameError, setNameError] = useState("");
   const [countryQuery, setCountryQuery] = useState("");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [phoneCountryQuery, setPhoneCountryQuery] = useState("");
+  const [showPhoneCountryDropdown, setShowPhoneCountryDropdown] = useState(false);
   const [shippingAddress, setShippingAddress] = useState({
     street: "",
     city: "",
@@ -216,6 +218,22 @@ export default function CheckoutPage() {
     country.toLowerCase().includes(countryQuery.toLowerCase())
   ).slice(0, 10);
 
+  const filteredCountryCodes = countryCodes.filter(country =>
+    country.name.toLowerCase().includes(phoneCountryQuery.toLowerCase()) ||
+    country.code.includes(phoneCountryQuery)
+  ).slice(0, 10);
+
+  const handlePhoneCountrySearch = (value: string) => {
+    setPhoneCountryQuery(value);
+    setShowPhoneCountryDropdown(value.length > 0);
+  };
+
+  const selectPhoneCountry = (countryCode: string) => {
+    setPhoneCountryCode(countryCode);
+    setPhoneCountryQuery("");
+    setShowPhoneCountryDropdown(false);
+  };
+
   // Copy billing address
   useEffect(() => {
     if (sameBillingAddress) {
@@ -238,13 +256,16 @@ export default function CheckoutPage() {
       if (!target.closest('.country-dropdown-container')) {
         setShowCountryDropdown(false);
       }
+      if (!target.closest('.phone-country-dropdown-container')) {
+        setShowPhoneCountryDropdown(false);
+      }
     };
 
-    if (showCountryDropdown) {
+    if (showCountryDropdown || showPhoneCountryDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showCountryDropdown]);
+  }, [showCountryDropdown, showPhoneCountryDropdown]);
 
   const completeOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
@@ -540,18 +561,29 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <Label htmlFor="customerPhone">Phone Number *</Label>
                   <div className="flex gap-2">
-                    <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {countryCodes.map((country, index) => (
-                          <SelectItem key={index} value={country.code}>
-                            {country.code} {country.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative phone-country-dropdown-container">
+                      <Input
+                        value={phoneCountryQuery || phoneCountryCode}
+                        onChange={(e) => handlePhoneCountrySearch(e.target.value)}
+                        onFocus={() => setShowPhoneCountryDropdown(true)}
+                        placeholder="Country code"
+                        className="w-40"
+                      />
+                      {showPhoneCountryDropdown && filteredCountryCodes.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                          {filteredCountryCodes.map((country, index) => (
+                            <div
+                              key={index}
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm flex items-center gap-2"
+                              onClick={() => selectPhoneCountry(country.code)}
+                            >
+                              <span className="font-medium">{country.code}</span>
+                              <span className="text-gray-600">{country.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <Input
                       id="customerPhone"
                       value={customerPhone}
@@ -562,7 +594,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
-                  <p className="text-xs text-gray-500">Format: Numbers, spaces, hyphens, and parentheses only</p>
+                  <p className="text-xs text-gray-500">Type country name or code to search. Format: Numbers, spaces, hyphens, and parentheses only</p>
                 </div>
               </CardContent>
             </Card>
