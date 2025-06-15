@@ -1,10 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Search, ShoppingCart, User, Menu } from "lucide-react";
+import { ShoppingCart, User, Menu } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import SearchInput from "@/components/SearchInput";
 import { useState } from "react";
 
 interface LayoutProps {
@@ -15,14 +15,6 @@ export default function Layout({ children }: LayoutProps) {
   const [location, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { cartCount } = useCart();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setLocation(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
@@ -43,22 +35,10 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Search Bar */}
             <div className="flex-1 max-w-2xl mx-8">
-              <form onSubmit={handleSearch} className="relative">
-                <Input
-                  type="text"
-                  placeholder="Search books, authors, ISBN..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-12 rounded-none border-gray-300 focus:border-primary-aqua"
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-4 bg-primary-aqua hover:bg-secondary-aqua rounded-none"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </form>
+              <SearchInput 
+                placeholder="Search books, authors, ISBN..."
+                className="w-full"
+              />
             </div>
 
             {/* Navigation */}

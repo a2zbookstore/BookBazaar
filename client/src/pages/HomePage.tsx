@@ -5,14 +5,12 @@ import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import SearchInput from "@/components/SearchInput";
 import { Book, Category } from "@/types";
 import { Search, Star, TrendingUp, Award } from "lucide-react";
 
 export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [, setLocation] = useLocation();
   
   const { data: featuredBooksResponse } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
@@ -36,14 +34,7 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [featuredBooks.length]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      const searchUrl = `/catalog?search=${encodeURIComponent(searchQuery.trim())}`;
-      console.log("Homepage search navigating to:", searchUrl);
-      setLocation(searchUrl);
-    }
-  };
+
 
   const bookImages = [
     "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
@@ -86,23 +77,12 @@ export default function HomePage() {
             </p>
             
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
-              <div className="relative">
-                <Input
-                  type="text"
-                  placeholder="Search by title, author, ISBN, or description..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-14 pl-6 pr-16 text-lg border-2 border-primary-aqua rounded-full focus:ring-2 focus:ring-secondary-aqua"
-                />
-                <Button
-                  type="submit"
-                  className="absolute right-2 top-2 h-10 w-10 rounded-full bg-primary-aqua hover:bg-secondary-aqua p-0"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
-              </div>
-            </form>
+            <div className="max-w-2xl mx-auto mb-8">
+              <SearchInput 
+                placeholder="Search by title, author, ISBN, or description..."
+                className="w-full"
+              />
+            </div>
 
             <div className="flex flex-wrap justify-center gap-4">
               <Link href="/catalog">
