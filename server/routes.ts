@@ -593,7 +593,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get cart items for order
-      let cartItems = [];
+      let cartItems: Array<{
+        bookId: number;
+        quantity: number;
+        price: string;
+        title: string;
+        author: string;
+      }> = [];
+      
       if (userId) {
         const userCartItems = await storage.getCartItems(userId);
         cartItems = userCartItems.map(item => ({
@@ -610,7 +617,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Session keys:", Object.keys(req.session));
         
         // For guest cart, use existing book data or fetch from database
-        cartItems = [];
         for (const item of guestCart) {
           try {
             let book = item.book;

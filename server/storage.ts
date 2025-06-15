@@ -80,7 +80,7 @@ export interface IStorage {
   }): Promise<{ orders: Order[]; total: number }>;
   getOrderById(id: number): Promise<(Order & { items: OrderItem[] }) | undefined>;
   getOrderByIdAndEmail(id: number, email: string): Promise<(Order & { items: OrderItem[] }) | undefined>;
-  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
+  createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<Order>;
   updateOrderStatus(id: number, status: string, trackingInfo?: { trackingNumber?: string; shippingCarrier?: string; notes?: string }): Promise<Order>;
 
   // Cart operations
@@ -425,7 +425,7 @@ export class DatabaseStorage implements IStorage {
     return { ...order, items };
   }
 
-  async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+  async createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<Order> {
     return await db.transaction(async (tx) => {
       const [newOrder] = await tx.insert(orders).values(order).returning();
 
