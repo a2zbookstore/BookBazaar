@@ -1361,29 +1361,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/orders/:id/status", async (req: any, res) => {
     try {
-      // Use the exact same authentication pattern as GET /api/admin/user
+      // Use exact same authentication pattern as GET /api/orders
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
       
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
+      if (adminId && isAdmin) {
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
 
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
+        const id = parseInt(req.params.id);
+        const { status, trackingNumber, shippingCarrier, notes } = req.body;
+        
+        const updatedOrder = await storage.updateOrderStatus(id, status, {
+          trackingNumber,
+          shippingCarrier,
+          notes
+        });
+        
+        return res.json(updatedOrder);
       }
-
-      const id = parseInt(req.params.id);
-      const { status, trackingNumber, shippingCarrier, notes } = req.body;
       
-      const updatedOrder = await storage.updateOrderStatus(id, status, {
-        trackingNumber,
-        shippingCarrier,
-        notes
-      });
-      
-      res.json(updatedOrder);
+      // If not admin, deny access
+      return res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error updating order status:", error);
       res.status(500).json({ message: "Failed to update order status" });
