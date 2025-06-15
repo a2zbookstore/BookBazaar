@@ -167,6 +167,46 @@ export const shippingRates = pgTable("shipping_rates", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Return requests table
+export const returnRequests = pgTable("return_requests", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  userId: varchar("user_id").references(() => users.id),
+  customerEmail: varchar("customer_email").notNull(),
+  customerName: varchar("customer_name").notNull(),
+  returnReason: varchar("return_reason").notNull(), // damaged, defective, wrong_item, not_as_described, other
+  returnDescription: text("return_description").notNull(),
+  itemsToReturn: jsonb("items_to_return").notNull(), // Array of {bookId, quantity, reason}
+  totalRefundAmount: decimal("total_refund_amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").default("pending"), // pending, approved, rejected, refund_processed
+  adminNotes: text("admin_notes"),
+  refundMethod: varchar("refund_method"), // paypal, razorpay, bank_transfer
+  refundTransactionId: varchar("refund_transaction_id"),
+  refundProcessedAt: timestamp("refund_processed_at"),
+  returnDeadline: timestamp("return_deadline").notNull(), // 30 days from order delivery
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Refund transactions table
+export const refundTransactions = pgTable("refund_transactions", {
+  id: serial("id").primaryKey(),
+  returnRequestId: integer("return_request_id").notNull().references(() => returnRequests.id),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }).notNull(),
+  refundMethod: varchar("refund_method").notNull(), // paypal, razorpay, bank_transfer
+  originalPaymentMethod: varchar("original_payment_method"), // paypal, razorpay
+  originalTransactionId: varchar("original_transaction_id"),
+  refundTransactionId: varchar("refund_transaction_id"),
+  refundStatus: varchar("refund_status").default("pending"), // pending, completed, failed
+  refundReason: text("refund_reason"),
+  processedBy: integer("processed_by").references(() => admins.id),
+  processedAt: timestamp("processed_at"),
+  gatewayResponse: jsonb("gateway_response"), // Store gateway API response
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -213,6 +253,33 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   book: one(books, {
     fields: [cartItems.bookId],
     references: [books.id],
+  }),
+}));
+
+export const returnRequestsRelations = relations(returnRequests, ({ one, many }) => ({
+  order: one(orders, {
+    fields: [returnRequests.orderId],
+    references: [orders.id],
+  }),
+  user: one(users, {
+    fields: [returnRequests.userId],
+    references: [users.id],
+  }),
+  refundTransactions: many(refundTransactions),
+}));
+
+export const refundTransactionsRelations = relations(refundTransactions, ({ one }) => ({
+  returnRequest: one(returnRequests, {
+    fields: [refundTransactions.returnRequestId],
+    references: [returnRequests.id],
+  }),
+  order: one(orders, {
+    fields: [refundTransactions.orderId],
+    references: [orders.id],
+  }),
+  processedByAdmin: one(admins, {
+    fields: [refundTransactions.processedBy],
+    references: [admins.id],
   }),
 }));
 
@@ -279,6 +346,28 @@ export const insertShippingRateSchema = createInsertSchema(shippingRates).omit({
   updatedAt: true,
 });
 export type InsertShippingRate = z.infer<typeof insertShippingRateSchema>;
+
+// Return and refund types
+export type ReturnRequest = typeof returnRequests.$inferSelect;
+export const insertReturnRequestSchema = createInsertSchema(returnRequests).omit({
+  id: true,
+  status: true,
+  refundTransactionId: true,
+  refundProcessedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
+
+export type RefundTransaction = typeof refundTransactions.$inferSelect;
+export const insertRefundTransactionSchema = createInsertSchema(refundTransactions).omit({
+  id: true,
+  refundStatus: true,
+  processedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRefundTransaction = z.infer<typeof insertRefundTransactionSchema>;
 
 // Admin types
 export type Admin = typeof admins.$inferSelect;

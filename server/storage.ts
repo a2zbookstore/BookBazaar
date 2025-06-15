@@ -9,6 +9,8 @@ import {
   contactMessages,
   storeSettings,
   shippingRates,
+  returnRequests,
+  refundTransactions,
   type User,
   type UpsertUser,
   type Admin,
@@ -28,6 +30,10 @@ import {
   type InsertStoreSettings,
   type ShippingRate,
   type InsertShippingRate,
+  type ReturnRequest,
+  type InsertReturnRequest,
+  type RefundTransaction,
+  type InsertRefundTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -117,6 +123,24 @@ export interface IStorage {
   getAdminById(id: number): Promise<Admin | undefined>;
   updateAdminLastLogin(id: number): Promise<void>;
   updateAdminPassword(id: number, passwordHash: string): Promise<void>;
+
+  // Return and refund operations
+  getReturnRequests(options?: {
+    status?: string;
+    userId?: string;
+    orderId?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ returnRequests: (ReturnRequest & { order: Order & { items: OrderItem[] } })[], total: number }>;
+  getReturnRequestById(id: number): Promise<(ReturnRequest & { order: Order & { items: OrderItem[] } }) | undefined>;
+  createReturnRequest(returnRequest: InsertReturnRequest): Promise<ReturnRequest>;
+  updateReturnRequestStatus(id: number, status: string, adminNotes?: string): Promise<ReturnRequest>;
+  getEligibleOrdersForReturn(userId?: string, email?: string): Promise<Order[]>;
+  
+  // Refund operations
+  createRefundTransaction(refund: InsertRefundTransaction): Promise<RefundTransaction>;
+  updateRefundTransaction(id: number, updates: Partial<RefundTransaction>): Promise<RefundTransaction>;
+  getRefundTransactionsByReturnId(returnRequestId: number): Promise<RefundTransaction[]>;
 }
 
 export class DatabaseStorage implements IStorage {
