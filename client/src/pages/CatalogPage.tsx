@@ -100,9 +100,11 @@ export default function CatalogPage() {
     queryKey: ["/api/categories"],
   });
 
+  console.log("booksResponse received:", booksResponse);
   const books = booksResponse?.books || [];
   const totalBooks = booksResponse?.total || 0;
   const totalPages = Math.ceil(totalBooks / itemsPerPage);
+  console.log("Books to display:", books.length, "Total books:", totalBooks);
 
   const conditions = ["New", "Like New", "Very Good", "Good", "Fair"];
 
