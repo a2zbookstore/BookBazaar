@@ -303,7 +303,7 @@ export default function CheckoutPage() {
   // Calculate totals
   const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
   const actualShippingRate = shippingAddress.country ? countryShipping : defaultShipping;
-  const shippingCost = (actualShippingRate as any)?.cost ? parseFloat((actualShippingRate as any).cost.toString()) : 
+  const shippingCost = (actualShippingRate as any)?.shippingCost ? parseFloat((actualShippingRate as any).shippingCost.toString()) : 
                      (shipping?.cost ? parseFloat(shipping.cost.toString()) : 5.99);
   const tax = subtotal * 0.01; // 1% tax
   const total = subtotal + shippingCost + tax;
