@@ -306,7 +306,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteBook(id: number): Promise<void> {
-    await db.delete(books).where(eq(books.id, id));
+    try {
+      // Check if book exists in any orders
+      const orderItemsCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(orderItems)
+        .where(eq(orderItems.bookId, id));
+      
+      if (orderItemsCount[0].count > 0) {
+        throw new Error("Cannot delete book that has been ordered. Books with order history must be kept for records.");
+      }
+      
+      // First, delete all cart items related to this book
+      await db.delete(cartItems).where(eq(cartItems.bookId, id));
+      
+      // Then delete the book
+      const result = await db.delete(books).where(eq(books.id, id));
+      
+      if (result.rowCount === 0) {
+        throw new Error("Book not found");
+      }
+    } catch (error) {
+      console.error("Error in deleteBook:", error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to delete book");
+    }
   }
 
   async updateBookStock(id: number, quantity: number): Promise<void> {

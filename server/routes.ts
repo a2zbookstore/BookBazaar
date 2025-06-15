@@ -1099,10 +1099,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid book ID" });
+      }
+
       await storage.deleteBook(id);
       res.json({ message: "Book deleted successfully" });
     } catch (error) {
       console.error("Error deleting book:", error);
+      
+      // Send specific error message to user
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to delete book" });
     }
   });
