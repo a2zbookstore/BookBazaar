@@ -354,27 +354,23 @@ export default function CheckoutPage() {
   };
 
   const handlePhoneCountryKeyDown = (e: React.KeyboardEvent) => {
-    if (!showPhoneCountryDropdown) {
-      if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
-        setPhoneCountryQuery(e.key);
-        setShowPhoneCountryDropdown(true);
-        setSelectedCountryIndex(-1);
-        e.preventDefault();
-      }
-      return;
-    }
-
-    const filtered = filteredCountryCodes;
+    const filtered = phoneCountryQuery ? filteredCountryCodes : countryCodes;
     
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
+        if (!showPhoneCountryDropdown) {
+          setShowPhoneCountryDropdown(true);
+        }
         setSelectedCountryIndex(prev => 
           prev < filtered.length - 1 ? prev + 1 : 0
         );
         break;
       case 'ArrowUp':
         e.preventDefault();
+        if (!showPhoneCountryDropdown) {
+          setShowPhoneCountryDropdown(true);
+        }
         setSelectedCountryIndex(prev => 
           prev > 0 ? prev - 1 : filtered.length - 1
         );
@@ -390,13 +386,6 @@ export default function CheckoutPage() {
         setShowPhoneCountryDropdown(false);
         setPhoneCountryQuery("");
         setSelectedCountryIndex(-1);
-        break;
-      default:
-        if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
-          setPhoneCountryQuery(prev => prev + e.key);
-          setSelectedCountryIndex(-1);
-          e.preventDefault();
-        }
         break;
     }
   };
@@ -729,17 +718,38 @@ export default function CheckoutPage() {
                   <Label htmlFor="customerPhone">Phone Number *</Label>
                   <div className="flex gap-2">
                     <div className="relative phone-country-dropdown-container">
-                      <div
-                        className="w-40 px-3 py-2 border border-gray-300 rounded cursor-pointer bg-white flex items-center justify-between hover:border-gray-400"
-                        onClick={() => setShowPhoneCountryDropdown(!showPhoneCountryDropdown)}
-                        onMouseEnter={() => setShowPhoneCountryDropdown(true)}
-                        onKeyDown={handlePhoneCountryKeyDown}
-                        tabIndex={0}
-                      >
-                        <span className="text-sm">{phoneCountryCode}</span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                      <div className="flex">
+                        <Input
+                          value={phoneCountryQuery || phoneCountryCode}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value.startsWith('+') || /^\+?\d*$/.test(value)) {
+                              // Manual country code entry
+                              const formattedValue = value.startsWith('+') ? value : (value ? `+${value}` : '');
+                              setPhoneCountryCode(formattedValue);
+                              setPhoneCountryQuery("");
+                              if (value.length > 1) {
+                                setShowPhoneCountryDropdown(false);
+                              }
+                            } else {
+                              // Search functionality
+                              handlePhoneCountrySearch(value);
+                            }
+                          }}
+                          onFocus={() => setShowPhoneCountryDropdown(true)}
+                          onKeyDown={handlePhoneCountryKeyDown}
+                          placeholder="Country code or type to search"
+                          className="w-36 rounded-r-none"
+                        />
+                        <button
+                          type="button"
+                          className="px-2 border border-l-0 border-gray-300 rounded-r bg-gray-50 hover:bg-gray-100"
+                          onClick={() => setShowPhoneCountryDropdown(!showPhoneCountryDropdown)}
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
                       </div>
                       {showPhoneCountryDropdown && (
                         <div 
@@ -788,7 +798,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
-                  <p className="text-xs text-gray-500">Hover or click dropdown, type letters to search countries. Phone format: Numbers, spaces, hyphens, and parentheses only</p>
+                  <p className="text-xs text-gray-500">Type +1, +91 etc. for manual entry or country letters to search. Phone format: Numbers, spaces, hyphens, and parentheses only</p>
                 </div>
               </CardContent>
             </Card>
