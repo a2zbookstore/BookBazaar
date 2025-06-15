@@ -27,9 +27,17 @@ export default function CartPage() {
 
   // Calculate cart totals
   const cartSubtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
-  const cartShipping = shipping?.cost ? parseFloat(shipping.cost) : 5.99; // Use actual shipping rate or fallback
+  const cartShipping = shipping?.cost ? parseFloat(shipping.cost.toString()) : 5.99; // Use actual shipping rate or fallback
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
+
+  // Debug shipping cost
+  console.log('Cart Page - Shipping Debug:', {
+    shippingObject: shipping,
+    shippingCost: cartShipping,
+    hasShipping: !!shipping,
+    hasCost: !!shipping?.cost
+  });
 
 
 
