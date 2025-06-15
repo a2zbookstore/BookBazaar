@@ -37,11 +37,13 @@ export default function SearchInput({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Search submitted with query:", searchQuery);
     if (searchQuery.trim()) {
       setShowSuggestions(false);
       if (onSearch) {
         onSearch(searchQuery.trim());
       } else {
+        console.log("Navigating to catalog with search:", searchQuery.trim());
         setLocation(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
       }
     }
@@ -106,6 +108,12 @@ export default function SearchInput({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              console.log("Enter key pressed, submitting search");
+              handleSubmit(e as any);
+            }
+          }}
           className="w-full pr-12"
         />
         {showButton && (
