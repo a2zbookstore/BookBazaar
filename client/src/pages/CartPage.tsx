@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
+import { useQuery } from "@tanstack/react-query";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShippingCostDisplay from "@/components/ShippingCostDisplay";
 
@@ -25,18 +26,31 @@ export default function CartPage() {
   const [convertedTotal, setConvertedTotal] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
 
-  // Calculate cart totals
+  // Get shipping rate from admin panel - default to India if no location detected
+  const { data: adminShippingRate } = useQuery({
+    queryKey: ["/api/shipping-rates/country", "IN"],
+  });
+
+  // Calculate cart totals using admin panel shipping rates
   const cartSubtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
-  const cartShipping = shipping?.cost ? parseFloat(shipping.cost.toString()) : 5.99; // Use actual shipping rate or fallback
+  
+  // Use admin panel shipping rates
+  let cartShipping = 5.99; // Default fallback
+  
+  if ((adminShippingRate as any)?.shippingCost) {
+    cartShipping = parseFloat((adminShippingRate as any).shippingCost.toString());
+  } else if (shipping?.cost) {
+    cartShipping = parseFloat(shipping.cost.toString());
+  }
+
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
 
   // Debug shipping cost
-  console.log('Cart Page - Shipping Debug:', {
-    shippingObject: shipping,
-    shippingCost: cartShipping,
-    hasShipping: !!shipping,
-    hasCost: !!shipping?.cost
+  console.log('Cart Page - Admin Shipping Debug:', {
+    adminShippingRate: adminShippingRate,
+    finalShippingCost: cartShipping,
+    isUsingAdminRate: !!(adminShippingRate as any)?.shippingCost
   });
 
 
