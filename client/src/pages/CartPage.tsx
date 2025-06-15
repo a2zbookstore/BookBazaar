@@ -10,6 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useShipping } from "@/hooks/useShipping";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShippingCostDisplay from "@/components/ShippingCostDisplay";
 
@@ -19,13 +20,14 @@ export default function CartPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
+  const { shipping } = useShipping();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   const [convertedTotal, setConvertedTotal] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
 
   // Calculate cart totals
   const cartSubtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
-  const cartShipping = 5.99; // Standard shipping rate
+  const cartShipping = shipping?.cost ? parseFloat(shipping.cost) : 5.99; // Use actual shipping rate or fallback
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
 

@@ -116,6 +116,7 @@ Changelog:
 - June 15, 2025. Implemented complete customer registration and login system with email authentication, password hashing, session management, and updated navigation
 - June 15, 2025. Added comprehensive guest checkout system - users can browse, add to cart, and complete orders without registration, with optional account creation during checkout
 - June 15, 2025. Fixed cart access requirements - removed login barriers for cart functionality, implemented server-side session cart storage for all users, and added cart transfer functionality when guests log in
+- June 15, 2025. Integrated dynamic shipping rates throughout application - cart and checkout now use actual shipping rates from admin-configured shipping module instead of hardcoded values, removed guest authentication barrier from checkout page
 ```
 
 ## User Preferences

@@ -61,7 +61,7 @@ export default function CheckoutPage() {
 
   // Calculate totals
   const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
-  const shippingCost = (shipping as any)?.shippingCost ? parseFloat((shipping as any).shippingCost) : 5.99;
+  const shippingCost = shipping?.cost ? parseFloat(shipping.cost) : 5.99;
   const tax = subtotal * 0.01; // 1% tax
   const total = subtotal + shippingCost + tax;
 
@@ -318,7 +318,7 @@ export default function CheckoutPage() {
   const isFormValid = customerName && customerEmail && customerPhone && 
     shippingAddress.street && shippingAddress.city && shippingAddress.country;
 
-  if (!isAuthenticated || cartCount === 0) {
+  if (cartCount === 0) {
     return <Layout><div>Loading...</div></Layout>;
   }
 
