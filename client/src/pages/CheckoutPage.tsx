@@ -78,7 +78,123 @@ const countryCodes = [
   { code: "+964", country: "IQ", name: "Iraq" },
   { code: "+213", country: "DZ", name: "Algeria" },
   { code: "+212", country: "MA", name: "Morocco" },
-  { code: "+216", country: "TN", name: "Tunisia" }
+  { code: "+216", country: "TN", name: "Tunisia" },
+  { code: "+93", country: "AF", name: "Afghanistan" },
+  { code: "+355", country: "AL", name: "Albania" },
+  { code: "+376", country: "AD", name: "Andorra" },
+  { code: "+244", country: "AO", name: "Angola" },
+  { code: "+54", country: "AR", name: "Argentina" },
+  { code: "+374", country: "AM", name: "Armenia" },
+  { code: "+994", country: "AZ", name: "Azerbaijan" },
+  { code: "+973", country: "BH", name: "Bahrain" },
+  { code: "+375", country: "BY", name: "Belarus" },
+  { code: "+501", country: "BZ", name: "Belize" },
+  { code: "+229", country: "BJ", name: "Benin" },
+  { code: "+975", country: "BT", name: "Bhutan" },
+  { code: "+591", country: "BO", name: "Bolivia" },
+  { code: "+387", country: "BA", name: "Bosnia and Herzegovina" },
+  { code: "+267", country: "BW", name: "Botswana" },
+  { code: "+673", country: "BN", name: "Brunei" },
+  { code: "+359", country: "BG", name: "Bulgaria" },
+  { code: "+226", country: "BF", name: "Burkina Faso" },
+  { code: "+257", country: "BI", name: "Burundi" },
+  { code: "+855", country: "KH", name: "Cambodia" },
+  { code: "+237", country: "CM", name: "Cameroon" },
+  { code: "+238", country: "CV", name: "Cape Verde" },
+  { code: "+235", country: "TD", name: "Chad" },
+  { code: "+56", country: "CL", name: "Chile" },
+  { code: "+57", country: "CO", name: "Colombia" },
+  { code: "+269", country: "KM", name: "Comoros" },
+  { code: "+242", country: "CG", name: "Congo" },
+  { code: "+506", country: "CR", name: "Costa Rica" },
+  { code: "+385", country: "HR", name: "Croatia" },
+  { code: "+53", country: "CU", name: "Cuba" },
+  { code: "+357", country: "CY", name: "Cyprus" },
+  { code: "+253", country: "DJ", name: "Djibouti" },
+  { code: "+1809", country: "DO", name: "Dominican Republic" },
+  { code: "+593", country: "EC", name: "Ecuador" },
+  { code: "+503", country: "SV", name: "El Salvador" },
+  { code: "+240", country: "GQ", name: "Equatorial Guinea" },
+  { code: "+291", country: "ER", name: "Eritrea" },
+  { code: "+372", country: "EE", name: "Estonia" },
+  { code: "+251", country: "ET", name: "Ethiopia" },
+  { code: "+679", country: "FJ", name: "Fiji" },
+  { code: "+241", country: "GA", name: "Gabon" },
+  { code: "+220", country: "GM", name: "Gambia" },
+  { code: "+995", country: "GE", name: "Georgia" },
+  { code: "+233", country: "GH", name: "Ghana" },
+  { code: "+502", country: "GT", name: "Guatemala" },
+  { code: "+224", country: "GN", name: "Guinea" },
+  { code: "+245", country: "GW", name: "Guinea-Bissau" },
+  { code: "+592", country: "GY", name: "Guyana" },
+  { code: "+509", country: "HT", name: "Haiti" },
+  { code: "+504", country: "HN", name: "Honduras" },
+  { code: "+852", country: "HK", name: "Hong Kong" },
+  { code: "+354", country: "IS", name: "Iceland" },
+  { code: "+1876", country: "JM", name: "Jamaica" },
+  { code: "+962", country: "JO", name: "Jordan" },
+  { code: "+7", country: "KZ", name: "Kazakhstan" },
+  { code: "+965", country: "KW", name: "Kuwait" },
+  { code: "+996", country: "KG", name: "Kyrgyzstan" },
+  { code: "+856", country: "LA", name: "Laos" },
+  { code: "+371", country: "LV", name: "Latvia" },
+  { code: "+961", country: "LB", name: "Lebanon" },
+  { code: "+266", country: "LS", name: "Lesotho" },
+  { code: "+231", country: "LR", name: "Liberia" },
+  { code: "+218", country: "LY", name: "Libya" },
+  { code: "+370", country: "LT", name: "Lithuania" },
+  { code: "+352", country: "LU", name: "Luxembourg" },
+  { code: "+261", country: "MG", name: "Madagascar" },
+  { code: "+265", country: "MW", name: "Malawi" },
+  { code: "+960", country: "MV", name: "Maldives" },
+  { code: "+223", country: "ML", name: "Mali" },
+  { code: "+356", country: "MT", name: "Malta" },
+  { code: "+222", country: "MR", name: "Mauritania" },
+  { code: "+230", country: "MU", name: "Mauritius" },
+  { code: "+373", country: "MD", name: "Moldova" },
+  { code: "+377", country: "MC", name: "Monaco" },
+  { code: "+976", country: "MN", name: "Mongolia" },
+  { code: "+382", country: "ME", name: "Montenegro" },
+  { code: "+258", country: "MZ", name: "Mozambique" },
+  { code: "+95", country: "MM", name: "Myanmar" },
+  { code: "+264", country: "NA", name: "Namibia" },
+  { code: "+64", country: "NZ", name: "New Zealand" },
+  { code: "+505", country: "NI", name: "Nicaragua" },
+  { code: "+227", country: "NE", name: "Niger" },
+  { code: "+850", country: "KP", name: "North Korea" },
+  { code: "+968", country: "OM", name: "Oman" },
+  { code: "+970", country: "PS", name: "Palestine" },
+  { code: "+507", country: "PA", name: "Panama" },
+  { code: "+675", country: "PG", name: "Papua New Guinea" },
+  { code: "+595", country: "PY", name: "Paraguay" },
+  { code: "+51", country: "PE", name: "Peru" },
+  { code: "+974", country: "QA", name: "Qatar" },
+  { code: "+40", country: "RO", name: "Romania" },
+  { code: "+250", country: "RW", name: "Rwanda" },
+  { code: "+221", country: "SN", name: "Senegal" },
+  { code: "+381", country: "RS", name: "Serbia" },
+  { code: "+248", country: "SC", name: "Seychelles" },
+  { code: "+232", country: "SL", name: "Sierra Leone" },
+  { code: "+421", country: "SK", name: "Slovakia" },
+  { code: "+386", country: "SI", name: "Slovenia" },
+  { code: "+252", country: "SO", name: "Somalia" },
+  { code: "+211", country: "SS", name: "South Sudan" },
+  { code: "+249", country: "SD", name: "Sudan" },
+  { code: "+597", country: "SR", name: "Suriname" },
+  { code: "+963", country: "SY", name: "Syria" },
+  { code: "+886", country: "TW", name: "Taiwan" },
+  { code: "+992", country: "TJ", name: "Tajikistan" },
+  { code: "+255", country: "TZ", name: "Tanzania" },
+  { code: "+228", country: "TG", name: "Togo" },
+  { code: "+993", country: "TM", name: "Turkmenistan" },
+  { code: "+256", country: "UG", name: "Uganda" },
+  { code: "+380", country: "UA", name: "Ukraine" },
+  { code: "+598", country: "UY", name: "Uruguay" },
+  { code: "+998", country: "UZ", name: "Uzbekistan" },
+  { code: "+58", country: "VE", name: "Venezuela" },
+  { code: "+967", country: "YE", name: "Yemen" },
+  { code: "+260", country: "ZM", name: "Zambia" },
+  { code: "+263", country: "ZW", name: "Zimbabwe" }
 ];
 
 const countries = [
@@ -131,6 +247,7 @@ export default function CheckoutPage() {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [phoneCountryQuery, setPhoneCountryQuery] = useState("");
   const [showPhoneCountryDropdown, setShowPhoneCountryDropdown] = useState(false);
+  const [selectedCountryIndex, setSelectedCountryIndex] = useState(-1);
   const [shippingAddress, setShippingAddress] = useState({
     street: "",
     city: "",
@@ -225,13 +342,63 @@ export default function CheckoutPage() {
 
   const handlePhoneCountrySearch = (value: string) => {
     setPhoneCountryQuery(value);
-    setShowPhoneCountryDropdown(value.length > 0);
+    setShowPhoneCountryDropdown(true);
+    setSelectedCountryIndex(-1);
   };
 
   const selectPhoneCountry = (countryCode: string) => {
     setPhoneCountryCode(countryCode);
     setPhoneCountryQuery("");
     setShowPhoneCountryDropdown(false);
+    setSelectedCountryIndex(-1);
+  };
+
+  const handlePhoneCountryKeyDown = (e: React.KeyboardEvent) => {
+    if (!showPhoneCountryDropdown) {
+      if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
+        setPhoneCountryQuery(e.key);
+        setShowPhoneCountryDropdown(true);
+        setSelectedCountryIndex(-1);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    const filtered = filteredCountryCodes;
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedCountryIndex(prev => 
+          prev < filtered.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedCountryIndex(prev => 
+          prev > 0 ? prev - 1 : filtered.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedCountryIndex >= 0 && filtered[selectedCountryIndex]) {
+          selectPhoneCountry(filtered[selectedCountryIndex].code);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowPhoneCountryDropdown(false);
+        setPhoneCountryQuery("");
+        setSelectedCountryIndex(-1);
+        break;
+      default:
+        if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
+          setPhoneCountryQuery(prev => prev + e.key);
+          setSelectedCountryIndex(-1);
+          e.preventDefault();
+        }
+        break;
+    }
   };
 
   // Copy billing address
@@ -562,25 +729,52 @@ export default function CheckoutPage() {
                   <Label htmlFor="customerPhone">Phone Number *</Label>
                   <div className="flex gap-2">
                     <div className="relative phone-country-dropdown-container">
-                      <Input
-                        value={phoneCountryQuery || phoneCountryCode}
-                        onChange={(e) => handlePhoneCountrySearch(e.target.value)}
-                        onFocus={() => setShowPhoneCountryDropdown(true)}
-                        placeholder="Country code"
-                        className="w-40"
-                      />
-                      {showPhoneCountryDropdown && filteredCountryCodes.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                          {filteredCountryCodes.map((country, index) => (
+                      <div
+                        className="w-40 px-3 py-2 border border-gray-300 rounded cursor-pointer bg-white flex items-center justify-between hover:border-gray-400"
+                        onClick={() => setShowPhoneCountryDropdown(!showPhoneCountryDropdown)}
+                        onMouseEnter={() => setShowPhoneCountryDropdown(true)}
+                        onKeyDown={handlePhoneCountryKeyDown}
+                        tabIndex={0}
+                      >
+                        <span className="text-sm">{phoneCountryCode}</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                      {showPhoneCountryDropdown && (
+                        <div 
+                          className="absolute z-50 w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
+                          onMouseLeave={() => {
+                            if (!phoneCountryQuery) {
+                              setShowPhoneCountryDropdown(false);
+                            }
+                          }}
+                        >
+                          {phoneCountryQuery && (
+                            <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b">
+                              Search: "{phoneCountryQuery}" - {filteredCountryCodes.length} results
+                            </div>
+                          )}
+                          {(phoneCountryQuery ? filteredCountryCodes : countryCodes).map((country, index) => (
                             <div
                               key={index}
-                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm flex items-center gap-2"
+                              className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${
+                                selectedCountryIndex === index 
+                                  ? 'bg-blue-100 text-blue-900' 
+                                  : 'hover:bg-gray-100'
+                              }`}
                               onClick={() => selectPhoneCountry(country.code)}
+                              onMouseEnter={() => setSelectedCountryIndex(index)}
                             >
-                              <span className="font-medium">{country.code}</span>
-                              <span className="text-gray-600">{country.name}</span>
+                              <span className="font-medium text-blue-600 min-w-[3rem]">{country.code}</span>
+                              <span className="text-gray-700">{country.name}</span>
                             </div>
                           ))}
+                          {phoneCountryQuery && filteredCountryCodes.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500">
+                              No countries found for "{phoneCountryQuery}"
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -594,7 +788,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
-                  <p className="text-xs text-gray-500">Type country name or code to search. Format: Numbers, spaces, hyphens, and parentheses only</p>
+                  <p className="text-xs text-gray-500">Hover or click dropdown, type letters to search countries. Phone format: Numbers, spaces, hyphens, and parentheses only</p>
                 </div>
               </CardContent>
             </Card>
