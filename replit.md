@@ -120,6 +120,7 @@ Changelog:
 - June 15, 2025. Fixed payment amount display issues - corrected PayPal and Razorpay payment calculations to show actual cart totals instead of ₹1, added USD to INR currency conversion for Razorpay payments
 - June 15, 2025. Enhanced search functionality and redesigned homepage - fixed case-sensitive search issues with proper SQL LIKE queries for title/author/ISBN/description searches, completely redesigned homepage with beautiful book-related imagery, integrated search bar in hero section, added moving carousel sections for bestsellers and featured books with auto-scroll animations
 - June 15, 2025. Implemented advanced search with auto-suggestions - created SearchInput component with dropdown suggestions, added backend API endpoint for search suggestions, fixed bestsellers loading issue by correcting API response structure, customized store branding with red "2" in A2Z BOOKSHOP throughout website
+- June 15, 2025. Enhanced book cards with location-based shipping - implemented dynamic shipping cost and delivery time display based on user's country location, integrated with admin-configured shipping rate module, automatic location detection with fallback to "Rest of World" rates for unconfigured countries, real-time currency conversion for shipping costs
 ```
 
 ## User Preferences
