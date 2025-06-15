@@ -12,6 +12,10 @@ export const razorpay = new Razorpay({
   key_secret: RAZORPAY_KEY_SECRET,
 });
 
+// Check if we're using live or test keys
+const isLiveEnvironment = RAZORPAY_KEY_ID?.startsWith('rzp_live_');
+console.log(`Razorpay initialized with ${isLiveEnvironment ? 'LIVE' : 'TEST'} credentials`);
+
 export async function createRazorpayOrder(req: Request, res: Response) {
   try {
     const { amount, currency = 'INR', receipt } = req.body;
@@ -22,10 +26,15 @@ export async function createRazorpayOrder(req: Request, res: Response) {
       });
     }
 
-    // Ensure minimum amount for live Razorpay (₹1.00 = 100 paise)
-    if (parseFloat(amount) < 1) {
+    // Check for live Razorpay minimum amount requirements
+    const isLiveKey = RAZORPAY_KEY_ID?.startsWith('rzp_live_');
+    const minAmount = isLiveKey ? 100 : 1; // Live accounts often require ₹100 minimum
+    
+    if (parseFloat(amount) < minAmount) {
       return res.status(400).json({
-        error: "Minimum transaction amount is ₹1.00",
+        error: `Minimum transaction amount is ₹${minAmount}.00`,
+        isLive: isLiveKey,
+        suggestion: isLiveKey ? "Please add more items to reach ₹100 minimum for live payments" : undefined
       });
     }
 
@@ -34,16 +43,37 @@ export async function createRazorpayOrder(req: Request, res: Response) {
     
     const options = {
       amount: amountInPaise, // Razorpay expects amount in paise
-      currency: currency,
+      currency: currency.toUpperCase(),
       receipt: receipt || `receipt_${Date.now()}`,
       payment_capture: 1, // Auto capture
+      notes: {
+        order_amount: `${amount} ${currency}`,
+        converted_amount: `${amountInPaise} paise`
+      }
     };
 
     const order = await razorpay.orders.create(options);
+    console.log("Razorpay order created successfully:", order);
     res.json(order);
   } catch (error) {
     console.error("Failed to create Razorpay order:", error);
-    res.status(500).json({ error: "Failed to create Razorpay order." });
+    
+    // Enhanced error handling for live Razorpay issues
+    if (error instanceof Error) {
+      if (error.message.includes('live') || error.message.includes('test')) {
+        res.status(400).json({ 
+          error: "Payment gateway configuration issue. Please contact support.",
+          details: error.message 
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Failed to create Razorpay order.",
+          details: error.message 
+        });
+      }
+    } else {
+      res.status(500).json({ error: "Failed to create Razorpay order." });
+    }
   }
 }
 

@@ -239,8 +239,16 @@ export default function CheckoutPage() {
       const usdToInrRate = 83; // Current exchange rate
       const totalInINR = Math.round(total * usdToInrRate * 100) / 100; // Round to 2 decimal places
       
-      console.log("Payment Debug - USD Total:", total);
-      console.log("Payment Debug - INR Total:", totalInINR);
+      // Check if amount is too small for live Razorpay
+      if (totalInINR < 100) {
+        toast({
+          title: "Minimum Amount Required",
+          description: "Razorpay requires a minimum transaction of ₹100. Please add more items to your cart.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
       
       const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
         amount: totalInINR,
@@ -248,15 +256,17 @@ export default function CheckoutPage() {
         receipt: `receipt_${Date.now()}`
       }) as any;
       
-      console.log("Payment Debug - Razorpay Response:", orderResponse);
-      console.log("Payment Debug - Amount in paise:", orderResponse.amount);
-
+      // Validate Razorpay response and amount
+      if (!orderResponse.amount || orderResponse.amount <= 100) {
+        throw new Error(`Invalid Razorpay amount: ${orderResponse.amount}. Expected: ${Math.round(totalInINR * 100)} paise`);
+      }
+      
       const options = {
         key: (razorpayConfig as any).key_id,
-        amount: orderResponse.amount, // Amount in paise from server
-        currency: orderResponse.currency,
+        amount: orderResponse.amount, // Use server-validated amount
+        currency: orderResponse.currency || "INR",
         name: "A2Z BOOKSHOP",
-        description: `Book Purchase - ₹${totalInINR.toFixed(2)}`,
+        description: `Book Purchase - Total: ₹${totalInINR.toFixed(2)}`,
         order_id: orderResponse.id,
         handler: async (response: any) => {
           try {
