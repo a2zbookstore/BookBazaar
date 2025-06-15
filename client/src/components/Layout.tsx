@@ -99,7 +99,7 @@ export default function Layout({ children }: LayoutProps) {
                 href="/cart"
                 className={`transition-colors relative ${
                   isCartAnimating 
-                    ? "cart-bounce" 
+                    ? "cart-pulse-animation" 
                     : "text-secondary-black hover:text-primary-aqua cart-normal"
                 }`}
               >
@@ -167,6 +167,23 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </header>
+
+      {/* Fixed Cart Icon - Always Visible */}
+      <Link
+        href="/cart"
+        className={`fixed-cart-icon ${
+          isCartAnimating 
+            ? "cart-pulse-animation" 
+            : "text-secondary-black hover:text-primary-aqua"
+        }`}
+      >
+        <ShoppingCart className="h-6 w-6" />
+        {cartCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
+            {cartCount}
+          </span>
+        )}
+      </Link>
 
       {/* Main Content */}
       <main className="flex-1">

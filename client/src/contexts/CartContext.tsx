@@ -25,7 +25,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsCartAnimating(true);
     setTimeout(() => {
       setIsCartAnimating(false);
-    }, 3000); // Animation lasts for 3 seconds
+    }, 600); // Animation lasts for 0.6 seconds
   }, []);
 
   // Always use server-side cart (supports both guest sessions and authenticated users)
