@@ -94,10 +94,16 @@ export default function CatalogPage() {
       offset: (currentPage - 1) * itemsPerPage
     }],
     queryFn: async () => {
+      console.log("Fetching books with API URL:", apiUrl);
+      console.log("Search parameter in queryFn:", search);
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch books');
-      return response.json();
-    }
+      const data = await response.json();
+      console.log("API response:", data);
+      return data;
+    },
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the results
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
