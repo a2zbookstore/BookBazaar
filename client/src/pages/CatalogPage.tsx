@@ -19,10 +19,10 @@ interface BooksResponse {
 
 export default function CatalogPage() {
   const [location] = useLocation();
-  const [searchParams, setSearchParams] = useState(new URLSearchParams(location.split('?')[1] || ''));
+  const [searchParams, setSearchParams] = useState(new URLSearchParams());
   
   // Filter states
-  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState('');
@@ -36,9 +36,14 @@ export default function CatalogPage() {
 
   // Update filters when URL changes
   useEffect(() => {
-    const params = new URLSearchParams(location.split('?')[1] || '');
+    console.log("Location changed:", location);
+    const urlParts = location.split('?');
+    const queryString = urlParts[1] || '';
+    console.log("Query string:", queryString);
+    const params = new URLSearchParams(queryString);
     setSearchParams(params);
     const searchParam = params.get('search') || '';
+    console.log("Extracted search param:", searchParam);
     setSearch(searchParam);
     
     // Reset to first page when search changes
