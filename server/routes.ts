@@ -125,30 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Order management routes
-  app.put('/api/orders/:id/status', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
-      const { id } = req.params;
-      const { status, trackingNumber, shippingCarrier, notes } = req.body;
-      
-      const updatedOrder = await storage.updateOrderStatus(parseInt(id), status, {
-        trackingNumber,
-        shippingCarrier,
-        notes
-      });
-      
-      res.json(updatedOrder);
-    } catch (error) {
-      console.error("Error updating order status:", error);
-      res.status(500).json({ message: "Failed to update order status" });
-    }
-  });
 
   // Get individual order (accessible to both authenticated users and guests with email)
   app.get('/api/orders/:id', async (req, res) => {
