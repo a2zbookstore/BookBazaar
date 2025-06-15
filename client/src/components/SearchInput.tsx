@@ -40,11 +40,13 @@ export default function SearchInput({
     console.log("Search submitted with query:", searchQuery);
     if (searchQuery.trim()) {
       setShowSuggestions(false);
+      const searchTerm = searchQuery.trim();
       if (onSearch) {
-        onSearch(searchQuery.trim());
+        onSearch(searchTerm);
       } else {
-        console.log("Navigating to catalog with search:", searchQuery.trim());
-        setLocation(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
+        console.log("Navigating to catalog with search:", searchTerm);
+        // Force page refresh to ensure proper search parameter handling
+        window.location.href = `/catalog?search=${encodeURIComponent(searchTerm)}`;
       }
     }
   };

@@ -37,33 +37,43 @@ export default function CatalogPage() {
   // Update filters when URL changes
   useEffect(() => {
     console.log("Location changed:", location);
-    const urlParts = location.split('?');
-    const queryString = urlParts[1] || '';
-    console.log("Query string:", queryString);
-    const params = new URLSearchParams(queryString);
+    
+    // Extract search params from current URL properly
+    const params = new URLSearchParams(window.location.search);
     setSearchParams(params);
+    
     const searchParam = params.get('search') || '';
-    console.log("Extracted search param:", searchParam);
-    setSearch(searchParam);
+    console.log("Extracted search param from URL:", searchParam);
     
-    // Reset to first page when search changes
-    setCurrentPage(1);
-    
-    // Reset other filters when coming from homepage search
-    if (searchParam) {
-      setSelectedCategories([]);
-      setSelectedConditions([]);
-      setMinPrice('');
-      setMaxPrice('');
+    // Only update search state if it's different
+    if (searchParam !== search) {
+      setSearch(searchParam);
+      console.log("Updated search state to:", searchParam);
+      
+      // Reset to first page when search changes
+      setCurrentPage(1);
+      
+      // Reset other filters when coming from homepage search
+      if (searchParam) {
+        console.log("Search detected, resetting other filters");
+        setSelectedCategories([]);
+        setSelectedConditions([]);
+        setMinPrice('');
+        setMaxPrice('');
+      }
     }
     
-    if (params.get('category')) {
-      setSelectedCategories([params.get('category')!]);
+    // Handle other URL parameters
+    const categoryParam = params.get('category');
+    if (categoryParam && !searchParam) {
+      setSelectedCategories([categoryParam]);
     }
-    if (params.get('featured')) {
+    
+    const featuredParam = params.get('featured');
+    if (featuredParam === 'true' && !searchParam) {
       // Handle featured filter if needed
     }
-  }, [location]);
+  }, [location, search]);
 
   // Build query parameters
   const queryParams = new URLSearchParams();
@@ -304,7 +314,7 @@ export default function CatalogPage() {
             {search && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  Search results for: <strong>"{search}"</strong>
+                  Search results for: <strong>"{search}"</strong> ({totalBooks} {totalBooks === 1 ? 'book' : 'books'} found)
                 </p>
               </div>
             )}
