@@ -78,6 +78,8 @@ export default function CatalogPage() {
   queryParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
 
   const apiUrl = `/api/books?${queryParams.toString()}`;
+  console.log("Final API URL:", apiUrl);
+  console.log("Current search state:", search);
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
     queryKey: [apiUrl],
