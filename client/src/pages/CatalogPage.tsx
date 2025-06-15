@@ -38,7 +38,9 @@ export default function CatalogPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1] || '');
     setSearchParams(params);
-    setSearch(params.get('search') || '');
+    const searchParam = params.get('search') || '';
+    console.log("Catalog page received search param:", searchParam);
+    setSearch(searchParam);
     
     if (params.get('category')) {
       setSelectedCategories([params.get('category')!]);
@@ -60,8 +62,12 @@ export default function CatalogPage() {
   queryParams.set('limit', itemsPerPage.toString());
   queryParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
 
+  const apiUrl = `/api/books?${queryParams.toString()}`;
+  console.log("API call URL:", apiUrl);
+  console.log("Search value:", search);
+
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: [`/api/books?${queryParams.toString()}`],
+    queryKey: [apiUrl],
   });
 
   const { data: categories = [] } = useQuery<Category[]>({

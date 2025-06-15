@@ -36,6 +36,7 @@ export default function HomePage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      console.log("Homepage search for:", searchQuery.trim());
       window.location.href = `/catalog?search=${encodeURIComponent(searchQuery.trim())}`;
     }
   };
