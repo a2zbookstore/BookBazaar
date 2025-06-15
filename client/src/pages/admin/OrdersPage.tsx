@@ -94,7 +94,7 @@ export default function OrdersPage() {
       notes?: string; 
     }) => {
       console.log('Order update data:', data);
-      return await apiRequest(`/api/orders/${data.orderId}/status`, "PUT", {
+      return await apiRequest("PUT", `/api/orders/${data.orderId}/status`, {
         status: data.status,
         trackingNumber: data.trackingNumber,
         shippingCarrier: data.shippingCarrier,
@@ -121,7 +121,10 @@ export default function OrdersPage() {
   });
 
   const handleUpdateOrder = () => {
-    if (!selectedOrder || !newStatus) return;
+    if (!selectedOrder || !newStatus) {
+      console.error('Missing required fields:', { selectedOrder: !!selectedOrder, newStatus });
+      return;
+    }
 
     // Handle shipping carrier: use custom carrier if "other" is selected
     let carrierValue = "";
@@ -133,13 +136,16 @@ export default function OrdersPage() {
       carrierValue = shippingCarrier;
     }
 
-    updateOrderMutation.mutate({
+    const updateData = {
       orderId: selectedOrder.id,
       status: newStatus,
       trackingNumber: trackingNumber || undefined,
       shippingCarrier: carrierValue || undefined,
       notes: notes || undefined,
-    });
+    };
+
+    console.log('Attempting to update order with data:', updateData);
+    updateOrderMutation.mutate(updateData);
   };
 
   // Set form values when order is selected
