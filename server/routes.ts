@@ -990,7 +990,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sortOrder: (sortOrder as "asc" | "desc") || "desc",
       };
 
+      // Debug logging for search functionality
+      if (search) {
+        console.log("Search query received:", search);
+        console.log("Search options being passed to storage:", options);
+      }
+
       const result = await storage.getBooks(options);
+      
+      if (search) {
+        console.log("Search results count:", result.books.length, "out of total:", result.total);
+      }
+      
       res.json(result);
     } catch (error) {
       console.error("Error fetching books:", error);
