@@ -75,6 +75,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = async (bookId: number, quantity: number = 1) => {
     await addToCartMutation.mutateAsync({ bookId, quantity });
+    triggerCartAnimation(); // Trigger the animation when item is added
   };
 
   const updateCartItem = async (id: number, quantity: number) => {
@@ -99,6 +100,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         clearCart,
         isLoading,
+        isCartAnimating,
+        triggerCartAnimation,
       }}
     >
       {children}

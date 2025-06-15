@@ -15,7 +15,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const [location, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const { cartCount } = useCart();
+  const { cartCount, isCartAnimating } = useCart();
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
@@ -97,7 +97,11 @@ export default function Layout({ children }: LayoutProps) {
               {/* Cart - accessible to all users */}
               <Link
                 href="/cart"
-                className="text-secondary-black hover:text-primary-aqua transition-colors relative"
+                className={`transition-colors relative ${
+                  isCartAnimating 
+                    ? "cart-bounce" 
+                    : "text-secondary-black hover:text-primary-aqua cart-normal"
+                }`}
               >
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
