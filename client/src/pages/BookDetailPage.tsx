@@ -157,6 +157,11 @@ export default function BookDetailPage() {
                 <Badge className={getConditionColor(book.condition)}>
                   {book.condition}
                 </Badge>
+                {book.binding && (
+                  <Badge className="bg-purple-100 text-purple-800">
+                    {book.binding}
+                  </Badge>
+                )}
                 {book.category && (
                   <Badge variant="outline">{book.category.name}</Badge>
                 )}
@@ -218,6 +223,16 @@ export default function BookDetailPage() {
                 <div>
                   <span className="font-semibold text-base-black">Pages:</span>
                   <p className="text-secondary-black">{book.pages}</p>
+                </div>
+              )}
+              <div>
+                <span className="font-semibold text-base-black">Condition:</span>
+                <p className="text-secondary-black">{book.condition}</p>
+              </div>
+              {book.binding && (
+                <div>
+                  <span className="font-semibold text-base-black">Binding:</span>
+                  <p className="text-secondary-black">{book.binding}</p>
                 </div>
               )}
               {book.language && (
