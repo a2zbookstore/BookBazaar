@@ -161,8 +161,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if user owns this order or is admin
-      const user = await storage.getUser(req.user?.claims?.sub);
-      if (order.userId !== req.user?.claims?.sub && user?.role !== "admin") {
+      const user = await storage.getUser(req.user?.id);
+      if (order.userId !== req.user?.id && user?.role !== "admin") {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -1665,7 +1665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = req.user.id;
       } else {
         // Guest user - require email parameter
         email = req.query.email;
@@ -1704,7 +1704,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      if (new Date(order.createdAt) < thirtyDaysAgo) {
+      const orderDate = order.createdAt ? new Date(order.createdAt) : new Date();
+      if (orderDate < thirtyDaysAgo) {
         return res.status(400).json({ message: "Return window has expired (30 days)" });
       }
 
@@ -1729,7 +1730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = req.user.id;
       }
 
       const returnRequest = await storage.createReturnRequest({
@@ -1762,7 +1763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = req.user.id;
       } else {
         return res.status(401).json({ message: "Authentication required" });
       }
