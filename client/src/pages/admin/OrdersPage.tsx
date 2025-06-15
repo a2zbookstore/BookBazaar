@@ -443,7 +443,7 @@ export default function OrdersPage() {
                         )}
                       </div>
 
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap ml-4">
                         {/* Quick Invoice Actions */}
                         <Button
                           variant="outline"
