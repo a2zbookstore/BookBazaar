@@ -256,18 +256,19 @@ export default function CheckoutPage() {
         receipt: `receipt_${Date.now()}`
       }) as any;
       
-      // Validate Razorpay response and amount
-      if (!orderResponse.amount || orderResponse.amount <= 100) {
-        throw new Error(`Invalid Razorpay amount: ${orderResponse.amount}. Expected: ${Math.round(totalInINR * 100)} paise`);
+      // Validate Razorpay response
+      const orderData = await orderResponse.json();
+      if (!orderData.amount || orderData.amount <= 100) {
+        throw new Error(`Invalid Razorpay amount: ${orderData.amount}. Expected: ${Math.round(totalInINR * 100)} paise`);
       }
       
       const options = {
         key: (razorpayConfig as any).key_id,
-        amount: orderResponse.amount, // Use server-validated amount
-        currency: orderResponse.currency || "INR",
+        amount: orderData.amount, // Use server-validated amount
+        currency: orderData.currency || "INR",
         name: "A2Z BOOKSHOP",
         description: `Book Purchase - Total: ₹${totalInINR.toFixed(2)}`,
-        order_id: orderResponse.id,
+        order_id: orderData.id,
         handler: async (response: any) => {
           try {
             // Verify payment
