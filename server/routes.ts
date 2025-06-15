@@ -522,14 +522,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Order completion route - supports both guest and authenticated users
+  // Order completion route - supports guest, registration, and authenticated users
   app.post("/api/orders/complete", async (req: any, res) => {
     try {
       let userId = null;
       let user = null;
       
-      // Check if user is authenticated
-      if (req.isAuthenticated && req.isAuthenticated()) {
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+        user = await storage.getUser(userId);
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
         user = await storage.getUser(userId);
       }
@@ -546,8 +552,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total,
         paymentMethod,
         paymentId,
-        items
+        items,
+        checkoutType,
+        registerPassword
       } = req.body;
+
+      // Handle account creation during checkout
+      if (checkoutType === "register" && registerPassword && !userId) {
+        try {
+          // Check if user already exists
+          const existingUser = await storage.getUserByEmail(customerEmail);
+          if (!existingUser) {
+            // Create new user account
+            const passwordHash = crypto.createHash('sha256').update(registerPassword).digest('hex');
+            const [firstName, ...lastNameParts] = customerName.split(' ');
+            const lastName = lastNameParts.join(' ') || '';
+            
+            const newUser = await storage.createEmailUser({
+              email: customerEmail,
+              firstName,
+              lastName,
+              passwordHash
+            });
+            
+            userId = newUser.id;
+            user = newUser;
+            
+            // Set user session
+            (req.session as any).userId = newUser.id;
+            (req.session as any).isCustomerAuth = true;
+          }
+        } catch (error) {
+          console.error("Error creating user during checkout:", error);
+          // Continue as guest if user creation fails
+        }
+      }
 
       // Create order in database
       const order = await storage.createOrder({
@@ -566,9 +605,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: `Payment via ${paymentMethod}. Payment ID: ${paymentId}`
       }, items);
 
-      // Clear cart after successful order (only for authenticated users)
+      // Clear cart after successful order
       if (userId) {
         await storage.clearCart(userId);
+      } else {
+        // Clear guest cart from session
+        (req.session as any).guestCart = [];
       }
 
       res.json({ success: true, orderId: order.id });
@@ -966,24 +1008,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cart routes
-  app.get("/api/cart", isAuthenticated, async (req: any, res) => {
+  // Cart routes - support both authenticated and guest users
+  app.get("/api/cart", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const cartItems = await storage.getCartItems(userId);
-      res.json(cartItems);
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (userId) {
+        const cartItems = await storage.getCartItems(userId);
+        res.json(cartItems);
+      } else {
+        // Guest user - return session-based cart
+        const guestCart = (req.session as any).guestCart || [];
+        res.json(guestCart);
+      }
     } catch (error) {
       console.error("Error fetching cart:", error);
       res.status(500).json({ message: "Failed to fetch cart" });
     }
   });
 
-  app.post("/api/cart", isAuthenticated, async (req: any, res) => {
+  app.post("/api/cart", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const cartData = insertCartItemSchema.parse({ ...req.body, userId });
-      const cartItem = await storage.addToCart(cartData);
-      res.json(cartItem);
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (userId) {
+        // Authenticated user - save to database
+        const cartData = insertCartItemSchema.parse({ ...req.body, userId });
+        const cartItem = await storage.addToCart(cartData);
+        res.json(cartItem);
+      } else {
+        // Guest user - save to session
+        const { bookId, quantity } = req.body;
+        const book = await storage.getBookById(parseInt(bookId));
+        
+        if (!book) {
+          return res.status(404).json({ message: "Book not found" });
+        }
+        
+        if (!req.session.guestCart) {
+          (req.session as any).guestCart = [];
+        }
+        
+        const guestCart = (req.session as any).guestCart;
+        const existingItemIndex = guestCart.findIndex((item: any) => item.bookId === parseInt(bookId));
+        
+        if (existingItemIndex >= 0) {
+          guestCart[existingItemIndex].quantity += parseInt(quantity);
+        } else {
+          guestCart.push({
+            id: Date.now(), // Temporary ID for guest cart
+            bookId: parseInt(bookId),
+            quantity: parseInt(quantity),
+            book: book
+          });
+        }
+        
+        req.session.save(() => {
+          res.json(guestCart[guestCart.length - 1]);
+        });
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });

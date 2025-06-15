@@ -61,6 +61,10 @@ export default function CheckoutPage() {
   const [sameBillingAddress, setSameBillingAddress] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [checkoutType, setCheckoutType] = useState<"guest" | "register" | "login">("guest");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Calculate totals
   const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
