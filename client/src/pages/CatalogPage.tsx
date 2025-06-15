@@ -82,7 +82,7 @@ export default function CatalogPage() {
   console.log("Current search state:", search);
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: [apiUrl],
+    queryKey: ['/api/books', search, selectedCategories, selectedConditions, minPrice, maxPrice, sortBy, sortOrder, currentPage],
     queryFn: async () => {
       console.log("Fetching books with API URL:", apiUrl);
       console.log("Search parameter in queryFn:", search);
