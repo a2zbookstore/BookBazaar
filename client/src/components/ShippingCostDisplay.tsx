@@ -152,9 +152,9 @@ export default function ShippingCostDisplay({
             <div className="flex items-center gap-2">
               {isFreeShipping ? (
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-green-600">FREE SHIPPING</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                    No Cost
+                  <span className="font-semibold text-primary-aqua">Standard Shipping</span>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                    {formatAmount(parseFloat(shipping.cost), 'USD')}
                   </Badge>
                 </div>
               ) : (

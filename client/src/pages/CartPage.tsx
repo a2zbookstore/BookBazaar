@@ -254,13 +254,10 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Shipping:</span>
-                      <span className="text-base-black">
-                        {cartShipping === 0 ? "Free" : `$${cartShipping.toFixed(2)}`}
-                      </span>
+                      <span className="text-base-black">${cartShipping.toFixed(2)}</span>
                     </div>
-
                     <div className="flex justify-between">
-                      <span className="text-secondary-black">Tax (21%):</span>
+                      <span className="text-secondary-black">Tax (1%):</span>
                       <span className="text-base-black">${cartTax.toFixed(2)}</span>
                     </div>
                     <Separator />

@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,7 +8,6 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
-// PayPal button component will be implemented inline
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,7 +62,7 @@ export default function CheckoutPage() {
   // Calculate totals
   const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
   const shippingCost = (shipping as any)?.shippingCost ? parseFloat((shipping as any).shippingCost) : 5.99;
-  const tax = subtotal * 0.21; // 21% VAT
+  const tax = subtotal * 0.01; // 1% tax
   const total = subtotal + shippingCost + tax;
 
   // Razorpay config
@@ -549,7 +542,7 @@ export default function CheckoutPage() {
                     <span>${shippingCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tax (21%):</span>
+                    <span>Tax (1%):</span>
                     <span>${tax.toFixed(2)}</span>
                   </div>
                   <Separator />
