@@ -130,7 +130,7 @@ export default function CheckoutPage() {
     try {
       // Create PayPal order with return URLs
       const orderResponse = await apiRequest("POST", "/api/paypal/order", {
-        amount: total.toFixed(2),
+        amount: parseFloat(total.toFixed(2)),
         currency: "USD",
         intent: "CAPTURE",
         return_url: `${window.location.origin}/api/paypal/success`,
@@ -235,10 +235,12 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // Create Razorpay order
-      console.log("Creating Razorpay order with:", { amount: total, currency: "INR" });
+      // Create Razorpay order (convert USD to INR)
+      const usdToInrRate = 83; // Current exchange rate
+      const totalInINR = Math.round(total * usdToInrRate * 100) / 100; // Round to 2 decimal places
+      
       const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
-        amount: total,
+        amount: totalInINR,
         currency: "INR",
         receipt: `receipt_${Date.now()}`
       }) as any;
@@ -279,6 +281,7 @@ export default function CheckoutPage() {
               shipping: shippingCost.toFixed(2),
               tax: tax.toFixed(2),
               total: total.toFixed(2),
+              totalInINR: totalInINR.toFixed(2),
               paymentMethod: "Razorpay",
               paymentId: response.razorpay_payment_id,
               items: orderItems

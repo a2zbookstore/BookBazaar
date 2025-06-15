@@ -31,9 +31,7 @@ export default function CartPage() {
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
 
-  // Debug logging
-  console.log('Cart Debug - Shipping object:', shipping);
-  console.log('Cart Debug - Shipping cost:', cartShipping);
+
 
   // Convert total to user's currency
   useEffect(() => {
