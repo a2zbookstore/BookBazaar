@@ -82,28 +82,18 @@ export default function CatalogPage() {
   console.log("Current search state:", search);
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: ['/api/books', {
-      search,
-      categoryId: selectedCategories[0],
-      condition: selectedConditions[0], 
-      minPrice,
-      maxPrice,
-      sortBy,
-      sortOrder,
-      limit: itemsPerPage,
-      offset: (currentPage - 1) * itemsPerPage
-    }],
+    queryKey: [apiUrl],
     queryFn: async () => {
       console.log("Fetching books with API URL:", apiUrl);
       console.log("Search parameter in queryFn:", search);
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch books');
       const data = await response.json();
-      console.log("API response:", data);
+      console.log("API response data:", data);
+      console.log("Number of books returned:", data.books?.length || 0);
       return data;
     },
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the results
+    staleTime: 0,
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -307,6 +297,15 @@ export default function CatalogPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Search Results Info */}
+            {search && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  Search results for: <strong>"{search}"</strong>
+                </p>
+              </div>
+            )}
 
             {/* Books Grid */}
             {isLoading ? (
