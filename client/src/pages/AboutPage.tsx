@@ -20,10 +20,10 @@ export default function AboutPage() {
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
           <div>
             <h1 className="text-4xl font-bookerly font-bold text-base-black mb-6">
-              About A2Z BOOKSHOP
+              About A<span className="text-red-500">2</span>Z BOOKSHOP
             </h1>
             <p className="text-lg text-secondary-black mb-6">
-              Welcome to A2Z BOOKSHOP, your premier destination for rare, collectible, and contemporary books. 
+              Welcome to A<span className="text-red-500">2</span>Z BOOKSHOP, your premier destination for rare, collectible, and contemporary books. 
               Founded with a passion for literature and a commitment to connecting readers with extraordinary books, 
               we've been serving book lovers worldwide for over a decade.
             </p>
@@ -71,7 +71,7 @@ export default function AboutPage() {
         {/* Why Choose Us */}
         <section className="mb-16">
           <h2 className="text-3xl font-bookerly font-bold text-base-black text-center mb-8">
-            Why Choose A2Z BOOKSHOP?
+            Why Choose A<span className="text-red-500">2</span>Z BOOKSHOP?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="text-center">
@@ -125,7 +125,7 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl font-bookerly font-bold text-base-black mb-6">Our Story</h2>
               <p className="text-secondary-black mb-4">
-                A2Z BOOKSHOP was born from a simple belief: that books are more than just objects—they're 
+                A<span className="text-red-500">2</span>Z BOOKSHOP was born from a simple belief: that books are more than just objects—they're 
                 gateways to new worlds, repositories of knowledge, and companions for life's journey.
               </p>
               <p className="text-secondary-black mb-4">

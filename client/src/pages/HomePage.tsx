@@ -79,7 +79,7 @@ export default function HomePage() {
         <div className="container-custom relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bookerly font-bold text-base-black mb-6">
-              A2Z BOOKSHOP
+              A<span className="text-red-500">2</span>Z BOOKSHOP
             </h1>
             <p className="text-xl text-secondary-black mb-8 leading-relaxed">
               Your ultimate destination for rare books, bestsellers, and literary treasures from around the world
@@ -268,7 +268,7 @@ export default function HomePage() {
             </div>
             <div className="order-1 lg:order-2">
               <h3 className="text-4xl font-bookerly font-bold text-base-black mb-6">
-                Why Choose A2Z BOOKSHOP?
+                Why Choose A<span className="text-red-500">2</span>Z BOOKSHOP?
               </h3>
               <p className="text-lg text-secondary-black mb-8 leading-relaxed">
                 We're passionate about connecting readers with extraordinary books. Our carefully 

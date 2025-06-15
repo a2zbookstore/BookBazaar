@@ -38,7 +38,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <h1 className="text-2xl font-bookerly font-bold text-base-black">A2Z BOOKSHOP</h1>
+              <h1 className="text-2xl font-bookerly font-bold text-base-black">A<span className="text-red-500">2</span>Z BOOKSHOP</h1>
             </Link>
 
             {/* Search Bar */}
@@ -184,7 +184,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="container-custom py-12">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bookerly font-bold mb-4">A2Z BOOKSHOP</h3>
+              <h3 className="text-xl font-bookerly font-bold mb-4">A<span className="text-red-500">2</span>Z BOOKSHOP</h3>
               <p className="text-gray-400 mb-4">
                 Your trusted partner in discovering rare, collectible, and contemporary books from around the world.
               </p>
@@ -219,7 +219,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
           <hr className="border-gray-700 my-8" />
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">© 2025 A2Z BOOKSHOP. All rights reserved.</p>
+            <p className="text-gray-400 text-sm">© 2025 A<span className="text-red-500">2</span>Z BOOKSHOP. All rights reserved.</p>
             <p className="text-gray-400 text-sm">Made with ❤️ for book lovers worldwide</p>
           </div>
         </div>
