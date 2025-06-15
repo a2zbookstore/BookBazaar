@@ -152,12 +152,14 @@ export class BookImporter {
             
             switch (normalizedHeader) {
               case 'title':
+              case 'name': // Support for your Excel format
                 bookData.title = value?.toString().trim();
                 break;
               case 'author':
                 bookData.author = value?.toString().trim();
                 break;
               case 'isbn':
+              case 'item code': // Support for your Excel format
                 bookData.isbn = value?.toString().trim();
                 break;
               case 'price':
@@ -198,12 +200,51 @@ export class BookImporter {
           if (!bookData.title) {
             throw new Error(`Row ${rowNumber}: Title is required`);
           }
-          if (!bookData.author) {
-            throw new Error(`Row ${rowNumber}: Author is required`);
+
+          // If no author is provided, try to fetch from API using ISBN
+          if (!bookData.author && bookData.isbn) {
+            try {
+              const coverData = await this.fetchBookCover(bookData.isbn);
+              if (coverData && coverData.source === 'google') {
+                // Try to extract author from Google Books API response
+                const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${bookData.isbn}`);
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.items && data.items[0] && data.items[0].volumeInfo) {
+                    const volumeInfo = data.items[0].volumeInfo;
+                    if (volumeInfo.authors && volumeInfo.authors.length > 0) {
+                      bookData.author = volumeInfo.authors.join(', ');
+                    }
+                    if (volumeInfo.publishedDate) {
+                      const year = new Date(volumeInfo.publishedDate).getFullYear();
+                      if (!isNaN(year)) {
+                        bookData.publishedYear = year;
+                      }
+                    }
+                    if (volumeInfo.publisher) {
+                      bookData.publisher = volumeInfo.publisher;
+                    }
+                    if (volumeInfo.pageCount) {
+                      bookData.pages = volumeInfo.pageCount;
+                    }
+                    if (volumeInfo.description) {
+                      bookData.description = volumeInfo.description;
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.log(`Could not fetch additional data for ${bookData.isbn}`);
+            }
           }
-          if (!bookData.price || bookData.price <= 0) {
-            throw new Error(`Row ${rowNumber}: Valid price is required`);
-          }
+
+          // Set defaults for missing fields
+          bookData.author = bookData.author || 'Unknown Author';
+          bookData.price = bookData.price || 19.99;
+          bookData.condition = bookData.condition || 'New';
+          bookData.stock = bookData.stock || 10;
+          bookData.language = bookData.language || 'English';
+          bookData.description = bookData.description || `${bookData.title} - A comprehensive book in our collection.`;
 
           // Get category ID
           let categoryId = 1; // Default to first category
@@ -252,8 +293,8 @@ export class BookImporter {
           const createdBook = await storage.createBook(insertBook);
           results.success++;
           
-          console.log(`Successfully imported: ${bookData.title} by ${bookData.author}`);
-          console.log(`Book ID: ${createdBook.id}, ISBN: ${bookData.isbn || 'N/A'}`);
+          console.log(`✅ Successfully imported: ${bookData.title} by ${bookData.author}`);
+          console.log(`   Book ID: ${createdBook.id}, ISBN: ${bookData.isbn || 'N/A'}, Price: $${bookData.price}`);
 
         } catch (error) {
           results.failed++;
