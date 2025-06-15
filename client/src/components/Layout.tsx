@@ -84,6 +84,15 @@ export default function Layout({ children }: LayoutProps) {
                 Track Order
               </Link>
               
+              <Link
+                href="/returns"
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                  isActive("/returns") ? "text-primary-aqua font-semibold" : ""
+                }`}
+              >
+                Returns
+              </Link>
+              
               {/* Cart - accessible to all users */}
               <Link
                 href="/cart"

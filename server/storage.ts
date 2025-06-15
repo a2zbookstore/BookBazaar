@@ -723,21 +723,22 @@ export class DatabaseStorage implements IStorage {
     if (userId) conditions.push(eq(returnRequests.userId, userId));
     if (orderId) conditions.push(eq(returnRequests.orderId, orderId));
 
-    let baseQuery = db
+    const baseQuery = db
       .select({
         returnRequest: returnRequests,
         order: orders,
       })
       .from(returnRequests)
       .innerJoin(orders, eq(returnRequests.orderId, orders.id))
-      .orderBy(desc(returnRequests.createdAt));
+      .orderBy(desc(returnRequests.createdAt))
+      .$dynamic();
 
-    if (conditions.length > 0) {
-      baseQuery = baseQuery.where(and(...conditions));
-    }
+    const finalQuery = conditions.length > 0 
+      ? baseQuery.where(and(...conditions))
+      : baseQuery;
 
     const [results, [{ count: total }]] = await Promise.all([
-      baseQuery.limit(limit).offset(offset),
+      finalQuery.limit(limit).offset(offset),
       db.select({ count: count() }).from(returnRequests).where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
 
