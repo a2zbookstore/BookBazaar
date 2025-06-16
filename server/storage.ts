@@ -6,6 +6,7 @@ import {
   orders,
   orderItems,
   cartItems,
+  wishlistItems,
   contactMessages,
   storeSettings,
   shippingRates,
@@ -24,6 +25,8 @@ import {
   type InsertOrderItem,
   type CartItem,
   type InsertCartItem,
+  type WishlistItem,
+  type InsertWishlistItem,
   type ContactMessage,
   type InsertContactMessage,
   type StoreSettings,
@@ -89,6 +92,12 @@ export interface IStorage {
   updateCartItem(id: number, quantity: number): Promise<CartItem>;
   removeFromCart(id: number): Promise<void>;
   clearCart(userId: string): Promise<void>;
+
+  // Wishlist operations
+  getWishlistItems(userId: string): Promise<(WishlistItem & { book: Book })[]>;
+  addToWishlist(item: InsertWishlistItem): Promise<WishlistItem>;
+  removeFromWishlist(userId: string, bookId: number): Promise<void>;
+  isInWishlist(userId: string, bookId: number): Promise<boolean>;
 
   // Contact operations
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
@@ -520,6 +529,62 @@ export class DatabaseStorage implements IStorage {
 
   async clearCart(userId: string): Promise<void> {
     await db.delete(cartItems).where(eq(cartItems.userId, userId));
+  }
+
+  // Wishlist operations
+  async getWishlistItems(userId: string): Promise<(WishlistItem & { book: Book })[]> {
+    const items = await db
+      .select()
+      .from(wishlistItems)
+      .leftJoin(books, eq(wishlistItems.bookId, books.id))
+      .where(eq(wishlistItems.userId, userId))
+      .orderBy(desc(wishlistItems.createdAt));
+
+    return items.map(item => ({
+      ...item.wishlist_items,
+      book: item.books!
+    }));
+  }
+
+  async addToWishlist(item: InsertWishlistItem): Promise<WishlistItem> {
+    // Check if item already exists in wishlist
+    const existing = await db
+      .select()
+      .from(wishlistItems)
+      .where(and(
+        eq(wishlistItems.userId, item.userId),
+        eq(wishlistItems.bookId, item.bookId)
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    const [wishlistItem] = await db.insert(wishlistItems).values(item).returning();
+    return wishlistItem;
+  }
+
+  async removeFromWishlist(userId: string, bookId: number): Promise<void> {
+    await db
+      .delete(wishlistItems)
+      .where(and(
+        eq(wishlistItems.userId, userId),
+        eq(wishlistItems.bookId, bookId)
+      ));
+  }
+
+  async isInWishlist(userId: string, bookId: number): Promise<boolean> {
+    const result = await db
+      .select({ id: wishlistItems.id })
+      .from(wishlistItems)
+      .where(and(
+        eq(wishlistItems.userId, userId),
+        eq(wishlistItems.bookId, bookId)
+      ))
+      .limit(1);
+
+    return result.length > 0;
   }
 
   // Contact operations
