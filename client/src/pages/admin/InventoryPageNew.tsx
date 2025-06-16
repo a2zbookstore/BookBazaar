@@ -35,9 +35,11 @@ interface BookForm {
   publisher: string;
   pages: number | null;
   language: string;
+  edition: string;
   weight: string;
   dimensions: string;
   featured: boolean;
+  bestseller: boolean;
 }
 
 export default function InventoryPageNew() {
@@ -72,9 +74,11 @@ export default function InventoryPageNew() {
     publisher: "",
     pages: null,
     language: "English",
+    edition: "",
     weight: "",
     dimensions: "",
     featured: false,
+    bestseller: false,
   });
 
   // Build query parameters
@@ -229,9 +233,11 @@ export default function InventoryPageNew() {
       publisher: "",
       pages: null,
       language: "English",
+      edition: "",
       weight: "",
       dimensions: "",
       featured: false,
+      bestseller: false,
     });
     setEditingBook(null);
   };
@@ -253,9 +259,11 @@ export default function InventoryPageNew() {
       publisher: book.publisher || "",
       pages: book.pages || null,
       language: book.language || "English",
+      edition: book.edition || "",
       weight: book.weight || "",
       dimensions: book.dimensions || "",
       featured: book.featured || false,
+      bestseller: book.bestseller || false,
     });
     setIsDialogOpen(true);
   };

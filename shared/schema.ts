@@ -79,9 +79,11 @@ export const books = pgTable("books", {
   publisher: varchar("publisher", { length: 200 }),
   pages: integer("pages"),
   language: varchar("language", { length: 50 }).default("English"),
-  weight: decimal("weight", { precision: 5, scale: 2 }), // in kg
-  dimensions: varchar("dimensions", { length: 100 }), // e.g., "20x15x3 cm"
+  edition: varchar("edition", { length: 100 }), // e.g., "1st Edition", "2nd Edition"
+  weight: decimal("weight", { precision: 5, scale: 2 }), // in lbs
+  dimensions: varchar("dimensions", { length: 100 }), // e.g., "8x5x1 inches"
   featured: boolean("featured").default(false),
+  bestseller: boolean("bestseller").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
