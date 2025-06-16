@@ -237,19 +237,19 @@ export default function HomePage() {
             <div className="order-2 lg:order-1">
               <div className="grid grid-cols-2 gap-4">
                 <img
-                  src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500"
-                  alt="Beautiful library"
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500"
+                  alt="Stack of vintage books"
                   className="rounded-2xl shadow-lg w-full h-80 object-cover"
                 />
                 <div className="flex flex-col gap-4">
                   <img
-                    src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
-                    alt="Reading books"
+                    src="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
+                    alt="Open book with reading glasses"
                     className="rounded-2xl shadow-lg w-full h-36 object-cover"
                   />
                   <img
-                    src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
-                    alt="Book collection"
+                    src="https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
+                    alt="Bookstore shelves with colorful books"
                     className="rounded-2xl shadow-lg w-full h-40 object-cover"
                   />
                 </div>
