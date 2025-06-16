@@ -766,8 +766,8 @@ export default function CheckoutPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="customerPhone">Phone Number *</Label>
-                  <div className="flex gap-2">
-                    <div className="relative phone-country-dropdown-container">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative phone-country-dropdown-container w-full sm:w-auto">
                       <div className="flex">
                         <Input
                           value={phoneCountryQuery || phoneCountryCode}
@@ -789,11 +789,11 @@ export default function CheckoutPage() {
                           onFocus={() => setShowPhoneCountryDropdown(true)}
                           onKeyDown={handlePhoneCountryKeyDown}
                           placeholder="Country code or type to search"
-                          className="w-36 rounded-r-none"
+                          className="w-full sm:w-36 rounded-r-none min-h-[44px] touch-target"
                         />
                         <button
                           type="button"
-                          className="px-2 border border-l-0 border-gray-300 rounded-r bg-gray-50 hover:bg-gray-100"
+                          className="px-3 border border-l-0 border-gray-300 rounded-r bg-gray-50 hover:bg-gray-100 touch-target min-h-[44px]"
                           onClick={() => setShowPhoneCountryDropdown(!showPhoneCountryDropdown)}
                         >
                           <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -844,7 +844,7 @@ export default function CheckoutPage() {
                       onChange={(e) => handlePhoneChange(e.target.value)}
                       placeholder="Enter phone number"
                       required
-                      className={phoneError ? "border-red-500 flex-1" : "flex-1"}
+                      className={phoneError ? "border-red-500 flex-1 min-h-[44px] touch-target" : "flex-1 min-h-[44px] touch-target"}
                     />
                   </div>
                   {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
