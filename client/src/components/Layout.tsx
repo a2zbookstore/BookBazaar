@@ -29,11 +29,11 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between h-16 md:h-20">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 w-full">
+        <div className="container-custom px-3 md:px-6">
+          <div className="flex items-center justify-between h-14 md:h-20 w-full">
             {/* Logo */}
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center flex-shrink-0">
               <div className="md:hidden">
                 <Logo size="sm" variant="default" showText={true} />
               </div>
