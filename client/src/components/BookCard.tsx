@@ -7,6 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
+import WishlistHeart from "@/components/WishlistHeart";
 import { Book } from "@/types";
 
 interface BookCardProps {
@@ -109,7 +110,7 @@ export default function BookCard({ book }: BookCardProps) {
     <Link href={`/books/${book.id}`}>
       <div className="book-card group cursor-pointer">
         {/* Book Image */}
-        <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100">
+        <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative">
           {book.imageUrl ? (
             <img
               src={book.imageUrl}
@@ -126,6 +127,11 @@ export default function BookCard({ book }: BookCardProps) {
               </div>
             </div>
           )}
+          
+          {/* Wishlist Heart */}
+          <div className="absolute top-2 right-2 z-10">
+            <WishlistHeart bookId={book.id} size={24} className="bg-white/80 backdrop-blur-sm rounded-full p-1" />
+          </div>
         </div>
 
         {/* Book Info */}

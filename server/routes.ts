@@ -697,6 +697,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wishlist routes
+  app.get("/api/wishlist", async (req, res) => {
+    try {
+      if (!req.session?.user?.id) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const wishlistItems = await storage.getWishlistItems(req.session.user.id);
+      res.json(wishlistItems);
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/wishlist", async (req, res) => {
+    try {
+      if (!req.session?.user?.id) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const { bookId } = req.body;
+      if (!bookId) {
+        return res.status(400).json({ error: "Book ID is required" });
+      }
+
+      const wishlistItem = await storage.addToWishlist({
+        userId: req.session.user.id,
+        bookId: parseInt(bookId)
+      });
+
+      res.json(wishlistItem);
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/wishlist/:bookId", async (req, res) => {
+    try {
+      if (!req.session?.user?.id) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const bookId = parseInt(req.params.bookId);
+      if (isNaN(bookId)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+      }
+
+      await storage.removeFromWishlist(req.session.user.id, bookId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/wishlist/check/:bookId", async (req, res) => {
+    try {
+      if (!req.session?.user?.id) {
+        return res.json({ inWishlist: false });
+      }
+
+      const bookId = parseInt(req.params.bookId);
+      if (isNaN(bookId)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+      }
+
+      const inWishlist = await storage.isInWishlist(req.session.user.id, bookId);
+      res.json({ inWishlist });
+    } catch (error) {
+      console.error("Error checking wishlist:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Store settings routes
   app.get('/api/settings/store', isAuthenticated, async (req: any, res) => {
     try {
