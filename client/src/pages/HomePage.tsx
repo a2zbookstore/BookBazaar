@@ -41,21 +41,21 @@ export default function HomePage() {
 
 
   const bookImages = [
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
   ];
 
   const categoryImages = [
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
-    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
+    "/uploads/images/custom-bookshop-image.jpeg",
   ];
 
   return (
@@ -237,18 +237,18 @@ export default function HomePage() {
             <div className="order-2 lg:order-1">
               <div className="grid grid-cols-2 gap-4">
                 <img
-                  src="/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg"
+                  src="/uploads/images/custom-bookshop-image.jpeg"
                   alt="A2Z Bookshop collection"
                   className="rounded-2xl shadow-lg w-full h-80 object-cover"
                 />
                 <div className="flex flex-col gap-4">
                   <img
-                    src="/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg"
+                    src="/uploads/images/custom-bookshop-image.jpeg"
                     alt="A2Z Bookshop books"
                     className="rounded-2xl shadow-lg w-full h-36 object-cover"
                   />
                   <img
-                    src="/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg"
+                    src="/uploads/images/custom-bookshop-image.jpeg"
                     alt="A2Z Bookshop library"
                     className="rounded-2xl shadow-lg w-full h-40 object-cover"
                   />

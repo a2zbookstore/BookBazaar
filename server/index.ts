@@ -25,6 +25,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/attached_assets', express.static(path.join(process.cwd(), 'attached_assets')));
 
 app.use((req, res, next) => {
   const start = Date.now();
