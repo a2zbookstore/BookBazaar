@@ -9,6 +9,7 @@ import {
   integer,
   decimal,
   boolean,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -127,6 +128,14 @@ export const cartItems = pgTable("cart_items", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   bookId: integer("book_id").references(() => books.id).notNull(),
   quantity: integer("quantity").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Wishlist Items table
+export const wishlistItems = pgTable("wishlist_items", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  bookId: integer("book_id").references(() => books.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -324,6 +333,13 @@ export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   createdAt: true,
 });
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+
+export type WishlistItem = typeof wishlistItems.$inferSelect;
+export const insertWishlistItemSchema = createInsertSchema(wishlistItems).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertWishlistItem = z.infer<typeof insertWishlistItemSchema>;
 
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
