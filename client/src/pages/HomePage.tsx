@@ -12,6 +12,7 @@ import { Search, Star, TrendingUp, Award } from "lucide-react";
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   
   const { data: featuredBooksResponse } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
@@ -27,13 +28,15 @@ export default function HomePage() {
     queryKey: ["/api/categories"],
   });
 
-  // Auto-scroll for moving sections
+  // Auto-scroll for moving sections - pauses when hovering
   useEffect(() => {
+    if (isPaused) return;
+    
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % Math.max(1, Math.ceil(featuredBooks.length / 4)));
     }, 4000);
     return () => clearInterval(interval);
-  }, [featuredBooks.length]);
+  }, [featuredBooks.length, isPaused]);
 
 
 
@@ -122,6 +125,8 @@ export default function HomePage() {
               <div 
                 className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
                 style={{ transform: `translateX(-${currentSlide * (window.innerWidth < 640 ? 100 : 25)}%)` }}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
               >
                 {bestsellerBooks.map((book) => (
                   <div key={book.id} className="flex-none w-full sm:w-72">
@@ -158,6 +163,8 @@ export default function HomePage() {
               <div 
                 className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
                 style={{ transform: `translateX(-${(currentSlide * (window.innerWidth < 640 ? 100 : 25)) % 100}%)` }}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
               >
                 {featuredBooks.map((book) => (
                   <div key={book.id} className="flex-none w-full sm:w-72">
