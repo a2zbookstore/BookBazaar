@@ -58,7 +58,7 @@ export default function Layout({ children }: LayoutProps) {
             </Link>
 
             {/* Search Bar - Hidden on mobile, shown on desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <div className="hidden md:flex flex-1 max-w-4xl mx-6">
               <SearchInput 
                 placeholder="Search books, authors, ISBN..."
                 className="w-full"
@@ -66,7 +66,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-4">
               <Link
                 href="/"
                 className={`text-secondary-black hover:text-primary-aqua transition-colors ${
@@ -139,7 +139,7 @@ export default function Layout({ children }: LayoutProps) {
               {/* Cart - accessible to all users */}
               <Link
                 href="/cart"
-                className={`transition-colors relative ${
+                className={`transition-colors relative ml-2 ${
                   isCartAnimating 
                     ? "cart-pulse-animation" 
                     : "text-secondary-black hover:text-primary-aqua cart-normal"
@@ -157,7 +157,7 @@ export default function Layout({ children }: LayoutProps) {
                 <>
                   {user?.role === "admin" && (
                     <Link href="/admin">
-                      <Button size="sm" className="bg-primary-aqua hover:bg-secondary-aqua text-xs px-3 py-1">
+                      <Button size="sm" className="bg-primary-aqua hover:bg-secondary-aqua text-xs px-2 py-1 ml-2">
                         Admin
                       </Button>
                     </Link>

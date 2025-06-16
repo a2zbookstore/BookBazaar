@@ -144,6 +144,7 @@ Changelog:
 - June 16, 2025. Enhanced homepage "About" section with authentic book imagery - replaced generic images with beautiful book-related photos including vintage book stacks, open book with reading glasses, and colorful bookstore shelves, creating more authentic atmosphere that better represents A2Z BOOKSHOP's literary focus and bookstore environment.
 - June 16, 2025. Replaced all website imagery with professional book-only photography - updated hero section background images, About section photos, and category display images throughout homepage to use carefully selected book photography from Unsplash showing only books, bookshelves, and literary objects without any human figures, creating proper bookstore atmosphere while ensuring no people are visible anywhere on the website.
 - June 16, 2025. Implemented frozen/sticky header functionality - added scroll detection with dynamic shadow effects, backdrop blur, and smooth height transitions when scrolling down, header remains fixed at top with enhanced visual styling including semi-transparent background and responsive height changes for better user navigation experience.
+- June 16, 2025. Enhanced header search bar with expanded horizontal width - increased search bar from max-w-2xl to max-w-4xl for better usability, adjusted navigation spacing and button margins for improved layout balance, maintained responsive design across all screen sizes.
 ```
 
 ## User Preferences
