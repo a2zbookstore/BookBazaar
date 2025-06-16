@@ -40,8 +40,8 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className={`bg-white border-b border-gray-200 sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled ? 'shadow-lg bg-white/95 backdrop-blur-sm' : ''
+      <header className={`fixed-header bg-white border-b border-gray-200 w-full transition-all duration-300 ${
+        isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''
       }`}>
         <div className="container-custom px-3 md:px-6">
           <div className={`flex items-center justify-between w-full transition-all duration-300 ${
@@ -402,7 +402,9 @@ export default function Layout({ children }: LayoutProps) {
       </Link>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className={`flex-1 transition-all duration-300 ${
+        isScrolled ? 'pt-12 md:pt-16' : 'pt-14 md:pt-20'
+      }`}>
         {children}
       </main>
 
