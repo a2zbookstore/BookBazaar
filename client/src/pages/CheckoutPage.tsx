@@ -985,7 +985,7 @@ export default function CheckoutPage() {
                       <Button
                         onClick={handleRazorpayPayment}
                         disabled={isProcessing}
-                        className="w-full bg-purple-600 hover:bg-purple-700"
+                        className="w-full bg-purple-600 hover:bg-purple-700 touch-target mobile-button"
                       >
                         {isProcessing ? "Processing..." : "Pay with Razorpay"}
                       </Button>
