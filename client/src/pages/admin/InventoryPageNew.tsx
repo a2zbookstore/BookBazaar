@@ -742,36 +742,60 @@ export default function InventoryPageNew() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="weight">Weight (kg)</Label>
+                      <Label htmlFor="edition">Edition</Label>
                       <Input
-                        id="weight"
-                        value={bookForm.weight}
-                        onChange={(e) => setBookForm(prev => ({ ...prev, weight: e.target.value }))}
-                        placeholder="0.5"
+                        id="edition"
+                        value={bookForm.edition}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, edition: e.target.value }))}
+                        placeholder="1st Edition"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="dimensions">Dimensions</Label>
-                    <Input
-                      id="dimensions"
-                      value={bookForm.dimensions}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, dimensions: e.target.value }))}
-                      placeholder="20x13x2 cm"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="weight">Weight (lbs)</Label>
+                      <Input
+                        id="weight"
+                        value={bookForm.weight}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, weight: e.target.value }))}
+                        placeholder="1.2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dimensions">Dimensions (inches)</Label>
+                      <Input
+                        id="dimensions"
+                        value={bookForm.dimensions}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, dimensions: e.target.value }))}
+                        placeholder="8x5x1"
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="featured"
-                      checked={bookForm.featured}
-                      onCheckedChange={(checked) => setBookForm(prev => ({ 
-                        ...prev, 
-                        featured: checked as boolean 
-                      }))}
-                    />
-                    <Label htmlFor="featured">Featured book</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="featured"
+                        checked={bookForm.featured}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          featured: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="featured">Featured book</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="bestseller"
+                        checked={bookForm.bestseller}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          bestseller: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="bestseller">Bestseller</Label>
+                    </div>
                   </div>
 
                   <div className="flex justify-end space-x-2 pt-4">

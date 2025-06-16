@@ -14,9 +14,11 @@ export interface Book {
   publisher?: string;
   pages?: number;
   language?: string;
+  edition?: string;
   weight?: string;
   dimensions?: string;
   featured: boolean;
+  bestseller: boolean;
   createdAt: string;
   updatedAt: string;
   category?: Category;
