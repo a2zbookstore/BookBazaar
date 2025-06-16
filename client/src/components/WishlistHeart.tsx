@@ -23,7 +23,7 @@ export default function WishlistHeart({ bookId, className = "", size = 20 }: Wis
     enabled: isAuthenticated,
   });
 
-  const isInWishlist = wishlistStatus?.inWishlist || false;
+  const isInWishlist = wishlistStatus?.inWishlist === true;
 
   // Add to wishlist mutation
   const addToWishlistMutation = useMutation({

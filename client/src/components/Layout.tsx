@@ -1,8 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, User, Menu } from "lucide-react";
+import { ShoppingCart, User, Menu, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
@@ -16,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
   const [location, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { cartCount, isCartAnimating } = useCart();
+  const { wishlistCount } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
@@ -103,11 +105,19 @@ export default function Layout({ children }: LayoutProps) {
               {isAuthenticated && (
                 <Link
                   href="/wishlist"
-                  className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                  className={`text-secondary-black hover:text-primary-aqua transition-colors relative ${
                     isActive("/wishlist") ? "text-primary-aqua font-semibold" : ""
                   }`}
                 >
-                  Wishlist
+                  <div className="flex items-center gap-1">
+                    <Heart className="h-4 w-4" />
+                    <span>Wishlist</span>
+                    {wishlistCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-1">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               )}
               
