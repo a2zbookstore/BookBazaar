@@ -213,7 +213,7 @@ export default function BookCard({ book }: BookCardProps) {
             <Button
               size="sm"
               onClick={handleAddToCart}
-              className="bg-primary-aqua hover:bg-secondary-aqua text-white px-3 py-2 text-xs flex items-center gap-1"
+              className="bg-primary-aqua hover:bg-secondary-aqua text-white px-4 py-3 text-sm flex items-center gap-2 touch-target min-h-[44px] w-full sm:w-auto"
               disabled={book.stock === 0}
             >
               {book.stock === 0 ? (

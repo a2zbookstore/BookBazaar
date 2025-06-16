@@ -16,6 +16,7 @@ export default function Layout({ children }: LayoutProps) {
   const [location, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { cartCount, isCartAnimating } = useCart();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
@@ -28,22 +29,27 @@ export default function Layout({ children }: LayoutProps) {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container-custom">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <Logo size="md" variant="default" showText={true} />
+              <div className="md:hidden">
+                <Logo size="sm" variant="default" showText={true} />
+              </div>
+              <div className="hidden md:block">
+                <Logo size="md" variant="default" showText={true} />
+              </div>
             </Link>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-8">
+            {/* Search Bar - Hidden on mobile, shown on desktop */}
+            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
               <SearchInput 
                 placeholder="Search books, authors, ISBN..."
                 className="w-full"
               />
             </div>
 
-            {/* Navigation */}
-            <nav className="flex items-center space-x-6">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-6">
               <Link
                 href="/"
                 className={`text-secondary-black hover:text-primary-aqua transition-colors ${
@@ -164,7 +170,161 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
               )}
             </nav>
+
+            {/* Mobile Navigation */}
+            <div className="flex md:hidden items-center space-x-4">
+              {/* Mobile Cart */}
+              <Link
+                href="/cart"
+                className={`transition-colors relative touch-target ${
+                  isCartAnimating 
+                    ? "cart-pulse-animation" 
+                    : "text-secondary-black hover:text-primary-aqua cart-normal"
+                }`}
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* Mobile Menu Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="touch-target"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </div>
           </div>
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden px-4 pb-4">
+            <SearchInput 
+              placeholder="Search books, authors, ISBN..."
+              className="w-full"
+            />
+          </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden bg-white border-t border-gray-200">
+              <nav className="px-4 py-4 space-y-4">
+                <Link
+                  href="/"
+                  className={`block py-2 text-lg touch-target ${
+                    isActive("/") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/catalog"
+                  className={`block py-2 text-lg touch-target ${
+                    isActive("/catalog") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Catalog
+                </Link>
+                <Link
+                  href="/about"
+                  className={`block py-2 text-lg touch-target ${
+                    isActive("/about") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  About
+                </Link>
+                <Link
+                  href="/contact"
+                  className={`block py-2 text-lg touch-target ${
+                    isActive("/contact") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+                <Link
+                  href="/track-order"
+                  className={`block py-2 text-lg touch-target ${
+                    isActive("/track-order") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Track Order
+                </Link>
+                <Link
+                  href="/returns"
+                  className={`block py-2 text-lg touch-target ${
+                    isActive("/returns") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Returns
+                </Link>
+
+                {/* Mobile Auth Buttons */}
+                <div className="pt-4 border-t border-gray-200">
+                  {isAuthenticated ? (
+                    <>
+                      {user?.role === "admin" && (
+                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Button className="w-full mb-2 bg-primary-aqua hover:bg-secondary-aqua touch-target">
+                            Admin Panel
+                          </Button>
+                        </Link>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          setIsMobileMenuOpen(false);
+                          try {
+                            await fetch("/api/auth/logout", { method: "POST" });
+                            window.location.href = "/";
+                          } catch (error) {
+                            window.location.href = "/api/logout";
+                          }
+                        }}
+                        className="w-full touch-target"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setLocation('/admin-login');
+                        }}
+                        className="w-full touch-target"
+                      >
+                        Admin Login
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setLocation('/login');
+                        }}
+                        className="w-full bg-primary-aqua hover:bg-secondary-aqua touch-target"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Customer Login
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 

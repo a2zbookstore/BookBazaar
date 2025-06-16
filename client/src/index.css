@@ -42,6 +42,90 @@
   --radius: 0rem;
 }
 
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Improve touch targets for mobile */
+  button, .button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better spacing for mobile */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Improve form inputs on mobile */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px;
+  }
+  
+  /* Better card spacing on mobile */
+  .book-card {
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Optimize navigation for mobile */
+  .mobile-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: white;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  /* Improve checkout form on mobile */
+  .checkout-form {
+    padding: 1rem;
+  }
+  
+  .checkout-form .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Touch optimizations */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Smooth scrolling for mobile */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix sticky elements on iOS */
+.sticky-mobile {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Improve button press feedback */
+button:active, .button:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Better focus states for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--primary-aqua);
+  outline-offset: 2px;
+}
+
 .dark {
   --background: hsl(0, 0%, 3.9%);
   --foreground: hsl(0, 0%, 98%);
