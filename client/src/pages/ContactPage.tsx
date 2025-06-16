@@ -134,8 +134,12 @@ export default function ContactPage() {
                 <Label htmlFor="subject" className="text-base-black font-semibold">
                   Subject *
                 </Label>
-                <Select value={formData.subject} onValueChange={(value) => handleInputChange("subject", value)}>
-                  <SelectTrigger className="mt-1 focus:border-primary-aqua">
+                <Select 
+                  value={formData.subject || ""} 
+                  onValueChange={(value) => handleInputChange("subject", value)}
+                  required
+                >
+                  <SelectTrigger className="mt-1 focus:border-primary-aqua" id="subject">
                     <SelectValue placeholder="Select a subject" />
                   </SelectTrigger>
                   <SelectContent>
