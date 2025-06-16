@@ -298,7 +298,15 @@ export default function Layout({ children }: LayoutProps) {
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Wishlist
+                    <div className="flex items-center gap-2">
+                      <Heart className="h-5 w-5" />
+                      <span>Wishlist</span>
+                      {wishlistCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </div>
                   </Link>
                 )}
 
