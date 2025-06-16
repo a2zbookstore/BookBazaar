@@ -141,7 +141,23 @@ export default function WishlistPage() {
             {/* Wishlist Items */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 book-grid">
               {wishlistItems.map((item: any) => (
-                <BookCard key={item.id} book={item.book} />
+                <div key={item.id} className="relative">
+                  <BookCard book={item.book} />
+                  
+                  {/* Remove Button */}
+                  <div className="absolute top-2 left-2 z-20">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => removeFromWishlistMutation.mutate(item.book.id)}
+                      disabled={removeFromWishlistMutation.isPending}
+                      className="bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 p-0 shadow-lg"
+                      aria-label="Remove from wishlist"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
 
