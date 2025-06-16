@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Star, ShoppingCart, Truck, Shield, ChevronRight, RotateCcw } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -15,6 +15,7 @@ export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const { data: book, isLoading } = useQuery<Book>({
     queryKey: [`/api/books/${id}`],
@@ -28,8 +29,13 @@ export default function BookDetailPage() {
       await addToCart(book.id);
       toast({
         title: "Added to cart",
-        description: `${book.title} has been added to your cart.`,
+        description: `${book.title} has been added to your cart. Redirecting to checkout...`,
       });
+      
+      // Redirect to checkout page after successful add to cart
+      setTimeout(() => {
+        setLocation("/checkout");
+      }, 500);
     } catch (error) {
       toast({
         title: "Error",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Star, ShoppingCart, Truck, Clock, Book as BookIcon, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ export default function BookCard({ book }: BookCardProps) {
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
   const { shipping } = useShipping();
+  const [, setLocation] = useLocation();
   const [displayPrice, setDisplayPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
   const [shippingCost, setShippingCost] = useState<string>('');
@@ -71,8 +72,13 @@ export default function BookCard({ book }: BookCardProps) {
       await addToCart(book.id);
       toast({
         title: "Added to cart",
-        description: `${book.title} has been added to your cart.`,
+        description: `${book.title} has been added to your cart. Redirecting to checkout...`,
       });
+      
+      // Redirect to checkout page after successful add to cart
+      setTimeout(() => {
+        setLocation("/checkout");
+      }, 500);
     } catch (error) {
       toast({
         title: "Error",
