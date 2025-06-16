@@ -41,21 +41,21 @@ export default function HomePage() {
 
 
   const bookImages = [
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=400&h=600&fit=crop",
     "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=600&fit=crop",
     "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=400&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1495640452828-3df6795cf69b?w=400&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=600&fit=crop",
   ];
 
   const categoryImages = [
     "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop",
     "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1495640452828-3df6795cf69b?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=300&fit=crop",
   ];
 
   return (
@@ -248,7 +248,7 @@ export default function HomePage() {
                     className="rounded-2xl shadow-lg w-full h-36 object-cover"
                   />
                   <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=320&fit=crop"
+                    src="https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=500&h=320&fit=crop"
                     alt="A2Z Bookshop library"
                     className="rounded-2xl shadow-lg w-full h-40 object-cover"
                   />
