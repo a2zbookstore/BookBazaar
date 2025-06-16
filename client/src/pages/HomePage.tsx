@@ -41,21 +41,21 @@ export default function HomePage() {
 
 
   const bookImages = [
-    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
   ];
 
   const categoryImages = [
-    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
-    "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
-    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
-    "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
-    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
+    "/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg",
   ];
 
   return (
@@ -237,19 +237,19 @@ export default function HomePage() {
             <div className="order-2 lg:order-1">
               <div className="grid grid-cols-2 gap-4">
                 <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500"
-                  alt="Stack of vintage books"
+                  src="/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg"
+                  alt="A2Z Bookshop collection"
                   className="rounded-2xl shadow-lg w-full h-80 object-cover"
                 />
                 <div className="flex flex-col gap-4">
                   <img
-                    src="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
-                    alt="Open book with reading glasses"
+                    src="/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg"
+                    alt="A2Z Bookshop books"
                     className="rounded-2xl shadow-lg w-full h-36 object-cover"
                   />
                   <img
-                    src="https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"
-                    alt="Bookstore shelves with colorful books"
+                    src="/attached_assets/WhatsApp Image 2025-06-16 at 5.02.14 PM_1750073600333.jpeg"
+                    alt="A2Z Bookshop library"
                     className="rounded-2xl shadow-lg w-full h-40 object-cover"
                   />
                 </div>
