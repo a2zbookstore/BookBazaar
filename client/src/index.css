@@ -299,6 +299,16 @@ button:active, .button:active {
     @apply bg-[hsl(346,95%,45%)] text-white px-6 py-2 hover:bg-[hsl(346,95%,40%)] transition-colors duration-200;
   }
   
+  /* Sticky header enhancements */
+  .sticky-header {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .sticky-header-shadow {
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  }
+  
   .text-primary-aqua {
     color: hsl(188, 100%, 29%);
   }

@@ -7,7 +7,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,6 +19,17 @@ export default function Layout({ children }: LayoutProps) {
   const { cartCount, isCartAnimating } = useCart();
   const { wishlistCount } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
@@ -29,9 +40,13 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 w-full">
+      <header className={`bg-white border-b border-gray-200 sticky top-0 z-50 w-full transition-all duration-300 ${
+        isScrolled ? 'shadow-lg bg-white/95 backdrop-blur-sm' : ''
+      }`}>
         <div className="container-custom px-3 md:px-6">
-          <div className="flex items-center justify-between h-14 md:h-20 w-full">
+          <div className={`flex items-center justify-between w-full transition-all duration-300 ${
+            isScrolled ? 'h-12 md:h-16' : 'h-14 md:h-20'
+          }`}>
             {/* Logo */}
             <Link href="/" className="flex items-center flex-shrink-0">
               <div className="md:hidden">
