@@ -107,6 +107,7 @@ export default function WishlistHeart({ bookId, className = "", size = 20 }: Wis
             ? "fill-red-500 text-red-500"
             : "text-gray-400 hover:text-red-400"
         } ${isAnimating ? "heart-beat-animation" : ""}`}
+        fill={isInWishlist ? "#ef4444" : "none"}
       />
       
       {/* Animation particles */}
