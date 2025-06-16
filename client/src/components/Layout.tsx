@@ -275,7 +275,7 @@ export default function Layout({ children }: LayoutProps) {
                     <>
                       {user?.role === "admin" && (
                         <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Button className="w-full mb-2 bg-primary-aqua hover:bg-secondary-aqua touch-target">
+                          <Button className="w-full mb-2 bg-primary-aqua hover:bg-secondary-aqua touch-target mobile-button">
                             Admin Panel
                           </Button>
                         </Link>
@@ -291,7 +291,7 @@ export default function Layout({ children }: LayoutProps) {
                             window.location.href = "/api/logout";
                           }
                         }}
-                        className="w-full touch-target"
+                        className="w-full touch-target mobile-button"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Logout
@@ -305,7 +305,7 @@ export default function Layout({ children }: LayoutProps) {
                           setIsMobileMenuOpen(false);
                           setLocation('/admin-login');
                         }}
-                        className="w-full touch-target"
+                        className="w-full touch-target mobile-button"
                       >
                         Admin Login
                       </Button>
@@ -314,7 +314,7 @@ export default function Layout({ children }: LayoutProps) {
                           setIsMobileMenuOpen(false);
                           setLocation('/login');
                         }}
-                        className="w-full bg-primary-aqua hover:bg-secondary-aqua touch-target"
+                        className="w-full bg-primary-aqua hover:bg-secondary-aqua touch-target mobile-button"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Customer Login

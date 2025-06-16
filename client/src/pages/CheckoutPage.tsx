@@ -970,7 +970,7 @@ export default function CheckoutPage() {
                       <Button
                         onClick={handlePayPalPayment}
                         disabled={isProcessing}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-blue-600 hover:bg-blue-700 touch-target mobile-button"
                       >
                         {isProcessing ? "Processing..." : "Pay with PayPal"}
                       </Button>

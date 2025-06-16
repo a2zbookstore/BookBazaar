@@ -156,11 +156,11 @@ export default function HomePage() {
           {featuredBooks.length > 0 ? (
             <div className="relative overflow-hidden">
               <div 
-                className="flex transition-transform duration-1000 ease-in-out gap-6"
-                style={{ transform: `translateX(-${(currentSlide * 25) % 100}%)` }}
+                className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                style={{ transform: `translateX(-${(currentSlide * (window.innerWidth < 640 ? 100 : 25)) % 100}%)` }}
               >
                 {featuredBooks.map((book) => (
-                  <div key={book.id} className="flex-none w-72">
+                  <div key={book.id} className="flex-none w-full sm:w-72">
                     <BookCard book={book} />
                   </div>
                 ))}
