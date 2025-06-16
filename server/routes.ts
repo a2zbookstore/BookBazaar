@@ -698,13 +698,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Wishlist routes
-  app.get("/api/wishlist", async (req, res) => {
+  app.get("/api/wishlist", async (req: any, res) => {
     try {
-      if (!req.session?.user?.id) {
+      if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
-      const wishlistItems = await storage.getWishlistItems(req.session.user.id);
+      const wishlistItems = await storage.getWishlistItems(req.session.userId);
       res.json(wishlistItems);
     } catch (error) {
       console.error("Error fetching wishlist:", error);
@@ -712,9 +712,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/wishlist", async (req, res) => {
+  app.post("/api/wishlist", async (req: any, res) => {
     try {
-      if (!req.session?.user?.id) {
+      if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
@@ -724,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const wishlistItem = await storage.addToWishlist({
-        userId: req.session.user.id,
+        userId: req.session.userId,
         bookId: parseInt(bookId)
       });
 
@@ -735,9 +735,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/wishlist/:bookId", async (req, res) => {
+  app.delete("/api/wishlist/:bookId", async (req: any, res) => {
     try {
-      if (!req.session?.user?.id) {
+      if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
@@ -746,7 +746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid book ID" });
       }
 
-      await storage.removeFromWishlist(req.session.user.id, bookId);
+      await storage.removeFromWishlist(req.session.userId, bookId);
       res.json({ success: true });
     } catch (error) {
       console.error("Error removing from wishlist:", error);
@@ -754,9 +754,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/wishlist/check/:bookId", async (req, res) => {
+  app.get("/api/wishlist/check/:bookId", async (req: any, res) => {
     try {
-      if (!req.session?.user?.id) {
+      if (!req.session?.userId) {
         return res.json({ inWishlist: false });
       }
 
@@ -765,7 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid book ID" });
       }
 
-      const inWishlist = await storage.isInWishlist(req.session.user.id, bookId);
+      const inWishlist = await storage.isInWishlist(req.session.userId, bookId);
       res.json({ inWishlist });
     } catch (error) {
       console.error("Error checking wishlist:", error);

@@ -27,6 +27,7 @@ import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";
 import PayPalCompletePage from "@/pages/PayPalCompletePage";
 import ReturnRequestPage from "@/pages/ReturnRequestPage";
+import WishlistPage from "@/pages/WishlistPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/paypal-complete" component={PayPalCompletePage} />
       <Route path="/orders/:id" component={OrderDetailPage} />
       <Route path="/returns" component={ReturnRequestPage} />
+      <Route path="/wishlist" component={WishlistPage} />
       <Route path="/admin-login" component={AdminLoginPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />

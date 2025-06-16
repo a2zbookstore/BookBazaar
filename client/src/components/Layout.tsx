@@ -100,6 +100,17 @@ export default function Layout({ children }: LayoutProps) {
                 Returns
               </Link>
               
+              {isAuthenticated && (
+                <Link
+                  href="/wishlist"
+                  className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                    isActive("/wishlist") ? "text-primary-aqua font-semibold" : ""
+                  }`}
+                >
+                  Wishlist
+                </Link>
+              )}
+              
               {/* Cart - accessible to all users */}
               <Link
                 href="/cart"
@@ -268,6 +279,18 @@ export default function Layout({ children }: LayoutProps) {
                 >
                   Returns
                 </Link>
+                
+                {isAuthenticated && (
+                  <Link
+                    href="/wishlist"
+                    className={`block py-2 text-lg touch-target ${
+                      isActive("/wishlist") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Wishlist
+                  </Link>
+                )}
 
                 {/* Mobile Auth Buttons */}
                 <div className="pt-4 border-t border-gray-200">
