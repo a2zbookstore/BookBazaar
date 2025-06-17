@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
 import { useState, useEffect } from "react";
+import { useCurrency } from "@/hooks/useCurrency";
+import { useShipping } from "@/hooks/useShipping";
+import { Badge } from "@/components/ui/badge";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,6 +23,8 @@ export default function Layout({ children }: LayoutProps) {
   const { wishlistCount } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { location: userLocation } = useShipping();
+  const { userCurrency, formatAmount, getSupportedCurrencies } = useCurrency(userLocation?.countryCode);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -136,6 +141,18 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               )}
               
+              {/* Currency Indicator */}
+              <div className="flex items-center ml-3">
+                <Badge variant="outline" className="text-xs font-medium bg-primary-aqua/10 border-primary-aqua text-primary-aqua">
+                  {getSupportedCurrencies().find(c => c.code === userCurrency)?.symbol || '$'} {userCurrency}
+                </Badge>
+                {userLocation?.country && (
+                  <span className="text-xs text-gray-500 ml-2 hidden md:inline">
+                    {userLocation.country}
+                  </span>
+                )}
+              </div>
+
               {/* Cart - accessible to all users */}
               <Link
                 href="/cart"
@@ -304,6 +321,21 @@ export default function Layout({ children }: LayoutProps) {
                 >
                   Returns
                 </Link>
+                
+                {/* Mobile Currency Display */}
+                <div className="py-2 border-t border-gray-200 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-secondary-black">Currency:</span>
+                    <Badge variant="outline" className="text-xs font-medium bg-primary-aqua/10 border-primary-aqua text-primary-aqua">
+                      {getSupportedCurrencies().find(c => c.code === userCurrency)?.symbol || '$'} {userCurrency}
+                    </Badge>
+                  </div>
+                  {userLocation?.country && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Location: {userLocation.country}
+                    </div>
+                  )}
+                </div>
                 
                 {isAuthenticated && (
                   <Link

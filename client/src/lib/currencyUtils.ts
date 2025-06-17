@@ -53,16 +53,48 @@ export const SUPPORTED_CURRENCIES: CurrencyInfo[] = [
 
 // Country to currency mapping
 export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  // Major currencies
   'US': 'USD', 'CA': 'CAD', 'GB': 'GBP', 'AU': 'AUD', 'JP': 'JPY',
   'CH': 'CHF', 'CN': 'CNY', 'IN': 'INR', 'KR': 'KRW', 'SG': 'SGD',
   'HK': 'HKD', 'NO': 'NOK', 'SE': 'SEK', 'DK': 'DKK', 'PL': 'PLN',
   'CZ': 'CZK', 'HU': 'HUF', 'RU': 'RUB', 'BR': 'BRL', 'MX': 'MXN',
   'ZA': 'ZAR', 'TR': 'TRY', 'AE': 'AED', 'SA': 'SAR',
-  // EU countries
+  
+  // EU countries using EUR
   'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR', 'NL': 'EUR',
   'BE': 'EUR', 'AT': 'EUR', 'PT': 'EUR', 'IE': 'EUR', 'FI': 'EUR',
   'GR': 'EUR', 'LU': 'EUR', 'MT': 'EUR', 'CY': 'EUR', 'SK': 'EUR',
   'SI': 'EUR', 'EE': 'EUR', 'LV': 'EUR', 'LT': 'EUR',
+  
+  // Additional Asian countries
+  'TH': 'USD', 'VN': 'USD', 'MY': 'USD', 'ID': 'USD', 'PH': 'USD',
+  'BD': 'USD', 'PK': 'USD', 'LK': 'USD', 'NP': 'USD', 'MM': 'USD',
+  
+  // Additional Middle East countries
+  'QA': 'USD', 'KW': 'USD', 'BH': 'USD', 'OM': 'USD', 'JO': 'USD',
+  'LB': 'USD', 'IL': 'USD', 'IQ': 'USD', 'IR': 'USD', 'SY': 'USD',
+  
+  // African countries
+  'EG': 'USD', 'NG': 'USD', 'KE': 'USD', 'GH': 'USD', 'UG': 'USD',
+  'TZ': 'USD', 'ZW': 'USD', 'ZM': 'USD', 'BW': 'USD', 'NA': 'USD',
+  'MU': 'USD', 'MG': 'USD', 'SN': 'USD', 'CI': 'USD', 'MA': 'USD',
+  'TN': 'USD', 'DZ': 'USD', 'LY': 'USD', 'SD': 'USD', 'ET': 'USD',
+  
+  // Latin American countries
+  'AR': 'USD', 'CL': 'USD', 'CO': 'USD', 'PE': 'USD', 'VE': 'USD',
+  'EC': 'USD', 'BO': 'USD', 'PY': 'USD', 'UY': 'USD', 'CR': 'USD',
+  'PA': 'USD', 'GT': 'USD', 'HN': 'USD', 'NI': 'USD', 'SV': 'USD',
+  'DO': 'USD', 'CU': 'USD', 'JM': 'USD', 'TT': 'USD', 'BB': 'USD',
+  
+  // Oceania
+  'NZ': 'USD', 'FJ': 'USD', 'PG': 'USD', 'NC': 'EUR', 'PF': 'EUR',
+  
+  // Eastern Europe
+  'UA': 'USD', 'BY': 'USD', 'MD': 'USD', 'GE': 'USD', 'AM': 'USD',
+  'AZ': 'USD', 'KZ': 'USD', 'UZ': 'USD', 'TM': 'USD', 'KG': 'USD',
+  'TJ': 'USD', 'MN': 'USD', 'AF': 'USD',
+  
+  // Other regions - default to USD for easier currency conversion
 };
 
 /**

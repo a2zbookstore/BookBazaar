@@ -213,6 +213,11 @@ export default function BookCard({ book }: BookCardProps) {
                       from ${parseFloat(book.price).toFixed(2)} USD
                     </span>
                   )}
+                  {userCurrency !== 'USD' && (
+                    <Badge variant="secondary" className="text-xs mt-1 bg-green-50 text-green-700 border-green-200">
+                      Your Currency
+                    </Badge>
+                  )}
                 </>
               )}
             </div>
