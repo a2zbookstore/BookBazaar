@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -38,7 +38,7 @@ import FAQPage from "@/pages/FAQPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import NotFound from "@/pages/not-found";
 
-function Router() {
+function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -53,73 +53,75 @@ function Router() {
   }
 
   return (
-    <Switch>
-      {/* Public routes - accessible to all users including guests */}
-      <Route path="/" component={HomePage} />
-      <Route path="/catalog" component={CatalogPage} />
-      <Route path="/books/:id" component={BookDetailPage} />
-      <Route path="/about" component={AboutPage} />
-      <Route path="/contact" component={ContactPage} />
-      <Route path="/track-order" component={TrackOrderPage} />
-      <Route path="/cart" component={CartPage} />
-      <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/paypal-complete" component={PayPalCompletePage} />
-      <Route path="/orders/:id" component={OrderDetailPage} />
-      <Route path="/returns" component={ReturnRequestPage} />
-      <Route path="/wishlist" component={WishlistPage} />
-      <Route path="/shipping-info" component={ShippingInfoPage} />
-      <Route path="/return-policy" component={ReturnPolicyPage} />
-      <Route path="/faq" component={FAQPage} />
-      <Route path="/privacy-policy" component={PrivacyPolicyPage} />
-      <Route path="/admin-login" component={AdminLoginPage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/register" component={RegisterPage} />
-      
-      {/* Admin routes - protected by separate admin authentication */}
-      <Route path="/admin">
-        <AdminProtectedRoute>
-          <AdminDashboard />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/inventory">
-        <AdminProtectedRoute>
-          <InventoryPageNew />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/orders">
-        <AdminProtectedRoute>
-          <OrdersPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/sales">
-        <AdminProtectedRoute>
-          <SalesPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/shipping">
-        <AdminProtectedRoute>
-          <ShippingPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/returns">
-        <AdminProtectedRoute>
-          <ReturnsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/settings">
-        <AdminProtectedRoute>
-          <SettingsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/account">
-        <AdminProtectedRoute>
-          <AdminAccountPage />
-        </AdminProtectedRoute>
-      </Route>
-      
-      {/* Fallback */}
-      <Route component={NotFound} />
-    </Switch>
+    <WouterRouter>
+      <Switch>
+        {/* Public routes - accessible to all users including guests */}
+        <Route path="/" component={HomePage} />
+        <Route path="/catalog" component={CatalogPage} />
+        <Route path="/books/:id" component={BookDetailPage} />
+        <Route path="/about" component={AboutPage} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/track-order" component={TrackOrderPage} />
+        <Route path="/cart" component={CartPage} />
+        <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/paypal-complete" component={PayPalCompletePage} />
+        <Route path="/orders/:id" component={OrderDetailPage} />
+        <Route path="/returns" component={ReturnRequestPage} />
+        <Route path="/wishlist" component={WishlistPage} />
+        <Route path="/shipping-info" component={ShippingInfoPage} />
+        <Route path="/return-policy" component={ReturnPolicyPage} />
+        <Route path="/faq" component={FAQPage} />
+        <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+        <Route path="/admin-login" component={AdminLoginPage} />
+        <Route path="/login" component={LoginPage} />
+        <Route path="/register" component={RegisterPage} />
+        
+        {/* Admin routes - protected by separate admin authentication */}
+        <Route path="/admin">
+          <AdminProtectedRoute>
+            <AdminDashboard />
+          </AdminProtectedRoute>
+        </Route>
+        <Route path="/admin/inventory">
+          <AdminProtectedRoute>
+            <InventoryPageNew />
+          </AdminProtectedRoute>
+        </Route>
+        <Route path="/admin/orders">
+          <AdminProtectedRoute>
+            <OrdersPage />
+          </AdminProtectedRoute>
+        </Route>
+        <Route path="/admin/sales">
+          <AdminProtectedRoute>
+            <SalesPage />
+          </AdminProtectedRoute>
+        </Route>
+        <Route path="/admin/shipping">
+          <AdminProtectedRoute>
+            <ShippingPage />
+          </AdminProtectedRoute>
+        </Route>
+        <Route path="/admin/returns">
+          <AdminProtectedRoute>
+            <ReturnsPage />
+          </AdminProtectedRoute>
+        </Route>
+        <Route path="/admin/settings">
+          <AdminProtectedRoute>
+            <SettingsPage />
+          </AdminProtectedRoute>
+        </Route>
+        <Route path="/admin/account">
+          <AdminProtectedRoute>
+            <AdminAccountPage />
+          </AdminProtectedRoute>
+        </Route>
+        
+        {/* Fallback */}
+        <Route component={NotFound} />
+      </Switch>
+    </WouterRouter>
   );
 }
 
@@ -130,7 +132,7 @@ function App() {
         <CartProvider>
           <WishlistProvider>
             <Toaster />
-            <Router />
+            <AppRouter />
           </WishlistProvider>
         </CartProvider>
       </TooltipProvider>
