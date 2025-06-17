@@ -773,7 +773,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Store settings routes
+  // Public store settings route for contact information
+  app.get('/api/store-info', async (req: any, res) => {
+    try {
+      const settings = await storage.getStoreSettings();
+      if (!settings) {
+        // Return default values if no settings exist
+        return res.json({
+          storeName: "A2Z BOOKSHOP",
+          storeEmail: "hello@a2zbookshop.com",
+          storePhone: "+31 (20) 123-BOOK",
+          storeAddress: "123 Book Street\nLiterary District\nBooktown, BT 12345\nEurope"
+        });
+      }
+      
+      // Return only public information
+      res.json({
+        storeName: settings.storeName,
+        storeEmail: settings.storeEmail,
+        storePhone: settings.storePhone,
+        storeAddress: settings.storeAddress
+      });
+    } catch (error) {
+      console.error("Error fetching public store info:", error);
+      res.status(500).json({ message: "Failed to fetch store information" });
+    }
+  });
+
+  // Admin-only store settings routes
   app.get('/api/settings/store', async (req: any, res) => {
     try {
       const adminId = (req.session as any).adminId;

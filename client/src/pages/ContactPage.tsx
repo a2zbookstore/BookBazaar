@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { ChevronRight, MapPin, Phone, Mail, Clock } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,18 @@ interface ContactForm {
   message: string;
 }
 
+interface StoreSettings {
+  id: number;
+  storeName: string;
+  storeEmail: string;
+  storeDescription?: string;
+  storePhone?: string;
+  currency: string;
+  storeAddress?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function ContactPage() {
   const { toast } = useToast();
   const [formData, setFormData] = useState<ContactForm>({
@@ -28,6 +40,16 @@ export default function ContactPage() {
     email: "",
     subject: "",
     message: "",
+  });
+
+  // Fetch public store information for contact details
+  const { data: storeInfo } = useQuery<{
+    storeName: string;
+    storeEmail: string;
+    storePhone?: string;
+    storeAddress?: string;
+  }>({
+    queryKey: ["/api/store-info"],
   });
 
   const contactMutation = useMutation({
@@ -191,11 +213,8 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-base-black mb-1">Address</h3>
-                      <p className="text-secondary-black">
-                        123 Book Street<br />
-                        Literary District<br />
-                        Booktown, BT 12345<br />
-                        Europe
+                      <p className="text-secondary-black whitespace-pre-line">
+                        {storeInfo?.storeAddress || "123 Book Street\nLiterary District\nBooktown, BT 12345\nEurope"}
                       </p>
                     </div>
                   </div>
@@ -210,7 +229,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-base-black mb-1">Phone</h3>
-                      <p className="text-secondary-black">+31 (20) 123-BOOK</p>
+                      <p className="text-secondary-black">{storeInfo?.storePhone || "+31 (20) 123-BOOK"}</p>
                       <p className="text-xs text-tertiary-black">Mon-Fri: 9 AM - 6 PM CET</p>
                     </div>
                   </div>
@@ -225,7 +244,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-base-black mb-1">Email</h3>
-                      <p className="text-secondary-black">hello@a2zbookshop.com</p>
+                      <p className="text-secondary-black">{storeInfo?.storeEmail || "hello@a2zbookshop.com"}</p>
                       <p className="text-xs text-tertiary-black">We respond within 24 hours</p>
                     </div>
                   </div>
