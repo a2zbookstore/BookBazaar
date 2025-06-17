@@ -146,6 +146,7 @@ Changelog:
 - June 16, 2025. Implemented frozen/sticky header functionality - added scroll detection with dynamic shadow effects, backdrop blur, and smooth height transitions when scrolling down, header remains fixed at top with enhanced visual styling including semi-transparent background and responsive height changes for better user navigation experience.
 - June 16, 2025. Enhanced header search bar with expanded horizontal width - increased search bar from max-w-2xl to max-w-4xl for better usability, adjusted navigation spacing and button margins for improved layout balance, maintained responsive design across all screen sizes.
 - June 16, 2025. Created comprehensive footer policy pages - built detailed Shipping Info, Return Policy, FAQ, and Privacy Policy pages with authentic bookstore content, added proper routing and navigation links, included professional layouts with cards, collapsible sections, and detailed information covering all aspects of online bookstore operations from shipping rates to GDPR compliance.
+- June 16, 2025. Fixed store settings authentication and dynamic contact information display - resolved 401 errors in admin panel store settings by updating API routes to use admin session authentication, created public /api/store-info endpoint for guest access, updated contact page to display dynamic store information (address, phone, email) from admin panel instead of hardcoded values.
 ```
 
 ## User Preferences
