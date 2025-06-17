@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { Badge } from "@/components/ui/badge";
+import CountrySelector from "@/components/CountrySelector";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -141,16 +142,9 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               )}
               
-              {/* Currency Indicator */}
-              <div className="flex items-center ml-3">
-                <Badge variant="outline" className="text-xs font-medium bg-primary-aqua/10 border-primary-aqua text-primary-aqua">
-                  {getSupportedCurrencies().find(c => c.code === userCurrency)?.symbol || '$'} {userCurrency}
-                </Badge>
-                {userLocation?.country && (
-                  <span className="text-xs text-gray-500 ml-2 hidden md:inline">
-                    {userLocation.country}
-                  </span>
-                )}
+              {/* Country Selector */}
+              <div className="hidden lg:flex items-center ml-3">
+                <CountrySelector compact={false} />
               </div>
 
               {/* Cart - accessible to all users */}
@@ -322,19 +316,10 @@ export default function Layout({ children }: LayoutProps) {
                   Returns
                 </Link>
                 
-                {/* Mobile Currency Display */}
-                <div className="py-2 border-t border-gray-200 mt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-secondary-black">Currency:</span>
-                    <Badge variant="outline" className="text-xs font-medium bg-primary-aqua/10 border-primary-aqua text-primary-aqua">
-                      {getSupportedCurrencies().find(c => c.code === userCurrency)?.symbol || '$'} {userCurrency}
-                    </Badge>
-                  </div>
-                  {userLocation?.country && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Location: {userLocation.country}
-                    </div>
-                  )}
+                {/* Mobile Country Selector */}
+                <div className="py-3 border-t border-gray-200 mt-2">
+                  <div className="text-sm text-secondary-black mb-2">Select your country:</div>
+                  <CountrySelector compact={true} className="w-full" />
                 </div>
                 
                 {isAuthenticated && (

@@ -76,9 +76,12 @@ export function useShipping(): UseShippingReturn {
     setError(null);
 
     try {
-      // Create a basic location object for the selected country
+      // Get country name from localStorage if available
+      const countryName = localStorage.getItem('user_selected_country_name') || countryCode;
+      
+      // Create a location object for the selected country
       const manualLocation: LocationInfo = {
-        country: countryCode,
+        country: countryName,
         countryCode: countryCode.toUpperCase()
       };
       
