@@ -5,15 +5,14 @@ import { Order, OrderItem, Book } from '../shared/schema';
 const createTransporter = () => {
   const transporter = nodemailer.createTransport({
     host: 'smtp.zoho.com',
-    port: 587,
-    secure: false, // STARTTLS
+    port: 465,
+    secure: true, // SSL
     auth: {
-      user: process.env.ZOHO_EMAIL,
-      pass: process.env.ZOHO_PASSWORD
+      user: 'orders@a2zbookshop.com',
+      pass: '8PS1MyCm4z6b'
     },
     tls: {
-      rejectUnauthorized: false,
-      ciphers: 'SSLv3'
+      rejectUnauthorized: false
     },
     connectionTimeout: 60000,
     greetingTimeout: 30000,
@@ -22,12 +21,13 @@ const createTransporter = () => {
     logger: process.env.NODE_ENV === 'development'
   });
 
-  // Verify SMTP connection
+  // Verify SMTP connection on startup
   transporter.verify((error, success) => {
     if (error) {
       console.error('SMTP Configuration Error:', error);
     } else {
-      console.log('SMTP Server ready for sending emails');
+      console.log('SMTP Server connected successfully - Ready for sending emails');
+      console.log('Using: orders@a2zbookshop.com via smtp.zoho.com:465 (SSL)');
     }
   });
 
@@ -280,7 +280,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const customerMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: process.env.ZOHO_EMAIL || 'orders@a2zbookshop.com'
+        address: 'orders@a2zbookshop.com'
       },
       to: data.customerEmail,
       subject: `Order Confirmation #${data.order.id} - A2Z BOOKSHOP`,
@@ -292,7 +292,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const adminMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: process.env.ZOHO_EMAIL || 'orders@a2zbookshop.com'
+        address: 'orders@a2zbookshop.com'
       },
       to: 'orders@a2zbookshop.com',
       subject: `New Order #${data.order.id} - Admin Copy`,
@@ -323,7 +323,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
     const mailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: process.env.ZOHO_EMAIL || 'orders@a2zbookshop.com'
+        address: 'orders@a2zbookshop.com'
       },
       to: data.customerEmail,
       subject: `Order #${data.order.id} Status Update - ${data.newStatus.toUpperCase()}`,
@@ -351,8 +351,8 @@ export const testEmailConfiguration = async (): Promise<boolean> => {
     
     // Send test email
     const testInfo = await transporter.sendMail({
-      from: `"A2Z BOOKSHOP" <${process.env.ZOHO_EMAIL}>`,
-      to: process.env.ZOHO_EMAIL,
+      from: `"A2Z BOOKSHOP" <orders@a2zbookshop.com>`,
+      to: 'orders@a2zbookshop.com',
       subject: 'SMTP Configuration Test - A2Z BOOKSHOP',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
