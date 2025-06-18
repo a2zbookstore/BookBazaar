@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useToast } from "@/hooks/use-toast";
-import AdminLayout from "@/components/AdminLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { Package, Truck, CheckCircle, XCircle, Clock, AlertCircle, Download, Printer, Edit, FileText } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import AdminLayout from "@/components/AdminLayout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { OrderStatusDialog } from "@/components/OrderStatusDialog";
+import { 
+  FileText, 
+  Download, 
+  Printer,
+  Package,
+  Truck,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle
+} from "lucide-react";
 
 interface Order {
   id: number;
@@ -49,33 +52,12 @@ interface OrderItem {
   author: string;
 }
 
-const statusColors = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  processing: "bg-purple-100 text-purple-800",
-  shipped: "bg-green-100 text-green-800",
-  delivered: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-red-100 text-red-800",
-};
-
-const statusIcons = {
-  pending: Clock,
-  confirmed: CheckCircle,
-  processing: Package,
-  shipped: Truck,
-  delivered: CheckCircle,
-  cancelled: XCircle,
-};
-
 export default function OrdersPage() {
-  const { admin, isLoading: authLoading, isAuthenticated } = useAdminAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [location] = useLocation();
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { isAuthenticated, isLoading: authLoading } = useAdminAuth();
 
-  // Auto-set filter to pending if coming from dashboard
+  // Set initial filter from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('status') === 'pending' || location.includes('pending')) {
@@ -83,12 +65,10 @@ export default function OrdersPage() {
     }
   }, [location]);
 
-  // Form states for order update
-  const [newStatus, setNewStatus] = useState("");
-  const [trackingNumber, setTrackingNumber] = useState("");
-  const [shippingCarrier, setShippingCarrier] = useState("");
-  const [customCarrier, setCustomCarrier] = useState("");
-  const [notes, setNotes] = useState("");
+  const { data: ordersData, isLoading } = useQuery({
+    queryKey: ["/api/orders"],
+    enabled: isAuthenticated,
+  });
 
   // Invoice functions
   const generateInvoiceHTML = (order: Order) => {
@@ -199,17 +179,15 @@ export default function OrdersPage() {
           </table>
         </div>
         
-        ${order.notes ? `
-        <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-          <strong>Notes:</strong><br>
-          ${order.notes}
-        </div>
-        ` : ''}
-        
         <div class="footer">
-          <p><strong>Thank you for your business!</strong></p>
-          <p>For questions about this invoice, contact us at support@a2zbookshop.com</p>
-          <p>A2Z BOOKSHOP - Your trusted online bookstore</p>
+          <p><strong>A2Z BOOKSHOP</strong> - Your trusted online bookstore</p>
+          <p>Thank you for your business!</p>
+          ${order.notes ? `
+          <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+            <strong>Order Notes:</strong><br>
+            ${order.notes}
+          </div>
+          ` : ''}
         </div>
       </body>
       </html>
@@ -217,54 +195,63 @@ export default function OrdersPage() {
   };
 
   const handleDownloadInvoice = (order: Order) => {
-    const invoiceContent = generateInvoiceHTML(order);
-    const blob = new Blob([invoiceContent], { type: 'text/html' });
+    const invoiceHTML = generateInvoiceHTML(order);
+    const blob = new Blob([invoiceHTML], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice-A2Z-${order.id.toString().padStart(6, '0')}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `A2Z-Invoice-${order.id}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Invoice Downloaded",
-      description: `Invoice for Order #${order.id} has been downloaded.`,
-    });
   };
 
   const handlePrintInvoice = (order: Order) => {
-    const invoiceContent = generateInvoiceHTML(order);
+    const invoiceHTML = generateInvoiceHTML(order);
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(invoiceContent);
+      printWindow.document.write(invoiceHTML);
       printWindow.document.close();
-      printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
-      };
+      printWindow.focus();
+      printWindow.print();
     }
-    
-    toast({
-      title: "Invoice Opened for Printing",
-      description: `Invoice for Order #${order.id} opened in new window.`,
-    });
   };
 
   const handleViewInvoice = (order: Order) => {
-    const invoiceContent = generateInvoiceHTML(order);
+    const invoiceHTML = generateInvoiceHTML(order);
     const newWindow = window.open('', '_blank');
     if (newWindow) {
-      newWindow.document.write(invoiceContent);
+      newWindow.document.write(invoiceHTML);
       newWindow.document.close();
     }
   };
 
-  const { data: ordersData, isLoading } = useQuery({
-    queryKey: ["/api/orders"],
-    enabled: isAuthenticated,
-  });
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock className="w-4 h-4" />;
+      case 'confirmed': return <CheckCircle className="w-4 h-4" />;
+      case 'processing': return <Package className="w-4 h-4" />;
+      case 'shipped': return <Truck className="w-4 h-4" />;
+      case 'delivered': return <CheckCircle className="w-4 h-4" />;
+      case 'cancelled': return <XCircle className="w-4 h-4" />;
+      case 'refunded': return <AlertCircle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'pending': return 'secondary';
+      case 'confirmed': return 'default';
+      case 'processing': return 'default';
+      case 'shipped': return 'default';
+      case 'delivered': return 'default';
+      case 'cancelled': return 'destructive';
+      case 'refunded': return 'destructive';
+      default: return 'secondary';
+    }
+  };
 
   if (authLoading || isLoading) {
     return (
@@ -298,54 +285,47 @@ export default function OrdersPage() {
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold text-base-black">Order Management</h2>
           <div className="flex items-center gap-4">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Orders</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
+            >
+              <option value="all">All Orders</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="refunded">Refunded</option>
+            </select>
           </div>
         </div>
 
         {filteredOrders.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <Package className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-lg font-medium text-gray-900">No orders found</h3>
-              <p className="mt-1 text-gray-500">
-                {statusFilter === "all" ? "No orders have been placed yet." : `No ${statusFilter} orders found.`}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="text-center py-8">
+            <p className="text-gray-500">No orders found.</p>
+          </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="space-y-4">
             {filteredOrders.map((order: Order) => {
-              const StatusIcon = statusIcons[order.status as keyof typeof statusIcons] || AlertCircle;
-              
               return (
-                <Card key={order.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-3 flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold text-base-black">
-                            Order #{order.id}
-                          </h3>
-                          <Badge className={statusColors[order.status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
+                <Card key={order.id} className="overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(order.status)}
+                            <span className="font-semibold">Order #{order.id}</span>
+                          </div>
+                          <Badge variant={getStatusVariant(order.status)}>
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </Badge>
+                          <Badge variant="outline">{order.paymentStatus}</Badge>
                         </div>
-                        
-                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+
+                        <div className="grid md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <p><strong>Customer:</strong> {order.customerName}</p>
                             <p><strong>Email:</strong> {order.customerEmail}</p>
@@ -398,199 +378,12 @@ export default function OrdersPage() {
                           Print
                         </Button>
                         
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedOrder(order)}
-                              className="flex items-center gap-1"
-                            >
-                              <Edit className="w-3 h-3" />
-                              Manage
-                            </Button>
-                          </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Manage Order #{selectedOrder?.id}</DialogTitle>
-                          </DialogHeader>
-                          
-                          {(selectedOrder || order) && (
-                            <div className="space-y-6">
-                              {/* Customer Information */}
-                              <div>
-                                <h4 className="font-semibold mb-2">Customer Information</h4>
-                                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                                  <div>
-                                    <p><strong>Name:</strong> {selectedOrder.customerName}</p>
-                                    <p><strong>Email:</strong> {selectedOrder.customerEmail}</p>
-                                    <p><strong>Phone:</strong> {selectedOrder.customerPhone}</p>
-                                  </div>
-                                  <div>
-                                    <p><strong>Order Date:</strong> {format(new Date(selectedOrder.createdAt), "PPP")}</p>
-                                    <p><strong>Total:</strong> ${parseFloat(selectedOrder.total).toFixed(2)}</p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <Separator />
-
-                              {/* Invoice Actions */}
-                              <div>
-                                <h4 className="font-semibold mb-3">Invoice Actions</h4>
-                                <div className="flex flex-wrap gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleViewInvoice(selectedOrder)}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <FileText className="w-4 h-4" />
-                                    View Invoice
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDownloadInvoice(selectedOrder || order)}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                    Download Invoice
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePrintInvoice(selectedOrder || order)}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Printer className="w-4 h-4" />
-                                    Print Invoice
-                                  </Button>
-                                </div>
-                              </div>
-
-                              <Separator />
-
-                              {/* Order Items */}
-                              {(selectedOrder || order).items && (selectedOrder || order).items.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold mb-2">Order Items</h4>
-                                  <div className="space-y-2">
-                                    {(selectedOrder || order).items.map((item) => (
-                                      <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                        <div>
-                                          <p className="font-medium">{item.title}</p>
-                                          <p className="text-sm text-gray-600">by {item.author}</p>
-                                        </div>
-                                        <div className="text-right">
-                                          <p>Qty: {item.quantity}</p>
-                                          <p>${parseFloat(item.price).toFixed(2)}</p>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              <Separator />
-
-                              {/* Update Order Status */}
-                              <div className="space-y-4">
-                                <h4 className="font-semibold">Update Order Status</h4>
-                                
-                                <div className="grid md:grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor="status">Status</Label>
-                                    <Select value={newStatus} onValueChange={setNewStatus}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                                        <SelectItem value="processing">Processing</SelectItem>
-                                        <SelectItem value="shipped">Shipped</SelectItem>
-                                        <SelectItem value="delivered">Delivered</SelectItem>
-                                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <Label htmlFor="carrier">Shipping Carrier</Label>
-                                    <Select value={shippingCarrier} onValueChange={setShippingCarrier}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select carrier" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="none">None</SelectItem>
-                                        <SelectItem value="FedEx">FedEx</SelectItem>
-                                        <SelectItem value="UPS">UPS</SelectItem>
-                                        <SelectItem value="DHL">DHL</SelectItem>
-                                        <SelectItem value="USPS">USPS</SelectItem>
-                                        <SelectItem value="India Post">India Post</SelectItem>
-                                        <SelectItem value="Blue Dart">Blue Dart</SelectItem>
-                                        <SelectItem value="Delhivery">Delhivery</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-
-                                {/* Custom carrier field - shows when "other" is selected */}
-                                {shippingCarrier === "other" && (
-                                  <div className="space-y-2">
-                                    <Label htmlFor="customCarrier">Custom Carrier Name</Label>
-                                    <Input
-                                      id="customCarrier"
-                                      value={customCarrier}
-                                      onChange={(e) => setCustomCarrier(e.target.value)}
-                                      placeholder="Enter carrier name"
-                                    />
-                                  </div>
-                                )}
-
-                                <div className="space-y-2">
-                                  <Label htmlFor="tracking">Tracking Number</Label>
-                                  <Input
-                                    id="tracking"
-                                    value={trackingNumber}
-                                    onChange={(e) => setTrackingNumber(e.target.value)}
-                                    placeholder="Enter tracking number"
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label htmlFor="notes">Notes</Label>
-                                  <Textarea
-                                    id="notes"
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Add any notes about this order..."
-                                    rows={3}
-                                  />
-                                </div>
-
-                                <Button 
-                                  onClick={() => {
-                                    const orderToUpdate = selectedOrder || order;
-                                    if (!orderToUpdate) {
-                                      console.error('No order available');
-                                      return;
-                                    }
-                                    setSelectedOrder(orderToUpdate);
-                                    handleUpdateOrder();
-                                  }}
-                                  disabled={updateOrderMutation.isPending || !newStatus}
-                                  className="w-full"
-                                >
-                                  {updateOrderMutation.isPending ? "Updating..." : "Update Order"}
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                        </Dialog>
+                        <OrderStatusDialog
+                          order={order}
+                          onViewInvoice={handleViewInvoice}
+                          onDownloadInvoice={handleDownloadInvoice}
+                          onPrintInvoice={handlePrintInvoice}
+                        />
                       </div>
                     </div>
                   </CardContent>
