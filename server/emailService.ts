@@ -166,10 +166,28 @@ const generateOrderConfirmationHTML = (data: OrderEmailData) => {
       </div>
 
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <p style="color: #6b7280; margin-bottom: 10px;">Thank you for choosing A2Z BOOKSHOP!</p>
-        <p style="color: #6b7280; margin-bottom: 10px;">
-          Questions? Contact us at <a href="mailto:orders@a2zbookshop.com" style="color: #3b82f6;">orders@a2zbookshop.com</a>
-        </p>
+        <p style="color: #6b7280; margin-bottom: 15px;">Thank you for choosing A2Z BOOKSHOP!</p>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="color: #6b7280; margin-bottom: 8px;">Visit our website:</p>
+          <p style="margin-bottom: 5px;">
+            <a href="https://a2zbookshop.com" style="color: #3b82f6; text-decoration: none;">https://a2zbookshop.com</a>
+          </p>
+          <p style="margin-bottom: 5px;">
+            <a href="https://www.a2zbookshop.com" style="color: #3b82f6; text-decoration: none;">https://www.a2zbookshop.com</a>
+          </p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="color: #6b7280; margin-bottom: 8px;">Contact us:</p>
+          <p style="margin-bottom: 5px;">
+            <a href="mailto:support@a2zbookshop.com" style="color: #3b82f6; text-decoration: none;">support@a2zbookshop.com</a>
+          </p>
+          <p style="margin-bottom: 5px;">
+            <a href="mailto:a2zbookshopglobal@gmail.com" style="color: #3b82f6; text-decoration: none;">a2zbookshopglobal@gmail.com</a>
+          </p>
+        </div>
+        
         <p style="color: #6b7280; font-size: 12px;">
           A2Z BOOKSHOP - Your trusted partner in discovering books worldwide
         </p>
@@ -264,10 +282,28 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
       </div>
 
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <p style="color: #6b7280; margin-bottom: 10px;">Thank you for choosing A2Z BOOKSHOP!</p>
-        <p style="color: #6b7280; margin-bottom: 10px;">
-          Questions? Contact us at <a href="mailto:orders@a2zbookshop.com" style="color: #3b82f6;">orders@a2zbookshop.com</a>
-        </p>
+        <p style="color: #6b7280; margin-bottom: 15px;">Thank you for choosing A2Z BOOKSHOP!</p>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="color: #6b7280; margin-bottom: 8px;">Visit our website:</p>
+          <p style="margin-bottom: 5px;">
+            <a href="https://a2zbookshop.com" style="color: #3b82f6; text-decoration: none;">https://a2zbookshop.com</a>
+          </p>
+          <p style="margin-bottom: 5px;">
+            <a href="https://www.a2zbookshop.com" style="color: #3b82f6; text-decoration: none;">https://www.a2zbookshop.com</a>
+          </p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="color: #6b7280; margin-bottom: 8px;">Contact us:</p>
+          <p style="margin-bottom: 5px;">
+            <a href="mailto:support@a2zbookshop.com" style="color: #3b82f6; text-decoration: none;">support@a2zbookshop.com</a>
+          </p>
+          <p style="margin-bottom: 5px;">
+            <a href="mailto:a2zbookshopglobal@gmail.com" style="color: #3b82f6; text-decoration: none;">a2zbookshopglobal@gmail.com</a>
+          </p>
+        </div>
+        
         <p style="color: #6b7280; font-size: 12px;">
           A2Z BOOKSHOP - Your trusted partner in discovering books worldwide
         </p>
