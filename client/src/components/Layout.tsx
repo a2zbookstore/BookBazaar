@@ -12,6 +12,8 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { Badge } from "@/components/ui/badge";
 import CountrySelector from "@/components/CountrySelector";
+import { SecretAdminButton, SecretAdminNav } from "@/components/SecretAdminButton";
+import { SecretAdminAccess } from "@/components/SecretAdminAccess";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -142,6 +144,9 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               )}
               
+              {/* Secret Admin Access - Only visible to admins */}
+              <SecretAdminNav />
+              
               {/* Country Selector */}
               <div className="hidden lg:flex items-center ml-3">
                 <CountrySelector compact={false} />
@@ -165,42 +170,24 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
 
               {isAuthenticated ? (
-                <>
-                  {user?.role === "admin" && (
-                    <Link href="/admin">
-                      <Button size="sm" className="bg-primary-aqua hover:bg-secondary-aqua text-xs px-2 py-1 ml-2">
-                        Admin
-                      </Button>
-                    </Link>
-                  )}
-                  
-                  <Button
-                    variant="ghost"
-                    onClick={async () => {
-                      try {
-                        await fetch("/api/auth/logout", { method: "POST" });
-                        window.location.href = "/";
-                      } catch (error) {
-                        // Fallback to Replit logout
-                        window.location.href = "/api/logout";
-                      }
-                    }}
-                    className="text-secondary-black hover:text-primary-aqua"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
-                </>
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      await fetch("/api/auth/logout", { method: "POST" });
+                      window.location.href = "/";
+                    } catch (error) {
+                      // Fallback to Replit logout
+                      window.location.href = "/api/logout";
+                    }
+                  }}
+                  className="text-secondary-black hover:text-primary-aqua"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setLocation('/admin-login')}
-                    className="border-gray-400 text-gray-600 hover:bg-gray-50 text-xs px-2 py-1"
-                  >
-                    Admin
-                  </Button>
                   <Button
                     variant="outline"
                     onClick={() => setLocation('/login')}
@@ -346,13 +333,7 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="pt-4 border-t border-gray-200">
                   {isAuthenticated ? (
                     <>
-                      {user?.role === "admin" && (
-                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Button className="w-full mb-2 bg-primary-aqua hover:bg-secondary-aqua touch-target mobile-button">
-                            Admin Panel
-                          </Button>
-                        </Link>
-                      )}
+
                       <Button
                         variant="outline"
                         onClick={async () => {
@@ -373,16 +354,6 @@ export default function Layout({ children }: LayoutProps) {
                   ) : (
                     <div className="space-y-2">
                       <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          setLocation('/admin-login');
-                        }}
-                        className="w-full touch-target mobile-button"
-                      >
-                        Admin Login
-                      </Button>
-                      <Button
                         onClick={() => {
                           setIsMobileMenuOpen(false);
                           setLocation('/login');
@@ -390,7 +361,7 @@ export default function Layout({ children }: LayoutProps) {
                         className="w-full bg-primary-aqua hover:bg-secondary-aqua touch-target mobile-button"
                       >
                         <User className="h-4 w-4 mr-2" />
-                        Customer Login
+                        Login
                       </Button>
                     </div>
                   )}
@@ -418,6 +389,9 @@ export default function Layout({ children }: LayoutProps) {
         )}
       </Link>
 
+      {/* Secret Admin Floating Button - Only visible to admins */}
+      <SecretAdminButton />
+
       {/* Main Content */}
       <main className={`flex-1 transition-all duration-300 ${
         isScrolled ? 'pt-12 md:pt-16' : 'pt-14 md:pt-20'
@@ -430,7 +404,10 @@ export default function Layout({ children }: LayoutProps) {
         <div className="container-custom py-12">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bookerly font-bold mb-4">A<span className="text-red-500">2</span>Z BOOKSHOP</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bookerly font-bold">A<span className="text-red-500">2</span>Z BOOKSHOP</h3>
+                <SecretAdminAccess />
+              </div>
               <p className="text-gray-400 mb-4">
                 Your trusted partner in discovering rare, collectible, and contemporary books from around the world.
               </p>
