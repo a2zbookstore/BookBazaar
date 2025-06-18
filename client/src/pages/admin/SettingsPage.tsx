@@ -365,20 +365,20 @@ export default function SettingsPage() {
                           <li>• Admin notifications to your Brevo email</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-800 mb-2">
-                            <strong>Brevo Credentials को Code में Fill करें</strong>
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-800 mb-2">
+                            <strong>Brevo Credentials Required</strong>
                           </p>
-                          <p className="text-sm text-blue-700 mb-2">
-                            emailService.ts file में आपके credentials fill करने के लिए ready है:
+                          <p className="text-sm text-yellow-700 mb-2">
+                            Please provide your Brevo credentials to enable email functionality:
                           </p>
-                          <ul className="text-sm text-blue-700 space-y-1">
-                            <li>1. BREVO_EMAIL: आपका verified email address</li>
-                            <li>2. BREVO_API_KEY: आपकी SMTP API key (xkeysib- से शुरू होती है)</li>
+                          <ul className="text-sm text-yellow-700 space-y-1">
+                            <li>1. BREVO_EMAIL: Your verified email address from Brevo</li>
+                            <li>2. BREVO_API_KEY: Your SMTP API key from Brevo settings</li>
                           </ul>
-                          <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
-                            <p className="text-xs text-green-700">
-                              <strong>Step:</strong> Code में credentials fill करके test करें - email system तुरंत काम करना शुरू हो जाएगा
+                          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                            <p className="text-xs text-blue-700">
+                              <strong>Ready:</strong> Email system will work immediately after providing credentials
                             </p>
                           </div>
                         </div>

@@ -3,9 +3,15 @@ import { Order, OrderItem, Book } from '../shared/schema';
 
 // Email configuration for Brevo (Sendinblue)
 const createTransporter = () => {
-  // ✅ FILL YOUR BREVO CREDENTIALS HERE:
-  const BREVO_EMAIL = 'PUT_YOUR_EMAIL_HERE';     // ← Replace with your verified email
-  const BREVO_API_KEY = 'PUT_YOUR_API_KEY_HERE'; // ← Replace with your SMTP API key
+  // Use environment variables for Brevo credentials
+  const BREVO_EMAIL = process.env.BREVO_EMAIL;
+  const BREVO_API_KEY = process.env.BREVO_API_KEY;
+
+  // Check if credentials are available
+  if (!BREVO_EMAIL || !BREVO_API_KEY) {
+    console.log('Brevo credentials not provided - email functionality disabled');
+    return null;
+  }
 
   const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
