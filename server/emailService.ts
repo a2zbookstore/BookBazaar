@@ -276,6 +276,11 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
 export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<boolean> => {
   try {
     const transporter = createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not available - skipping order confirmation email');
+      return false;
+    }
+    
     const htmlContent = generateOrderConfirmationHTML(data);
 
     // Email to customer
@@ -320,6 +325,11 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
 export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promise<boolean> => {
   try {
     const transporter = createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not available - skipping status update email');
+      return false;
+    }
+    
     const htmlContent = generateStatusUpdateHTML(data);
 
     const mailOptions = {
