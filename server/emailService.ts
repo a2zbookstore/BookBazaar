@@ -9,7 +9,7 @@ const createTransporter = () => {
     secure: false, // TLS
     auth: {
       user: 'orders@a2zbookshop.com',
-      pass: '8PS1MyCm4z6b'
+      pass: process.env.ZOHO_EMAIL_PASSWORD || '8PS1MyCm4z6b'
     },
     tls: {
       rejectUnauthorized: false
