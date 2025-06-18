@@ -13,8 +13,8 @@ const createTransporter = () => {
     port: 587,
     secure: false, // TLS
     auth: {
-      user: BREVO_EMAIL,
-      pass: BREVO_API_KEY
+      user: SMTP_USER,
+      pass: SMTP_PASS
     },
     tls: {
       rejectUnauthorized: false
