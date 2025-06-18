@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, User, Store, Mail, Plus, Edit, Trash2 } from "lucide-react";
+import { Settings, User, Store, Mail, Plus, Edit, Trash2, Send, CheckCircle, AlertCircle } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,6 +175,25 @@ export default function SettingsPage() {
     },
   });
 
+  const testSmtpMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/test-smtp", {});
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "SMTP Test Successful",
+        description: "Test email sent successfully. Check your inbox to confirm SMTP configuration is working.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "SMTP Test Failed",
+        description: error instanceof Error ? error.message : "Failed to send test email. Check SMTP configuration.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCategorySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -315,14 +334,61 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
-                    disabled={updateStoreSettingsMutation.isPending}
-                  >
-                    {updateStoreSettingsMutation.isPending ? "Saving..." : "Save Store Settings"}
-                  </Button>
+                  <div className="flex gap-4">
+                    <Button 
+                      type="submit" 
+                      className="bg-primary-aqua hover:bg-secondary-aqua"
+                      disabled={updateStoreSettingsMutation.isPending}
+                    >
+                      {updateStoreSettingsMutation.isPending ? "Saving..." : "Save Store Settings"}
+                    </Button>
+                  </div>
                 </form>
+
+                {/* SMTP Configuration Test Section */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Email Configuration (SMTP)
+                  </h3>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-700 mb-2">
+                          <strong>Current SMTP Settings:</strong>
+                        </p>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          <li>• Server: smtp.zoho.com</li>
+                          <li>• Port: 587 (STARTTLS)</li>
+                          <li>• Authentication: Zoho Mail credentials</li>
+                          <li>• Used for: Order confirmations, status updates</li>
+                        </ul>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => testSmtpMutation.mutate()}
+                        disabled={testSmtpMutation.isPending}
+                        className="flex items-center gap-2"
+                      >
+                        {testSmtpMutation.isPending ? (
+                          <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                            Testing...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            Test SMTP
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Click "Test SMTP" to verify email configuration. A test email will be sent to verify the connection.
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
