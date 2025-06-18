@@ -2228,6 +2228,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update Brevo credentials endpoint (admin only)
+  app.post("/api/admin/brevo-credentials", requireAdminAuth, async (req, res) => {
+    try {
+      const { email, apiKey } = req.body;
+      
+      if (!email || !apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: "Email and API key are required"
+        });
+      }
+
+      // Validate API key format
+      if (!apiKey.startsWith('xkeysib-')) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid API key format. Should start with 'xkeysib-'"
+        });
+      }
+
+      // Test the credentials by creating a transporter and verifying
+      const nodemailer = require('nodemailer');
+      const testTransporter = nodemailer.createTransporter({
+        host: 'smtp-relay.brevo.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: email,
+          pass: apiKey
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      // Verify the connection
+      await testTransporter.verify();
+
+      // Send a test email
+      await testTransporter.sendMail({
+        from: {
+          name: 'A2Z BOOKSHOP',
+          address: email
+        },
+        to: email,
+        subject: 'Brevo SMTP Configuration Successful - A2Z BOOKSHOP',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #d32f2f; text-align: center;">A<span style="color: #d32f2f;">2</span>Z BOOKSHOP</h2>
+            <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+              <h3 style="color: #1e40af; margin-top: 0;">Brevo SMTP Successfully Configured!</h3>
+              <p>Your email system is now working perfectly:</p>
+              <ul style="color: #555;">
+                <li>✅ Customer order confirmation emails</li>
+                <li>✅ Admin notifications for new orders</li>
+                <li>✅ Order status updates and tracking</li>
+              </ul>
+              <p style="color: #666; margin-top: 20px;">
+                Every customer order will now automatically send professional emails.
+              </p>
+            </div>
+            <div style="text-align: center; margin-top: 30px; color: #666;">
+              <p>Email sent via Brevo SMTP: smtp-relay.brevo.com</p>
+            </div>
+          </div>
+        `
+      });
+
+      // If we reach here, credentials are valid - update environment
+      process.env.BREVO_EMAIL = email;
+      process.env.BREVO_API_KEY = apiKey;
+
+      console.log('Brevo SMTP credentials updated successfully');
+      console.log('Email system now active with:', email);
+
+      res.json({
+        success: true,
+        message: "Brevo credentials saved and tested successfully!"
+      });
+
+    } catch (error) {
+      console.error("Brevo credentials error:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to configure Brevo credentials"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   // Test SMTP configuration endpoint
   app.post("/api/test-smtp", async (req: any, res) => {
