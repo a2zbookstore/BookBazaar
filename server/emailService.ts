@@ -3,18 +3,35 @@ import { Order, OrderItem, Book } from '../shared/schema';
 
 // Email configuration for Zoho Mail
 const createTransporter = () => {
-  return nodemailer.createTransport({
+  const transporter = nodemailer.createTransport({
     host: 'smtp.zoho.com',
     port: 587,
-    secure: false, // true for 465, false for other ports
+    secure: false, // STARTTLS
     auth: {
-      user: process.env.ZOHO_EMAIL || 'orders@a2zbookshop.com',
-      pass: process.env.ZOHO_PASSWORD // App password from Zoho
+      user: process.env.ZOHO_EMAIL,
+      pass: process.env.ZOHO_PASSWORD
     },
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      ciphers: 'SSLv3'
+    },
+    connectionTimeout: 60000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
+    debug: process.env.NODE_ENV === 'development',
+    logger: process.env.NODE_ENV === 'development'
+  });
+
+  // Verify SMTP connection
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error('SMTP Configuration Error:', error);
+    } else {
+      console.log('SMTP Server ready for sending emails');
     }
   });
+
+  return transporter;
 };
 
 interface OrderEmailData {
@@ -323,15 +340,42 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
   }
 };
 
-// Test email configuration
+// Test SMTP configuration with actual email
 export const testEmailConfiguration = async (): Promise<boolean> => {
   try {
     const transporter = createTransporter();
+    
+    // First verify connection
     await transporter.verify();
-    console.log('Email configuration is valid');
+    console.log('SMTP connection verified successfully');
+    
+    // Send test email
+    const testInfo = await transporter.sendMail({
+      from: `"A2Z BOOKSHOP" <${process.env.ZOHO_EMAIL}>`,
+      to: process.env.ZOHO_EMAIL,
+      subject: 'SMTP Configuration Test - A2Z BOOKSHOP',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+          <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #1a202c; margin-bottom: 20px;">SMTP Configuration Test</h2>
+            <p style="color: #4a5568; line-height: 1.6;">This email confirms that your SMTP configuration is working correctly.</p>
+            <div style="background: #e6fffa; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #38b2ac;">
+              <p style="margin: 0; color: #2d3748;"><strong>Test Details:</strong></p>
+              <p style="margin: 5px 0; color: #2d3748;">Time: ${new Date().toLocaleString()}</p>
+              <p style="margin: 5px 0; color: #2d3748;">Server: Zoho Mail SMTP</p>
+              <p style="margin: 5px 0; color: #2d3748;">Status: ✅ Working</p>
+            </div>
+            <p style="color: #4a5568;">Your A2Z BOOKSHOP email service is ready to send order confirmations and notifications.</p>
+          </div>
+        </div>
+      `,
+      text: 'SMTP Configuration Test - Your email service is working correctly!'
+    });
+
+    console.log('Test email sent successfully:', testInfo.messageId);
     return true;
   } catch (error) {
-    console.error('Email configuration error:', error);
+    console.error('SMTP Test Failed:', error);
     return false;
   }
 };

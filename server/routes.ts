@@ -2229,5 +2229,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Test SMTP configuration endpoint
+  app.post("/api/test-smtp", async (req: any, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const result = await testEmailConfiguration();
+      if (result) {
+        res.json({ 
+          success: true, 
+          message: "SMTP configuration verified and test email sent successfully",
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "SMTP configuration test failed - check server logs for details" 
+        });
+      }
+    } catch (error) {
+      console.error("SMTP Test Error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Email service error - check SMTP credentials and connection" 
+      });
+    }
+  });
+
   return httpServer;
 }
