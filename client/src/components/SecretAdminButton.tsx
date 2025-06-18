@@ -34,23 +34,6 @@ export function SecretAdminButton({ className }: SecretAdminButtonProps) {
 }
 
 export function SecretAdminNav() {
-  const { isSecretAdmin, isLoading } = useSecretAdmin();
-
-  // Don't show anything if loading or not admin
-  if (isLoading || !isSecretAdmin) {
-    return null;
-  }
-
-  return (
-    <Link href="/admin" className="hidden md:flex">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-      >
-        <Settings className="w-4 h-4 mr-1" />
-        Admin
-      </Button>
-    </Link>
-  );
+  // Completely hidden - no admin button in navigation
+  return null;
 }

@@ -144,8 +144,7 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               )}
               
-              {/* Secret Admin Access - Only visible to admins */}
-              <SecretAdminNav />
+              {/* Secret Admin Access - Only visible to admins (hidden from customers) */}
               
               {/* Country Selector */}
               <div className="hidden lg:flex items-center ml-3">
