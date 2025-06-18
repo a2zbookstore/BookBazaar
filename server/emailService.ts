@@ -3,13 +3,17 @@ import { Order, OrderItem, Book } from '../shared/schema';
 
 // Email configuration for Brevo (Sendinblue)
 const createTransporter = () => {
+  // आपके Brevo credentials यहाँ fill करें:
+  const BREVO_EMAIL = 'your-brevo-email@domain.com';  // ← यहाँ आपका verified email address डालें
+  const BREVO_API_KEY = 'xkeysib-your-api-key-here';   // ← यहाँ आपकी SMTP API key डालें
+
   const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
     port: 587,
     secure: false, // TLS
     auth: {
-      user: process.env.BREVO_EMAIL || 'your-brevo-email',
-      pass: process.env.BREVO_API_KEY || 'your-brevo-api-key'
+      user: BREVO_EMAIL,
+      pass: BREVO_API_KEY
     },
     tls: {
       rejectUnauthorized: false
@@ -24,12 +28,11 @@ const createTransporter = () => {
   // Verify SMTP connection on startup (non-blocking)
   transporter.verify((error, success) => {
     if (error) {
-      console.error('Brevo SMTP Configuration Error:', error.message);
-      console.log('Email functionality disabled - orders will complete without email notifications');
-      console.log('Please provide Brevo email and API key for SMTP configuration');
+      console.error('Brevo SMTP Error:', error.message);
+      console.log('Email functionality disabled - orders will complete without notifications');
     } else {
-      console.log('Brevo SMTP Server connected successfully - Ready for sending emails');
-      console.log('Using:', process.env.BREVO_EMAIL, 'via smtp-relay.brevo.com:587 (TLS)');
+      console.log('✅ Brevo SMTP connected successfully');
+      console.log('Email system ready:', BREVO_EMAIL, 'via smtp-relay.brevo.com');
     }
   });
 
@@ -287,7 +290,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const customerMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com'
+        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
       },
       to: data.customerEmail,
       subject: `Order Confirmation #${data.order.id} - A2Z BOOKSHOP`,
@@ -299,9 +302,9 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const adminMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com'
+        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
       },
-      to: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com',
+      to: 'your-brevo-email@domain.com',  // ← यहाँ भी same email address डालें
       subject: `New Order #${data.order.id} - Admin Copy`,
       html: htmlContent,
       text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${parseFloat(data.order.total.toString()).toFixed(2)}`
@@ -335,7 +338,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
     const mailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com'
+        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
       },
       to: data.customerEmail,
       subject: `Order #${data.order.id} Status Update - ${data.newStatus.toUpperCase()}`,
@@ -352,42 +355,45 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
   }
 };
 
-// Test SMTP configuration with actual email
+// Test email configuration
 export const testEmailConfiguration = async (): Promise<boolean> => {
   try {
     const transporter = createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not available - test failed');
+      return false;
+    }
     
-    // First verify connection
+    // Test connection
     await transporter.verify();
-    console.log('SMTP connection verified successfully');
+    console.log('✅ Email configuration test successful');
     
     // Send test email
-    const testInfo = await transporter.sendMail({
-      from: `"A2Z BOOKSHOP" <orders@a2zbookshop.com>`,
-      to: 'orders@a2zbookshop.com',
-      subject: 'SMTP Configuration Test - A2Z BOOKSHOP',
+    const info = await transporter.sendMail({
+      from: {
+        name: 'A2Z BOOKSHOP',
+        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
+      },
+      to: 'your-brevo-email@domain.com',  // ← यहाँ भी same email address डालें
+      subject: 'A2Z BOOKSHOP - Email Test Successful',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
-          <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #1a202c; margin-bottom: 20px;">SMTP Configuration Test</h2>
-            <p style="color: #4a5568; line-height: 1.6;">This email confirms that your SMTP configuration is working correctly.</p>
-            <div style="background: #e6fffa; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #38b2ac;">
-              <p style="margin: 0; color: #2d3748;"><strong>Test Details:</strong></p>
-              <p style="margin: 5px 0; color: #2d3748;">Time: ${new Date().toLocaleString()}</p>
-              <p style="margin: 5px 0; color: #2d3748;">Server: Zoho Mail SMTP</p>
-              <p style="margin: 5px 0; color: #2d3748;">Status: ✅ Working</p>
-            </div>
-            <p style="color: #4a5568;">Your A2Z BOOKSHOP email service is ready to send order confirmations and notifications.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #d32f2f;">A<span style="color: #d32f2f;">2</span>Z BOOKSHOP</h2>
+          <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px;">
+            <h3 style="color: #1e40af;">Email System Test Successful!</h3>
+            <p>Your Brevo SMTP configuration is working perfectly.</p>
+            <p>Email system ready for order confirmations and notifications.</p>
+            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Server:</strong> smtp-relay.brevo.com</p>
           </div>
         </div>
-      `,
-      text: 'SMTP Configuration Test - Your email service is working correctly!'
+      `
     });
-
-    console.log('Test email sent successfully:', testInfo.messageId);
+    
+    console.log('✅ Test email sent successfully - Message ID:', info.messageId);
     return true;
   } catch (error) {
-    console.error('SMTP Test Failed:', error);
+    console.error('Email configuration test failed:', error instanceof Error ? error.message : error);
     return false;
   }
 };
