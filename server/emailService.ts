@@ -1,15 +1,15 @@
 import nodemailer from 'nodemailer';
 import { Order, OrderItem, Book } from '../shared/schema';
 
-// Email configuration for Zoho Mail
+// Email configuration for Brevo (Sendinblue)
 const createTransporter = () => {
   const transporter = nodemailer.createTransport({
-    host: 'smtp.zoho.com',
+    host: 'smtp-relay.brevo.com',
     port: 587,
     secure: false, // TLS
     auth: {
-      user: 'orders@a2zbookshop.com',
-      pass: 'KMNpmtwETvQx'
+      user: process.env.BREVO_EMAIL || 'your-brevo-email',
+      pass: process.env.BREVO_API_KEY || 'your-brevo-api-key'
     },
     tls: {
       rejectUnauthorized: false
@@ -24,12 +24,12 @@ const createTransporter = () => {
   // Verify SMTP connection on startup (non-blocking)
   transporter.verify((error, success) => {
     if (error) {
-      console.error('SMTP Configuration Error: Domain verification required');
+      console.error('Brevo SMTP Configuration Error:', error.message);
       console.log('Email functionality disabled - orders will complete without email notifications');
-      console.log('To fix: Verify a2zbookshop.com domain in Zoho Mail Control Panel');
+      console.log('Please provide Brevo email and API key for SMTP configuration');
     } else {
-      console.log('SMTP Server connected successfully - Ready for sending emails');
-      console.log('Using: orders@a2zbookshop.com via smtp.zoho.com:587 (TLS)');
+      console.log('Brevo SMTP Server connected successfully - Ready for sending emails');
+      console.log('Using:', process.env.BREVO_EMAIL, 'via smtp-relay.brevo.com:587 (TLS)');
     }
   });
 
@@ -282,7 +282,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const customerMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com'
       },
       to: data.customerEmail,
       subject: `Order Confirmation #${data.order.id} - A2Z BOOKSHOP`,
@@ -294,9 +294,9 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const adminMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com'
       },
-      to: 'orders@a2zbookshop.com',
+      to: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com',
       subject: `New Order #${data.order.id} - Admin Copy`,
       html: htmlContent,
       text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${parseFloat(data.order.total.toString()).toFixed(2)}`
@@ -325,7 +325,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
     const mailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: process.env.BREVO_EMAIL || 'orders@a2zbookshop.com'
       },
       to: data.customerEmail,
       subject: `Order #${data.order.id} Status Update - ${data.newStatus.toUpperCase()}`,

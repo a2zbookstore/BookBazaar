@@ -358,34 +358,27 @@ export default function SettingsPage() {
                           <strong>Current SMTP Settings:</strong>
                         </p>
                         <ul className="text-sm text-gray-600 space-y-1">
-                          <li>• Server: smtp.zoho.com</li>
-                          <li>• Port: 587 (TLS) - Currently Active</li>
-                          <li>• Alternative: Port 465 (SSL) - Available</li>
-                          <li>• Email: orders@a2zbookshop.com</li>
-                          <li>• Authentication: App Password Required</li>
+                          <li>• Server: smtp-relay.brevo.com (Brevo)</li>
+                          <li>• Port: 587 (TLS)</li>
+                          <li>• Authentication: Brevo API Key</li>
                           <li>• Used for: Order confirmations, status updates</li>
+                          <li>• Admin notifications to your Brevo email</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <p className="text-sm text-red-800 mb-2">
-                            <strong>SMTP Authentication Issue</strong>
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-800 mb-2">
+                            <strong>Brevo SMTP Configuration</strong>
                           </p>
-                          <p className="text-sm text-red-700 mb-2">
-                            Authentication failing with provided credentials. Please verify:
+                          <p className="text-sm text-blue-700 mb-2">
+                            Please provide your Brevo credentials:
                           </p>
-                          <ul className="text-sm text-red-700 space-y-1">
-                            <li>1. Domain a2zbookshop.com is verified in Zoho Control Panel</li>
-                            <li>2. DNS MX and TXT records are properly configured</li>
-                            <li>3. orders@a2zbookshop.com account exists and is active</li>
-                            <li>4. SMTP access is enabled in Zoho Mail security settings</li>
-                            <li>5. App Password (KMNpmtwETvQx) is valid and has permissions</li>
+                          <ul className="text-sm text-blue-700 space-y-1">
+                            <li>1. Brevo Email Address (verified sender)</li>
+                            <li>2. Brevo API Key (SMTP key from account settings)</li>
                           </ul>
-                          <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-                            <p className="text-sm text-green-800 mb-2">
-                              <strong>Email System Ready!</strong> Customer और orders@a2zbookshop.com दोनों को emails जाएंगी।
-                            </p>
+                          <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
                             <p className="text-xs text-green-700">
-                              Domain Setup Guide: Check DOMAIN_SETUP_STEP_BY_STEP.md file for complete instructions.
+                              Brevo typically has better deliverability than other providers and no domain verification required for basic setup.
                             </p>
                           </div>
                         </div>
