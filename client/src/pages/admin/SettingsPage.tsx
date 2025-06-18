@@ -368,17 +368,21 @@ export default function SettingsPage() {
                         
                         <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                           <p className="text-sm text-red-800 mb-2">
-                            <strong>SMTP Authentication Failed</strong>
+                            <strong>SMTP Authentication Issue</strong>
                           </p>
                           <p className="text-sm text-red-700 mb-2">
-                            Please verify your Zoho Mail configuration:
+                            Authentication failing with provided credentials. Please verify:
                           </p>
                           <ul className="text-sm text-red-700 space-y-1">
-                            <li>1. Generate App Password: Zoho Mail → Settings → Security → App Passwords</li>
-                            <li>2. Enable SMTP: Zoho Mail → Settings → Mail → SMTP Access</li>
-                            <li>3. Verify orders@a2zbookshop.com account is active</li>
-                            <li>4. Check domain configuration and MX records</li>
+                            <li>1. orders@a2zbookshop.com account exists and is active</li>
+                            <li>2. Domain a2zbookshop.com is properly configured in Zoho</li>
+                            <li>3. App Password is generated and copied correctly</li>
+                            <li>4. SMTP access is enabled in Zoho Mail settings</li>
+                            <li>5. Account has necessary permissions for SMTP</li>
                           </ul>
+                          <p className="text-sm text-red-600 mt-2">
+                            Orders continue to work - emails will send once SMTP is resolved.
+                          </p>
                         </div>
                       </div>
                       <Button

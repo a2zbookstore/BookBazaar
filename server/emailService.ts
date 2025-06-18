@@ -5,11 +5,11 @@ import { Order, OrderItem, Book } from '../shared/schema';
 const createTransporter = () => {
   const transporter = nodemailer.createTransport({
     host: 'smtp.zoho.com',
-    port: 465,
-    secure: true, // SSL
+    port: 587,
+    secure: false, // TLS
     auth: {
       user: 'orders@a2zbookshop.com',
-      pass: process.env.ZOHO_EMAIL_PASSWORD || '8PS1MyCm4z6b'
+      pass: 'KMNpmtwETvQx'
     },
     tls: {
       rejectUnauthorized: false
@@ -28,7 +28,7 @@ const createTransporter = () => {
       console.log('Email functionality will be disabled until SMTP is configured properly');
     } else {
       console.log('SMTP Server connected successfully - Ready for sending emails');
-      console.log('Using: orders@a2zbookshop.com via smtp.zoho.com:465 (SSL)');
+      console.log('Using: orders@a2zbookshop.com via smtp.zoho.com:587 (TLS)');
     }
   });
 
