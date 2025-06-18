@@ -75,6 +75,9 @@ export default function SettingsPage() {
     lastName: user?.lastName || "",
     email: user?.email || "",
   });
+  const [brevoEmail, setBrevoEmail] = useState('');
+  const [brevoApiKey, setBrevoApiKey] = useState('');
+  const [isUpdatingBrevo, setIsUpdatingBrevo] = useState(false);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -247,6 +250,57 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveBrevoCredentials = async () => {
+    if (!brevoEmail || !brevoApiKey) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in both email and API key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdatingBrevo(true);
+    try {
+      const response = await fetch('/api/admin/brevo-credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: brevoEmail,
+          apiKey: brevoApiKey,
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Credentials Saved",
+          description: "Brevo credentials updated and tested successfully!",
+        });
+        // Clear the form
+        setBrevoEmail('');
+        setBrevoApiKey('');
+      } else {
+        toast({
+          title: "Configuration Failed",
+          description: result.error || "Failed to save Brevo credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save Brevo credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingBrevo(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -365,23 +419,49 @@ export default function SettingsPage() {
                           <li>• Admin notifications to your Brevo email</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                          <p className="text-sm text-amber-800 mb-2">
-                            <strong>Brevo SMTP Authentication Issue</strong>
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-800 mb-3">
+                            <strong>Configure Brevo SMTP Credentials</strong>
                           </p>
-                          <p className="text-sm text-amber-700 mb-2">
-                            Please verify your Brevo credentials:
-                          </p>
-                          <ul className="text-sm text-amber-700 space-y-1">
-                            <li>1. Email must be verified in your Brevo account</li>
-                            <li>2. API Key should start with "xkeysib-" (not account password)</li>
-                            <li>3. Generate SMTP API key in Settings → SMTP & API</li>
-                            <li>4. Ensure account has email sending permissions</li>
-                          </ul>
-                          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-                            <p className="text-xs text-blue-700">
-                              Check BREVO_SETUP_GUIDE.md for detailed credential setup instructions.
-                            </p>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Brevo Email Address
+                              </label>
+                              <input
+                                type="email"
+                                placeholder="your-email@domain.com"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                value={brevoEmail}
+                                onChange={(e) => setBrevoEmail(e.target.value)}
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Must be verified in your Brevo account
+                              </p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Brevo API Key
+                              </label>
+                              <input
+                                type="password"
+                                placeholder="xkeysib-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                value={brevoApiKey}
+                                onChange={(e) => setBrevoApiKey(e.target.value)}
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Generate in Brevo Settings → SMTP & API (starts with xkeysib-)
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              onClick={handleSaveBrevoCredentials}
+                              disabled={!brevoEmail || !brevoApiKey || isUpdatingBrevo}
+                              className="w-full"
+                            >
+                              {isUpdatingBrevo ? 'Saving...' : 'Save & Test Brevo Credentials'}
+                            </Button>
                           </div>
                         </div>
                       </div>
