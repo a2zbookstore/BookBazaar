@@ -19,12 +19,6 @@
 4. Name it "A2Z BOOKSHOP SMTP"
 5. Copy the generated API key (starts with xkeysib-)
 
-**Important Notes:**
-- Use the API key, NOT your account password
-- API key format: xkeysib-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-- Email must be verified as a sender in your Brevo account
-- Free tier allows 300 emails/day
-
 ## Step 3: Provide Credentials
 
 I need these two values:
