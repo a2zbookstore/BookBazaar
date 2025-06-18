@@ -314,31 +314,49 @@ export default function OrdersPage() {
   });
 
   const handleUpdateOrder = () => {
+    console.log('handleUpdateOrder called');
+    console.log('selectedOrder:', selectedOrder);
+    console.log('newStatus:', newStatus);
+    
     if (!selectedOrder || !newStatus) {
       console.error('Missing required fields:', { selectedOrder: !!selectedOrder, newStatus });
+      toast({
+        title: "Error",
+        description: "Please select a status to update",
+        variant: "destructive",
+      });
       return;
     }
 
-    // Handle shipping carrier: use custom carrier if "other" is selected
-    let carrierValue = "";
-    if (shippingCarrier === "none") {
-      carrierValue = "";
-    } else if (shippingCarrier === "other") {
-      carrierValue = customCarrier;
-    } else {
-      carrierValue = shippingCarrier;
+    try {
+      // Handle shipping carrier: use custom carrier if "other" is selected
+      let carrierValue = "";
+      if (shippingCarrier === "none") {
+        carrierValue = "";
+      } else if (shippingCarrier === "other") {
+        carrierValue = customCarrier;
+      } else {
+        carrierValue = shippingCarrier;
+      }
+
+      const updateData = {
+        orderId: selectedOrder.id,
+        status: newStatus,
+        trackingNumber: trackingNumber || "",
+        shippingCarrier: carrierValue || "",
+        notes: notes || "",
+      };
+
+      console.log('Attempting to update order with data:', updateData);
+      updateOrderMutation.mutate(updateData);
+    } catch (error) {
+      console.error('Error in handleUpdateOrder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
     }
-
-    const updateData = {
-      orderId: selectedOrder.id,
-      status: newStatus,
-      trackingNumber: trackingNumber || undefined,
-      shippingCarrier: carrierValue || undefined,
-      notes: notes || undefined,
-    };
-
-    console.log('Attempting to update order with data:', updateData);
-    updateOrderMutation.mutate(updateData);
   };
 
   // Set form values when order is selected
@@ -515,7 +533,7 @@ export default function OrdersPage() {
                             <DialogTitle>Manage Order #{selectedOrder?.id}</DialogTitle>
                           </DialogHeader>
                           
-                          {selectedOrder && (
+                          {(selectedOrder || order) && (
                             <div className="space-y-6">
                               {/* Customer Information */}
                               <div>
@@ -551,7 +569,7 @@ export default function OrdersPage() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleDownloadInvoice(selectedOrder)}
+                                    onClick={() => handleDownloadInvoice(selectedOrder || order)}
                                     className="flex items-center gap-2"
                                   >
                                     <Download className="w-4 h-4" />
@@ -560,7 +578,7 @@ export default function OrdersPage() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handlePrintInvoice(selectedOrder)}
+                                    onClick={() => handlePrintInvoice(selectedOrder || order)}
                                     className="flex items-center gap-2"
                                   >
                                     <Printer className="w-4 h-4" />
@@ -572,11 +590,11 @@ export default function OrdersPage() {
                               <Separator />
 
                               {/* Order Items */}
-                              {selectedOrder.items && selectedOrder.items.length > 0 && (
+                              {(selectedOrder || order).items && (selectedOrder || order).items.length > 0 && (
                                 <div>
                                   <h4 className="font-semibold mb-2">Order Items</h4>
                                   <div className="space-y-2">
-                                    {selectedOrder.items.map((item) => (
+                                    {(selectedOrder || order).items.map((item) => (
                                       <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                                         <div>
                                           <p className="font-medium">{item.title}</p>
@@ -672,8 +690,16 @@ export default function OrdersPage() {
                                 </div>
 
                                 <Button 
-                                  onClick={handleUpdateOrder}
-                                  disabled={updateOrderMutation.isPending}
+                                  onClick={() => {
+                                    const orderToUpdate = selectedOrder || order;
+                                    if (!orderToUpdate) {
+                                      console.error('No order available');
+                                      return;
+                                    }
+                                    setSelectedOrder(orderToUpdate);
+                                    handleUpdateOrder();
+                                  }}
+                                  disabled={updateOrderMutation.isPending || !newStatus}
                                   className="w-full"
                                 >
                                   {updateOrderMutation.isPending ? "Updating..." : "Update Order"}
