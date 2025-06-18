@@ -3,9 +3,9 @@ import { Order, OrderItem, Book } from '../shared/schema';
 
 // Email configuration for Brevo (Sendinblue)
 const createTransporter = () => {
-  // आपके Brevo credentials यहाँ fill करें:
-  const BREVO_EMAIL = 'your-brevo-email@domain.com';  // ← यहाँ आपका verified email address डालें
-  const BREVO_API_KEY = 'xkeysib-your-api-key-here';   // ← यहाँ आपकी SMTP API key डालें
+  // ✅ FILL YOUR BREVO CREDENTIALS HERE:
+  const BREVO_EMAIL = 'PUT_YOUR_EMAIL_HERE';     // ← Replace with your verified email
+  const BREVO_API_KEY = 'PUT_YOUR_API_KEY_HERE'; // ← Replace with your SMTP API key
 
   const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
