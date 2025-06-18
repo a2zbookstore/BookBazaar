@@ -21,10 +21,11 @@ const createTransporter = () => {
     logger: process.env.NODE_ENV === 'development'
   });
 
-  // Verify SMTP connection on startup
+  // Verify SMTP connection on startup (non-blocking)
   transporter.verify((error, success) => {
     if (error) {
-      console.error('SMTP Configuration Error:', error);
+      console.error('SMTP Configuration Error:', error.message);
+      console.log('Email functionality will be disabled until SMTP is configured properly');
     } else {
       console.log('SMTP Server connected successfully - Ready for sending emails');
       console.log('Using: orders@a2zbookshop.com via smtp.zoho.com:465 (SSL)');

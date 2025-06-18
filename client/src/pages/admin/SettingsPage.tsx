@@ -359,18 +359,26 @@ export default function SettingsPage() {
                         </p>
                         <ul className="text-sm text-gray-600 space-y-1">
                           <li>• Server: smtp.zoho.com</li>
-                          <li>• Port: 587 (TLS/STARTTLS) - Currently Active</li>
-                          <li>• Alternative: Port 465 (SSL) - Available</li>
+                          <li>• Port: 465 (SSL) - Currently Active</li>
+                          <li>• Alternative: Port 587 (TLS) - Available</li>
                           <li>• Email: orders@a2zbookshop.com</li>
                           <li>• Authentication: App Password Required</li>
                           <li>• Used for: Order confirmations, status updates</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <p className="text-sm text-yellow-800">
-                            <strong>Note:</strong> Zoho Mail requires an App Password for SMTP authentication. 
-                            Generate one in your Zoho account settings under Security → App Passwords.
+                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-sm text-red-800 mb-2">
+                            <strong>SMTP Authentication Failed</strong>
                           </p>
+                          <p className="text-sm text-red-700 mb-2">
+                            Please verify your Zoho Mail configuration:
+                          </p>
+                          <ul className="text-sm text-red-700 space-y-1">
+                            <li>1. Generate App Password: Zoho Mail → Settings → Security → App Passwords</li>
+                            <li>2. Enable SMTP: Zoho Mail → Settings → Mail → SMTP Access</li>
+                            <li>3. Verify orders@a2zbookshop.com account is active</li>
+                            <li>4. Check domain configuration and MX records</li>
+                          </ul>
                         </div>
                       </div>
                       <Button
