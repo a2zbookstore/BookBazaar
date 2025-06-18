@@ -1,18 +1,12 @@
 import nodemailer from 'nodemailer';
 import { Order, OrderItem, Book } from '../shared/schema';
 
-// Email configuration for Brevo (Sendinblue)
+// Email configuration for Brevo SMTP
 const createTransporter = () => {
-  // For SMTP, we need different credentials than REST API
-  // SMTP uses your verified email + SMTP password/key
-  const BREVO_EMAIL = process.env.BREVO_EMAIL;
-  const BREVO_API_KEY = process.env.BREVO_API_KEY;
-
-  // Check if credentials are available
-  if (!BREVO_EMAIL || !BREVO_API_KEY) {
-    console.log('Brevo SMTP credentials not provided - email functionality disabled');
-    return null;
-  }
+  // Use the provided SMTP credentials
+  const SMTP_USER = '8ffc43003@smtp-brevo.com';
+  const SMTP_PASS = 'AW6v3Nmy2CrYs8kV';
+  const FROM_EMAIL = 'orders@a2zbookshop.com';
 
   const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
@@ -35,16 +29,12 @@ const createTransporter = () => {
   // Verify SMTP connection on startup (non-blocking)
   transporter.verify((error, success) => {
     if (error) {
-      console.error('Brevo SMTP Authentication Error:', error.message);
-      console.log('Please check:');
-      console.log('1. Email is verified in Brevo Senders & IP section');
-      console.log('2. SMTP access is enabled in account');
-      console.log('3. Using SMTP API key (not REST API key)');
-      console.log('4. Account has sending permissions');
+      console.error('Brevo SMTP Error:', error.message);
       console.log('Email functionality disabled - orders will complete without notifications');
     } else {
       console.log('✅ Brevo SMTP connected successfully');
-      console.log('Email system ready:', BREVO_EMAIL, 'via smtp-relay.brevo.com');
+      console.log('Email system ready: orders@a2zbookshop.com via smtp-relay.brevo.com');
+      console.log('Order confirmations and admin notifications will be sent');
     }
   });
 
@@ -302,7 +292,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const customerMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
+        address: 'orders@a2zbookshop.com'
       },
       to: data.customerEmail,
       subject: `Order Confirmation #${data.order.id} - A2Z BOOKSHOP`,
@@ -314,9 +304,9 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const adminMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
+        address: 'orders@a2zbookshop.com'
       },
-      to: 'your-brevo-email@domain.com',  // ← यहाँ भी same email address डालें
+      to: 'orders@a2zbookshop.com',
       subject: `New Order #${data.order.id} - Admin Copy`,
       html: htmlContent,
       text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${parseFloat(data.order.total.toString()).toFixed(2)}`

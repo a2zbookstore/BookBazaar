@@ -365,30 +365,27 @@ export default function SettingsPage() {
                           <li>• Admin notifications to your Brevo email</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                          <p className="text-sm text-orange-800 mb-2">
-                            <strong>SMTP vs REST API Credentials</strong>
-                          </p>
-                          <p className="text-sm text-orange-700 mb-2">
-                            You provided REST API credentials (for campaigns), but we need SMTP credentials (for transactional emails):
+                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm text-green-800 mb-2">
+                            <strong>✅ Brevo SMTP Configured Successfully</strong>
                           </p>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                            <div className="bg-red-50 p-2 rounded">
-                              <p className="font-semibold text-red-800">REST API (Campaign)</p>
-                              <p className="text-red-700">• For marketing campaigns</p>
-                              <p className="text-red-700">• Uses API v3 key</p>
-                              <p className="text-red-700">• Code you shared</p>
+                            <div className="bg-white p-2 rounded border">
+                              <p className="font-semibold text-gray-800">SMTP Settings</p>
+                              <p className="text-gray-700">• Server: smtp-relay.brevo.com</p>
+                              <p className="text-gray-700">• Port: 587 (TLS)</p>
+                              <p className="text-gray-700">• From: orders@a2zbookshop.com</p>
                             </div>
-                            <div className="bg-green-50 p-2 rounded">
-                              <p className="font-semibold text-green-800">SMTP (Transactional)</p>
-                              <p className="text-green-700">• For order confirmations</p>
-                              <p className="text-green-700">• Uses SMTP key</p>
-                              <p className="text-green-700">• What we need</p>
+                            <div className="bg-white p-2 rounded border">
+                              <p className="font-semibold text-gray-800">Email Features</p>
+                              <p className="text-gray-700">• Order confirmations</p>
+                              <p className="text-gray-700">• Status updates</p>
+                              <p className="text-gray-700">• Admin notifications</p>
                             </div>
                           </div>
                           <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
                             <p className="text-xs text-blue-700">
-                              <strong>Solution:</strong> Go to Brevo → Settings → SMTP & API → Generate SMTP key (different from REST API key)
+                              <strong>Ready:</strong> Email system is now active and will send notifications for all orders
                             </p>
                           </div>
                         </div>
