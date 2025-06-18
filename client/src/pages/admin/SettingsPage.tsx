@@ -374,11 +374,11 @@ export default function SettingsPage() {
                             Authentication failing with provided credentials. Please verify:
                           </p>
                           <ul className="text-sm text-red-700 space-y-1">
-                            <li>1. orders@a2zbookshop.com account exists and is active</li>
-                            <li>2. Domain a2zbookshop.com is properly configured in Zoho</li>
-                            <li>3. App Password is generated and copied correctly</li>
-                            <li>4. SMTP access is enabled in Zoho Mail settings</li>
-                            <li>5. Account has necessary permissions for SMTP</li>
+                            <li>1. Domain a2zbookshop.com is verified in Zoho Control Panel</li>
+                            <li>2. DNS MX and TXT records are properly configured</li>
+                            <li>3. orders@a2zbookshop.com account exists and is active</li>
+                            <li>4. SMTP access is enabled in Zoho Mail security settings</li>
+                            <li>5. App Password (KMNpmtwETvQx) is valid and has permissions</li>
                           </ul>
                           <p className="text-sm text-red-600 mt-2">
                             Orders continue to work - emails will send once SMTP is resolved.

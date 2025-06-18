@@ -24,8 +24,9 @@ const createTransporter = () => {
   // Verify SMTP connection on startup (non-blocking)
   transporter.verify((error, success) => {
     if (error) {
-      console.error('SMTP Configuration Error:', error.message);
-      console.log('Email functionality will be disabled until SMTP is configured properly');
+      console.error('SMTP Configuration Error: Domain verification required');
+      console.log('Email functionality disabled - orders will complete without email notifications');
+      console.log('To fix: Verify a2zbookshop.com domain in Zoho Mail Control Panel');
     } else {
       console.log('SMTP Server connected successfully - Ready for sending emails');
       console.log('Using: orders@a2zbookshop.com via smtp.zoho.com:587 (TLS)');
