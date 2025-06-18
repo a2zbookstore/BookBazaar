@@ -337,18 +337,34 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
     
     const htmlContent = generateStatusUpdateHTML(data);
 
-    const mailOptions = {
+    const customerMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
+        address: 'orders@a2zbookshop.com'
       },
       to: data.customerEmail,
-      subject: `Order #${data.order.id} Status Update - ${data.newStatus.toUpperCase()}`,
+      subject: `Order Status Update - Order #${data.order.id}`,
       html: htmlContent,
-      text: `Your order #${data.order.id} status has been updated to: ${data.newStatus.toUpperCase()}. ${data.trackingNumber ? `Tracking: ${data.trackingNumber}` : ''}`
+      text: `Your order #${data.order.id} status has been updated to: ${data.newStatus}. ${data.trackingNumber ? `Tracking: ${data.trackingNumber}` : ''}`
     };
 
-    await transporter.sendMail(mailOptions);
+    // Copy to admin
+    const adminMailOptions = {
+      from: {
+        name: 'A2Z BOOKSHOP',
+        address: 'orders@a2zbookshop.com'
+      },
+      to: 'orders@a2zbookshop.com',
+      subject: `Order Status Updated - Order #${data.order.id}`,
+      html: htmlContent,
+      text: `Order #${data.order.id} status updated to: ${data.newStatus} for customer: ${data.customerEmail}`
+    };
+
+    // Send both emails
+    await Promise.all([
+      transporter.sendMail(customerMailOptions),
+      transporter.sendMail(adminMailOptions)
+    ]);
     console.log(`Status update email sent for order #${data.order.id}, new status: ${data.newStatus}`);
     return true;
   } catch (error) {
@@ -374,10 +390,10 @@ export const testEmailConfiguration = async (): Promise<boolean> => {
     const info = await transporter.sendMail({
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'your-brevo-email@domain.com'  // ← यहाँ भी same email address डालें
+        address: 'orders@a2zbookshop.com'
       },
-      to: 'your-brevo-email@domain.com',  // ← यहाँ भी same email address डालें
-      subject: 'A2Z BOOKSHOP - Email Test Successful',
+      to: 'orders@a2zbookshop.com',
+      subject: 'A2Z BOOKSHOP - Email System Ready',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #d32f2f;">A<span style="color: #d32f2f;">2</span>Z BOOKSHOP</h2>
