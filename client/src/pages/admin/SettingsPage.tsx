@@ -380,9 +380,11 @@ export default function SettingsPage() {
                             <li>4. SMTP access is enabled in Zoho Mail security settings</li>
                             <li>5. App Password (KMNpmtwETvQx) is valid and has permissions</li>
                           </ul>
-                          <p className="text-sm text-red-600 mt-2">
-                            Orders continue to work - emails will send once SMTP is resolved.
-                          </p>
+                          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                            <p className="text-sm text-blue-800">
+                              <strong>Email System Ready:</strong> Customer और orders@a2zbookshop.com दोनों को emails जाएंगी जब domain verify हो जाएगा।
+                            </p>
+                          </div>
                         </div>
                       </div>
                       <Button
