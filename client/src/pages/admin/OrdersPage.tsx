@@ -1,12 +1,31 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { 
   Edit,
   FileText, 
@@ -45,9 +64,17 @@ interface Order {
 export default function OrdersPage() {
   const [location] = useLocation();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [shippingCarrier, setShippingCarrier] = useState("");
+  const [notes, setNotes] = useState("");
+  
   const { isAuthenticated, isLoading: authLoading } = useAdminAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Set initial filter from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('status') === 'pending' || location.includes('pending')) {
@@ -59,6 +86,75 @@ export default function OrdersPage() {
     queryKey: ["/api/orders"],
     enabled: isAuthenticated,
   });
+
+  const updateOrderMutation = useMutation({
+    mutationFn: async (data: { 
+      orderId: number; 
+      status: string; 
+      trackingNumber?: string; 
+      shippingCarrier?: string; 
+      notes?: string; 
+    }) => {
+      console.log('Updating order:', data);
+      const response = await apiRequest("PUT", `/api/orders/${data.orderId}/status`, {
+        status: data.status,
+        trackingNumber: data.trackingNumber || "",
+        shippingCarrier: data.shippingCarrier || "",
+        notes: data.notes || "",
+      });
+      console.log('Update response:', response);
+      return response;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Success",
+        description: "Order status updated successfully with email notification sent.",
+      });
+      setIsDialogOpen(false);
+      setSelectedOrderId(null);
+      setNewStatus("");
+      setTrackingNumber("");
+      setShippingCarrier("");
+      setNotes("");
+    },
+    onError: (error: any) => {
+      console.error('Update error:', error);
+      toast({
+        title: "Error", 
+        description: error?.message || "Failed to update order status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleOpenDialog = (order: Order) => {
+    setSelectedOrderId(order.id);
+    setNewStatus(order.status);
+    setTrackingNumber(order.trackingNumber || "");
+    setShippingCarrier(order.shippingCarrier || "");
+    setNotes(order.notes || "");
+    setIsDialogOpen(true);
+  };
+
+  const handleUpdateOrder = () => {
+    if (!selectedOrderId || !newStatus) {
+      toast({
+        title: "Error",
+        description: "Please select a status",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateOrderMutation.mutate({
+      orderId: selectedOrderId,
+      status: newStatus,
+      trackingNumber,
+      shippingCarrier,
+      notes,
+    });
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -83,16 +179,6 @@ export default function OrdersPage() {
       case 'cancelled': return 'destructive';
       case 'refunded': return 'destructive';
       default: return 'secondary';
-    }
-  };
-
-  const handleStatusUpdate = async (orderId: number) => {
-    try {
-      console.log('Simple status update for order:', orderId);
-      // Simple alert instead of complex dialog for now
-      alert(`Update order #${orderId} status`);
-    } catch (error) {
-      console.error('Error in status update:', error);
     }
   };
 
@@ -192,9 +278,8 @@ export default function OrdersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id)}
+                          onClick={() => handleOpenDialog(order)}
                           className="flex items-center gap-1"
-                          title="Update Order Status"
                         >
                           <Edit className="w-3 h-3" />
                           Update Status
@@ -207,6 +292,92 @@ export default function OrdersPage() {
             })}
           </div>
         )}
+
+        {/* Order Status Update Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Update Order Status</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="status">Order Status</Label>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="carrier">Shipping Carrier</Label>
+                <Select value={shippingCarrier} onValueChange={setShippingCarrier}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select carrier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No Carrier</SelectItem>
+                    <SelectItem value="FedEx">FedEx</SelectItem>
+                    <SelectItem value="UPS">UPS</SelectItem>
+                    <SelectItem value="DHL">DHL</SelectItem>
+                    <SelectItem value="USPS">USPS</SelectItem>
+                    <SelectItem value="India Post">India Post</SelectItem>
+                    <SelectItem value="Blue Dart">Blue Dart</SelectItem>
+                    <SelectItem value="Delhivery">Delhivery</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tracking">Tracking Number</Label>
+                <Input
+                  id="tracking"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="Enter tracking number"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add any notes about this order..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleUpdateOrder}
+                  disabled={updateOrderMutation.isPending || !newStatus}
+                  className="flex-1"
+                >
+                  {updateOrderMutation.isPending ? "Updating..." : "Update Order"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
