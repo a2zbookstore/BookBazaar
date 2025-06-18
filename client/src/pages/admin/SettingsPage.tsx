@@ -365,20 +365,25 @@ export default function SettingsPage() {
                           <li>• Admin notifications to your Brevo email</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <p className="text-sm text-yellow-800 mb-2">
-                            <strong>Brevo Credentials Required</strong>
+                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-sm text-red-800 mb-2">
+                            <strong>Brevo SMTP Authentication Failed</strong>
                           </p>
-                          <p className="text-sm text-yellow-700 mb-2">
-                            Please provide your Brevo credentials to enable email functionality:
+                          <p className="text-sm text-red-700 mb-2">
+                            Error: 535 5.7.8 Authentication failed - Credentials updated but still not working
                           </p>
-                          <ul className="text-sm text-yellow-700 space-y-1">
-                            <li>1. BREVO_EMAIL: Your verified email address from Brevo</li>
-                            <li>2. BREVO_API_KEY: Your SMTP API key from Brevo settings</li>
+                          <p className="text-sm text-red-700 mb-2">
+                            <strong>Please verify:</strong>
+                          </p>
+                          <ul className="text-sm text-red-700 space-y-1">
+                            <li>1. Email address is verified in Brevo account (Senders & IP section)</li>
+                            <li>2. SMTP access is enabled in account settings</li>
+                            <li>3. API key is SMTP key (not REST API key)</li>
+                            <li>4. Account has sending permissions enabled</li>
                           </ul>
-                          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-                            <p className="text-xs text-blue-700">
-                              <strong>Ready:</strong> Email system will work immediately after providing credentials
+                          <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                            <p className="text-xs text-yellow-700">
+                              <strong>Alternative:</strong> Try regenerating a new SMTP API key in Brevo dashboard
                             </p>
                           </div>
                         </div>

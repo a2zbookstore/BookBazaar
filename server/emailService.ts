@@ -34,7 +34,12 @@ const createTransporter = () => {
   // Verify SMTP connection on startup (non-blocking)
   transporter.verify((error, success) => {
     if (error) {
-      console.error('Brevo SMTP Error:', error.message);
+      console.error('Brevo SMTP Authentication Error:', error.message);
+      console.log('Please check:');
+      console.log('1. Email is verified in Brevo Senders & IP section');
+      console.log('2. SMTP access is enabled in account');
+      console.log('3. Using SMTP API key (not REST API key)');
+      console.log('4. Account has sending permissions');
       console.log('Email functionality disabled - orders will complete without notifications');
     } else {
       console.log('✅ Brevo SMTP connected successfully');
