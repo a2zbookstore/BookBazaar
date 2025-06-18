@@ -380,9 +380,12 @@ export default function SettingsPage() {
                             <li>4. SMTP access is enabled in Zoho Mail security settings</li>
                             <li>5. App Password (KMNpmtwETvQx) is valid and has permissions</li>
                           </ul>
-                          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-                            <p className="text-sm text-blue-800">
-                              <strong>Email System Ready:</strong> Customer और orders@a2zbookshop.com दोनों को emails जाएंगी जब domain verify हो जाएगा।
+                          <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                            <p className="text-sm text-green-800 mb-2">
+                              <strong>Email System Ready!</strong> Customer और orders@a2zbookshop.com दोनों को emails जाएंगी।
+                            </p>
+                            <p className="text-xs text-green-700">
+                              Domain Setup Guide: Check DOMAIN_SETUP_STEP_BY_STEP.md file for complete instructions.
                             </p>
                           </div>
                         </div>
