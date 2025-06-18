@@ -76,14 +76,23 @@ export function OrderStatusDialog({
       shippingCarrier?: string; 
       notes?: string; 
     }) => {
-      return await apiRequest("PUT", `/api/orders/${data.orderId}/status`, {
-        status: data.status,
-        trackingNumber: data.trackingNumber || "",
-        shippingCarrier: data.shippingCarrier || "",
-        notes: data.notes || "",
-      });
+      try {
+        console.log('Updating order with data:', data);
+        const response = await apiRequest("PUT", `/api/orders/${data.orderId}/status`, {
+          status: data.status,
+          trackingNumber: data.trackingNumber || "",
+          shippingCarrier: data.shippingCarrier || "",
+          notes: data.notes || "",
+        });
+        console.log('Order update response:', response);
+        return response;
+      } catch (error) {
+        console.error('Order update failed:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Order update successful:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: "Success",
@@ -92,34 +101,61 @@ export function OrderStatusDialog({
       setOpen(false);
     },
     onError: (error: any) => {
+      console.error('Order update error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update order status",
+        description: error?.message || "Failed to update order status",
         variant: "destructive",
       });
     },
   });
 
   const handleSubmit = () => {
-    if (!newStatus) {
+    try {
+      console.log('HandleSubmit called');
+      console.log('Order:', order);
+      console.log('New status:', newStatus);
+      
+      if (!newStatus) {
+        toast({
+          title: "Error",
+          description: "Please select a status",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!order?.id) {
+        console.error('No order ID available');
+        toast({
+          title: "Error",
+          description: "Invalid order data",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const carrierValue = shippingCarrier === "other" ? customCarrier : 
+                          shippingCarrier === "none" ? "" : shippingCarrier;
+
+      const updateData = {
+        orderId: order.id,
+        status: newStatus,
+        trackingNumber: trackingNumber || "",
+        shippingCarrier: carrierValue || "",
+        notes: notes || "",
+      };
+
+      console.log('Submitting order update:', updateData);
+      updateOrderMutation.mutate(updateData);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Error",
-        description: "Please select a status",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-      return;
     }
-
-    const carrierValue = shippingCarrier === "other" ? customCarrier : 
-                        shippingCarrier === "none" ? "" : shippingCarrier;
-
-    updateOrderMutation.mutate({
-      orderId: order.id,
-      status: newStatus,
-      trackingNumber: trackingNumber || "",
-      shippingCarrier: carrierValue || "",
-      notes: notes || "",
-    });
   };
 
   const resetForm = () => {
@@ -132,9 +168,14 @@ export function OrderStatusDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      setOpen(isOpen);
-      if (isOpen) {
-        resetForm();
+      try {
+        console.log('Dialog state changing:', isOpen);
+        setOpen(isOpen);
+        if (isOpen) {
+          resetForm();
+        }
+      } catch (error) {
+        console.error('Error in dialog state change:', error);
       }
     }}>
       <DialogTrigger asChild>
@@ -142,6 +183,14 @@ export function OrderStatusDialog({
           variant="outline"
           size="sm"
           className="flex items-center gap-2"
+          onClick={() => {
+            try {
+              console.log('Dialog trigger clicked for order:', order?.id);
+              setOpen(true);
+            } catch (error) {
+              console.error('Error opening dialog:', error);
+            }
+          }}
         >
           <Edit className="w-4 h-4" />
           Edit Order Status
