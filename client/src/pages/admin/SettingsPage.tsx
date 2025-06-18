@@ -362,8 +362,16 @@ export default function SettingsPage() {
                           <li>• Port: 587 (TLS/STARTTLS) - Currently Active</li>
                           <li>• Alternative: Port 465 (SSL) - Available</li>
                           <li>• Email: orders@a2zbookshop.com</li>
+                          <li>• Authentication: App Password Required</li>
                           <li>• Used for: Order confirmations, status updates</li>
                         </ul>
+                        
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-800">
+                            <strong>Note:</strong> Zoho Mail requires an App Password for SMTP authentication. 
+                            Generate one in your Zoho account settings under Security → App Passwords.
+                          </p>
+                        </div>
                       </div>
                       <Button
                         type="button"
