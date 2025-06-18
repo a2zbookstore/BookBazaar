@@ -1631,6 +1631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Send status update email to customer
         try {
+          // Email already imported at top of file
           await sendStatusUpdateEmail({
             order: updatedOrder,
             customerEmail: updatedOrder.customerEmail,

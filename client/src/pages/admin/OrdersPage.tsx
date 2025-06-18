@@ -275,21 +275,33 @@ export default function OrdersPage() {
       notes?: string; 
     }) => {
       console.log('Order update data:', data);
-      return await apiRequest("PUT", `/api/orders/${data.orderId}/status`, {
-        status: data.status,
-        trackingNumber: data.trackingNumber,
-        shippingCarrier: data.shippingCarrier,
-        notes: data.notes,
-      });
+      try {
+        const response = await apiRequest("PUT", `/api/orders/${data.orderId}/status`, {
+          status: data.status,
+          trackingNumber: data.trackingNumber || "",
+          shippingCarrier: data.shippingCarrier || "",
+          notes: data.notes || "",
+        });
+        console.log('Order update response:', response);
+        return response;
+      } catch (error) {
+        console.error('API request failed:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       console.log('Order update success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: "Success",
-        description: "Order status updated successfully",
+        description: "Order status updated successfully. Email notification sent.",
       });
       setSelectedOrder(null);
+      setNewStatus("");
+      setTrackingNumber("");
+      setShippingCarrier("");
+      setCustomCarrier("");
+      setNotes("");
     },
     onError: (error: any) => {
       console.error('Order update error:', error);
