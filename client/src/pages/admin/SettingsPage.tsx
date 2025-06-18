@@ -365,20 +365,22 @@ export default function SettingsPage() {
                           <li>• Admin notifications to your Brevo email</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-800 mb-2">
-                            <strong>Brevo SMTP Configuration</strong>
+                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-sm text-amber-800 mb-2">
+                            <strong>Brevo SMTP Authentication Issue</strong>
                           </p>
-                          <p className="text-sm text-blue-700 mb-2">
-                            Please provide your Brevo credentials:
+                          <p className="text-sm text-amber-700 mb-2">
+                            Please verify your Brevo credentials:
                           </p>
-                          <ul className="text-sm text-blue-700 space-y-1">
-                            <li>1. Brevo Email Address (verified sender)</li>
-                            <li>2. Brevo API Key (SMTP key from account settings)</li>
+                          <ul className="text-sm text-amber-700 space-y-1">
+                            <li>1. Email must be verified in your Brevo account</li>
+                            <li>2. API Key should start with "xkeysib-" (not account password)</li>
+                            <li>3. Generate SMTP API key in Settings → SMTP & API</li>
+                            <li>4. Ensure account has email sending permissions</li>
                           </ul>
-                          <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
-                            <p className="text-xs text-green-700">
-                              Brevo typically has better deliverability than other providers and no domain verification required for basic setup.
+                          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                            <p className="text-xs text-blue-700">
+                              Check BREVO_SETUP_GUIDE.md for detailed credential setup instructions.
                             </p>
                           </div>
                         </div>
