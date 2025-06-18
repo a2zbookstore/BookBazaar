@@ -359,8 +359,9 @@ export default function SettingsPage() {
                         </p>
                         <ul className="text-sm text-gray-600 space-y-1">
                           <li>• Server: smtp.zoho.com</li>
-                          <li>• Port: 587 (STARTTLS)</li>
-                          <li>• Authentication: Zoho Mail credentials</li>
+                          <li>• Port: 587 (TLS/STARTTLS) - Currently Active</li>
+                          <li>• Alternative: Port 465 (SSL) - Available</li>
+                          <li>• Email: orders@a2zbookshop.com</li>
                           <li>• Used for: Order confirmations, status updates</li>
                         </ul>
                       </div>
