@@ -365,25 +365,30 @@ export default function SettingsPage() {
                           <li>• Admin notifications to your Brevo email</li>
                         </ul>
                         
-                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <p className="text-sm text-red-800 mb-2">
-                            <strong>Brevo SMTP Authentication Failed</strong>
+                        <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                          <p className="text-sm text-orange-800 mb-2">
+                            <strong>SMTP vs REST API Credentials</strong>
                           </p>
-                          <p className="text-sm text-red-700 mb-2">
-                            Error: 535 5.7.8 Authentication failed - Credentials updated but still not working
+                          <p className="text-sm text-orange-700 mb-2">
+                            You provided REST API credentials (for campaigns), but we need SMTP credentials (for transactional emails):
                           </p>
-                          <p className="text-sm text-red-700 mb-2">
-                            <strong>Please verify:</strong>
-                          </p>
-                          <ul className="text-sm text-red-700 space-y-1">
-                            <li>1. Email address is verified in Brevo account (Senders & IP section)</li>
-                            <li>2. SMTP access is enabled in account settings</li>
-                            <li>3. API key is SMTP key (not REST API key)</li>
-                            <li>4. Account has sending permissions enabled</li>
-                          </ul>
-                          <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                            <p className="text-xs text-yellow-700">
-                              <strong>Alternative:</strong> Try regenerating a new SMTP API key in Brevo dashboard
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            <div className="bg-red-50 p-2 rounded">
+                              <p className="font-semibold text-red-800">REST API (Campaign)</p>
+                              <p className="text-red-700">• For marketing campaigns</p>
+                              <p className="text-red-700">• Uses API v3 key</p>
+                              <p className="text-red-700">• Code you shared</p>
+                            </div>
+                            <div className="bg-green-50 p-2 rounded">
+                              <p className="font-semibold text-green-800">SMTP (Transactional)</p>
+                              <p className="text-green-700">• For order confirmations</p>
+                              <p className="text-green-700">• Uses SMTP key</p>
+                              <p className="text-green-700">• What we need</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                            <p className="text-xs text-blue-700">
+                              <strong>Solution:</strong> Go to Brevo → Settings → SMTP & API → Generate SMTP key (different from REST API key)
                             </p>
                           </div>
                         </div>

@@ -3,13 +3,14 @@ import { Order, OrderItem, Book } from '../shared/schema';
 
 // Email configuration for Brevo (Sendinblue)
 const createTransporter = () => {
-  // Use environment variables for Brevo credentials
+  // For SMTP, we need different credentials than REST API
+  // SMTP uses your verified email + SMTP password/key
   const BREVO_EMAIL = process.env.BREVO_EMAIL;
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
   // Check if credentials are available
   if (!BREVO_EMAIL || !BREVO_API_KEY) {
-    console.log('Brevo credentials not provided - email functionality disabled');
+    console.log('Brevo SMTP credentials not provided - email functionality disabled');
     return null;
   }
 
