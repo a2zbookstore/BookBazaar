@@ -179,6 +179,9 @@ export function getCurrencyForCountry(countryCode: string): string {
  * Format price with currency symbol
  */
 export function formatPrice(amount: number, currencyCode: string): string {
+  // Ensure amount is a number
+  const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
+  
   const currency = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode);
   const symbol = currency?.symbol || currencyCode;
   
@@ -187,12 +190,12 @@ export function formatPrice(amount: number, currencyCode: string): string {
     case 'JPY':
     case 'KRW':
       // No decimal places for these currencies
-      return `${symbol}${Math.round(amount).toLocaleString()}`;
+      return `${symbol}${Math.round(numAmount).toLocaleString()}`;
     case 'EUR':
       // Euro symbol after amount in some locales, but we'll keep it before
-      return `${symbol}${amount.toFixed(2)}`;
+      return `${symbol}${numAmount.toFixed(2)}`;
     default:
-      return `${symbol}${amount.toFixed(2)}`;
+      return `${symbol}${numAmount.toFixed(2)}`;
   }
 }
 

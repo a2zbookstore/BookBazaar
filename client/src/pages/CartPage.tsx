@@ -23,7 +23,7 @@ export default function CartPage() {
   const { userCurrency, convertPrice, formatCurrency, formatAmount } = useCurrency();
   const { shipping } = useShipping();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
-  const [isConverting, setIsConverting] = useState(false);
+
 
   // Get shipping rate from admin panel - default to India if no location detected
   const { data: adminShippingRate } = useQuery({
@@ -60,30 +60,7 @@ export default function CartPage() {
 
 
 
-  // Convert total to user's currency
-  useEffect(() => {
-    const convertCartTotal = async () => {
-      if (userCurrency !== 'USD' && cartTotal > 0) {
-        setIsConverting(true);
-        try {
-          const converted = await convertPrice(cartTotal);
-          if (converted) {
-            setConvertedTotal(formatAmount(converted.convertedAmount, userCurrency));
-          } else {
-            setConvertedTotal(formatAmount(cartTotal, 'USD'));
-          }
-        } catch (error) {
-          setConvertedTotal(formatAmount(cartTotal, 'USD'));
-        } finally {
-          setIsConverting(false);
-        }
-      } else {
-        setConvertedTotal(formatAmount(cartTotal, 'USD'));
-      }
-    };
-
-    convertCartTotal();
-  }, [cartTotal, userCurrency, convertPrice, formatAmount]);
+  // Note: Currency conversion is now handled directly in the display components
 
 
 
