@@ -67,12 +67,17 @@ export default function CountrySelector({ className = "", compact = false }: Cou
         localStorage.setItem('user_selected_country_name', selectedCountry.name);
         
         console.log(`Country changed to ${selectedCountry.name}, currency set to ${newCurrency}`);
+        
+        // Auto-refresh page to reflect changes immediately
+        setTimeout(() => {
+          window.location.reload();
+        }, 500); // Small delay to ensure state updates are complete
       }
     } catch (error) {
       console.error('Error changing country:', error);
-    } finally {
       setIsChanging(false);
     }
+    // Don't set isChanging to false here since page will reload
   };
 
   const getCurrentCurrencySymbol = () => {
