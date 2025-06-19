@@ -15,6 +15,32 @@ import { useQuery } from "@tanstack/react-query";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShippingCostDisplay from "@/components/ShippingCostDisplay";
 
+// Component to handle individual item price conversion
+function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: number }) {
+  const { formatAmount, convertPrice } = useCurrency();
+  const [convertedPrice, setConvertedPrice] = useState<number>(bookPrice * quantity);
+
+  useEffect(() => {
+    const convertItemPrice = async () => {
+      try {
+        const converted = await convertPrice(bookPrice * quantity);
+        setConvertedPrice(converted?.convertedAmount || (bookPrice * quantity));
+      } catch (error) {
+        console.error('Error converting item price:', error);
+        setConvertedPrice(bookPrice * quantity);
+      }
+    };
+
+    convertItemPrice();
+  }, [bookPrice, quantity, convertPrice]);
+
+  return (
+    <p className="text-xl font-bold text-primary-aqua">
+      {formatAmount(convertedPrice)}
+    </p>
+  );
+}
+
 export default function CartPage() {
   const [, setLocation] = useLocation();
   const { cartItems, updateCartItem, removeFromCart, clearCart, isLoading } = useCart();
@@ -281,9 +307,8 @@ export default function CartPage() {
 
                       {/* Price and Remove */}
                       <div className="text-right">
-                        <p className="text-xl font-bold text-primary-aqua">
-                          {formatAmount(parseFloat(item.book.price) * item.quantity)}
-                        </p>
+                        <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                        
                         <Button
                           variant="ghost"
                           size="sm"

@@ -1074,9 +1074,7 @@ export default function CheckoutPage() {
                         <p className="text-xs text-gray-600">by {item.book.author}</p>
                         <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-medium text-sm">
-                        {formatAmount(parseFloat(item.book.price) * item.quantity)}
-                      </p>
+                      <CheckoutItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
                     </div>
                   ))}
                 </div>
