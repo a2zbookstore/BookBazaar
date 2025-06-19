@@ -139,7 +139,7 @@ export default function Layout({ children }: LayoutProps) {
               {/* Cart - accessible to all users */}
               <Link
                 href="/cart"
-                className={`transition-colors relative ml-4 p-2 rounded-lg hover:bg-primary-aqua/10 border border-transparent hover:border-primary-aqua/20 ${
+                className={`transition-colors relative mx-3 p-2 rounded-lg hover:bg-primary-aqua/10 border border-transparent hover:border-primary-aqua/20 ${
                   isCartAnimating 
                     ? "cart-pulse-animation" 
                     : "text-secondary-black hover:text-primary-aqua cart-normal"
