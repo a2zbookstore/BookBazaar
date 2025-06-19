@@ -317,11 +317,12 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
                   )}
                 </div>
-              </div>
+              </nav>
             </div>
+          </div>
 
-            {/* Bottom Row - Navigation Buttons */}
-            <div className="hidden md:flex items-center justify-center py-2 border-t border-gray-100">
+          {/* Bottom Row - Navigation Buttons */}
+          <div className="hidden md:flex items-center justify-center py-3 border-t border-gray-100">
               <nav className="flex items-center gap-4">
                 <Link
                   href="/"
