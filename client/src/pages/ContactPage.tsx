@@ -157,8 +157,8 @@ export default function ContactPage() {
                   Subject *
                 </Label>
                 <Select 
-                  value={formData.subject || ""} 
-                  onValueChange={(value) => handleInputChange("subject", value)}
+                  value={formData.subject || undefined} 
+                  onValueChange={(value) => handleInputChange("subject", value || "")}
                   required
                 >
                   <SelectTrigger className="mt-1 focus:border-primary-aqua" id="subject">
