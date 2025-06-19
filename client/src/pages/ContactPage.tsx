@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Removed Select components to fix runtime error
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -156,23 +156,21 @@ export default function ContactPage() {
                 <Label htmlFor="subject" className="text-base-black font-semibold">
                   Subject *
                 </Label>
-                <Select 
-                  value={formData.subject || undefined} 
-                  onValueChange={(value) => handleInputChange("subject", value || "")}
+                <select
+                  id="subject"
                   required
+                  value={formData.subject}
+                  onChange={(e) => handleInputChange("subject", e.target.value)}
+                  className="mt-1 flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary-aqua"
                 >
-                  <SelectTrigger className="mt-1 focus:border-primary-aqua" id="subject">
-                    <SelectValue placeholder="Select a subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General Inquiry</SelectItem>
-                    <SelectItem value="order">Order Question</SelectItem>
-                    <SelectItem value="book-request">Book Request</SelectItem>
-                    <SelectItem value="technical">Technical Issue</SelectItem>
-                    <SelectItem value="feedback">Feedback</SelectItem>
-                    <SelectItem value="partnership">Partnership Inquiry</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value="" disabled>Select a subject</option>
+                  <option value="general">General Inquiry</option>
+                  <option value="order">Order Question</option>
+                  <option value="book-request">Book Request</option>
+                  <option value="technical">Technical Issue</option>
+                  <option value="feedback">Feedback</option>
+                  <option value="partnership">Partnership Inquiry</option>
+                </select>
               </div>
 
               <div>
