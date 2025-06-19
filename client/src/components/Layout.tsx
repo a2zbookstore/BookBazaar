@@ -73,27 +73,25 @@ export default function Layout({ children }: LayoutProps) {
               />
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-4">
-              <Link
-                href="/"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
-                  isActive("/") ? "text-primary-aqua font-semibold" : ""
-                }`}
-              >
-                Home
-              </Link>
-              <Link
-                href="/track-order"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
-                  isActive("/track-order") ? "text-primary-aqua font-semibold" : ""
-                }`}
-              >
-                Track Order
-              </Link>
-              
-              {/* Small Navigation Buttons */}
-              <div className="flex items-center gap-2 ml-4">
+            {/* Desktop Navigation - All Small Buttons */}
+            <nav className="hidden md:flex items-center">
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/"
+                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/track-order"
+                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Track Order
+                </Link>
                 <Link
                   href="/catalog"
                   className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
