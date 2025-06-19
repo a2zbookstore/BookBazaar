@@ -328,16 +328,23 @@ export default function CheckoutPage() {
   useEffect(() => {
     const convertAmounts = async () => {
       try {
+        console.log('Checkout conversion attempt:', { subtotal, userCurrency, exchangeRates });
+        
         const convertedSubtotal = await convertPrice(subtotal);
         const convertedShipping = await convertPrice(shippingCost);
         const convertedTax = await convertPrice(tax);
         const convertedTotal = await convertPrice(total);
 
+        console.log('Checkout conversion results:', {
+          original: { subtotal, shippingCost, tax, total },
+          converted: { convertedSubtotal, convertedShipping, convertedTax, convertedTotal }
+        });
+
         setConvertedAmounts({
-          subtotal: convertedSubtotal?.amount || subtotal,
-          shipping: convertedShipping?.amount || shippingCost,
-          tax: convertedTax?.amount || tax,
-          total: convertedTotal?.amount || total
+          subtotal: convertedSubtotal?.convertedAmount || subtotal,
+          shipping: convertedShipping?.convertedAmount || shippingCost,
+          tax: convertedTax?.convertedAmount || tax,
+          total: convertedTotal?.convertedAmount || total
         });
       } catch (error) {
         console.error('Error converting currencies:', error);
@@ -351,8 +358,19 @@ export default function CheckoutPage() {
       }
     };
 
-    convertAmounts();
-  }, [subtotal, shippingCost, tax, total, userCurrency, convertPrice]);
+    // Only convert if we have exchange rates and the currency is not USD
+    if (exchangeRates && userCurrency !== 'USD') {
+      convertAmounts();
+    } else {
+      // For USD or when no exchange rates, use original amounts
+      setConvertedAmounts({
+        subtotal: subtotal,
+        shipping: shippingCost,
+        tax: tax,
+        total: total
+      });
+    }
+  }, [subtotal, shippingCost, tax, total, userCurrency, convertPrice, exchangeRates]);
 
   // Debug shipping cost in checkout
   console.log('Checkout Page - Admin Shipping Debug:', {
@@ -1069,20 +1087,20 @@ export default function CheckoutPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{formatAmount(convertedAmounts.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping:</span>
-                    <span>${shippingCost.toFixed(2)}</span>
+                    <span>{formatAmount(convertedAmounts.shipping)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax (1%):</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>{formatAmount(convertedAmounts.tax)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total:</span>
-                    <span className="text-primary-aqua">${total.toFixed(2)}</span>
+                    <span className="text-primary-aqua">{formatAmount(convertedAmounts.total)}</span>
                   </div>
                 </div>
               </CardContent>

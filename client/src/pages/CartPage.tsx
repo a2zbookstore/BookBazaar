@@ -57,16 +57,23 @@ export default function CartPage() {
   useEffect(() => {
     const convertAmounts = async () => {
       try {
+        console.log('Cart conversion attempt:', { cartSubtotal, userCurrency, exchangeRates });
+        
         const convertedSubtotal = await convertPrice(cartSubtotal);
         const convertedShipping = await convertPrice(cartShipping);
         const convertedTax = await convertPrice(cartTax);
         const convertedTotal = await convertPrice(cartTotal);
 
+        console.log('Cart conversion results:', {
+          original: { cartSubtotal, cartShipping, cartTax, cartTotal },
+          converted: { convertedSubtotal, convertedShipping, convertedTax, convertedTotal }
+        });
+
         setConvertedAmounts({
-          subtotal: convertedSubtotal?.amount || cartSubtotal,
-          shipping: convertedShipping?.amount || cartShipping,
-          tax: convertedTax?.amount || cartTax,
-          total: convertedTotal?.amount || cartTotal
+          subtotal: convertedSubtotal?.convertedAmount || cartSubtotal,
+          shipping: convertedShipping?.convertedAmount || cartShipping,
+          tax: convertedTax?.convertedAmount || cartTax,
+          total: convertedTotal?.convertedAmount || cartTotal
         });
       } catch (error) {
         console.error('Error converting currencies:', error);
@@ -80,8 +87,19 @@ export default function CartPage() {
       }
     };
 
-    convertAmounts();
-  }, [cartSubtotal, cartShipping, cartTax, cartTotal, userCurrency, convertPrice]);
+    // Only convert if we have exchange rates and the currency is not USD
+    if (exchangeRates && userCurrency !== 'USD') {
+      convertAmounts();
+    } else {
+      // For USD or when no exchange rates, use original amounts
+      setConvertedAmounts({
+        subtotal: cartSubtotal,
+        shipping: cartShipping,
+        tax: cartTax,
+        total: cartTotal
+      });
+    }
+  }, [cartSubtotal, cartShipping, cartTax, cartTotal, userCurrency, convertPrice, exchangeRates]);
 
 
   // Debug shipping cost
