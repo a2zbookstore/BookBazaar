@@ -178,6 +178,7 @@ Changelog:
 - June 19, 2025. Unified navigation button styling - converted all navigation links (Home, Track Order, Catalog, About, Contact, Returns) to consistent small rounded buttons with borders and hover effects for uniform header appearance.
 - June 19, 2025. Streamlined header navigation - removed About and Contact buttons from header since they are already accessible in footer, keeping only Home, Track Order, Catalog, and Returns for cleaner header layout.
 - June 19, 2025. Reordered header navigation buttons - arranged navigation sequence as Home, Catalog, Track Order, Returns for improved user workflow and logical organization.
+- June 19, 2025. Refined header button sizing - made country selector button smaller to match navigation button size with consistent styling, enlarged cart button with better spacing and hover effects for improved visibility and usability.
 ```
 
 ## User Preferences
