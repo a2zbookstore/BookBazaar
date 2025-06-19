@@ -52,6 +52,7 @@ export default function Layout({ children }: LayoutProps) {
         isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''
       }`}>
         <div className="container-custom px-3 md:px-6">
+          {/* Main Header Row */}
           <div className={`flex items-center justify-between w-full transition-all duration-300 ${
             isScrolled ? 'h-12 md:h-16' : 'h-14 md:h-20'
           }`}>
@@ -66,26 +67,18 @@ export default function Layout({ children }: LayoutProps) {
             </Link>
 
             {/* Search Bar - Hidden on mobile, shown on desktop */}
-            <div className="hidden md:flex flex-1 max-w-4xl mx-6">
+            <div className="hidden md:flex flex-1 max-w-6xl mx-6">
               <SearchInput 
                 placeholder="Search books, authors, ISBN..."
                 className="w-full"
               />
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-4">
-              <Link
-                href="/"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
-                  isActive("/") ? "text-primary-aqua font-semibold" : ""
-                }`}
-              >
-                Home
-              </Link>
+            {/* Desktop Navigation - Moved to right side */}
+            <nav className="hidden lg:flex items-center space-x-6">
               <Link
                 href="/catalog"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
                   isActive("/catalog") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
@@ -93,7 +86,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/about"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
                   isActive("/about") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
@@ -101,24 +94,15 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/contact"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
                   isActive("/contact") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
                 Contact
               </Link>
               <Link
-                href="/track-order"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
-                  isActive("/track-order") ? "text-primary-aqua font-semibold" : ""
-                }`}
-              >
-                Track Order
-              </Link>
-              
-              <Link
                 href="/returns"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
                   isActive("/returns") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
@@ -445,6 +429,46 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">© 2025 A<span className="text-red-500">2</span>Z BOOKSHOP. All rights reserved.</p>
             <p className="text-gray-400 text-sm">Made with ❤️ for book lovers worldwide</p>
+          </div>
+          
+          {/* Secondary Navigation Row - Only on desktop */}
+          <div className="hidden lg:block border-t border-gray-100">
+            <div className="flex items-center justify-center py-3">
+              <nav className="flex items-center space-x-8">
+                <Link
+                  href="/catalog"
+                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
+                    isActive("/catalog") ? "text-primary-aqua" : "text-secondary-black"
+                  }`}
+                >
+                  Catalog
+                </Link>
+                <Link
+                  href="/about"
+                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
+                    isActive("/about") ? "text-primary-aqua" : "text-secondary-black"
+                  }`}
+                >
+                  About
+                </Link>
+                <Link
+                  href="/contact"
+                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
+                    isActive("/contact") ? "text-primary-aqua" : "text-secondary-black"
+                  }`}
+                >
+                  Contact
+                </Link>
+                <Link
+                  href="/returns"
+                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
+                    isActive("/returns") ? "text-primary-aqua" : "text-secondary-black"
+                  }`}
+                >
+                  Returns
+                </Link>
+              </nav>
+            </div>
           </div>
         </div>
       </footer>
