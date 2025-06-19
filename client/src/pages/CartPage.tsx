@@ -20,10 +20,9 @@ export default function CartPage() {
   const { cartItems, updateCartItem, removeFromCart, clearCart, isLoading } = useCart();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { userCurrency, convertPrice, formatAmount } = useCurrency();
+  const { userCurrency, convertPrice, formatCurrency } = useCurrency();
   const { shipping } = useShipping();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
-  const [convertedTotal, setConvertedTotal] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
 
   // Get shipping rate from admin panel - default to India if no location detected
@@ -45,6 +44,12 @@ export default function CartPage() {
 
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
+  
+  // Convert all amounts to user's currency for display
+  const convertedSubtotal = convertPrice(cartSubtotal);
+  const convertedShipping = convertPrice(cartShipping);
+  const convertedTax = convertPrice(cartTax);
+  const convertedTotal = convertPrice(cartTotal);
 
   // Debug shipping cost
   console.log('Cart Page - Admin Shipping Debug:', {
@@ -249,7 +254,7 @@ export default function CartPage() {
                       {/* Price and Remove */}
                       <div className="text-right">
                         <p className="text-xl font-bold text-primary-aqua">
-                          ${(parseFloat(item.book.price) * item.quantity).toFixed(2)}
+                          {formatCurrency(convertPrice(parseFloat(item.book.price) * item.quantity), userCurrency)}
                         </p>
                         <Button
                           variant="ghost"
@@ -276,20 +281,20 @@ export default function CartPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Subtotal:</span>
-                      <span className="text-base-black">${cartSubtotal.toFixed(2)}</span>
+                      <span className="text-base-black">{formatCurrency(convertedSubtotal, userCurrency)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Shipping:</span>
-                      <span className="text-base-black">${cartShipping.toFixed(2)}</span>
+                      <span className="text-base-black">{formatCurrency(convertedShipping, userCurrency)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Tax (1%):</span>
-                      <span className="text-base-black">${cartTax.toFixed(2)}</span>
+                      <span className="text-base-black">{formatCurrency(convertedTax, userCurrency)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span className="text-base-black">Total:</span>
-                      <span className="text-primary-aqua">${cartTotal.toFixed(2)}</span>
+                      <span className="text-primary-aqua">{formatCurrency(convertedTotal, userCurrency)}</span>
                     </div>
                   </div>
 

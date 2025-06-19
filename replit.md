@@ -160,6 +160,7 @@ Changelog:
 - June 18, 2025. Generated final website source code ZIP package - created compressed archive with complete A2Z BOOKSHOP source code excluding development files and node_modules, includes all implemented features ready for deployment with secret admin access, email notifications with website links, payment systems, and mobile optimization.
 - June 19, 2025. Added comprehensive Terms and Conditions page to footer navigation - created detailed Terms and Conditions page with 10 sections covering book sales, payment terms, shipping policies, returns/refunds, user accounts, intellectual property, liability limits, dispute resolution, and service updates, all specifically tailored for A2Z BOOKSHOP online bookstore operations with authentic bookselling terms and conditions content.
 - June 19, 2025. Enhanced checkout page with location-based currency display - updated all amount displays (subtotal, shipping, total, individual item prices) to show in user's local currency based on their location instead of just USD, integrated with existing currency conversion system for consistent international pricing experience across the entire checkout process.
+- June 19, 2025. Fixed cart page currency display issue - updated CartPage.tsx to properly show all amounts in user's local currency instead of USD, applied currency conversion to subtotal, shipping, tax, total amounts and individual book prices, ensuring consistent currency display throughout the shopping experience based on detected user location.
 ```
 
 ## User Preferences
