@@ -402,7 +402,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bookerly font-bold">A<span className="text-red-500">2</span>Z BOOKSHOP</h3>
+                <h3 className="text-xl font-bookerly font-bold text-white">A<span className="text-red-500">2</span>Z BOOKSHOP</h3>
                 <SecretAdminAccess />
               </div>
               <p className="text-gray-400 mb-4">
