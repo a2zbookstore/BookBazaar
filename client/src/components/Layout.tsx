@@ -132,14 +132,14 @@ export default function Layout({ children }: LayoutProps) {
               {/* Secret Admin Access - Only visible to admins (hidden from customers) */}
               
               {/* Country Selector */}
-              <div className="hidden lg:flex items-center ml-3">
+              <div className="hidden lg:flex items-center ml-2">
                 <CountrySelector compact={false} />
               </div>
 
               {/* Cart - accessible to all users */}
               <Link
                 href="/cart"
-                className={`transition-colors relative ml-3 p-2 rounded-md hover:bg-gray-100 ${
+                className={`transition-colors relative ml-4 p-2 rounded-lg hover:bg-primary-aqua/10 border border-transparent hover:border-primary-aqua/20 ${
                   isCartAnimating 
                     ? "cart-pulse-animation" 
                     : "text-secondary-black hover:text-primary-aqua cart-normal"
@@ -147,7 +147,7 @@ export default function Layout({ children }: LayoutProps) {
               >
                 <ShoppingCart className="h-6 w-6" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
                     {cartCount}
                   </span>
                 )}

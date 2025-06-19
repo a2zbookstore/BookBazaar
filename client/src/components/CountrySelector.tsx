@@ -118,42 +118,34 @@ export default function CountrySelector({ className = "", compact = false }: Cou
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex items-center gap-2">
-        <Globe className="h-4 w-4 text-primary-aqua" />
-        <Select value={currentCountry?.code} onValueChange={handleCountryChange} disabled={isChanging}>
-          <SelectTrigger className="w-44 border-primary-aqua/50 hover:border-primary-aqua">
-            <SelectValue>
-              <div className="flex items-center gap-2">
-                <span className="text-base">{currentCountry?.flag}</span>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-medium">{currentCountry?.name}</span>
-                  <span className="text-xs text-secondary-black">
-                    {getCurrentCurrencySymbol()} {userCurrency}
-                  </span>
-                </div>
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="max-h-60 w-64">
-            <div className="px-2 py-1 text-xs text-secondary-black border-b">
-              Select your country for local pricing
+      <Select value={currentCountry?.code} onValueChange={handleCountryChange} disabled={isChanging}>
+        <SelectTrigger className="text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 w-auto h-8 text-gray-600">
+          <SelectValue>
+            <div className="flex items-center gap-1">
+              <span className="text-sm">{currentCountry?.flag}</span>
+              <span className="font-medium text-xs">{currentCountry?.code}</span>
             </div>
-            {POPULAR_COUNTRIES.map((country) => (
-              <SelectItem key={country.code} value={country.code}>
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{country.flag}</span>
-                    <span className="text-sm">{country.name}</span>
-                  </div>
-                  <Badge variant="outline" className="text-xs ml-2">
-                    {SUPPORTED_CURRENCIES.find(c => c.code === country.currency)?.symbol} {country.currency}
-                  </Badge>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="max-h-60 w-64">
+          <div className="px-2 py-1 text-xs text-secondary-black border-b">
+            Select your country for local pricing
+          </div>
+          {POPULAR_COUNTRIES.map((country) => (
+            <SelectItem key={country.code} value={country.code}>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{country.flag}</span>
+                  <span className="text-sm">{country.name}</span>
                 </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+                <Badge variant="outline" className="text-xs ml-2">
+                  {SUPPORTED_CURRENCIES.find(c => c.code === country.currency)?.symbol} {country.currency}
+                </Badge>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       
       {isChanging && (
         <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700">
