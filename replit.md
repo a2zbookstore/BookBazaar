@@ -163,6 +163,7 @@ Changelog:
 - June 19, 2025. Fixed cart page currency display issue - updated CartPage.tsx to properly show all amounts in user's local currency instead of USD, applied currency conversion to subtotal, shipping, tax, total amounts and individual book prices, ensuring consistent currency display throughout the shopping experience based on detected user location.
 - June 19, 2025. Fixed Select component empty string error in order management - replaced empty string value with "no-carrier" in shipping carrier dropdown to prevent "[plugin:runtime-error-plugin] A <Select.Item /> must have a value prop that is not an empty string" error, updated all related form logic to handle "no-carrier" value properly, order status update dialog now works without runtime errors.
 - June 19, 2025. Enhanced book deletion functionality in inventory management - removed restriction preventing deletion of books that have been ordered, admin can now delete any book from inventory regardless of order history, order records remain intact for historical tracking while allowing inventory cleanup.
+- June 19, 2025. Implemented out-of-stock book filtering - modified getBooks API to automatically exclude books with zero stock from homepage and catalog display, ensuring only available books are shown to customers while maintaining inventory records.
 ```
 
 ## User Preferences

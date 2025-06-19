@@ -248,6 +248,9 @@ export class DatabaseStorage implements IStorage {
 
     const conditions = [];
 
+    // Always exclude out of stock books (stock = 0)
+    conditions.push(sql`${books.stock} > 0`);
+
     if (categoryId) conditions.push(eq(books.categoryId, categoryId));
     if (condition) conditions.push(eq(books.condition, condition));
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
