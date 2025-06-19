@@ -115,7 +115,7 @@ export default function OrdersPage() {
       setSelectedOrderId(null);
       setNewStatus("");
       setTrackingNumber("");
-      setShippingCarrier("");
+      setShippingCarrier("no-carrier");
       setNotes("");
     },
     onError: (error: any) => {
@@ -132,7 +132,7 @@ export default function OrdersPage() {
     setSelectedOrderId(order.id);
     setNewStatus(order.status);
     setTrackingNumber(order.trackingNumber || "");
-    setShippingCarrier(order.shippingCarrier || "");
+    setShippingCarrier(order.shippingCarrier || "no-carrier");
     setNotes(order.notes || "");
     setIsDialogOpen(true);
   };
@@ -151,7 +151,7 @@ export default function OrdersPage() {
       orderId: selectedOrderId,
       status: newStatus,
       trackingNumber,
-      shippingCarrier: !shippingCarrier || shippingCarrier === "" ? "" : shippingCarrier,
+      shippingCarrier: !shippingCarrier || shippingCarrier === "no-carrier" ? "" : shippingCarrier,
       notes,
     });
   };
@@ -326,7 +326,7 @@ export default function OrdersPage() {
                     <SelectValue placeholder="Select carrier" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Carrier</SelectItem>
+                    <SelectItem value="no-carrier">No Carrier</SelectItem>
                     <SelectItem value="FedEx">FedEx</SelectItem>
                     <SelectItem value="UPS">UPS</SelectItem>
                     <SelectItem value="DHL">DHL</SelectItem>
