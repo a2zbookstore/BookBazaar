@@ -52,7 +52,6 @@ export default function Layout({ children }: LayoutProps) {
         isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''
       }`}>
         <div className="container-custom px-3 md:px-6">
-          {/* Main Header Row */}
           <div className={`flex items-center justify-between w-full transition-all duration-300 ${
             isScrolled ? 'h-12 md:h-16' : 'h-14 md:h-20'
           }`}>
@@ -66,19 +65,64 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             </Link>
 
-            {/* Search Bar - Hidden on mobile, shown on desktop */}
-            <div className="hidden md:flex flex-1 max-w-6xl mx-6">
-              <SearchInput 
-                placeholder="Search books, authors, ISBN..."
-                className="w-full"
-              />
+            {/* Search Bar - Hidden on mobile, shown on desktop - Made Bigger */}
+            <div className="hidden md:flex flex-1 max-w-5xl mx-6">
+              <div className="w-full relative">
+                <SearchInput 
+                  placeholder="Search books, authors, ISBN..."
+                  className="w-full"
+                />
+                {/* Small Navigation Below Search */}
+                <div className="absolute top-full left-0 right-0 flex items-center justify-center gap-6 py-2 bg-white border-b border-gray-100 shadow-sm">
+                  <Link
+                    href="/catalog"
+                    className={`text-xs font-medium hover:text-primary-aqua transition-colors ${
+                      isActive("/catalog") ? "text-primary-aqua" : "text-gray-600"
+                    }`}
+                  >
+                    Catalog
+                  </Link>
+                  <Link
+                    href="/about"
+                    className={`text-xs font-medium hover:text-primary-aqua transition-colors ${
+                      isActive("/about") ? "text-primary-aqua" : "text-gray-600"
+                    }`}
+                  >
+                    About
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className={`text-xs font-medium hover:text-primary-aqua transition-colors ${
+                      isActive("/contact") ? "text-primary-aqua" : "text-gray-600"
+                    }`}
+                  >
+                    Contact
+                  </Link>
+                  <Link
+                    href="/returns"
+                    className={`text-xs font-medium hover:text-primary-aqua transition-colors ${
+                      isActive("/returns") ? "text-primary-aqua" : "text-gray-600"
+                    }`}
+                  >
+                    Returns
+                  </Link>
+                </div>
+              </div>
             </div>
 
-            {/* Desktop Navigation - Moved to right side */}
-            <nav className="hidden lg:flex items-center space-x-6">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-4">
+              <Link
+                href="/"
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                  isActive("/") ? "text-primary-aqua font-semibold" : ""
+                }`}
+              >
+                Home
+              </Link>
               <Link
                 href="/catalog"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
                   isActive("/catalog") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
@@ -86,7 +130,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/about"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
                   isActive("/about") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
@@ -94,15 +138,24 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/contact"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
                   isActive("/contact") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
                 Contact
               </Link>
               <Link
+                href="/track-order"
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
+                  isActive("/track-order") ? "text-primary-aqua font-semibold" : ""
+                }`}
+              >
+                Track Order
+              </Link>
+              
+              <Link
                 href="/returns"
-                className={`text-secondary-black hover:text-primary-aqua transition-colors font-medium ${
+                className={`text-secondary-black hover:text-primary-aqua transition-colors ${
                   isActive("/returns") ? "text-primary-aqua font-semibold" : ""
                 }`}
               >
@@ -431,45 +484,7 @@ export default function Layout({ children }: LayoutProps) {
             <p className="text-gray-400 text-sm">Made with ❤️ for book lovers worldwide</p>
           </div>
           
-          {/* Secondary Navigation Row - Only on desktop */}
-          <div className="hidden lg:block border-t border-gray-100">
-            <div className="flex items-center justify-center py-3">
-              <nav className="flex items-center space-x-8">
-                <Link
-                  href="/catalog"
-                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                    isActive("/catalog") ? "text-primary-aqua" : "text-secondary-black"
-                  }`}
-                >
-                  Catalog
-                </Link>
-                <Link
-                  href="/about"
-                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                    isActive("/about") ? "text-primary-aqua" : "text-secondary-black"
-                  }`}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                    isActive("/contact") ? "text-primary-aqua" : "text-secondary-black"
-                  }`}
-                >
-                  Contact
-                </Link>
-                <Link
-                  href="/returns"
-                  className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                    isActive("/returns") ? "text-primary-aqua" : "text-secondary-black"
-                  }`}
-                >
-                  Returns
-                </Link>
-              </nav>
-            </div>
-          </div>
+
         </div>
       </footer>
     </div>
