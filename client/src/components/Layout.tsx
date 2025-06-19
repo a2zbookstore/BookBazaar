@@ -85,20 +85,20 @@ export default function Layout({ children }: LayoutProps) {
                   Home
                 </Link>
                 <Link
-                  href="/track-order"
-                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Track Order
-                </Link>
-                <Link
                   href="/catalog"
                   className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
                     isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
                   }`}
                 >
                   Catalog
+                </Link>
+                <Link
+                  href="/track-order"
+                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Track Order
                 </Link>
                 <Link
                   href="/returns"
