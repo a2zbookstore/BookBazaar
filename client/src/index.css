@@ -42,6 +42,17 @@
   --radius: 0rem;
 }
 
+/* Footer logo fix */
+.footer-logo {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.footer-logo .red-2 {
+  color: #ef4444 !important;
+  font-weight: bold !important;
+}
+
 /* Global mobile fixes */
 html, body {
   overflow-x: hidden;
