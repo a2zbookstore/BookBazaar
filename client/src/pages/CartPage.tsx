@@ -45,11 +45,44 @@ export default function CartPage() {
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
   
-  // Convert all amounts to user's currency for display - use direct values since convertPrice is async
-  const convertedSubtotal = cartSubtotal;
-  const convertedShipping = cartShipping;
-  const convertedTax = cartTax;
-  const convertedTotal = cartTotal;
+  // Convert all amounts to user's currency for display
+  const [convertedAmounts, setConvertedAmounts] = useState({
+    subtotal: cartSubtotal,
+    shipping: cartShipping,
+    tax: cartTax,
+    total: cartTotal
+  });
+
+  // Convert prices when currency or amounts change
+  useEffect(() => {
+    const convertAmounts = async () => {
+      try {
+        const convertedSubtotal = await convertPrice(cartSubtotal);
+        const convertedShipping = await convertPrice(cartShipping);
+        const convertedTax = await convertPrice(cartTax);
+        const convertedTotal = await convertPrice(cartTotal);
+
+        setConvertedAmounts({
+          subtotal: convertedSubtotal?.amount || cartSubtotal,
+          shipping: convertedShipping?.amount || cartShipping,
+          tax: convertedTax?.amount || cartTax,
+          total: convertedTotal?.amount || cartTotal
+        });
+      } catch (error) {
+        console.error('Error converting currencies:', error);
+        // Fallback to original amounts
+        setConvertedAmounts({
+          subtotal: cartSubtotal,
+          shipping: cartShipping,
+          tax: cartTax,
+          total: cartTotal
+        });
+      }
+    };
+
+    convertAmounts();
+  }, [cartSubtotal, cartShipping, cartTax, cartTotal, userCurrency, convertPrice]);
+
 
   // Debug shipping cost
   console.log('Cart Page - Admin Shipping Debug:', {
@@ -231,7 +264,7 @@ export default function CartPage() {
                       {/* Price and Remove */}
                       <div className="text-right">
                         <p className="text-xl font-bold text-primary-aqua">
-                          {formatAmount(parseFloat(item.book.price) * item.quantity, userCurrency)}
+                          {formatAmount(parseFloat(item.book.price) * item.quantity)}
                         </p>
                         <Button
                           variant="ghost"
@@ -258,20 +291,20 @@ export default function CartPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Subtotal:</span>
-                      <span className="text-base-black">{formatAmount(convertedSubtotal, userCurrency)}</span>
+                      <span className="text-base-black">{formatAmount(convertedAmounts.subtotal)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Shipping:</span>
-                      <span className="text-base-black">{formatAmount(convertedShipping, userCurrency)}</span>
+                      <span className="text-base-black">{formatAmount(convertedAmounts.shipping)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Tax (1%):</span>
-                      <span className="text-base-black">{formatAmount(convertedTax, userCurrency)}</span>
+                      <span className="text-base-black">{formatAmount(convertedAmounts.tax)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span className="text-base-black">Total:</span>
-                      <span className="text-primary-aqua">{formatAmount(convertedTotal, userCurrency)}</span>
+                      <span className="text-primary-aqua">{formatAmount(convertedAmounts.total)}</span>
                     </div>
                   </div>
 

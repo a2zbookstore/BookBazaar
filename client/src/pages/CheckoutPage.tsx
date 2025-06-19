@@ -316,6 +316,44 @@ export default function CheckoutPage() {
   const tax = subtotal * 0.01; // 1% tax
   const total = subtotal + shippingCost + tax;
 
+  // Convert all amounts to user's currency for display
+  const [convertedAmounts, setConvertedAmounts] = useState({
+    subtotal: subtotal,
+    shipping: shippingCost,
+    tax: tax,
+    total: total
+  });
+
+  // Convert prices when currency or amounts change
+  useEffect(() => {
+    const convertAmounts = async () => {
+      try {
+        const convertedSubtotal = await convertPrice(subtotal);
+        const convertedShipping = await convertPrice(shippingCost);
+        const convertedTax = await convertPrice(tax);
+        const convertedTotal = await convertPrice(total);
+
+        setConvertedAmounts({
+          subtotal: convertedSubtotal?.amount || subtotal,
+          shipping: convertedShipping?.amount || shippingCost,
+          tax: convertedTax?.amount || tax,
+          total: convertedTotal?.amount || total
+        });
+      } catch (error) {
+        console.error('Error converting currencies:', error);
+        // Fallback to original amounts
+        setConvertedAmounts({
+          subtotal: subtotal,
+          shipping: shippingCost,
+          tax: tax,
+          total: total
+        });
+      }
+    };
+
+    convertAmounts();
+  }, [subtotal, shippingCost, tax, total, userCurrency, convertPrice]);
+
   // Debug shipping cost in checkout
   console.log('Checkout Page - Admin Shipping Debug:', {
     adminShippingRate: adminShippingRate,
