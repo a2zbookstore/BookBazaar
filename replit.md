@@ -165,6 +165,7 @@ Changelog:
 - June 19, 2025. Enhanced book deletion functionality in inventory management - removed restriction preventing deletion of books that have been ordered, admin can now delete any book from inventory regardless of order history, order records remain intact for historical tracking while allowing inventory cleanup.
 - June 19, 2025. Implemented out-of-stock book filtering - modified getBooks API to automatically exclude books with zero stock from homepage and catalog display, ensuring only available books are shown to customers while maintaining inventory records.
 - June 19, 2025. Fixed location-based currency conversion in cart and checkout pages - implemented proper async currency conversion for all amounts (subtotal, shipping, tax, total) using convertPrice function, both CartPage and CheckoutPage now correctly display prices in user's local currency (₹ INR for India, £ GBP for UK, etc.) instead of showing USD amounts.
+- June 19, 2025. Fixed currency conversion runtime error - resolved "exchangeRates is not defined" error by properly importing exchangeRates from useCurrency hook, fixed property access to use convertedAmount instead of amount, added debug logging for conversion tracking, currency conversion now working correctly with $40 converting to ₹3,459.60 for India location.
 ```
 
 ## User Preferences
