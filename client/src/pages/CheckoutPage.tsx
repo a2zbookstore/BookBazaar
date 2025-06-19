@@ -1057,7 +1057,7 @@ export default function CheckoutPage() {
                         <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
                       </div>
                       <p className="font-medium text-sm">
-                        ${(parseFloat(item.book.price) * item.quantity).toFixed(2)}
+                        {formatAmount(parseFloat(item.book.price) * item.quantity)}
                       </p>
                     </div>
                   ))}

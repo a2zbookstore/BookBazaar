@@ -164,6 +164,7 @@ Changelog:
 - June 19, 2025. Fixed Select component empty string error in order management - replaced empty string value with "no-carrier" in shipping carrier dropdown to prevent "[plugin:runtime-error-plugin] A <Select.Item /> must have a value prop that is not an empty string" error, updated all related form logic to handle "no-carrier" value properly, order status update dialog now works without runtime errors.
 - June 19, 2025. Enhanced book deletion functionality in inventory management - removed restriction preventing deletion of books that have been ordered, admin can now delete any book from inventory regardless of order history, order records remain intact for historical tracking while allowing inventory cleanup.
 - June 19, 2025. Implemented out-of-stock book filtering - modified getBooks API to automatically exclude books with zero stock from homepage and catalog display, ensuring only available books are shown to customers while maintaining inventory records.
+- June 19, 2025. Fixed location-based currency conversion in cart and checkout pages - implemented proper async currency conversion for all amounts (subtotal, shipping, tax, total) using convertPrice function, both CartPage and CheckoutPage now correctly display prices in user's local currency (₹ INR for India, £ GBP for UK, etc.) instead of showing USD amounts.
 ```
 
 ## User Preferences
