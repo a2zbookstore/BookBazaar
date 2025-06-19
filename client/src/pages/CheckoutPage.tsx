@@ -231,7 +231,7 @@ export default function CheckoutPage() {
   const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { cartItems, cartCount, clearCart } = useCart();
-  const { userCurrency, convertPrice, formatAmount } = useCurrency();
+  const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
   const { shipping } = useShipping();
   const { toast } = useToast();
 
