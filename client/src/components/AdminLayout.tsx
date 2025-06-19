@@ -12,6 +12,7 @@ import {
   Truck,
   User,
   RotateCcw,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ const sidebarItems = [
   { href: "/admin", icon: BarChart3, label: "Overview", exact: true },
   { href: "/admin/inventory", icon: BookOpen, label: "Inventory" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
+  { href: "/admin/messages", icon: Mail, label: "Customer Messages" },
   { href: "/admin/returns", icon: RotateCcw, label: "Returns & Refunds" },
   { href: "/admin/sales", icon: TrendingUp, label: "Sales Reports" },
   { href: "/admin/shipping", icon: Truck, label: "Shipping Rates" },

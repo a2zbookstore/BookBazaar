@@ -24,6 +24,7 @@ import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
 import ReturnsPage from "@/pages/admin/ReturnsPage";
 import AdminAccountPage from "@/pages/admin/AdminAccountPage";
+import MessagesPage from "@/pages/admin/MessagesPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";
@@ -97,6 +98,11 @@ function AppRouter() {
       <Route path="/admin/orders">
         <AdminProtectedRoute>
           <OrdersPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/messages">
+        <AdminProtectedRoute>
+          <MessagesPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/sales">
