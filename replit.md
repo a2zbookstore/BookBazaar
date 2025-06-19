@@ -171,6 +171,7 @@ Changelog:
 - June 19, 2025. Fixed CheckoutItemPrice component definition error - properly added CheckoutItemPrice component definition to CheckoutPage.tsx before its usage, resolved "CheckoutItemPrice is not defined" runtime error, checkout page currency conversion now working without errors.
 - June 19, 2025. Successfully completed comprehensive currency conversion implementation - verified PayPal payment creation ($41.70 USD) and Razorpay payment creation (₹3,461.10 INR), all currency conversions working correctly throughout application, individual book prices, cart totals, checkout summaries, and payment processing all display and process in user's local currency based on location detection.
 - June 19, 2025. Added auto-refresh functionality to country selector - when user changes country in header dropdown, page automatically refreshes after 500ms to immediately reflect currency changes and location-based content, eliminating need for manual page refresh.
+- June 19, 2025. Implemented "Free Delivery" display when shipping cost is 0 - updated BookCard, ShippingCostDisplay, CartPage, and CheckoutPage components to show "Free Delivery" instead of amount when shipping cost is set to 0 for any country, providing better user experience for free shipping promotions.
 ```
 
 ## User Preferences

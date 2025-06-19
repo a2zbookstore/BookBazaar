@@ -1115,7 +1115,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping:</span>
-                    <span>{formatAmount(convertedAmounts.shipping)}</span>
+                    <span>{convertedAmounts.shipping === 0 ? 'Free Delivery' : formatAmount(convertedAmounts.shipping)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax (1%):</span>

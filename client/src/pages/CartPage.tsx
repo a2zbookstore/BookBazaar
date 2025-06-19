@@ -338,7 +338,9 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Shipping:</span>
-                      <span className="text-base-black">{formatAmount(convertedAmounts.shipping)}</span>
+                      <span className="text-base-black">
+                        {convertedAmounts.shipping === 0 ? 'Free Delivery' : formatAmount(convertedAmounts.shipping)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Tax (1%):</span>

@@ -39,17 +39,27 @@ export default function BookCard({ book }: BookCardProps) {
           
           // Convert shipping cost if available from location-based shipping
           if (shipping?.cost) {
-            const convertedShipping = await convertPrice(parseFloat(shipping.cost));
-            if (convertedShipping) {
-              setShippingCost(formatAmount(convertedShipping.convertedAmount, userCurrency));
+            const shippingAmount = parseFloat(shipping.cost);
+            if (shippingAmount === 0) {
+              setShippingCost('Free Delivery');
             } else {
-              setShippingCost(formatAmount(parseFloat(shipping.cost), 'USD'));
+              const convertedShipping = await convertPrice(shippingAmount);
+              if (convertedShipping) {
+                setShippingCost(formatAmount(convertedShipping.convertedAmount, userCurrency));
+              } else {
+                setShippingCost(formatAmount(shippingAmount, 'USD'));
+              }
             }
           }
         } catch (error) {
           setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
           if (shipping?.cost) {
-            setShippingCost(formatAmount(parseFloat(shipping.cost), 'USD'));
+            const shippingAmount = parseFloat(shipping.cost);
+            if (shippingAmount === 0) {
+              setShippingCost('Free Delivery');
+            } else {
+              setShippingCost(formatAmount(shippingAmount, 'USD'));
+            }
           }
         } finally {
           setIsConverting(false);
@@ -57,7 +67,12 @@ export default function BookCard({ book }: BookCardProps) {
       } else {
         setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
         if (shipping?.cost) {
-          setShippingCost(formatAmount(parseFloat(shipping.cost), 'USD'));
+          const shippingAmount = parseFloat(shipping.cost);
+          if (shippingAmount === 0) {
+            setShippingCost('Free Delivery');
+          } else {
+            setShippingCost(formatAmount(shippingAmount, 'USD'));
+          }
         }
       }
     };

@@ -29,23 +29,34 @@ export default function ShippingCostDisplay({
   // Convert shipping cost to user's currency
   useEffect(() => {
     const convertShippingCost = async () => {
-      if (shipping && userCurrency !== 'USD') {
-        setIsConverting(true);
-        try {
-          const converted = await convertPrice(parseFloat(shipping.cost));
-          if (converted) {
-            setConvertedShipping(formatAmount(converted.convertedAmount, userCurrency));
-          } else {
-            setConvertedShipping(null);
-          }
-        } catch (error) {
-          console.error('Error converting shipping cost:', error);
-          setConvertedShipping(null);
-        } finally {
+      if (shipping) {
+        const shippingAmount = parseFloat(shipping.cost);
+        
+        // Show "Free Delivery" for zero cost
+        if (shippingAmount === 0) {
+          setConvertedShipping('Free Delivery');
           setIsConverting(false);
+          return;
         }
-      } else if (shipping) {
-        setConvertedShipping(formatAmount(parseFloat(shipping.cost), 'USD'));
+        
+        if (userCurrency !== 'USD') {
+          setIsConverting(true);
+          try {
+            const converted = await convertPrice(shippingAmount);
+            if (converted) {
+              setConvertedShipping(formatAmount(converted.convertedAmount, userCurrency));
+            } else {
+              setConvertedShipping(null);
+            }
+          } catch (error) {
+            console.error('Error converting shipping cost:', error);
+            setConvertedShipping(null);
+          } finally {
+            setIsConverting(false);
+          }
+        } else {
+          setConvertedShipping(formatAmount(shippingAmount, 'USD'));
+        }
       }
     };
 
