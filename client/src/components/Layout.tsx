@@ -73,7 +73,7 @@ export default function Layout({ children }: LayoutProps) {
               />
             </div>
 
-            {/* Desktop Navigation - All Small Buttons */}
+            {/* Desktop Navigation - Small Buttons */}
             <nav className="hidden md:flex items-center">
               <div className="flex items-center gap-2">
                 <Link
@@ -99,22 +99,6 @@ export default function Layout({ children }: LayoutProps) {
                   }`}
                 >
                   Catalog
-                </Link>
-                <Link
-                  href="/about"
-                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/about") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Contact
                 </Link>
                 <Link
                   href="/returns"
