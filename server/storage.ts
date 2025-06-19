@@ -316,15 +316,8 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBook(id: number): Promise<void> {
     try {
-      // Check if book exists in any orders
-      const orderItemsCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(orderItems)
-        .where(eq(orderItems.bookId, id));
-      
-      if (orderItemsCount[0].count > 0) {
-        throw new Error("Cannot delete book that has been ordered. Books with order history must be kept for records.");
-      }
+      // Allow deletion of books even if they have been ordered
+      // Order history will remain intact in the order_items table
       
       // First, delete all cart items related to this book
       await db.delete(cartItems).where(eq(cartItems.bookId, id));
