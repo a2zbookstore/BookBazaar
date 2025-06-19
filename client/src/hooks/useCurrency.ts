@@ -19,6 +19,7 @@ export interface UseCurrencyReturn {
   error: string | null;
   convertPrice: (amount: number, fromCurrency?: string) => Promise<ConvertedPrice | null>;
   formatAmount: (amount: number, currency?: string) => string;
+  formatCurrency: (amount: number, currency?: string) => string;
   setCurrency: (currencyCode: string) => void;
   getSupportedCurrencies: () => CurrencyInfo[];
   refreshRates: () => Promise<void>;
@@ -162,6 +163,7 @@ export function useCurrency(countryCode?: string): UseCurrencyReturn {
     error,
     convertPrice,
     formatAmount,
+    formatCurrency: formatAmount, // Alias for consistency
     setCurrency,
     getSupportedCurrencies,
     refreshRates,

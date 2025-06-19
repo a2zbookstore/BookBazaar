@@ -254,7 +254,7 @@ export default function CartPage() {
                       {/* Price and Remove */}
                       <div className="text-right">
                         <p className="text-xl font-bold text-primary-aqua">
-                          {formatCurrency(convertPrice(parseFloat(item.book.price) * item.quantity), userCurrency)}
+                          {formatAmount(parseFloat(item.book.price) * item.quantity, userCurrency)}
                         </p>
                         <Button
                           variant="ghost"
@@ -281,20 +281,20 @@ export default function CartPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Subtotal:</span>
-                      <span className="text-base-black">{formatCurrency(convertedSubtotal, userCurrency)}</span>
+                      <span className="text-base-black">{formatAmount(convertedSubtotal, userCurrency)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Shipping:</span>
-                      <span className="text-base-black">{formatCurrency(convertedShipping, userCurrency)}</span>
+                      <span className="text-base-black">{formatAmount(convertedShipping, userCurrency)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-secondary-black">Tax (1%):</span>
-                      <span className="text-base-black">{formatCurrency(convertedTax, userCurrency)}</span>
+                      <span className="text-base-black">{formatAmount(convertedTax, userCurrency)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span className="text-base-black">Total:</span>
-                      <span className="text-primary-aqua">{formatCurrency(convertedTotal, userCurrency)}</span>
+                      <span className="text-primary-aqua">{formatAmount(convertedTotal, userCurrency)}</span>
                     </div>
                   </div>
 
