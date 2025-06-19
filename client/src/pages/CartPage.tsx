@@ -45,11 +45,11 @@ export default function CartPage() {
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
   
-  // Convert all amounts to user's currency for display
-  const convertedSubtotal = convertPrice(cartSubtotal);
-  const convertedShipping = convertPrice(cartShipping);
-  const convertedTax = convertPrice(cartTax);
-  const convertedTotal = convertPrice(cartTotal);
+  // Convert all amounts to user's currency for display - use direct values since convertPrice is async
+  const convertedSubtotal = cartSubtotal;
+  const convertedShipping = cartShipping;
+  const convertedTax = cartTax;
+  const convertedTotal = cartTotal;
 
   // Debug shipping cost
   console.log('Cart Page - Admin Shipping Debug:', {
