@@ -35,6 +35,7 @@ import RegisterPage from "@/pages/RegisterPage";
 import ShippingInfoPage from "@/pages/ShippingInfoPage";
 import ReturnPolicyPage from "@/pages/ReturnPolicyPage";
 import CancellationPolicyPage from "@/pages/CancellationPolicyPage";
+import TermsAndConditionsPage from "@/pages/TermsAndConditionsPage";
 import FAQPage from "@/pages/FAQPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import NotFound from "@/pages/not-found";
@@ -71,6 +72,7 @@ function AppRouter() {
       <Route path="/shipping-info" component={ShippingInfoPage} />
       <Route path="/return-policy" component={ReturnPolicyPage} />
       <Route path="/cancellation-policy" component={CancellationPolicyPage} />
+      <Route path="/terms-and-conditions" component={TermsAndConditionsPage} />
       <Route path="/faq" component={FAQPage} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/admin-login" component={AdminLoginPage} />
