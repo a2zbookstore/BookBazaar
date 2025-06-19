@@ -67,50 +67,13 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Search Bar - Hidden on mobile, shown on desktop - Made Bigger Horizontally and Narrower Vertically */}
             <div className="hidden md:flex flex-1 max-w-6xl mx-8">
-              <div className="w-full relative">
-                <SearchInput 
-                  placeholder="Search books, authors, ISBN..."
-                  className="w-full h-8"
-                />
-                {/* Small Navigation Below Search */}
-                <div className="absolute top-full left-0 right-0 flex items-center justify-center gap-8 py-2 bg-white border-b border-gray-100 shadow-sm z-10">
-                  <Link
-                    href="/catalog"
-                    className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                      isActive("/catalog") ? "text-primary-aqua" : "text-gray-600"
-                    }`}
-                  >
-                    Catalog
-                  </Link>
-                  <Link
-                    href="/about"
-                    className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                      isActive("/about") ? "text-primary-aqua" : "text-gray-600"
-                    }`}
-                  >
-                    About
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                      isActive("/contact") ? "text-primary-aqua" : "text-gray-600"
-                    }`}
-                  >
-                    Contact
-                  </Link>
-                  <Link
-                    href="/returns"
-                    className={`text-sm font-medium hover:text-primary-aqua transition-colors ${
-                      isActive("/returns") ? "text-primary-aqua" : "text-gray-600"
-                    }`}
-                  >
-                    Returns
-                  </Link>
-                </div>
-              </div>
+              <SearchInput 
+                placeholder="Search books, authors, ISBN..."
+                className="w-full h-8"
+              />
             </div>
 
-            {/* Desktop Navigation - Only Home and Track Order */}
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-4">
               <Link
                 href="/"
@@ -128,6 +91,42 @@ export default function Layout({ children }: LayoutProps) {
               >
                 Track Order
               </Link>
+              
+              {/* Small Navigation Buttons */}
+              <div className="flex items-center gap-2 ml-4">
+                <Link
+                  href="/catalog"
+                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Catalog
+                </Link>
+                <Link
+                  href="/about"
+                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/about") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  About
+                </Link>
+                <Link
+                  href="/contact"
+                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Contact
+                </Link>
+                <Link
+                  href="/returns"
+                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Returns
+                </Link>
+              </div>
               
               {isAuthenticated && (
                 <Link

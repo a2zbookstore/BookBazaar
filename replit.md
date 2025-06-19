@@ -174,6 +174,7 @@ Changelog:
 - June 19, 2025. Implemented "Free Delivery" display when shipping cost is 0 - updated BookCard, ShippingCostDisplay, CartPage, and CheckoutPage components to show "Free Delivery" instead of amount when shipping cost is set to 0 for any country, providing better user experience for free shipping promotions.
 - June 19, 2025. Enhanced header layout with expanded search bar and reorganized navigation - increased search bar horizontal width from max-w-4xl to max-w-6xl, moved navigation links (Catalog, About, Contact, Returns) to second row below search bar in centered horizontal layout, created two-row header structure with search prominence and improved navigation accessibility.
 - June 19, 2025. Refined header layout - made search bar horizontally wider (max-w-6xl) and vertically narrower (h-8), positioned navigation links (Catalog, About, Contact, Returns) exclusively below search bar, removed duplicate navigation from main header keeping only Home and Track Order in main navigation.
+- June 19, 2025. Moved navigation buttons to header - removed catalog, about, contact, returns from below search bar and placed them as small rounded buttons in main header navigation after Home and Track Order for cleaner layout.
 ```
 
 ## User Preferences
