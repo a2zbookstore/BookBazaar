@@ -227,6 +227,32 @@ const validateName = (name: string): boolean => {
   return nameRegex.test(name) && name.trim().length >= 2;
 };
 
+// Component to handle individual item price conversion in checkout
+function CheckoutItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: number }) {
+  const { formatAmount, convertPrice } = useCurrency();
+  const [convertedPrice, setConvertedPrice] = useState<number>(bookPrice * quantity);
+
+  useEffect(() => {
+    const convertItemPrice = async () => {
+      try {
+        const converted = await convertPrice(bookPrice * quantity);
+        setConvertedPrice(converted?.convertedAmount || (bookPrice * quantity));
+      } catch (error) {
+        console.error('Error converting checkout item price:', error);
+        setConvertedPrice(bookPrice * quantity);
+      }
+    };
+
+    convertItemPrice();
+  }, [bookPrice, quantity, convertPrice]);
+
+  return (
+    <p className="font-medium text-sm">
+      {formatAmount(convertedPrice)}
+    </p>
+  );
+}
+
 export default function CheckoutPage() {
   const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
