@@ -20,7 +20,7 @@ export default function CartPage() {
   const { cartItems, updateCartItem, removeFromCart, clearCart, isLoading } = useCart();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { userCurrency, convertPrice, formatCurrency } = useCurrency();
+  const { userCurrency, convertPrice, formatCurrency, formatAmount } = useCurrency();
   const { shipping } = useShipping();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   const [isConverting, setIsConverting] = useState(false);
