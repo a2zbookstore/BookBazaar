@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
@@ -42,6 +43,9 @@ import NotFound from "@/pages/not-found";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  
+  // Auto scroll to top on page navigation
+  useScrollToTop();
 
   if (isLoading) {
     return (
