@@ -180,6 +180,7 @@ Changelog:
 - June 19, 2025. Reordered header navigation buttons - arranged navigation sequence as Home, Catalog, Track Order, Returns for improved user workflow and logical organization.
 - June 19, 2025. Refined header button sizing - made country selector button smaller to match navigation button size with consistent styling, enlarged cart button with better spacing and hover effects for improved visibility and usability.
 - June 19, 2025. Fixed country selector styling - applied small button design (text-xs, px-2 py-1, rounded, border) to match navigation buttons, enhanced cart button with improved hover effects and larger badge for better visibility.
+- June 19, 2025. Redesigned header layout with increased height - changed header from single row to two-row layout with top row containing logo/search/actions and bottom row containing navigation buttons (Home, Catalog, Track Order, Returns, Contact) positioned below search bar, increased header height from h-20 to h-28 for better visual presence.
 ```
 
 ## User Preferences

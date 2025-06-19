@@ -52,8 +52,9 @@ export default function Layout({ children }: LayoutProps) {
         isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''
       }`}>
         <div className="container-custom px-3 md:px-6">
+          {/* Top Row - Logo, Search, Right Actions */}
           <div className={`flex items-center justify-between w-full transition-all duration-300 ${
-            isScrolled ? 'h-12 md:h-16' : 'h-14 md:h-20'
+            isScrolled ? 'h-12 md:h-18' : 'h-16 md:h-22'
           }`}>
             {/* Logo */}
             <Link href="/" className="flex items-center flex-shrink-0">
@@ -73,42 +74,8 @@ export default function Layout({ children }: LayoutProps) {
               />
             </div>
 
-            {/* Desktop Navigation - Small Buttons */}
-            <nav className="hidden md:flex items-center">
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/"
-                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/catalog"
-                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Catalog
-                </Link>
-                <Link
-                  href="/track-order"
-                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Track Order
-                </Link>
-                <Link
-                  href="/returns"
-                  className={`text-xs px-2 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Returns
-                </Link>
-              </div>
+            {/* Right Actions */}
+            <div className="flex items-center gap-2">
               
               {isAuthenticated && (
                 <Link
@@ -187,7 +154,7 @@ export default function Layout({ children }: LayoutProps) {
                   </Button>
                 </div>
               )}
-            </nav>
+            </div>
 
             {/* Mobile Navigation */}
             <div className="flex md:hidden items-center space-x-4">
@@ -350,9 +317,101 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Bottom Row - Navigation Buttons */}
+            <div className="hidden md:flex items-center justify-center py-2 border-t border-gray-100">
+              <nav className="flex items-center gap-4">
+                <Link
+                  href="/"
+                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/catalog"
+                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Catalog
+                </Link>
+                <Link
+                  href="/track-order"
+                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Track Order
+                </Link>
+                <Link
+                  href="/returns"
+                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Returns
+                </Link>
+                <Link
+                  href="/contact"
+                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                    isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
+                  }`}
+                >
+                  Contact
+                </Link>
               </nav>
             </div>
           )}
+          
+          {/* Bottom Row - Navigation Buttons */}
+          <div className="hidden md:flex items-center justify-center py-3 border-t border-gray-100">
+            <nav className="flex items-center gap-6">
+              <Link
+                href="/"
+                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                href="/catalog"
+                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Catalog
+              </Link>
+              <Link
+                href="/track-order"
+                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Track Order
+              </Link>
+              <Link
+                href="/returns"
+                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Returns
+              </Link>
+              <Link
+                href="/contact"
+                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Contact
+              </Link>
+            </nav>
+          </div>
         </div>
       </header>
 
