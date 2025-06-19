@@ -435,6 +435,7 @@ export default function Layout({ children }: LayoutProps) {
                 <li><Link href="/shipping-info" className="text-gray-400 hover:text-white transition-colors">Shipping Info</Link></li>
                 <li><Link href="/return-policy" className="text-gray-400 hover:text-white transition-colors">Return Policy</Link></li>
                 <li><Link href="/cancellation-policy" className="text-gray-400 hover:text-white transition-colors">Cancellation Policy</Link></li>
+                <li><Link href="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link></li>
                 <li><Link href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link></li>
                 <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
               </ul>
