@@ -134,6 +134,7 @@ export interface IStorage {
   getAdminById(id: number): Promise<Admin | undefined>;
   updateAdminLastLogin(id: number): Promise<void>;
   updateAdminPassword(id: number, passwordHash: string): Promise<void>;
+  getAllCustomers(): Promise<any[]>;
 
   // Return and refund operations
   getReturnRequests(options?: {
