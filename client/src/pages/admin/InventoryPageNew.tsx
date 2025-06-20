@@ -142,6 +142,7 @@ export default function InventoryPageNew() {
         weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
         dimensions: data.dimensions || "",
         featured: data.featured || false,
+        bestseller: data.bestseller || false,
       };
       return apiRequest('POST', '/api/books', bookData);
     },
@@ -181,6 +182,7 @@ export default function InventoryPageNew() {
         weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
         dimensions: data.dimensions || "",
         featured: data.featured || false,
+        bestseller: data.bestseller || false,
       };
       return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
