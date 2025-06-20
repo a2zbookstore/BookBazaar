@@ -27,9 +27,15 @@ export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  const { data: customers = [], isLoading } = useQuery({
+  const { data: customers = [], isLoading, error } = useQuery({
     queryKey: ["/api/admin/customers"],
+    retry: 3,
+    refetchOnWindowFocus: false,
   });
+
+  console.log("Customers data:", customers);
+  console.log("Is loading:", isLoading);
+  console.log("Error:", error);
 
   const filteredCustomers = customers.filter((customer: Customer) => 
     customer.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -43,6 +49,16 @@ export default function CustomersPage() {
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-gray-500">Loading customers...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-500">Error loading customers: {(error as any)?.message || 'Unknown error'}</div>
         </div>
       </div>
     );

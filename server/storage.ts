@@ -1017,13 +1017,13 @@ export class DatabaseStorage implements IStorage {
           createdAt: users.createdAt,
           isEmailVerified: users.isEmailVerified,
           totalOrders: sql<number>`COALESCE(COUNT(${orders.id}), 0)`,
-          totalSpent: sql<string>`COALESCE(SUM(${orders.totalAmount}), 0)`,
+          totalSpent: sql<string>`COALESCE(SUM(CAST(${orders.totalAmount} AS DECIMAL)), 0)`,
           lastOrderDate: sql<string>`MAX(${orders.createdAt})`
         })
         .from(users)
         .leftJoin(orders, eq(users.id, orders.userId))
         .where(eq(users.role, "customer"))
-        .groupBy(users.id)
+        .groupBy(users.id, users.email, users.phone, users.firstName, users.lastName, users.authProvider, users.createdAt, users.isEmailVerified)
         .orderBy(desc(users.createdAt));
 
       console.log(`Retrieved ${customersWithStats.length} customers for admin panel`);
