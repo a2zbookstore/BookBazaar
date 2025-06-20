@@ -143,13 +143,13 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg space-y-6">
-        <Card className="shadow-2xl border-0">
-          <CardHeader className="space-y-1 text-center bg-gradient-to-r from-primary-aqua to-secondary-aqua text-white rounded-t-lg">
-            <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-              <User className="h-5 w-5" />
+        <Card className="shadow-2xl border-0 overflow-hidden">
+          <CardHeader className="space-y-3 text-center text-white rounded-t-lg py-8 px-6" style={{ background: 'linear-gradient(135deg, rgb(41, 128, 185) 0%, rgb(52, 152, 219) 100%)' }}>
+            <CardTitle className="text-3xl font-bold flex items-center justify-center gap-3 text-white">
+              <User className="h-7 w-7 text-white" />
               Create Your Account
             </CardTitle>
-            <p className="text-blue-100 text-sm">Join A2Z BOOKSHOP community today!</p>
+            <p className="text-white text-lg font-semibold mt-2">Join A2Z BOOKSHOP community today!</p>
           </CardHeader>
           <CardContent className="p-6">
             <Tabs value={registrationType} onValueChange={setRegistrationType} className="w-full">
