@@ -335,21 +335,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, phone, password } = req.body;
       
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
+      if ((!email && !phone) || !password) {
+        return res.status(400).json({ message: "Email/phone and password are required" });
       }
 
-      const user = await storage.getUserByEmail(email);
-      if (!user || user.authProvider !== "email") {
-        return res.status(401).json({ message: "Invalid email or password" });
+      // Find user by email or phone
+      let user;
+      if (email) {
+        user = await storage.getUserByEmail(email);
+      } else if (phone) {
+        user = await storage.getUserByPhone(phone);
+      }
+      
+      if (!user || (user.authProvider !== "email" && user.authProvider !== "phone")) {
+        return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Verify password
       const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
       if (user.passwordHash !== passwordHash) {
-        return res.status(401).json({ message: "Invalid email or password" });
+        return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Get guest cart items before login
