@@ -23,15 +23,14 @@ interface AdminLayoutProps {
 }
 
 const sidebarItems = [
-  { href: "/admin", icon: BarChart3, label: "Overview", exact: true },
+  { href: "/admin", icon: BarChart3, label: "Dashboard", exact: true },
   { href: "/admin/inventory", icon: BookOpen, label: "Inventory" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
   { href: "/admin/customers", icon: Users, label: "Customers" },
-  { href: "/admin/messages", icon: Mail, label: "Customer Messages" },
-  { href: "/admin/returns", icon: RotateCcw, label: "Returns & Refunds" },
-  { href: "/admin/welcome-email", icon: Mail, label: "Welcome Emails" },
-  { href: "/admin/sales", icon: TrendingUp, label: "Sales Reports" },
-  { href: "/admin/shipping", icon: Truck, label: "Shipping Rates" },
+  { href: "/admin/messages", icon: Mail, label: "Messages" },
+  { href: "/admin/returns", icon: RotateCcw, label: "Returns" },
+  { href: "/admin/welcome-email", icon: Mail, label: "Welcome Email" },
+  { href: "/admin/shipping", icon: Truck, label: "Shipping" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
   { href: "/admin/account", icon: User, label: "Account" },
 ];
@@ -68,9 +67,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               return (
                 <li key={item.href}>
                   <Link href={item.href}>
-                    <a
+                    <div
                       className={cn(
-                        "flex items-center px-4 py-3 rounded-lg transition-colors duration-200",
+                        "flex items-center px-4 py-3 rounded-lg transition-colors duration-200 cursor-pointer",
                         isActive(item.href, item.exact)
                           ? "bg-primary-aqua text-white"
                           : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -79,7 +78,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     >
                       <Icon className="h-5 w-5 mr-3" />
                       {item.label}
-                    </a>
+                    </div>
                   </Link>
                 </li>
               );
