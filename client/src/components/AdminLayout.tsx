@@ -75,6 +75,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           ? "bg-primary-aqua text-white"
                           : "text-gray-300 hover:bg-gray-800 hover:text-white"
                       )}
+                      onClick={() => console.log("Clicking link to:", item.href)}
                     >
                       <Icon className="h-5 w-5 mr-3" />
                       {item.label}
