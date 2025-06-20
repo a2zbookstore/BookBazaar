@@ -24,7 +24,6 @@ export default function InventoryPageSimple() {
   const totalBooks = booksResponse?.total || 0;
 
   return (
-    <AdminLayout>
       <div className="p-6">
         <h1 className="text-3xl font-bookerly font-bold text-base-black mb-6">
           Inventory Management (Simple Test)
@@ -67,6 +66,5 @@ export default function InventoryPageSimple() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

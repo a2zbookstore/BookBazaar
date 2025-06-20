@@ -1,7 +1,7 @@
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
-import AdminLayout from "./AdminLayout";
+import AdminLayout from "@/components/AdminLayout";
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
