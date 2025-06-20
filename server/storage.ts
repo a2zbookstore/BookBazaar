@@ -45,8 +45,9 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  createEmailUser(user: { email: string; firstName: string; lastName: string; passwordHash: string }): Promise<User>;
+  createEmailUser(user: { email?: string; phone?: string; firstName: string; lastName: string; passwordHash: string }): Promise<User>;
 
   // Category operations
   getCategories(): Promise<Category[]>;

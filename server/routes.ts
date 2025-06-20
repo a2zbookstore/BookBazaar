@@ -279,9 +279,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Customer authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { firstName, lastName, email, password } = req.body;
+      const { firstName, lastName, email, phone, password } = req.body;
       
-      if (!firstName || !lastName || !email || !password) {
+      if (!firstName || !lastName || (!email && !phone) || !password) {
         return res.status(400).json({ message: "All fields are required" });
       }
 
@@ -289,10 +289,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Password must be at least 6 characters long" });
       }
 
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ message: "User already exists with this email" });
+      // Check if user already exists by email or phone
+      if (email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          return res.status(409).json({ message: "User already exists with this email" });
+        }
+      }
+
+      if (phone) {
+        const existingUser = await storage.getUserByPhone(phone);
+        if (existingUser) {
+          return res.status(409).json({ message: "User already exists with this phone number" });
+        }
       }
 
       // Hash password

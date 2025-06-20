@@ -7,15 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Eye, EyeOff, User, Mail, Lock, Phone, Globe } from "lucide-react";
 
 export default function RegisterPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [registrationType, setRegistrationType] = useState("email");
   
-  const [formData, setFormData] = useState({
+  const [emailFormData, setEmailFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -23,8 +25,35 @@ export default function RegisterPage() {
     confirmPassword: ""
   });
 
+  const [phoneFormData, setPhoneFormData] = useState({
+    firstName: "",
+    lastName: "",
+    countryCode: "+91",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: ""
+  });
+
+  const countries = [
+    { code: "+1", name: "US/Canada", flag: "🇺🇸" },
+    { code: "+91", name: "India", flag: "🇮🇳" },
+    { code: "+44", name: "UK", flag: "🇬🇧" },
+    { code: "+33", name: "France", flag: "🇫🇷" },
+    { code: "+49", name: "Germany", flag: "🇩🇪" },
+    { code: "+86", name: "China", flag: "🇨🇳" },
+    { code: "+81", name: "Japan", flag: "🇯🇵" },
+    { code: "+61", name: "Australia", flag: "🇦🇺" },
+    { code: "+55", name: "Brazil", flag: "🇧🇷" },
+    { code: "+34", name: "Spain", flag: "🇪🇸" },
+    { code: "+39", name: "Italy", flag: "🇮🇹" },
+    { code: "+7", name: "Russia", flag: "🇷🇺" },
+    { code: "+82", name: "South Korea", flag: "🇰🇷" },
+    { code: "+52", name: "Mexico", flag: "🇲🇽" },
+    { code: "+31", name: "Netherlands", flag: "🇳🇱" },
+  ];
+
   const registerMutation = useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; email: string; password: string }) => {
+    mutationFn: async (data: { firstName: string; lastName: string; email?: string; phone?: string; password: string }) => {
       return await apiRequest("POST", "/api/auth/register", data);
     },
     onSuccess: () => {
