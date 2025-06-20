@@ -32,5 +32,9 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     return null; // Will redirect via useEffect
   }
 
-  return <>{children}</>;
+  return (
+    <AdminLayout>
+      {children}
+    </AdminLayout>
+  );
 }

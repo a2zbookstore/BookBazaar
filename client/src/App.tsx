@@ -8,7 +8,6 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
-import AdminLayout from "@/components/AdminLayout";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -90,72 +89,52 @@ function AppRouter() {
       {/* Admin routes - protected by separate admin authentication */}
       <Route path="/admin">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <AdminDashboard />
-          </AdminLayout>
+          <AdminDashboard />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/inventory">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <InventoryPageNew />
-          </AdminLayout>
+          <InventoryPageNew />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/orders">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <OrdersPage />
-          </AdminLayout>
+          <OrdersPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/customers">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <CustomersPage />
-          </AdminLayout>
+          <CustomersPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/messages">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <MessagesPage />
-          </AdminLayout>
+          <MessagesPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/returns">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <ReturnsPage />
-          </AdminLayout>
+          <ReturnsPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/welcome-email">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <WelcomeEmailTestPage />
-          </AdminLayout>
+          <WelcomeEmailTestPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/shipping">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <ShippingPage />
-          </AdminLayout>
+          <ShippingPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/settings">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <SettingsPage />
-          </AdminLayout>
+          <SettingsPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/account">
         <AdminProtectedRoute>
-          <AdminLayout>
-            <AdminAccountPage />
-          </AdminLayout>
+          <AdminAccountPage />
         </AdminProtectedRoute>
       </Route>
 
