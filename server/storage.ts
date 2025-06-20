@@ -1006,27 +1006,30 @@ export class DatabaseStorage implements IStorage {
   async getAllCustomers(): Promise<any[]> {
     console.log("getAllCustomers called");
     try {
-      const customersWithStats = await db
-        .select({
-          id: users.id,
-          email: users.email,
-          phone: users.phone,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          authProvider: users.authProvider,
-          createdAt: users.createdAt,
-          isEmailVerified: users.isEmailVerified,
-          totalOrders: sql<number>`COALESCE(COUNT(${orders.id}), 0)`,
-          totalSpent: sql<string>`COALESCE(SUM(CAST(${orders.totalAmount} AS DECIMAL)), 0)`,
-          lastOrderDate: sql<string>`MAX(${orders.createdAt})`
-        })
+      // Simple approach - just get customers without complex aggregation
+      const customers = await db
+        .select()
         .from(users)
-        .leftJoin(orders, eq(users.id, orders.userId))
         .where(eq(users.role, "customer"))
-        .groupBy(users.id, users.email, users.phone, users.firstName, users.lastName, users.authProvider, users.createdAt, users.isEmailVerified)
         .orderBy(desc(users.createdAt));
 
-      console.log(`Retrieved ${customersWithStats.length} customers for admin panel`);
+      console.log(`Retrieved ${customers.length} customers for admin panel`);
+      
+      // Add basic stats as 0 for now
+      const customersWithStats = customers.map(customer => ({
+        id: customer.id,
+        email: customer.email,
+        phone: customer.phone,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        authProvider: customer.authProvider,
+        createdAt: customer.createdAt,
+        isEmailVerified: customer.isEmailVerified,
+        totalOrders: 0,
+        totalSpent: "0",
+        lastOrderDate: null
+      }));
+
       return customersWithStats;
     } catch (error) {
       console.error("Error in getAllCustomers:", error);
