@@ -87,20 +87,9 @@ function AppRouter() {
       <Route path="/register" component={RegisterPage} />
       
       {/* Admin routes - protected by separate admin authentication */}
-      <Route path="/admin" nest>
+      <Route path="/admin">
         <AdminProtectedRoute>
-          <Switch>
-            <Route path="/" component={AdminDashboard} />
-            <Route path="/inventory" component={InventoryPageNew} />
-            <Route path="/orders" component={OrdersPage} />
-            <Route path="/customers" component={CustomersPage} />
-            <Route path="/messages" component={MessagesPage} />
-            <Route path="/returns" component={ReturnsPage} />
-            <Route path="/welcome-email" component={WelcomeEmailTestPage} />
-            <Route path="/shipping" component={ShippingPage} />
-            <Route path="/settings" component={SettingsPage} />
-            <Route path="/account" component={AdminAccountPage} />
-          </Switch>
+          <AdminDashboard />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/inventory">
@@ -113,11 +102,42 @@ function AppRouter() {
           <OrdersPage />
         </AdminProtectedRoute>
       </Route>
+      <Route path="/admin/customers">
+        <AdminProtectedRoute>
+          <CustomersPage />
+        </AdminProtectedRoute>
+      </Route>
       <Route path="/admin/messages">
         <AdminProtectedRoute>
           <MessagesPage />
         </AdminProtectedRoute>
       </Route>
+      <Route path="/admin/returns">
+        <AdminProtectedRoute>
+          <ReturnsPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/welcome-email">
+        <AdminProtectedRoute>
+          <WelcomeEmailTestPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/shipping">
+        <AdminProtectedRoute>
+          <ShippingPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/settings">
+        <AdminProtectedRoute>
+          <SettingsPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/account">
+        <AdminProtectedRoute>
+          <AdminAccountPage />
+        </AdminProtectedRoute>
+      </Route>
+
       <Route path="/admin/sales">
         <AdminProtectedRoute>
           <SalesPage />
