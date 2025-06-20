@@ -184,6 +184,7 @@ Changelog:
 - June 19, 2025. Refined header button sizing - made country selector button smaller to match navigation button size with consistent styling, enlarged cart button with better spacing and hover effects for improved visibility and usability.
 - June 19, 2025. Fixed country selector styling - applied small button design (text-xs, px-2 py-1, rounded, border) to match navigation buttons, enhanced cart button with improved hover effects and larger badge for better visibility.
 - June 19, 2025. Redesigned header layout with increased height - changed header from single row to two-row layout with top row containing logo/search/actions and bottom row containing navigation buttons (Home, Catalog, Track Order, Returns, Contact) positioned below search bar, increased header height from h-20 to h-28 for better visual presence.
+- June 20, 2025. Fixed critical admin panel double sidebar layout issue - completely resolved duplicate AdminLayout wrapper components that were causing double sidebar display when navigating between admin sections, centralized AdminLayout in AdminProtectedRoute component, removed all AdminLayout imports and wrappers from individual admin pages, fixed React import error in CustomersPage component, cleaned up debug console logs for professional customer management interface, all admin panel navigation now working correctly with single sidebar display.
 ```
 
 ## User Preferences
