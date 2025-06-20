@@ -534,6 +534,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin customers route
+  app.get("/api/admin/customers", requireAdminAuth, async (req, res) => {
+    try {
+      console.log("Admin customers API called");
+      const customers = await storage.getAllCustomers();
+      console.log(`Found ${customers.length} customers`);
+      res.json(customers);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      res.status(500).json({ message: "Failed to fetch customers" });
+    }
+  });
+
   // Admin session check route
   app.get("/api/admin/user", async (req, res) => {
     try {

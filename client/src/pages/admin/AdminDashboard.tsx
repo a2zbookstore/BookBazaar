@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { BookOpen, DollarSign, Clock, Star, TrendingUp, AlertTriangle, Truck, Package } from "lucide-react";
-import AdminLayout from "@/components/AdminLayout";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,6 @@ export default function AdminDashboard() {
   };
 
   return (
-    <AdminLayout>
       <div className="space-y-8">
         {/* Welcome Section */}
         <div>
@@ -282,6 +281,5 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
   );
 }

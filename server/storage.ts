@@ -1002,6 +1002,37 @@ export class DatabaseStorage implements IStorage {
       .where(eq(refundTransactions.returnRequestId, returnRequestId))
       .orderBy(desc(refundTransactions.createdAt));
   }
+
+  async getAllCustomers(): Promise<any[]> {
+    console.log("getAllCustomers called");
+    try {
+      const customersWithStats = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          phone: users.phone,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          authProvider: users.authProvider,
+          createdAt: users.createdAt,
+          isEmailVerified: users.isEmailVerified,
+          totalOrders: sql<number>`COALESCE(COUNT(${orders.id}), 0)`,
+          totalSpent: sql<string>`COALESCE(SUM(${orders.totalAmount}), 0)`,
+          lastOrderDate: sql<string>`MAX(${orders.createdAt})`
+        })
+        .from(users)
+        .leftJoin(orders, eq(users.id, orders.userId))
+        .where(eq(users.role, "customer"))
+        .groupBy(users.id)
+        .orderBy(desc(users.createdAt));
+
+      console.log(`Retrieved ${customersWithStats.length} customers for admin panel`);
+      return customersWithStats;
+    } catch (error) {
+      console.error("Error in getAllCustomers:", error);
+      return [];
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
