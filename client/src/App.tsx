@@ -8,6 +8,7 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
+import AdminLayout from "@/components/AdminLayout";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -87,54 +88,22 @@ function AppRouter() {
       <Route path="/register" component={RegisterPage} />
       
       {/* Admin routes - protected by separate admin authentication */}
-      <Route path="/admin">
+      <Route path="/admin" nest>
         <AdminProtectedRoute>
-          <AdminDashboard />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/inventory">
-        <AdminProtectedRoute>
-          <InventoryPageNew />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/orders">
-        <AdminProtectedRoute>
-          <OrdersPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/customers">
-        <AdminProtectedRoute>
-          <CustomersPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/messages">
-        <AdminProtectedRoute>
-          <MessagesPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/returns">
-        <AdminProtectedRoute>
-          <ReturnsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/welcome-email">
-        <AdminProtectedRoute>
-          <WelcomeEmailTestPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/shipping">
-        <AdminProtectedRoute>
-          <ShippingPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/settings">
-        <AdminProtectedRoute>
-          <SettingsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/account">
-        <AdminProtectedRoute>
-          <AdminAccountPage />
+          <AdminLayout>
+            <Switch>
+              <Route path="/" component={AdminDashboard} />
+              <Route path="/inventory" component={InventoryPageNew} />
+              <Route path="/orders" component={OrdersPage} />
+              <Route path="/customers" component={CustomersPage} />
+              <Route path="/messages" component={MessagesPage} />
+              <Route path="/returns" component={ReturnsPage} />
+              <Route path="/welcome-email" component={WelcomeEmailTestPage} />
+              <Route path="/shipping" component={ShippingPage} />
+              <Route path="/settings" component={SettingsPage} />
+              <Route path="/account" component={AdminAccountPage} />
+            </Switch>
+          </AdminLayout>
         </AdminProtectedRoute>
       </Route>
 
