@@ -27,22 +27,35 @@ export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  const { data: customers = [], isLoading, error } = useQuery({
+  const { data: customers = [], isLoading, error, refetch } = useQuery({
     queryKey: ["/api/admin/customers"],
     retry: 3,
     refetchOnWindowFocus: false,
   });
 
-  console.log("Customers data:", customers);
-  console.log("Is loading:", isLoading);
-  console.log("Error:", error);
+  React.useEffect(() => {
+    console.log("CustomersPage mounted");
+    console.log("Customers data:", customers);
+    console.log("Is loading:", isLoading);
+    console.log("Error:", error);
+    
+    // Force refetch on mount
+    refetch();
+  }, []);
 
-  const filteredCustomers = customers.filter((customer: Customer) => 
-    customer.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.phone?.includes(searchQuery)
-  );
+  React.useEffect(() => {
+    console.log("Customers data updated:", customers);
+  }, [customers]);
+
+  const filteredCustomers = customers.filter((customer: Customer) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      customer.firstName?.toLowerCase().includes(searchLower) ||
+      customer.lastName?.toLowerCase().includes(searchLower) ||
+      customer.email?.toLowerCase().includes(searchLower) ||
+      customer.phone?.includes(searchQuery)
+    );
+  });
 
   if (isLoading) {
     return (
@@ -64,7 +77,8 @@ export default function CustomersPage() {
     );
   }
 
-  if (!customers || customers.length === 0) {
+  // Don't show "no customers" if data is still loading or we have customers
+  if (!isLoading && (!customers || customers.length === 0)) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Customer Management</h1>
