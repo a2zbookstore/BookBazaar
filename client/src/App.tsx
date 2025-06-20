@@ -16,7 +16,7 @@ import BookDetailPage from "@/pages/BookDetailPage";
 import CartPage from "@/pages/CartPage";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
-import DashboardPage from "@/pages/admin/DashboardPage";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
 import InventoryPageNew from "@/pages/admin/InventoryPageNew";
 import OrdersPage from "@/pages/admin/OrdersPage";
 import CustomersPage from "@/pages/admin/CustomersPage";
@@ -90,7 +90,7 @@ function AppRouter() {
       <Route path="/admin" nest>
         <AdminProtectedRoute>
           <Switch>
-            <Route path="/" component={DashboardPage} />
+            <Route path="/" component={AdminDashboard} />
             <Route path="/inventory" component={InventoryPageNew} />
             <Route path="/orders" component={OrdersPage} />
             <Route path="/customers" component={CustomersPage} />
