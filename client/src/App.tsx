@@ -88,21 +88,73 @@ function AppRouter() {
       <Route path="/register" component={RegisterPage} />
       
       {/* Admin routes - protected by separate admin authentication */}
-      <Route path="/admin" nest>
+      <Route path="/admin">
         <AdminProtectedRoute>
           <AdminLayout>
-            <Switch>
-              <Route path="/" component={AdminDashboard} />
-              <Route path="/inventory" component={InventoryPageNew} />
-              <Route path="/orders" component={OrdersPage} />
-              <Route path="/customers" component={CustomersPage} />
-              <Route path="/messages" component={MessagesPage} />
-              <Route path="/returns" component={ReturnsPage} />
-              <Route path="/welcome-email" component={WelcomeEmailTestPage} />
-              <Route path="/shipping" component={ShippingPage} />
-              <Route path="/settings" component={SettingsPage} />
-              <Route path="/account" component={AdminAccountPage} />
-            </Switch>
+            <AdminDashboard />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/inventory">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <InventoryPageNew />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/orders">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <OrdersPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/customers">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <CustomersPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/messages">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <MessagesPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/returns">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <ReturnsPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/welcome-email">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <WelcomeEmailTestPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/shipping">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <ShippingPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/settings">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <SettingsPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/account">
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <AdminAccountPage />
           </AdminLayout>
         </AdminProtectedRoute>
       </Route>
