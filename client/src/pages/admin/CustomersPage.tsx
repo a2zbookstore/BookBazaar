@@ -35,49 +35,17 @@ export default function CustomersPage() {
     refetchOnWindowFocus: false,
   });
 
-  React.useEffect(() => {
-    console.log("CustomersPage mounted - component loaded");
-    console.log("Customers data:", customers);
-    console.log("Is loading:", isLoading);
-    console.log("Error:", error);
-    
-    // Force refetch on mount
-    if (refetch) {
-      console.log("Forcing refetch of customers data");
-      refetch();
-    }
-  }, [refetch]);
 
-  React.useEffect(() => {
-    console.log("Customers data updated:", customers);
-  }, [customers]);
 
-  // Always show debug for now
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Customer Management</h1>
-      <div className="bg-gray-100 p-4 rounded mb-4">
-        <p><strong>Loading:</strong> {isLoading ? "YES" : "NO"}</p>
-        <p><strong>Error:</strong> {error ? JSON.stringify(error) : "NONE"}</p>
-        <p><strong>Customers count:</strong> {customers ? customers.length : 0}</p>
-        <p><strong>Raw data:</strong> {JSON.stringify(customers).substring(0, 200)}...</p>
-      </div>
-      {customers && customers.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Customer List:</h2>
-          {customers.slice(0, 5).map((customer: any) => (
-            <div key={customer.id} className="bg-white p-3 rounded border">
-              <p><strong>Name:</strong> {customer.firstName} {customer.lastName}</p>
-              <p><strong>Email:</strong> {customer.email || "N/A"}</p>
-              <p><strong>Phone:</strong> {customer.phone || "N/A"}</p>
-              <p><strong>Method:</strong> {customer.authProvider}</p>
-              <p><strong>Joined:</strong> {new Date(customer.createdAt).toLocaleDateString()}</p>
-            </div>
-          ))}
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
 
   const filteredCustomers = customers.filter((customer: Customer) => {
     const searchLower = searchQuery.toLowerCase();
