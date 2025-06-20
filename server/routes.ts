@@ -316,6 +316,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         passwordHash
       });
 
+      // Send welcome email
+      try {
+        await sendWelcomeEmail({
+          user: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phone: user.phone,
+            authProvider: user.authProvider
+          }
+        });
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail registration if email fails
+      }
+
       res.json({ 
         success: true, 
         message: "Account created successfully",
