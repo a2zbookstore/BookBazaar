@@ -466,7 +466,6 @@ export default function InventoryPageNew() {
   };
 
   return (
-    <AdminLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bookerly font-bold text-base-black">
@@ -1029,6 +1028,5 @@ export default function InventoryPageNew() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }
