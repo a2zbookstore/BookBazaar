@@ -20,7 +20,7 @@ export default function HomePage() {
   const featuredBooks = featuredBooksResponse?.books || [];
 
   const { data: bestsellerBooksResponse } = useQuery<{ books: Book[]; total: number }>({
-    queryKey: ["/api/books?sortBy=createdAt&sortOrder=desc&limit=10"],
+    queryKey: ["/api/books?bestseller=true&limit=12"],
   });
   const bestsellerBooks = bestsellerBooksResponse?.books || [];
 
@@ -113,7 +113,7 @@ export default function HomePage() {
               <TrendingUp className="h-8 w-8 text-primary-aqua" />
               <h3 className="text-3xl font-bookerly font-bold text-base-black">Bestsellers</h3>
             </div>
-            <Link href="/catalog?sortBy=createdAt&sortOrder=desc">
+            <Link href="/catalog?bestseller=true">
               <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white">
                 View All Bestsellers
               </Button>

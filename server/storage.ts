@@ -59,6 +59,7 @@ export interface IStorage {
     categoryId?: number;
     condition?: string;
     featured?: boolean;
+    bestseller?: boolean;
     search?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -225,6 +226,7 @@ export class DatabaseStorage implements IStorage {
     categoryId?: number;
     condition?: string;
     featured?: boolean;
+    bestseller?: boolean;
     search?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -237,6 +239,7 @@ export class DatabaseStorage implements IStorage {
       categoryId,
       condition,
       featured,
+      bestseller,
       search,
       minPrice,
       maxPrice,
@@ -254,6 +257,7 @@ export class DatabaseStorage implements IStorage {
     if (categoryId) conditions.push(eq(books.categoryId, categoryId));
     if (condition) conditions.push(eq(books.condition, condition));
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
+    if (bestseller !== undefined) conditions.push(eq(books.bestseller, bestseller));
     if (search) {
       const searchTerm = search.toLowerCase();
       conditions.push(
