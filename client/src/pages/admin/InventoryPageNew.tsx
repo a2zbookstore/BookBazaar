@@ -555,25 +555,22 @@ export default function InventoryPageNew() {
                     </div>
                     <div>
                       <Label htmlFor="category">Category</Label>
-                      <Select 
-                        value={bookForm.categoryId?.toString() || "none"} 
-                        onValueChange={(value) => setBookForm(prev => ({ 
+                      <select
+                        id="category"
+                        value={bookForm.categoryId?.toString() || ""}
+                        onChange={(e) => setBookForm(prev => ({ 
                           ...prev, 
-                          categoryId: value === "none" ? null : parseInt(value) 
+                          categoryId: e.target.value ? parseInt(e.target.value) : null 
                         }))}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Category</SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <option value="">Select category</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -590,37 +587,34 @@ export default function InventoryPageNew() {
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="condition">Condition *</Label>
-                      <Select 
-                        value={bookForm.condition} 
-                        onValueChange={(value) => setBookForm(prev => ({ ...prev, condition: value }))}
+                      <select
+                        id="condition"
+                        value={bookForm.condition}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, condition: e.target.value }))}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        required
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="New">New</SelectItem>
-                          <SelectItem value="Like New">Like New</SelectItem>
-                          <SelectItem value="Very Good">Very Good</SelectItem>
-                          <SelectItem value="Good">Good</SelectItem>
-                          <SelectItem value="Acceptable">Acceptable</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <option value="">Select condition</option>
+                        <option value="New">New</option>
+                        <option value="Like New">Like New</option>
+                        <option value="Very Good">Very Good</option>
+                        <option value="Good">Good</option>
+                        <option value="Acceptable">Acceptable</option>
+                      </select>
                     </div>
                     <div>
                       <Label htmlFor="binding">Binding</Label>
-                      <Select 
-                        value={bookForm.binding} 
-                        onValueChange={(value) => setBookForm(prev => ({ ...prev, binding: value }))}
+                      <select
+                        id="binding"
+                        value={bookForm.binding}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, binding: e.target.value }))}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Hardcover">Hardcover</SelectItem>
-                          <SelectItem value="Softcover">Softcover</SelectItem>
-                          <SelectItem value="No Binding">No Binding</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <option value="">Select binding</option>
+                        <option value="Hardcover">Hardcover</option>
+                        <option value="Softcover">Softcover</option>
+                        <option value="No Binding">No Binding</option>
+                      </select>
                     </div>
                     <div>
                       <Label htmlFor="price">Price ($) *</Label>
