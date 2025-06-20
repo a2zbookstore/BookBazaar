@@ -16,9 +16,11 @@ import BookDetailPage from "@/pages/BookDetailPage";
 import CartPage from "@/pages/CartPage";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
+import DashboardPage from "@/pages/admin/DashboardPage";
 import InventoryPageNew from "@/pages/admin/InventoryPageNew";
 import OrdersPage from "@/pages/admin/OrdersPage";
+import CustomersPage from "@/pages/admin/CustomersPage";
+import WelcomeEmailTestPage from "@/pages/admin/WelcomeEmailTestPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
@@ -85,9 +87,20 @@ function AppRouter() {
       <Route path="/register" component={RegisterPage} />
       
       {/* Admin routes - protected by separate admin authentication */}
-      <Route path="/admin">
+      <Route path="/admin" nest>
         <AdminProtectedRoute>
-          <AdminDashboard />
+          <Switch>
+            <Route path="/" component={DashboardPage} />
+            <Route path="/inventory" component={InventoryPageNew} />
+            <Route path="/orders" component={OrdersPage} />
+            <Route path="/customers" component={CustomersPage} />
+            <Route path="/messages" component={MessagesPage} />
+            <Route path="/returns" component={ReturnsPage} />
+            <Route path="/welcome-email" component={WelcomeEmailTestPage} />
+            <Route path="/shipping" component={ShippingPage} />
+            <Route path="/settings" component={SettingsPage} />
+            <Route path="/account" component={AdminAccountPage} />
+          </Switch>
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/inventory">
