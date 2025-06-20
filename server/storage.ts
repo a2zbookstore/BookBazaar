@@ -186,17 +186,18 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createEmailUser(userData: { email: string; firstName: string; lastName: string; passwordHash: string }): Promise<User> {
-    const userId = `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  async createEmailUser(userData: { email?: string; phone?: string; firstName: string; lastName: string; passwordHash: string }): Promise<User> {
+    const userId = `${userData.phone ? 'phone' : 'email'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const [user] = await db
       .insert(users)
       .values({
         id: userId,
-        email: userData.email,
+        email: userData.email || null,
+        phone: userData.phone || null,
         firstName: userData.firstName,
         lastName: userData.lastName,
         passwordHash: userData.passwordHash,
-        authProvider: "email",
+        authProvider: userData.phone ? "phone" : "email",
         isEmailVerified: true,
         role: "customer",
       })
