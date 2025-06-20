@@ -36,7 +36,7 @@ const sidebarItems = [
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
 
   const isActive = (href: string, exact = false) => {
@@ -66,20 +66,21 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               const Icon = item.icon;
               return (
                 <li key={item.href}>
-                  <Link href={item.href}>
-                    <div
-                      className={cn(
-                        "flex items-center px-4 py-3 rounded-lg transition-colors duration-200 cursor-pointer",
-                        isActive(item.href, item.exact)
-                          ? "bg-primary-aqua text-white"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      )}
-                      onClick={() => console.log("Clicking link to:", item.href)}
-                    >
-                      <Icon className="h-5 w-5 mr-3" />
-                      {item.label}
-                    </div>
-                  </Link>
+                  <div
+                    className={cn(
+                      "flex items-center px-4 py-3 rounded-lg transition-colors duration-200 cursor-pointer",
+                      isActive(item.href, item.exact)
+                        ? "bg-primary-aqua text-white"
+                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    )}
+                    onClick={() => {
+                      console.log("Navigating to:", item.href);
+                      setLocation(item.href);
+                    }}
+                  >
+                    <Icon className="h-5 w-5 mr-3" />
+                    {item.label}
+                  </div>
                 </li>
               );
             })}
