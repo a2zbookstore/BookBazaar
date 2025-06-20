@@ -84,7 +84,6 @@ export default function AdminAccountPage() {
   };
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <User className="h-6 w-6" />
@@ -206,6 +205,5 @@ export default function AdminAccountPage() {
           </Card>
         </div>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, DollarSign, Calendar, Download } from "lucide-react";
-import AdminLayout from "@/components/AdminLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -58,7 +58,6 @@ export default function SalesPage() {
   };
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -319,6 +318,5 @@ export default function SalesPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

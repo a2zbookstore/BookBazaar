@@ -398,7 +398,6 @@ export default function ShippingPage() {
   const defaultRate = shippingRates.find(rate => rate.isDefault);
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -642,6 +641,5 @@ export default function ShippingPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }
