@@ -30,13 +30,14 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   email: varchar("email").unique(),
+  phone: varchar("phone").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").default("customer"), // customer, admin
   passwordHash: varchar("password_hash"), // For email-based authentication
   isEmailVerified: boolean("is_email_verified").default(false),
-  authProvider: varchar("auth_provider").default("email"), // email, replit
+  authProvider: varchar("auth_provider").default("email"), // email, phone, replit
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

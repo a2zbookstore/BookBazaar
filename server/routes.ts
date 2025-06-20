@@ -309,7 +309,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create user
       const user = await storage.createEmailUser({
-        email,
+        email: email || null,
+        phone: phone || null,
         firstName,
         lastName,
         passwordHash
@@ -321,6 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: user.id,
           email: user.email,
+          phone: user.phone,
           firstName: user.firstName,
           lastName: user.lastName
         }

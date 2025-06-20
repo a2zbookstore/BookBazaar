@@ -13,11 +13,36 @@ export default function LoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [loginType, setLoginType] = useState("email");
   
-  const [formData, setFormData] = useState({
+  const [emailFormData, setEmailFormData] = useState({
     email: "",
     password: ""
   });
+
+  const [phoneFormData, setPhoneFormData] = useState({
+    countryCode: "+91",
+    phoneNumber: "",
+    password: ""
+  });
+
+  const countries = [
+    { code: "+1", name: "US/Canada", flag: "🇺🇸" },
+    { code: "+91", name: "India", flag: "🇮🇳" },
+    { code: "+44", name: "UK", flag: "🇬🇧" },
+    { code: "+33", name: "France", flag: "🇫🇷" },
+    { code: "+49", name: "Germany", flag: "🇩🇪" },
+    { code: "+86", name: "China", flag: "🇨🇳" },
+    { code: "+81", name: "Japan", flag: "🇯🇵" },
+    { code: "+61", name: "Australia", flag: "🇦🇺" },
+    { code: "+55", name: "Brazil", flag: "🇧🇷" },
+    { code: "+34", name: "Spain", flag: "🇪🇸" },
+    { code: "+39", name: "Italy", flag: "🇮🇹" },
+    { code: "+7", name: "Russia", flag: "🇷🇺" },
+    { code: "+82", name: "South Korea", flag: "🇰🇷" },
+    { code: "+52", name: "Mexico", flag: "🇲🇽" },
+    { code: "+31", name: "Netherlands", flag: "🇳🇱" },
+  ];
 
   const loginMutation = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
