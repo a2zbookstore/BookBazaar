@@ -74,17 +74,14 @@ export default function MessagesPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -186,6 +183,5 @@ export default function MessagesPage() {
           </Card>
         )}
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

@@ -184,22 +184,18 @@ export default function OrdersPage() {
 
   if (authLoading || isLoading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
+      </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <AdminLayout>
-        <div className="text-center py-8">
-          <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
-          <p className="text-gray-600 mt-2">You need admin privileges to access this page.</p>
-        </div>
-      </AdminLayout>
+      <div className="text-center py-8">
+        <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
+        <p className="text-gray-600 mt-2">You need admin privileges to access this page.</p>
+      </div>
     );
   }
 
@@ -209,7 +205,6 @@ export default function OrdersPage() {
     : orders.filter((order: Order) => order.status === statusFilter);
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold text-base-black">Order Management</h2>
@@ -379,6 +374,5 @@ export default function OrdersPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }
