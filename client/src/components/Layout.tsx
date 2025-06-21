@@ -251,25 +251,26 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Desktop Header */}
-      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-28' : 'bg-white h-32'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
+      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-20' : 'bg-white h-24'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
         <div className="container-custom">
           {/* Top Row - Logo, Search, Actions */}
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-8">
+          <div className="flex items-center justify-between py-2">
+            {/* Left - Logo */}
+            <div className="flex items-center">
               <Link href="/">
                 <Logo size="lg" variant="default" showText={true} />
               </Link>
             </div>
 
-            {/* Search Bar - Centered and Wide */}
-            <div className="flex-1 max-w-6xl mx-8">
+            {/* Center - Search Bar */}
+            <div className="flex-1 max-w-4xl mx-6">
               <SearchInput />
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center space-x-4">
+            {/* Right - Actions */}
+            <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs px-2 py-1">
                   {userCurrency.symbol} {userCurrency.code}
                 </Badge>
                 <CountrySelector />
@@ -278,12 +279,12 @@ export default function Layout({ children }: LayoutProps) {
               {isAuthenticated && (
                 <Link
                   href="/wishlist"
-                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors relative"
+                  className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors relative"
                 >
-                  <Heart className="h-5 w-5" />
-                  <span className="hidden lg:inline">Wishlist</span>
+                  <Heart className="h-4 w-4" />
+                  <span className="hidden lg:inline text-sm">Wishlist</span>
                   {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                       {wishlistCount}
                     </span>
                   )}
@@ -292,22 +293,24 @@ export default function Layout({ children }: LayoutProps) {
 
               <Link
                 href="/cart"
-                className={`flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors relative ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors relative ${
                   isCartAnimating ? "cart-pulse-animation" : ""
                 }`}
               >
-                <ShoppingCart className="h-5 w-5" />
-                <span className="hidden lg:inline">Cart</span>
+                <ShoppingCart className="h-4 w-4" />
+                <span className="hidden lg:inline text-sm">Cart</span>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                  <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium">
                     {cartCount}
                   </span>
                 )}
               </Link>
 
+              {/* Auth Buttons */}
               {isAuthenticated ? (
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={async () => {
                     try {
                       await fetch("/api/auth/logout", { method: "POST" });
@@ -316,22 +319,37 @@ export default function Layout({ children }: LayoutProps) {
                       window.location.href = "/api/logout";
                     }
                   }}
+                  className="text-sm px-3 py-1"
                 >
-                  <User className="h-4 w-4 mr-2" />
+                  <User className="h-3 w-3 mr-1" />
                   Logout
                 </Button>
               ) : (
-                <Button onClick={() => setLocation('/login')}>
-                  <User className="h-4 w-4 mr-2" />
-                  Login
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLocation('/login')}
+                    className="text-sm px-3 py-1"
+                  >
+                    <User className="h-3 w-3 mr-1" />
+                    Login
+                  </Button>
+                  <Button 
+                    size="sm"
+                    onClick={() => setLocation('/login')}
+                    className="bg-primary-aqua hover:bg-secondary-aqua text-sm px-3 py-1"
+                  >
+                    Register
+                  </Button>
+                </div>
               )}
             </div>
           </div>
 
           {/* Bottom Row - Navigation Buttons */}
-          <div className="flex items-center justify-center py-3 border-t border-gray-100">
-            <nav className="flex items-center gap-4">
+          <div className="flex items-center justify-center py-2 border-t border-gray-100">
+            <nav className="flex items-center gap-3">
               <Link
                 href="/"
                 className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
