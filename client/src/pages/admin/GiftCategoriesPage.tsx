@@ -141,11 +141,11 @@ export default function GiftCategoriesPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file size (limit to 2MB)
-      if (file.size > 2 * 1024 * 1024) {
+      // Check file size (limit to 500KB for better performance)
+      if (file.size > 500 * 1024) {
         toast({
-          title: "Error",
-          description: "Image file is too large. Please choose a file smaller than 2MB.",
+          title: "Error", 
+          description: "Image file is too large. Please choose a file smaller than 500KB.",
           variant: "destructive",
         });
         return;
@@ -194,31 +194,52 @@ export default function GiftCategoriesPage() {
       
       // If image file is uploaded, convert to base64 and store in imageUrl
       if (uploadedImage) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            finalForm.imageUrl = reader.result as string;
-            console.log('Submitting form with uploaded image:', {
-              ...finalForm,
-              imageUrl: finalForm.imageUrl.substring(0, 50) + '...' // Log truncated version
-            });
-            categoryMutation.mutate(finalForm);
-          } catch (error) {
-            console.error('Error processing uploaded image:', error);
-            toast({
-              title: "Error",
-              description: "Failed to process uploaded image. Please try again.",
-              variant: "destructive",
-            });
+        // Compress image before sending
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Resize image to max 400x400 to reduce size
+          const maxSize = 400;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
           }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with reduced quality
+          const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
+          finalForm.imageUrl = compressedImage;
+          
+          console.log('Submitting form with compressed image');
+          categoryMutation.mutate(finalForm);
         };
-        reader.onerror = () => {
-          console.error('FileReader error');
+        
+        img.onerror = () => {
           toast({
             title: "Error",
-            description: "Failed to read image file. Please try again.",
+            description: "Failed to process image. Please try again.",
             variant: "destructive",
           });
+        };
+        
+        // Read file as data URL
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target?.result as string;
         };
         reader.readAsDataURL(uploadedImage);
       } else {
