@@ -47,96 +47,67 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className={`fixed-header bg-white border-b border-gray-200 w-full transition-all duration-300 ${
-        isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''
-      }`}>
-        {/* Mobile Header Layout - Complete Standalone Layout */}
-        <div className="md:hidden bg-white">
-          <div className="px-4">
-            {/* Row 1: Logo and Actions */}
-            <div className="flex items-center justify-between h-14 border-b border-gray-100">
-              <Link href="/" className="flex items-center">
-                <Logo size="sm" variant="default" showText={true} />
+      {/* Mobile Header - ONLY FOR MOBILE */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+        <div className="px-4 py-2">
+          {/* Single Row Layout for Mobile */}
+          <div className="flex items-center justify-between mb-3">
+            <Link href="/">
+              <Logo size="sm" variant="default" showText={true} />
+            </Link>
+            <div className="flex items-center space-x-3">
+              <CountrySelector />
+              <Link href="/cart" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
-              <div className="flex items-center space-x-2">
-                <CountrySelector />
-                <Link href="/cart" className="relative touch-target">
-                  <ShoppingCart className="h-5 w-5 text-gray-700" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-                <Link href="/wishlist" className="touch-target">
-                  <Heart className="h-5 w-5 text-gray-700" />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="touch-target p-1"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-            
-            {/* Row 2: Search */}
-            <div className="py-2">
-              <SearchInput 
-                placeholder="Search books..."
-                className="w-full h-9"
-              />
-            </div>
-            
-            {/* Row 3: Navigation */}
-            <div className="flex justify-center space-x-1 pb-2">
-              <Link
-                href="/"
-                className={`text-xs px-2 py-1 rounded ${
-                  isActive("/") ? "bg-blue-100 text-blue-600" : "text-gray-600"
-                }`}
+              <Link href="/wishlist" className="relative">
+                <Heart className="h-5 w-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-1"
               >
-                Home
-              </Link>
-              <Link
-                href="/catalog"
-                className={`text-xs px-2 py-1 rounded ${
-                  isActive("/catalog") ? "bg-blue-100 text-blue-600" : "text-gray-600"
-                }`}
-              >
-                Catalog
-              </Link>
-              <Link
-                href="/track-order"
-                className={`text-xs px-2 py-1 rounded ${
-                  isActive("/track-order") ? "bg-blue-100 text-blue-600" : "text-gray-600"
-                }`}
-              >
-                Track
-              </Link>
-              <Link
-                href="/returns"
-                className={`text-xs px-2 py-1 rounded ${
-                  isActive("/returns") ? "bg-blue-100 text-blue-600" : "text-gray-600"
-                }`}
-              >
-                Returns
-              </Link>
+                <Menu className="h-5 w-5" />
+              </Button>
             </div>
           </div>
+          
+          <div className="mb-2">
+            <SearchInput placeholder="Search books..." className="w-full h-8" />
+          </div>
+          
+          <div className="flex justify-center space-x-2">
+            <Link href="/" className={`text-xs px-2 py-1 rounded ${isActive("/") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+              Home
+            </Link>
+            <Link href="/catalog" className={`text-xs px-2 py-1 rounded ${isActive("/catalog") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+              Catalog
+            </Link>
+            <Link href="/track-order" className={`text-xs px-2 py-1 rounded ${isActive("/track-order") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+              Track
+            </Link>
+            <Link href="/returns" className={`text-xs px-2 py-1 rounded ${isActive("/returns") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+              Returns
+            </Link>
+          </div>
         </div>
+      </header>
 
-        {/* Desktop Header Layout */}
-        <div className="hidden md:block">
-          <div className="container-custom px-6">
+      {/* Desktop Header - ONLY FOR DESKTOP */}
+      <header className="hidden md:block fixed-header bg-white border-b border-gray-200 w-full transition-all duration-300">
+        <div className="container-custom px-6">
             <div className={`flex items-center justify-between w-full transition-all duration-300 ${
               isScrolled ? 'h-16' : 'h-20'
             }`}>
@@ -265,11 +236,12 @@ export default function Layout({ children }: LayoutProps) {
                 )}
               </div>
             </div>
-          </div>
+        </div>
+      </header>
         
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-            <div className="md:hidden bg-white border-t border-gray-200">
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200 fixed top-20 left-0 right-0 z-40">
               <nav className="px-4 py-4 space-y-4">
                 <Link
                   href="/"
@@ -436,10 +408,9 @@ export default function Layout({ children }: LayoutProps) {
               >
                 Contact
               </Link>
-            </nav>
-          </div>
+          </nav>
         </div>
-      </header>
+      )}
 
       {/* Fixed Cart Icon - Always Visible */}
       <Link

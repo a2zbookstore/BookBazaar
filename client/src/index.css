@@ -348,15 +348,9 @@ button:active, .button:active {
       max-width: 100vw;
     }
     
-    /* Mobile header height adjustment */
-    .fixed-header {
-      height: auto !important;
-      min-height: 110px;
-    }
-    
-    /* Ensure main content starts below mobile header */
+    /* Mobile header adjustment */
     .min-h-screen {
-      padding-top: 115px;
+      padding-top: 100px;
     }
   }
   
