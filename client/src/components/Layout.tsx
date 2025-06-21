@@ -50,13 +50,43 @@ export default function Layout({ children }: LayoutProps) {
       {/* Mobile Header - ONLY FOR MOBILE */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
         <div className="px-4 py-2">
-          {/* Single Row Layout for Mobile */}
+          {/* First Row - Logo and Actions */}
           <div className="flex items-center justify-between mb-3">
             <Link href="/">
               <Logo size="sm" variant="default" showText={true} />
             </Link>
             <div className="flex items-center space-x-3">
               <CountrySelector />
+              
+              {/* Auth Buttons for Mobile */}
+              {isAuthenticated ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await fetch("/api/auth/logout", { method: "POST" });
+                      window.location.href = "/";
+                    } catch (error) {
+                      window.location.href = "/api/logout";
+                    }
+                  }}
+                  className="text-xs px-2 py-1"
+                >
+                  <User className="h-3 w-3 mr-1" />
+                  Logout
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setLocation('/login')}
+                  className="bg-primary-aqua hover:bg-secondary-aqua text-xs px-2 py-1"
+                >
+                  <User className="h-3 w-3 mr-1" />
+                  Login
+                </Button>
+              )}
+              
               <Link href="/cart" className="relative">
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
@@ -65,14 +95,18 @@ export default function Layout({ children }: LayoutProps) {
                   </span>
                 )}
               </Link>
-              <Link href="/wishlist" className="relative">
-                <Heart className="h-5 w-5" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
+              
+              {isAuthenticated && (
+                <Link href="/wishlist" className="relative">
+                  <Heart className="h-5 w-5" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+              )}
+              
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-1"
@@ -83,16 +117,16 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Second Row - Search Bar */}
           <div className="mb-3">
             <SearchInput />
           </div>
 
-          {/* Navigation Row */}
-          <nav className="flex items-center justify-center space-x-4 pb-2">
+          {/* Third Row - Navigation Buttons in Single Line */}
+          <nav className="flex items-center justify-between text-xs pb-2 overflow-x-auto">
             <Link
               href="/"
-              className={`text-sm px-2 py-1 rounded transition-colors ${
+              className={`flex-shrink-0 px-2 py-1 rounded transition-colors ${
                 isActive("/") ? "text-primary-aqua font-semibold" : "text-gray-600"
               }`}
             >
@@ -100,7 +134,7 @@ export default function Layout({ children }: LayoutProps) {
             </Link>
             <Link
               href="/catalog"
-              className={`text-sm px-2 py-1 rounded transition-colors ${
+              className={`flex-shrink-0 px-2 py-1 rounded transition-colors ${
                 isActive("/catalog") ? "text-primary-aqua font-semibold" : "text-gray-600"
               }`}
             >
@@ -108,15 +142,15 @@ export default function Layout({ children }: LayoutProps) {
             </Link>
             <Link
               href="/track-order"
-              className={`text-sm px-2 py-1 rounded transition-colors ${
+              className={`flex-shrink-0 px-2 py-1 rounded transition-colors ${
                 isActive("/track-order") ? "text-primary-aqua font-semibold" : "text-gray-600"
               }`}
             >
-              Track Order
+              Track
             </Link>
             <Link
               href="/returns"
-              className={`text-sm px-2 py-1 rounded transition-colors ${
+              className={`flex-shrink-0 px-2 py-1 rounded transition-colors ${
                 isActive("/returns") ? "text-primary-aqua font-semibold" : "text-gray-600"
               }`}
             >
@@ -124,7 +158,7 @@ export default function Layout({ children }: LayoutProps) {
             </Link>
             <Link
               href="/contact"
-              className={`text-sm px-2 py-1 rounded transition-colors ${
+              className={`flex-shrink-0 px-2 py-1 rounded transition-colors ${
                 isActive("/contact") ? "text-primary-aqua font-semibold" : "text-gray-600"
               }`}
             >
