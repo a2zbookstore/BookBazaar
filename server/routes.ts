@@ -1390,10 +1390,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (userId) {
         const cartItems = await storage.getCartItems(userId);
-        res.json(cartItems);
+        const giftItem = (req.session as any).giftItem;
+        
+        // Add gift item to cart if present
+        const fullCart = [...cartItems];
+        if (giftItem) {
+          fullCart.push({
+            id: `gift_${giftItem.giftId}`,
+            book: {
+              id: giftItem.giftId,
+              title: giftItem.name,
+              author: giftItem.type,
+              price: "0.00",
+              imageUrl: giftItem.imageUrl
+            },
+            quantity: 1,
+            isGift: true
+          });
+        }
+        
+        res.json(fullCart);
       } else {
         // Guest user - return session-based cart with book details
         const guestCart = (req.session as any).guestCart || [];
+        const giftItem = (req.session as any).giftItem;
         
         // Ensure each cart item has complete book data
         const cartWithBooks = await Promise.all(guestCart.map(async (item: any) => {
@@ -1403,6 +1423,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return item;
         }));
+        
+        // Add gift item to cart if present
+        if (giftItem) {
+          cartWithBooks.push({
+            id: `gift_${giftItem.giftId}`,
+            book: {
+              id: giftItem.giftId,
+              title: giftItem.name,
+              author: giftItem.type,
+              price: "0.00",
+              imageUrl: giftItem.imageUrl
+            },
+            quantity: 1,
+            isGift: true
+          });
+        }
         
         res.json(cartWithBooks);
       }
@@ -1563,12 +1599,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Clear guest cart from session
         (req.session as any).guestCart = [];
+        (req.session as any).giftItem = null;
       }
       
       res.json({ message: "Cart cleared" });
     } catch (error) {
       console.error("Error clearing cart:", error);
       res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Gift cart management routes
+  app.post("/api/cart/gift", async (req: any, res) => {
+    try {
+      const { giftId, name, type, imageUrl, price, quantity } = req.body;
+      
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      const giftItem = {
+        giftId,
+        name,
+        type,
+        imageUrl,
+        price: 0, // Always free
+        quantity: 1, // Always 1
+        isGift: true
+      };
+      
+      if (userId) {
+        // For authenticated users, store in database session or custom field
+        // For now, use session storage
+        (req.session as any).giftItem = giftItem;
+      } else {
+        // For guest users, store in session
+        (req.session as any).giftItem = giftItem;
+      }
+      
+      res.json({ message: "Gift added to cart", gift: giftItem });
+    } catch (error) {
+      console.error("Error adding gift to cart:", error);
+      res.status(500).json({ message: "Failed to add gift to cart" });
+    }
+  });
+
+  app.delete("/api/cart/gift", async (req: any, res) => {
+    try {
+      // Check for authenticated user first
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (userId) {
+        // Remove gift from authenticated user's session
+        (req.session as any).giftItem = null;
+      } else {
+        // Remove gift from guest session
+        (req.session as any).giftItem = null;
+      }
+      
+      res.json({ message: "Gift removed from cart" });
+    } catch (error) {
+      console.error("Error removing gift from cart:", error);
+      res.status(500).json({ message: "Failed to remove gift from cart" });
     }
   });
 

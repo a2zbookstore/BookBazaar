@@ -9,9 +9,10 @@ import type { GiftItem, GiftCategory } from '@/shared/schema';
 
 interface GiftWithPurchaseProps {
   hasItemsInCart: boolean;
+  onGiftAdded?: () => void;
 }
 
-export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchaseProps) {
+export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWithPurchaseProps) {
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -76,34 +77,70 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
     }
   }, [activeCategories.length, isPaused]);
 
-  const handleGiftSelect = (giftId: string) => {
+  const handleGiftSelect = async (giftId: string) => {
     if (selectedGift === giftId) return; // Already selected
     
-    setSelectedGift(giftId);
-    localStorage.setItem('selectedGift', giftId);
-    
-    // Add gift to cart with special flag
+    // Find the gift item
     const giftItem = activeGiftItems.find(item => item.id.toString() === giftId);
-    if (giftItem) {
-      localStorage.setItem('giftDetails', JSON.stringify({
-        id: giftItem.id,
-        name: giftItem.name,
-        type: giftItem.type,
-        image: giftItem.imageUrl || '/placeholder-gift.jpg',
-        price: parseFloat(giftItem.price || '0'),
-        quantity: 1,
-        isGift: true
-      }));
+    if (!giftItem) return;
 
-      // Show confirmation alert
-      alert(`🎁 Great choice! "${giftItem.name}" has been selected as your free gift and will be added to your cart at checkout.`);
+    try {
+      // Add gift to cart via API
+      const response = await fetch('/api/cart/gift', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          giftId: giftItem.id,
+          name: giftItem.name,
+          type: giftItem.type,
+          imageUrl: giftItem.imageUrl,
+          price: 0, // Always free
+          quantity: 1
+        }),
+      });
+
+      if (response.ok) {
+        setSelectedGift(giftId);
+        localStorage.setItem('selectedGift', giftId);
+        
+        // Show confirmation alert
+        alert(`🎁 Great choice! "${giftItem.name}" has been added to your cart as a free gift!`);
+        
+        // Notify parent component to refresh cart
+        if (onGiftAdded) {
+          onGiftAdded();
+        }
+      } else {
+        const error = await response.json();
+        alert(`Error adding gift: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Error adding gift to cart:', error);
+      alert('Failed to add gift to cart. Please try again.');
     }
   };
 
-  const handleRefreshGifts = () => {
-    setSelectedGift(null);
-    localStorage.removeItem('selectedGift');
-    localStorage.removeItem('giftDetails');
+  const handleRefreshGifts = async () => {
+    try {
+      // Remove gift from cart via API
+      await fetch('/api/cart/gift', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      setSelectedGift(null);
+      localStorage.removeItem('selectedGift');
+      
+      // Notify parent component to refresh cart
+      if (onGiftAdded) {
+        onGiftAdded();
+      }
+    } catch (error) {
+      console.error('Error removing gift from cart:', error);
+    }
   };
 
   // Animation variants
