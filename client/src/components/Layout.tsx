@@ -46,7 +46,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Mobile Header - ONLY FOR MOBILE */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
         <div className="px-4 py-2">
@@ -73,300 +73,230 @@ export default function Layout({ children }: LayoutProps) {
                   </span>
                 )}
               </Link>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-1"
+                aria-label="Toggle menu"
               >
                 <Menu className="h-5 w-5" />
-              </Button>
+              </button>
             </div>
           </div>
-          
-          <div className="mb-2">
-            <SearchInput placeholder="Search books..." className="w-full h-8" />
+
+          {/* Search Bar */}
+          <div className="mb-3">
+            <SearchInput />
           </div>
-          
-          <div className="flex justify-center space-x-2">
-            <Link href="/" className={`text-xs px-2 py-1 rounded ${isActive("/") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+
+          {/* Navigation Row */}
+          <nav className="flex items-center justify-center space-x-4 pb-2">
+            <Link
+              href="/"
+              className={`text-sm px-2 py-1 rounded transition-colors ${
+                isActive("/") ? "text-primary-aqua font-semibold" : "text-gray-600"
+              }`}
+            >
               Home
             </Link>
-            <Link href="/catalog" className={`text-xs px-2 py-1 rounded ${isActive("/catalog") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+            <Link
+              href="/catalog"
+              className={`text-sm px-2 py-1 rounded transition-colors ${
+                isActive("/catalog") ? "text-primary-aqua font-semibold" : "text-gray-600"
+              }`}
+            >
               Catalog
             </Link>
-            <Link href="/track-order" className={`text-xs px-2 py-1 rounded ${isActive("/track-order") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
-              Track
+            <Link
+              href="/track-order"
+              className={`text-sm px-2 py-1 rounded transition-colors ${
+                isActive("/track-order") ? "text-primary-aqua font-semibold" : "text-gray-600"
+              }`}
+            >
+              Track Order
             </Link>
-            <Link href="/returns" className={`text-xs px-2 py-1 rounded ${isActive("/returns") ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+            <Link
+              href="/returns"
+              className={`text-sm px-2 py-1 rounded transition-colors ${
+                isActive("/returns") ? "text-primary-aqua font-semibold" : "text-gray-600"
+              }`}
+            >
               Returns
             </Link>
-          </div>
+            <Link
+              href="/contact"
+              className={`text-sm px-2 py-1 rounded transition-colors ${
+                isActive("/contact") ? "text-primary-aqua font-semibold" : "text-gray-600"
+              }`}
+            >
+              Contact
+            </Link>
+          </nav>
         </div>
       </header>
 
-      {/* Desktop Header - ONLY FOR DESKTOP */}
-      <header className="hidden md:block fixed-header bg-white border-b border-gray-200 w-full transition-all duration-300">
-        <div className="container-custom px-6">
-            <div className={`flex items-center justify-between w-full transition-all duration-300 ${
-              isScrolled ? 'h-16' : 'h-20'
-            }`}>
-              {/* Logo */}
-              <Link href="/" className="flex items-center flex-shrink-0">
-                <Logo size="md" variant="default" showText={true} />
-              </Link>
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200 fixed top-32 left-0 right-0 z-40">
+          <nav className="px-4 py-4 space-y-4">
+            <Link
+              href="/"
+              className={`block py-2 text-lg touch-target ${
+                isActive("/") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              href="/catalog"
+              className={`block py-2 text-lg touch-target ${
+                isActive("/catalog") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Catalog
+            </Link>
+            <Link
+              href="/about"
+              className={`block py-2 text-lg touch-target ${
+                isActive("/about") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className={`block py-2 text-lg touch-target ${
+                isActive("/contact") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Contact
+            </Link>
+            
+            {/* Mobile Country Selector */}
+            <div className="py-3 border-t border-gray-200 mt-2">
+              <div className="text-sm text-secondary-black mb-2">Select your country:</div>
+              <CountrySelector compact={true} className="w-full" />
+            </div>
+            
+            {isAuthenticated ? (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  setIsMobileMenuOpen(false);
+                  try {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    window.location.href = "/";
+                  } catch (error) {
+                    window.location.href = "/api/logout";
+                  }
+                }}
+                className="w-full touch-target mobile-button"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <Button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setLocation('/login');
+                  }}
+                  className="w-full bg-primary-aqua hover:bg-secondary-aqua touch-target mobile-button"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
 
-              {/* Search Bar */}
-              <div className="flex flex-1 max-w-6xl mx-8">
-                <SearchInput 
-                  placeholder="Search books, authors, ISBN..."
-                  className="w-full h-8"
-                />
+      {/* Desktop Header */}
+      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-28' : 'bg-white h-32'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
+        <div className="container-custom">
+          {/* Top Row - Logo, Search, Actions */}
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-8">
+              <Link href="/">
+                <Logo size="lg" variant="default" showText={true} />
+              </Link>
+            </div>
+
+            {/* Search Bar - Centered and Wide */}
+            <div className="flex-1 max-w-6xl mx-8">
+              <SearchInput />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-xs">
+                  {userCurrency.symbol} {userCurrency.code}
+                </Badge>
+                <CountrySelector />
               </div>
 
-              {/* Desktop Navigation */}
-              <div className="flex items-center space-x-6">
-                {/* Navigation Buttons */}
-                <div className="flex items-center space-x-2">
-                  <Link
-                    href="/"
-                    className={`text-xs px-2 py-1 rounded border transition-colors ${
-                      isActive("/") 
-                        ? "bg-primary-aqua text-white border-primary-aqua" 
-                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/catalog"
-                    className={`text-xs px-2 py-1 rounded border transition-colors ${
-                      isActive("/catalog") 
-                        ? "bg-primary-aqua text-white border-primary-aqua" 
-                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    Catalog
-                  </Link>
-                  <Link
-                    href="/track-order"
-                    className={`text-xs px-2 py-1 rounded border transition-colors ${
-                      isActive("/track-order") 
-                        ? "bg-primary-aqua text-white border-primary-aqua" 
-                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    Track Order
-                  </Link>
-                  <Link
-                    href="/returns"
-                    className={`text-xs px-2 py-1 rounded border transition-colors ${
-                      isActive("/returns") 
-                        ? "bg-primary-aqua text-white border-primary-aqua" 
-                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    Returns
-                  </Link>
-                </div>
-
-                {/* Country Selector */}
-                <CountrySelector />
-                
-                {/* Wishlist */}
-                <Link href="/wishlist" className="text-secondary-black hover:text-primary-aqua relative">
+              {isAuthenticated && (
+                <Link
+                  href="/wishlist"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors relative"
+                >
                   <Heart className="h-5 w-5" />
+                  <span className="hidden lg:inline">Wishlist</span>
                   {wishlistCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {wishlistCount}
                     </span>
                   )}
                 </Link>
+              )}
 
-                {/* Cart */}
-                <Link
-                  href="/cart"
-                  className={`transition-colors relative ${
-                    isCartAnimating 
-                      ? "cart-pulse-animation" 
-                      : "text-secondary-black hover:text-primary-aqua cart-normal"
-                  }`}
-                >
-                  <ShoppingCart className="h-6 w-6" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-abe-red text-white text-sm rounded-full w-6 h-6 flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-
-                {/* Authentication */}
-                {isAuthenticated ? (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600 hidden lg:inline">Hi, {user?.firstName}</span>
-                    <SecretAdminButton />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setLocation('/logout')}
-                      className="text-xs px-2 py-1"
-                    >
-                      Logout
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setLocation('/login')}
-                      className="text-xs px-2 py-1"
-                    >
-                      Login
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setLocation('/register')}
-                      className="text-xs px-2 py-1"
-                    >
-                      Register
-                    </Button>
-                  </div>
+              <Link
+                href="/cart"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors relative ${
+                  isCartAnimating ? "cart-pulse-animation" : ""
+                }`}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                <span className="hidden lg:inline">Cart</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                    {cartCount}
+                  </span>
                 )}
-              </div>
-            </div>
-        </div>
-      </header>
-        
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 fixed top-20 left-0 right-0 z-40">
-              <nav className="px-4 py-4 space-y-4">
-                <Link
-                  href="/"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/catalog"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/catalog") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Catalog
-                </Link>
-                <Link
-                  href="/about"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/about") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/contact") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Contact
-                </Link>
-                <Link
-                  href="/track-order"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/track-order") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Track Order
-                </Link>
-                <Link
-                  href="/returns"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/returns") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Returns
-                </Link>
-                
-                {/* Mobile Country Selector */}
-                <div className="py-3 border-t border-gray-200 mt-2">
-                  <div className="text-sm text-secondary-black mb-2">Select your country:</div>
-                  <CountrySelector compact={true} className="w-full" />
-                </div>
-                
-                {isAuthenticated && (
-                  <Link
-                    href="/wishlist"
-                    className={`block py-2 text-lg touch-target ${
-                      isActive("/wishlist") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                    }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Heart className="h-5 w-5" />
-                      <span>Wishlist</span>
-                      {wishlistCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                          {wishlistCount}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                )}
+              </Link>
 
-                {/* Mobile Auth Buttons */}
-                <div className="pt-4 border-t border-gray-200">
-                  {isAuthenticated ? (
-                    <>
-
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          setIsMobileMenuOpen(false);
-                          try {
-                            await fetch("/api/auth/logout", { method: "POST" });
-                            window.location.href = "/";
-                          } catch (error) {
-                            window.location.href = "/api/logout";
-                          }
-                        }}
-                        className="w-full touch-target mobile-button"
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        Logout
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="space-y-2">
-                      <Button
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          setLocation('/login');
-                        }}
-                        className="w-full bg-primary-aqua hover:bg-secondary-aqua touch-target mobile-button"
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        Login
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </nav>
+              {isAuthenticated ? (
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await fetch("/api/auth/logout", { method: "POST" });
+                      window.location.href = "/";
+                    } catch (error) {
+                      window.location.href = "/api/logout";
+                    }
+                  }}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              ) : (
+                <Button onClick={() => setLocation('/login')}>
+                  <User className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Bottom Row - Navigation Buttons */}
-          <div className="hidden md:flex items-center justify-center py-3 border-t border-gray-100">
+          <div className="flex items-center justify-center py-3 border-t border-gray-100">
             <nav className="flex items-center gap-4">
               <Link
                 href="/"
@@ -411,91 +341,87 @@ export default function Layout({ children }: LayoutProps) {
             </nav>
           </div>
         </div>
-      )}
-
-      {/* Main Content */}
-      <Link
-        href="/cart"
-        className={`fixed-cart-icon ${
-          isCartAnimating 
-            ? "cart-pulse-animation" 
-            : "text-secondary-black hover:text-primary-aqua"
-        }`}
-      >
-        <ShoppingCart className="h-6 w-6" />
-        {cartCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
-            {cartCount}
-          </span>
-        )}
-      </Link>
+      </header>
 
       {/* Secret Admin Floating Button - Only visible to admins */}
       <SecretAdminButton />
 
-      <div className="min-h-screen bg-white flex flex-col">
-        {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${
-          isScrolled ? 'pt-12 md:pt-16' : 'pt-14 md:pt-20'
-        }`}>
-          {children}
-        </main>
+      {/* Main Content */}
+      <main className={`flex-1 transition-all duration-300 ${
+        isScrolled ? 'pt-12 md:pt-16' : 'pt-14 md:pt-20'
+      }`}>
+        {children}
+      </main>
 
-        {/* Footer */}
-        <footer className="bg-base-black text-white mt-16">
-          <div className="container-custom py-12">
-            <div className="grid md:grid-cols-4 gap-8">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bookerly font-bold footer-logo">
-                    A<span className="red-2">2</span>Z BOOKSHOP
+      {/* Footer */}
+      <footer className="bg-base-black text-white mt-16">
+        <div className="container-custom py-12">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bookerly font-bold footer-logo">
+                  A<span className="red-2">2</span>Z BOOKSHOP
                 </h3>
                 <SecretAdminAccess />
               </div>
               <p className="text-gray-400 mb-4">
-                Your trusted partner in discovering rare, collectible, and contemporary books from around the world.
+                Your trusted partner for quality books worldwide. Discover, explore, and enjoy the world of literature.
               </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-white">
+                  <span className="sr-only">Facebook</span>
+                  📘
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white">
+                  <span className="sr-only">Twitter</span>
+                  🐦
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white">
+                  <span className="sr-only">Instagram</span>
+                  📷
+                </a>
+              </div>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
-                <li><Link href="/catalog" className="text-gray-400 hover:text-white transition-colors">Catalog</Link></li>
-                <li><Link href="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
+                <li><Link href="/catalog" className="text-gray-400 hover:text-white">Book Catalog</Link></li>
+                <li><Link href="/about" className="text-gray-400 hover:text-white">About Us</Link></li>
+                <li><Link href="/contact" className="text-gray-400 hover:text-white">Contact</Link></li>
+                <li><Link href="/track-order" className="text-gray-400 hover:text-white">Track Order</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Categories</h4>
-              <ul className="space-y-2">
-                <li><Link href="/catalog?category=fiction" className="text-gray-400 hover:text-white transition-colors">Fiction</Link></li>
-                <li><Link href="/catalog?category=non-fiction" className="text-gray-400 hover:text-white transition-colors">Non-Fiction</Link></li>
-                <li><Link href="/catalog?category=rare" className="text-gray-400 hover:text-white transition-colors">Rare Books</Link></li>
-                <li><Link href="/catalog?category=academic" className="text-gray-400 hover:text-white transition-colors">Academic</Link></li>
-              </ul>
-            </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Customer Service</h4>
               <ul className="space-y-2">
-                <li><Link href="/shipping-info" className="text-gray-400 hover:text-white transition-colors">Shipping Info</Link></li>
-                <li><Link href="/return-policy" className="text-gray-400 hover:text-white transition-colors">Return Policy</Link></li>
-                <li><Link href="/cancellation-policy" className="text-gray-400 hover:text-white transition-colors">Cancellation Policy</Link></li>
-                <li><Link href="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link></li>
-                <li><Link href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link></li>
-                <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/shipping-info" className="text-gray-400 hover:text-white">Shipping Info</Link></li>
+                <li><Link href="/return-policy" className="text-gray-400 hover:text-white">Return Policy</Link></li>
+                <li><Link href="/cancellation-policy" className="text-gray-400 hover:text-white">Cancellation Policy</Link></li>
+                <li><Link href="/faq" className="text-gray-400 hover:text-white">FAQ</Link></li>
+                <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
+                <li><Link href="/terms-conditions" className="text-gray-400 hover:text-white">Terms & Conditions</Link></li>
               </ul>
             </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Contact Info</h4>
+              <div className="space-y-2 text-gray-400">
+                <p>📧 support@a2zbookshop.com</p>
+                <p>📧 a2zbookshopglobal@gmail.com</p>
+                <p>🌐 https://a2zbookshop.com</p>
+                <p>🌐 https://www.a2zbookshop.com</p>
+              </div>
+            </div>
           </div>
-          <hr className="border-gray-700 my-8" />
-          <div className="flex flex-col md:flex-row justify-between items-center">
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400 text-sm">© 2025 A<span className="text-red-500">2</span>Z BOOKSHOP. All rights reserved.</p>
             <p className="text-gray-400 text-sm">Made with ❤️ for book lovers worldwide</p>
           </div>
-          
-
-          </div>
-        </footer>
-      </div>
-    </>
+        </div>
+      </footer>
+    </div>
   );
 }
