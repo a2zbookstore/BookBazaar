@@ -131,15 +131,22 @@ export default function BookCard({ book }: BookCardProps) {
               <img
                 src={(() => {
                   let imageUrl = book.imageUrl;
+                  console.log('BookCard processing image URL for:', book.title, 'Original URL:', imageUrl);
+                  
                   // Handle different domain patterns
                   if (imageUrl.includes('www.a2zbookshop.com')) {
                     imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
+                    console.log('Replaced a2zbookshop domain:', imageUrl);
                   } else if (imageUrl.includes('.replit.dev')) {
                     imageUrl = imageUrl.replace(/https:\/\/[a-z0-9-]+\.replit\.dev/, window.location.origin);
+                    console.log('Replaced replit domain:', imageUrl);
                   } else if (!imageUrl.startsWith('http')) {
                     // Relative URL - add current origin
                     imageUrl = window.location.origin + (imageUrl.startsWith('/') ? '' : '/') + imageUrl;
+                    console.log('Added origin to relative URL:', imageUrl);
                   }
+                  
+                  console.log('Final image URL for', book.title, ':', imageUrl);
                   return imageUrl;
                 })()}
                 alt={book.title}
@@ -154,9 +161,11 @@ export default function BookCard({ book }: BookCardProps) {
                   // Try different URL variations
                   if (!target.dataset.retryAttempt) {
                     target.dataset.retryAttempt = '1';
+                    console.log('Attempting retry for:', book.title);
                     
-                    // Try without domain replacement
+                    // Try without domain replacement first
                     if (book.imageUrl.startsWith('http')) {
+                      console.log('Trying original URL:', book.imageUrl);
                       target.src = book.imageUrl;
                       return;
                     }
@@ -164,11 +173,24 @@ export default function BookCard({ book }: BookCardProps) {
                     // Try direct path
                     const imagePath = book.imageUrl.split('/').pop();
                     if (imagePath) {
-                      target.src = `${window.location.origin}/uploads/images/${imagePath}`;
+                      const retryUrl = `${window.location.origin}/uploads/images/${imagePath}`;
+                      console.log('Trying direct path:', retryUrl);
+                      target.src = retryUrl;
+                      return;
+                    }
+                  } else if (target.dataset.retryAttempt === '1') {
+                    target.dataset.retryAttempt = '2';
+                    // Try with different domain patterns
+                    const imagePath = book.imageUrl.split('/').pop();
+                    if (imagePath) {
+                      const retryUrl = `/uploads/images/${imagePath}`;
+                      console.log('Trying relative path:', retryUrl);
+                      target.src = retryUrl;
                       return;
                     }
                   }
                   
+                  console.log('All retry attempts failed for:', book.title);
                   // Show fallback if all attempts fail
                   target.style.display = 'none';
                   const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
