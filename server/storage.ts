@@ -37,6 +37,12 @@ import {
   type InsertReturnRequest,
   type RefundTransaction,
   type InsertRefundTransaction,
+  giftItems,
+  homepageContent,
+  type GiftItem,
+  type InsertGiftItem,
+  type HomepageContent,
+  type InsertHomepageContent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
