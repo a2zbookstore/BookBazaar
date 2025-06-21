@@ -1390,6 +1390,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to check if cart has any non-gift books
+  const hasNonGiftBooks = (cartItems: any[]) => {
+    return cartItems.some(item => !item.isGift);
+  };
+
+  // Helper function to automatically remove gifts if no books remain
+  const autoRemoveGiftsIfNoBooks = async (req: any, cartItems: any[]) => {
+    const hasBooks = hasNonGiftBooks(cartItems);
+    if (!hasBooks && (req.session as any).giftItem) {
+      // Remove gift from session if no books remain
+      (req.session as any).giftItem = null;
+      console.log("Auto-removed gift: no books remaining in cart");
+    }
+  };
+
   // Cart routes - support both authenticated and guest users
   app.get("/api/cart", async (req: any, res) => {
     try {
@@ -1406,11 +1421,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (userId) {
         const cartItems = await storage.getCartItems(userId);
+        
+        // Auto-remove gifts if no books remain
+        await autoRemoveGiftsIfNoBooks(req, cartItems);
+        
         const giftItem = (req.session as any).giftItem;
         
-        // Add gift item to cart if present
+        // Add gift item to cart if present and there are books
         const fullCart = [...cartItems];
-        if (giftItem) {
+        if (giftItem && hasNonGiftBooks(cartItems)) {
           fullCart.push({
             id: `gift_${giftItem.giftId}`,
             book: {
@@ -1429,6 +1448,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Guest user - return session-based cart with book details
         const guestCart = (req.session as any).guestCart || [];
+        
+        // Auto-remove gifts if no books remain
+        await autoRemoveGiftsIfNoBooks(req, guestCart);
+        
         const giftItem = (req.session as any).giftItem;
         
         // Ensure each cart item has complete book data
@@ -1440,8 +1463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return item;
         }));
         
-        // Add gift item to cart if present
-        if (giftItem) {
+        // Add gift item to cart if present and there are books
+        if (giftItem && hasNonGiftBooks(cartWithBooks)) {
           cartWithBooks.push({
             id: `gift_${giftItem.giftId}`,
             book: {
@@ -1580,12 +1603,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Authenticated user - remove from database cart
         await storage.removeFromCart(parseInt(id));
+        
+        // Check remaining cart items and auto-remove gifts if no books remain
+        const remainingCartItems = await storage.getCartItems(userId);
+        await autoRemoveGiftsIfNoBooks(req, remainingCartItems);
+        
         res.json({ message: "Item removed from cart" });
       } else {
         // Guest user - remove from session cart
         const guestCart = (req.session as any).guestCart || [];
         const filteredCart = guestCart.filter((item: any) => item.id.toString() !== id);
         (req.session as any).guestCart = filteredCart;
+        
+        // Auto-remove gifts if no books remain
+        await autoRemoveGiftsIfNoBooks(req, filteredCart);
         
         req.session.save(() => {
           res.json({ message: "Item removed from cart" });
@@ -1612,6 +1643,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (userId) {
         await storage.clearCart(userId);
+        // Auto-remove gifts since cart is now empty
+        (req.session as any).giftItem = null;
       } else {
         // Clear guest cart from session
         (req.session as any).guestCart = [];
@@ -1639,6 +1672,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
+      }
+      
+      // Check if user has any books in cart before allowing gift
+      let hasBooks = false;
+      if (userId) {
+        const cartItems = await storage.getCartItems(userId);
+        hasBooks = hasNonGiftBooks(cartItems);
+      } else {
+        const guestCart = (req.session as any).guestCart || [];
+        hasBooks = hasNonGiftBooks(guestCart);
+      }
+      
+      if (!hasBooks) {
+        return res.status(400).json({ message: "You must have at least one book in your cart to select a gift" });
       }
       
       const giftItem = {

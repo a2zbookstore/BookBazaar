@@ -51,10 +51,13 @@ export default function CartPage() {
   const [giftItem, setGiftItem] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   
-  // Load gift item from localStorage
+  // Check if cart has any non-gift books
+  const hasNonGiftBooks = cartItems.some(item => !item.isGift);
+
+  // Load gift item from localStorage and auto-remove if no books
   useEffect(() => {
     const savedGift = localStorage.getItem('giftDetails');
-    if (savedGift && cartItems.length > 0) {
+    if (savedGift && cartItems.length > 0 && hasNonGiftBooks) {
       try {
         setGiftItem(JSON.parse(savedGift));
       } catch (error) {
@@ -62,8 +65,13 @@ export default function CartPage() {
       }
     } else {
       setGiftItem(null);
+      // Clear localStorage if no books remain
+      if (!hasNonGiftBooks) {
+        localStorage.removeItem('giftDetails');
+        localStorage.removeItem('selectedGift');
+      }
     }
-  }, [cartItems]);
+  }, [cartItems, hasNonGiftBooks]);
 
 
   // Get shipping rate from admin panel - default to India if no location detected

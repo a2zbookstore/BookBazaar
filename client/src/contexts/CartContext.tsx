@@ -84,6 +84,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const removeFromCart = async (id: number) => {
     await removeFromCartMutation.mutateAsync(id);
+    
+    // After removing an item, check if gifts should be auto-removed
+    // This will be handled by the server-side logic, but we invalidate to refresh
+    queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
   };
 
   const clearCart = async () => {
