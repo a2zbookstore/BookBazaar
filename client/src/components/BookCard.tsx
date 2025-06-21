@@ -138,11 +138,11 @@ export default function BookCard({ book }: BookCardProps) {
                     imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
                     console.log('Replaced a2zbookshop domain:', imageUrl);
                   } else if (imageUrl.includes('.replit.dev')) {
-                    // Direct string replacement for replit domains
-                    const urlParts = imageUrl.split('/');
-                    if (urlParts.length > 3) {
-                      // Reconstruct with current domain
-                      imageUrl = window.location.origin + '/' + urlParts.slice(3).join('/');
+                    // Extract path after domain for replit URLs
+                    const pathIndex = imageUrl.indexOf('/uploads/');
+                    if (pathIndex !== -1) {
+                      const imagePath = imageUrl.substring(pathIndex);
+                      imageUrl = window.location.origin + imagePath;
                       console.log('Replaced replit domain with path:', imageUrl);
                     }
                   } else if (!imageUrl.startsWith('http')) {

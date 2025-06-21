@@ -291,9 +291,10 @@ export default function CartPage() {
                               if (imageUrl.includes('www.a2zbookshop.com')) {
                                 imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
                               } else if (imageUrl.includes('.replit.dev')) {
-                                const urlParts = imageUrl.split('/');
-                                if (urlParts.length > 3) {
-                                  imageUrl = window.location.origin + '/' + urlParts.slice(3).join('/');
+                                const pathIndex = imageUrl.indexOf('/uploads/');
+                                if (pathIndex !== -1) {
+                                  const imagePath = imageUrl.substring(pathIndex);
+                                  imageUrl = window.location.origin + imagePath;
                                 }
                               }
                               return imageUrl;
