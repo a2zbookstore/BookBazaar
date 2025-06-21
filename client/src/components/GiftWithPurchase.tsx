@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
@@ -288,17 +289,15 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Gift Category</h3>
                 <p className="text-gray-600">Select a category to see available gifts</p>
               </div>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
-                onClick={() => {
-                  // Navigate to gift categories page or show all gifts
-                  window.open('/catalog?gift=true', '_blank');
-                }}
-              >
-                <ExternalLink className="h-4 w-4" />
-                See All
-              </Button>
+              <Link href="/gift-items">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  See All Gifts
+                </Button>
+              </Link>
             </div>
             
             <div className="relative overflow-hidden">
