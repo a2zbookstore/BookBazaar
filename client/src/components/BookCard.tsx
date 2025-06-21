@@ -127,28 +127,22 @@ export default function BookCard({ book }: BookCardProps) {
         {/* Book Image */}
         <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative">
           {book.imageUrl ? (
-            <>
-              <img
-                src={`/uploads/images/${book.imageUrl.split('/').pop()}?v=${Date.now()}`}
-                alt={book.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                onLoad={() => {}}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = 'https://via.placeholder.com/150x200/f0f0f0/666?text=No+Image';
-                }}
-              />
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-icon" style={{display: 'none'}}>
-                <div className="text-center p-4">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-primary-aqua/10 rounded-full flex items-center justify-center">
-                    <span className="text-primary-aqua font-bookerly text-lg">📚</span>
-                  </div>
-                  <p className="text-xs text-gray-500 font-medium">Image Error</p>
-                </div>
-              </div>
-            </>
+            <img
+              src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
+              alt={book.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              onLoad={(e) => {
+                console.log('✅ Image loaded successfully:', book.title);
+              }}
+              onError={(e) => {
+                console.log('❌ Image failed to load:', book.title);
+                console.log('❌ Failed URL:', (e.target as HTMLImageElement).src);
+                const target = e.target as HTMLImageElement;
+                target.src = 'https://via.placeholder.com/150x200/f0f0f0/666?text=No+Image';
+              }}
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-icon">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="text-center p-4">
                 <div className="w-12 h-12 mx-auto mb-2 bg-primary-aqua/10 rounded-full flex items-center justify-center">
                   <span className="text-primary-aqua font-bookerly text-lg">📚</span>
