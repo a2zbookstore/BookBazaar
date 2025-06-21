@@ -125,9 +125,9 @@ export default function BookDetailPage() {
                     if (imageUrl.includes('www.a2zbookshop.com')) {
                       imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
                     } else if (imageUrl.includes('.replit.dev')) {
-                      const pathMatch = imageUrl.match(/https:\/\/[^\/]+(.+)$/);
-                      if (pathMatch) {
-                        imageUrl = window.location.origin + pathMatch[1];
+                      const urlParts = imageUrl.split('/');
+                      if (urlParts.length > 3) {
+                        imageUrl = window.location.origin + '/' + urlParts.slice(3).join('/');
                       }
                     }
                     return imageUrl;

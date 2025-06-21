@@ -138,10 +138,11 @@ export default function BookCard({ book }: BookCardProps) {
                     imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
                     console.log('Replaced a2zbookshop domain:', imageUrl);
                   } else if (imageUrl.includes('.replit.dev')) {
-                    // Extract the path part after domain
-                    const pathMatch = imageUrl.match(/https:\/\/[^\/]+(.+)$/);
-                    if (pathMatch) {
-                      imageUrl = window.location.origin + pathMatch[1];
+                    // Direct string replacement for replit domains
+                    const urlParts = imageUrl.split('/');
+                    if (urlParts.length > 3) {
+                      // Reconstruct with current domain
+                      imageUrl = window.location.origin + '/' + urlParts.slice(3).join('/');
                       console.log('Replaced replit domain with path:', imageUrl);
                     }
                   } else if (!imageUrl.startsWith('http')) {
@@ -169,14 +170,7 @@ export default function BookCard({ book }: BookCardProps) {
                     target.dataset.retryAttempt = '1';
                     console.log('Attempting retry for:', book.title);
                     
-                    // Try without domain replacement first
-                    if (book.imageUrl.startsWith('http')) {
-                      console.log('Trying original URL:', book.imageUrl);
-                      target.src = book.imageUrl;
-                      return;
-                    }
-                    
-                    // Try direct path
+                    // Try direct path with filename only
                     const imagePath = book.imageUrl.split('/').pop();
                     if (imagePath) {
                       const retryUrl = `${window.location.origin}/uploads/images/${imagePath}`;
