@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit, Trash2, Package, Gift } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Gift, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { GiftCategory } from "@/shared/schema";
@@ -26,6 +26,9 @@ interface CategoryForm {
 export default function GiftCategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<GiftCategory | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,6 +105,11 @@ export default function GiftCategoriesPage() {
       sortOrder: 0,
     });
     setEditingCategory(null);
+    setUploadedImage(null);
+    setImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleEdit = (category: GiftCategory) => {
@@ -114,6 +122,8 @@ export default function GiftCategoriesPage() {
       isActive: category.isActive,
       sortOrder: category.sortOrder,
     });
+    setImagePreview(category.imageUrl || '');
+    setUploadedImage(null);
     setIsDialogOpen(true);
   };
 
@@ -123,9 +133,48 @@ export default function GiftCategoriesPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle image file upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedImage(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview(result);
+        setForm({ ...form, imageUrl: '' }); // Clear URL when file is uploaded
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Clear image selection
+  const clearImage = () => {
+    setUploadedImage(null);
+    setImagePreview('');
+    setForm({ ...form, imageUrl: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    categoryMutation.mutate(form);
+    
+    let finalForm = { ...form };
+    
+    // If image file is uploaded, convert to base64 and store in imageUrl
+    if (uploadedImage) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        finalForm.imageUrl = reader.result as string;
+        categoryMutation.mutate(finalForm);
+      };
+      reader.readAsDataURL(uploadedImage);
+    } else {
+      categoryMutation.mutate(finalForm);
+    }
   };
 
   return (
@@ -197,25 +246,83 @@ export default function GiftCategoriesPage() {
               </div>
 
               <div>
-                <Label htmlFor="imageUrl">Category Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  value={form.imageUrl}
-                  onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                  placeholder="https://example.com/category-image.jpg"
-                />
-                {form.imageUrl && (
-                  <div className="mt-2">
-                    <img 
-                      src={form.imageUrl} 
-                      alt="Preview"
-                      className="w-20 h-20 object-cover rounded border"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                <Label>Category Image</Label>
+                
+                {/* Image Upload Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="imageFile" className="text-sm text-gray-600">Upload Image File</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          ref={fileInputRef}
+                          id="imageFile"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-2"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Choose File
+                        </Button>
+                        {uploadedImage && (
+                          <span className="text-sm text-green-600">
+                            {uploadedImage.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-gray-500 self-end pb-1">OR</div>
+                    
+                    <div className="flex-1">
+                      <Label htmlFor="imageUrl" className="text-sm text-gray-600">Image URL</Label>
+                      <Input
+                        id="imageUrl"
+                        value={form.imageUrl}
+                        onChange={(e) => {
+                          setForm({ ...form, imageUrl: e.target.value });
+                          setImagePreview(e.target.value);
+                          setUploadedImage(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                        placeholder="https://example.com/image.jpg"
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
-                )}
+
+                  {/* Image Preview */}
+                  {(imagePreview || uploadedImage) && (
+                    <div className="relative inline-block">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview"
+                        className="w-24 h-24 object-cover rounded border shadow-sm"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={clearImage}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
