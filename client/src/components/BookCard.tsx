@@ -128,17 +128,15 @@ export default function BookCard({ book }: BookCardProps) {
         <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative" style={{ minHeight: '200px' }}>
           {book.imageUrl ? (
             <img
-              src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
+              src={(() => {
+                const filename = book.imageUrl.split('/').pop();
+                // For production deployment, use relative paths that work with any domain
+                return `/uploads/images/${filename}`;
+              })()}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              style={{ maxWidth: '100%', height: 'auto' }}
-              onLoad={(e) => {
-                console.log('✅ Image loaded for:', book.title);
-                const target = e.target as HTMLImageElement;
-                target.style.opacity = '1';
-              }}
+              onLoad={() => {}}
               onError={(e) => {
-                console.log('❌ Image failed for:', book.title, 'URL:', (e.target as HTMLImageElement).src);
                 const target = e.target as HTMLImageElement;
                 target.src = 'https://via.placeholder.com/150x200/f0f0f0/666?text=No+Image';
               }}
