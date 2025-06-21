@@ -25,10 +25,14 @@ if (process.env.NODE_ENV === 'development') {
 
 // Serve uploaded images statically with proper headers
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png')) {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
       res.set('Content-Type', 'image/jpeg');
+    } else if (filePath.endsWith('.png')) {
+      res.set('Content-Type', 'image/png');
     }
+    res.set('Cache-Control', 'public, max-age=86400'); // 24 hour cache
+    res.set('Access-Control-Allow-Origin', '*');
   }
 }));
 app.use('/attached_assets', express.static(path.join(process.cwd(), 'attached_assets')));

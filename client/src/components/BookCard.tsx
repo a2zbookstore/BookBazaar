@@ -129,17 +129,47 @@ export default function BookCard({ book }: BookCardProps) {
           {book.imageUrl ? (
             <>
               <img
-                src={book.imageUrl
-                  .replace('https://www.a2zbookshop.com', window.location.origin)
-                  .replace(/https:\/\/[a-z0-9-]+\.replit\.dev/, window.location.origin)}
+                src={(() => {
+                  let imageUrl = book.imageUrl;
+                  // Handle different domain patterns
+                  if (imageUrl.includes('www.a2zbookshop.com')) {
+                    imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
+                  } else if (imageUrl.includes('.replit.dev')) {
+                    imageUrl = imageUrl.replace(/https:\/\/[a-z0-9-]+\.replit\.dev/, window.location.origin);
+                  } else if (!imageUrl.startsWith('http')) {
+                    // Relative URL - add current origin
+                    imageUrl = window.location.origin + (imageUrl.startsWith('/') ? '' : '/') + imageUrl;
+                  }
+                  return imageUrl;
+                })()}
                 alt={book.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 onLoad={(e) => {
                   console.log('Image loaded successfully:', book.title);
                 }}
                 onError={(e) => {
-                  console.log('Image failed to load:', book.title, book.imageUrl);
+                  console.log('Image failed to load:', book.title, 'URL:', book.imageUrl);
                   const target = e.target as HTMLImageElement;
+                  
+                  // Try different URL variations
+                  if (!target.dataset.retryAttempt) {
+                    target.dataset.retryAttempt = '1';
+                    
+                    // Try without domain replacement
+                    if (book.imageUrl.startsWith('http')) {
+                      target.src = book.imageUrl;
+                      return;
+                    }
+                    
+                    // Try direct path
+                    const imagePath = book.imageUrl.split('/').pop();
+                    if (imagePath) {
+                      target.src = `${window.location.origin}/uploads/images/${imagePath}`;
+                      return;
+                    }
+                  }
+                  
+                  // Show fallback if all attempts fail
                   target.style.display = 'none';
                   const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
                   if (fallback) {
