@@ -129,10 +129,16 @@ export default function BookCard({ book }: BookCardProps) {
           {book.imageUrl ? (
             <>
               <img
-                src={book.imageUrl.replace('https://www.a2zbookshop.com', window.location.origin)}
+                src={book.imageUrl
+                  .replace('https://www.a2zbookshop.com', window.location.origin)
+                  .replace(/https:\/\/[a-z0-9-]+\.replit\.dev/, window.location.origin)}
                 alt={book.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                onLoad={(e) => {
+                  console.log('Image loaded successfully:', book.title);
+                }}
                 onError={(e) => {
+                  console.log('Image failed to load:', book.title, book.imageUrl);
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                   const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
@@ -146,7 +152,7 @@ export default function BookCard({ book }: BookCardProps) {
                   <div className="w-12 h-12 mx-auto mb-2 bg-primary-aqua/10 rounded-full flex items-center justify-center">
                     <span className="text-primary-aqua font-bookerly text-lg">📚</span>
                   </div>
-                  <p className="text-xs text-gray-500 font-medium">Image Loading...</p>
+                  <p className="text-xs text-gray-500 font-medium">Image Error</p>
                 </div>
               </div>
             </>

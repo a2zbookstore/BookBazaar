@@ -286,7 +286,9 @@ export default function CartPage() {
                           </div>
                         ) : item.book.imageUrl ? (
                           <img
-                            src={item.book.imageUrl.replace('https://www.a2zbookshop.com', window.location.origin)}
+                            src={item.book.imageUrl
+                              .replace('https://www.a2zbookshop.com', window.location.origin)
+                              .replace(/https:\/\/[a-z0-9-]+\.replit\.dev/, window.location.origin)}
                             alt={item.book.title}
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {
