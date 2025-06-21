@@ -55,88 +55,77 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
         quantity: 1,
         isGift: true
       }));
+
+      // Show confirmation alert
+      alert(`🎁 Great choice! "${giftItem.name}" has been selected as your free gift and will be added to your cart at checkout.`);
     }
   };
 
-  const handleChangeGift = () => {
+  const handleRefreshGifts = () => {
     setSelectedGift(null);
     localStorage.removeItem('selectedGift');
     localStorage.removeItem('giftDetails');
   };
 
+  // Animation variants
   const containerVariants = {
-    hidden: { 
-      opacity: 0, 
-      y: 50,
-      scale: 0.9
-    },
+    hidden: { opacity: 0, y: 50 },
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut",
+      transition: { 
+        duration: 0.8,
         staggerChildren: 0.1
-      }
-    },
-    exit: {
-      opacity: 0,
-      y: -50,
-      scale: 0.9,
-      transition: {
-        duration: 0.4
       }
     }
   };
 
   const itemVariants = {
-    hidden: { 
-      opacity: 0, 
-      scale: 0.8,
-      rotateY: -15
-    },
+    hidden: { opacity: 0, y: 30 },
     visible: { 
       opacity: 1, 
-      scale: 1,
-      rotateY: 0,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
+      y: 0,
+      transition: { duration: 0.6 }
     }
   };
 
-  const glowVariants = {
-    initial: { 
-      boxShadow: "0 0 0px rgba(59, 130, 246, 0)" 
-    },
-    hover: { 
-      boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
-      transition: {
-        duration: 0.3
-      }
-    },
-    selected: {
-      boxShadow: "0 0 25px rgba(34, 197, 94, 0.6)",
-      transition: {
-        duration: 0.3
-      }
-    }
-  };
-
-  // Always show the gift section prominently at the top
+  // Always show the gift section
   const alwaysVisible = true;
 
-  return (
-    <AnimatePresence>
-      <motion.div
-        variants={containerVariants}
+  if (isLoading) {
+    return (
+      <motion.section 
         initial="hidden"
         animate="visible"
-        exit="exit"
-        className="py-16 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 shadow-xl border-b-4 border-green-400"
+        variants={containerVariants}
+        className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 relative overflow-hidden"
       >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
+          <p className="text-gray-600">Loading special gift offers...</p>
+        </div>
+      </motion.section>
+    );
+  }
+
+  if (activeGiftItems.length === 0) {
+    return null; // Don't show section if no gifts available
+  }
+
+  return (
+    <motion.section 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 relative overflow-hidden"
+    >
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-green-200 to-blue-200 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full opacity-20 blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header Section */}
           <motion.div 
@@ -170,7 +159,7 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
               className="text-2xl text-gray-700 dark:text-gray-300 mb-6 font-semibold"
               variants={itemVariants}
             >
-              Buy any book and get <span className="font-bold text-green-600 text-3xl">1 FREE Novel or Notebook</span> as a gift!
+              Buy any book and get <span className="font-bold text-green-600 text-3xl">1 FREE Gift</span> of your choice!
             </motion.p>
             
             {!isVisible && alwaysVisible && (
@@ -215,131 +204,126 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
           </motion.div>
 
           {/* Gift Selection Grid */}
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
-            variants={containerVariants}
-          >
-            {GIFT_ITEMS.map((gift) => (
-              <motion.div
-                key={gift.id}
-                variants={itemVariants}
-                whileHover={{ y: -8 }}
-                className="relative"
-              >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {activeGiftItems.map((gift, index) => {
+              const isSelected = selectedGift === gift.id.toString();
+              return (
                 <motion.div
-                  variants={glowVariants}
-                  initial="initial"
-                  whileHover={selectedGift !== gift.id ? "hover" : "selected"}
-                  animate={selectedGift === gift.id ? "selected" : "initial"}
-                  className="rounded-xl overflow-hidden"
+                  key={gift.id}
+                  variants={itemVariants}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative"
                 >
                   <Card 
-                    className={`cursor-pointer transition-all duration-300 border-2 ${
-                      selectedGift === gift.id 
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
-                        : 'border-gray-200 hover:border-blue-400 dark:border-gray-700'
-                    } ${
-                      selectedGift && selectedGift !== gift.id 
-                        ? 'opacity-60' 
-                        : 'opacity-100'
-                    } ${
-                      !isVisible && alwaysVisible
-                        ? 'opacity-50 cursor-not-allowed'
-                        : ''
-                    }`}
-                    onClick={() => handleGiftSelect(gift.id)}
+                    className={`
+                      relative overflow-hidden transition-all duration-300 cursor-pointer group h-full
+                      ${isSelected 
+                        ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300' 
+                        : 'hover:shadow-xl border-gray-200 hover:border-gray-300'
+                      }
+                    `}
+                    onClick={() => handleGiftSelect(gift.id.toString())}
                   >
-                    <CardContent className="p-4">
-                      <div className="relative mb-4">
+                    <CardContent className="p-6">
+                      {/* Gift Image */}
+                      <div className="relative mb-4 overflow-hidden rounded-xl bg-gray-100">
                         <img 
-                          src={gift.image} 
+                          src={gift.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop'} 
                           alt={gift.name}
-                          className="w-full h-48 object-cover rounded-lg"
+                          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop';
+                          }}
                         />
-                        
-                        {/* Gift Type Badge */}
-                        <Badge 
-                          className={`absolute top-2 left-2 ${
-                            gift.type === 'novel' 
-                              ? 'bg-purple-500 hover:bg-purple-600' 
-                              : 'bg-blue-500 hover:bg-blue-600'
-                          }`}
-                        >
-                          {gift.type === 'novel' ? '📚 Novel' : '📓 Notebook'}
-                        </Badge>
-
-                        {/* Selection Indicator */}
-                        <AnimatePresence>
-                          {selectedGift === gift.id && (
-                            <motion.div
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              exit={{ scale: 0, opacity: 0 }}
-                              className="absolute top-2 right-2 bg-green-500 rounded-full p-2"
-                            >
-                              <Check className="h-4 w-4 text-white" />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        {isSelected && (
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute top-3 right-3 bg-green-500 text-white rounded-full p-2 shadow-lg"
+                          >
+                            <Check className="h-5 w-5" />
+                          </motion.div>
+                        )}
                       </div>
 
-                      <h3 className="font-semibold text-lg mb-2 text-gray-900 dark:text-white">
-                        {gift.name}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                        {gift.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-green-600">FREE</span>
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Button
-                            variant={selectedGift === gift.id ? "default" : "outline"}
-                            size="sm"
-                            className={selectedGift === gift.id ? "bg-green-500 hover:bg-green-600" : ""}
-                            disabled={selectedGift === gift.id || (!isVisible && alwaysVisible)}
+                      {/* Gift Details */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={gift.type === 'novel' ? 'default' : 'secondary'}
+                            className="text-xs font-medium"
                           >
-                            {selectedGift === gift.id ? 'Selected' : (!isVisible && alwaysVisible ? 'Add to Cart First' : 'Select Gift')}
-                          </Button>
-                        </motion.div>
+                            {gift.type === 'novel' ? '📖 Novel' : '📝 Notebook'}
+                          </Badge>
+                          {gift.price && parseFloat(gift.price) > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              ${parseFloat(gift.price).toFixed(2)}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-green-600 transition-colors">
+                          {gift.name}
+                        </h3>
+                        
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                          {gift.description || 'Special gift item'}
+                        </p>
+
+                        {gift.isbn && (
+                          <p className="text-xs text-gray-500">
+                            ISBN: {gift.isbn}
+                          </p>
+                        )}
+
+                        {isSelected && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 p-3 rounded-lg text-sm font-medium"
+                          >
+                            ✅ Selected as your free gift!
+                          </motion.div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                 </motion.div>
-              </motion.div>
-            ))}
-          </motion.div>
+              );
+            })}
+          </div>
 
-          {/* Change Gift Button */}
-          <AnimatePresence>
-            {selectedGift && (
+          {/* Action Buttons */}
+          <motion.div 
+            className="text-center mt-12"
+            variants={itemVariants}
+          >
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="text-center"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <Button
+                  onClick={handleRefreshGifts}
+                  variant="outline"
+                  className="flex items-center gap-2 px-6 py-3 text-lg font-medium border-2 border-gray-300 hover:border-blue-400"
                 >
-                  <Button
-                    variant="outline"
-                    onClick={handleChangeGift}
-                    className="gap-2 border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-600 dark:text-orange-400"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Change Gift Selection
-                  </Button>
-                </motion.div>
+                  <RefreshCw className="h-5 w-5" />
+                  Reset Selection
+                </Button>
               </motion.div>
-            )}
-          </AnimatePresence>
+              
+              <motion.p 
+                className="text-sm text-gray-600 dark:text-gray-400 max-w-md"
+                variants={itemVariants}
+              >
+                * Free gift will be automatically added to your cart when you proceed to checkout with any book purchase.
+              </motion.p>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    </motion.section>
   );
 }
