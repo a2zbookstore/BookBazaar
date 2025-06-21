@@ -123,13 +123,14 @@ export default function BookDetailPage() {
                   src={(() => {
                     let imageUrl = book.imageUrl;
                     if (imageUrl.includes('www.a2zbookshop.com')) {
-                      imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
+                      const fileName = imageUrl.split('/').pop();
+                      if (fileName) {
+                        imageUrl = `/uploads/images/${fileName}`;
+                      }
                     } else if (imageUrl.includes('.replit.dev')) {
-                      const pathIndex = imageUrl.indexOf('/uploads/');
-                      if (pathIndex !== -1) {
-                        const imagePath = imageUrl.substring(pathIndex);
-                        const currentOrigin = window.location.protocol + '//' + window.location.host;
-                        imageUrl = currentOrigin + imagePath;
+                      const fileName = imageUrl.split('/').pop();
+                      if (fileName) {
+                        imageUrl = `/uploads/images/${fileName}`;
                       }
                     }
                     return imageUrl;

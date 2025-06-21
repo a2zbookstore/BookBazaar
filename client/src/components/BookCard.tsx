@@ -135,20 +135,17 @@ export default function BookCard({ book }: BookCardProps) {
                   
                   // Handle different domain patterns
                   if (imageUrl.includes('www.a2zbookshop.com')) {
-                    const currentOrigin = window.location.protocol + '//' + window.location.host;
-                    imageUrl = imageUrl.replace('https://www.a2zbookshop.com', currentOrigin);
-                    console.log('Replaced a2zbookshop domain:', imageUrl);
+                    const fileName = imageUrl.split('/').pop();
+                    if (fileName) {
+                      imageUrl = `/uploads/images/${fileName}`;
+                      console.log('Using relative path for a2zbookshop image:', imageUrl);
+                    }
                   } else if (imageUrl.includes('.replit.dev')) {
-                    // Extract path after domain for replit URLs
-                    const pathIndex = imageUrl.indexOf('/uploads/');
-                    console.log('PathIndex found:', pathIndex, 'for URL:', imageUrl);
-                    if (pathIndex !== -1) {
-                      const imagePath = imageUrl.substring(pathIndex);
-                      console.log('Extracted path:', imagePath);
-                      // Use current server origin instead of replit domain
-                      const currentOrigin = window.location.protocol + '//' + window.location.host;
-                      imageUrl = currentOrigin + imagePath;
-                      console.log('Final URL after replacement:', imageUrl);
+                    // For replit URLs, just use the filename with our server
+                    const fileName = imageUrl.split('/').pop();
+                    if (fileName) {
+                      imageUrl = `/uploads/images/${fileName}`;
+                      console.log('Using relative path for replit image:', imageUrl);
                     }
                   } else if (!imageUrl.startsWith('http')) {
                     // Relative URL - add current origin
