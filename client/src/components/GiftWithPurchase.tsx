@@ -616,34 +616,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
             })}
           </div>
 
-          {/* Action Buttons */}
-          <motion.div 
-            className="text-center mt-12"
-            variants={itemVariants}
-          >
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  onClick={handleRefreshGifts}
-                  variant="outline"
-                  className="flex items-center gap-2 px-6 py-3 text-lg font-medium border-2 border-gray-300 hover:border-blue-400"
-                >
-                  <RefreshCw className="h-5 w-5" />
-                  Reset Selection
-                </Button>
-              </motion.div>
-              
-              <motion.p 
-                className="text-sm text-gray-600 dark:text-gray-400 max-w-md"
-                variants={itemVariants}
-              >
-                * Free gift will be automatically added to your cart when you proceed to checkout with any book purchase.
-              </motion.p>
-            </div>
-          </motion.div>
+
         </div>
       </div>
     </motion.section>
