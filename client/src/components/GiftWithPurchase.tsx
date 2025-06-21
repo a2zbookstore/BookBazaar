@@ -133,9 +133,8 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
     );
   }
 
-  if (activeGiftItems.length === 0) {
-    return null; // Don't show section if no gifts available
-  }
+  // Always show the section even if no gift items are available
+  // This allows users to see the gift categories and know the feature exists
 
   return (
     <motion.section 
