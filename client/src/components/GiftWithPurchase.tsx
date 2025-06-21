@@ -19,13 +19,17 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
   // Fetch gift categories from database (public endpoint)
   const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 1000, // Refetch every 1 second
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Fetch gift items from database (public endpoint)
   const { data: giftItems = [], isLoading: itemsLoading } = useQuery<GiftItem[]>({
     queryKey: ["/api/gift-items"],
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 1000, // Refetch every 1 second
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const isLoading = categoriesLoading || itemsLoading;
@@ -47,6 +51,12 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
       setSelectedGift(savedGift);
     }
   }, []);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Gift Categories Data:', giftCategories);
+    console.log('Gift Items Data:', giftItems);
+  }, [giftCategories, giftItems]);
 
   useEffect(() => {
     setIsVisible(hasItemsInCart);
