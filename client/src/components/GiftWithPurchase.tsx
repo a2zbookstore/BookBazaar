@@ -75,6 +75,7 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
   }, []);
 
   useEffect(() => {
+    console.log("Gift with Purchase visibility check:", hasItemsInCart);
     setIsVisible(hasItemsInCart);
   }, [hasItemsInCart]);
 
@@ -166,6 +167,8 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
     }
   };
 
+  console.log("GiftWithPurchase render - isVisible:", isVisible, "hasItemsInCart:", hasItemsInCart);
+  
   if (!isVisible) {
     return null;
   }

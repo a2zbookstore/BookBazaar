@@ -36,6 +36,7 @@ export default function HomePage() {
 
   // Check if cart has items for gift offer
   useEffect(() => {
+    console.log("Cart items for gift check:", cartItems);
     setHasItemsInCart(cartItems && cartItems.length > 0);
   }, [cartItems]);
 
