@@ -298,6 +298,15 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
                           </div>
                         )}
                         
+                        {/* Price Badge - Top Left */}
+                        {category.price && Number(category.price) > 0 && (
+                          <div className="absolute top-2 left-2">
+                            <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                              ${Number(category.price).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* Selection indicator */}
                         {selectedCategory === category.id && (
                           <motion.div
@@ -315,6 +324,19 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
                         <h4 className="font-bold text-gray-800 text-center truncate">
                           {category.name}
                         </h4>
+                        <div className="flex items-center justify-center gap-2 mt-1">
+                          {category.price && Number(category.price) > 0 && (
+                            <span className="text-sm font-semibold text-green-600">
+                              ${Number(category.price).toFixed(2)}
+                            </span>
+                          )}
+                          <Badge 
+                            variant={category.type === 'novel' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {category.type === 'novel' ? '📖 Novel' : '📝 Notebook'}
+                          </Badge>
+                        </div>
                         <p className="text-xs text-gray-500 text-center mt-1 truncate">
                           {category.description || (category.type === 'novel' ? 'Novel Collection' : 'Notebook Collection')}
                         </p>
