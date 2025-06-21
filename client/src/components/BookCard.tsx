@@ -152,7 +152,9 @@ export default function BookCard({ book }: BookCardProps) {
                 alt={book.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 onLoad={(e) => {
-                  console.log('Image loaded successfully:', book.title);
+                  console.log('✅ Image loaded successfully:', book.title);
+                  const target = e.target as HTMLImageElement;
+                  console.log('✅ Loaded image src:', target.src);
                 }}
                 onError={(e) => {
                   console.log('Image failed to load:', book.title, 'URL:', book.imageUrl);
