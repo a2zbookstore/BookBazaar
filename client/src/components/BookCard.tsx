@@ -175,8 +175,8 @@ export default function BookCard({ book }: BookCardProps) {
                     // Try direct path with filename only
                     const imagePath = book.imageUrl.split('/').pop();
                     if (imagePath) {
-                      const retryUrl = `${window.location.origin}/uploads/images/${imagePath}`;
-                      console.log('🔄 Retry attempt 1 - Trying direct path:', retryUrl);
+                      const retryUrl = `/uploads/images/${imagePath}`;
+                      console.log('🔄 Retry attempt 1 - Trying relative path:', retryUrl);
                       target.src = retryUrl;
                       return;
                     }

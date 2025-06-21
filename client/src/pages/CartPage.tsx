@@ -286,21 +286,7 @@ export default function CartPage() {
                           </div>
                         ) : item.book.imageUrl ? (
                           <img
-                            src={(() => {
-                              let imageUrl = item.book.imageUrl;
-                              if (imageUrl.includes('www.a2zbookshop.com')) {
-                                const fileName = imageUrl.split('/').pop();
-                                if (fileName) {
-                                  imageUrl = `/uploads/images/${fileName}`;
-                                }
-                              } else if (imageUrl.includes('.replit.dev')) {
-                                const fileName = imageUrl.split('/').pop();
-                                if (fileName) {
-                                  imageUrl = `/uploads/images/${fileName}`;
-                                }
-                              }
-                              return imageUrl;
-                            })()}
+                            src={`/uploads/images/${item.book.imageUrl.split('/').pop()}`}
                             alt={item.book.title}
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {

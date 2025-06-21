@@ -120,21 +120,7 @@ export default function BookDetailPage() {
             <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
               {book.imageUrl ? (
                 <img
-                  src={(() => {
-                    let imageUrl = book.imageUrl;
-                    if (imageUrl.includes('www.a2zbookshop.com')) {
-                      const fileName = imageUrl.split('/').pop();
-                      if (fileName) {
-                        imageUrl = `/uploads/images/${fileName}`;
-                      }
-                    } else if (imageUrl.includes('.replit.dev')) {
-                      const fileName = imageUrl.split('/').pop();
-                      if (fileName) {
-                        imageUrl = `/uploads/images/${fileName}`;
-                      }
-                    }
-                    return imageUrl;
-                  })()}
+                  src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
                   alt={book.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
