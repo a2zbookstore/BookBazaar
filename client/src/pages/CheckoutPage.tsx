@@ -1131,11 +1131,28 @@ export default function CheckoutPage() {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h4 className="font-medium text-sm">{item.book.title}</h4>
-                        <p className="text-xs text-gray-600">by {item.book.author}</p>
-                        <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
+                        {item.isGift ? (
+                          <>
+                            <h4 className="font-medium text-sm text-green-700">🎁 Free Gift</h4>
+                            <p className="text-xs text-green-600">Complimentary item</p>
+                            <p className="text-xs text-green-500">Qty: {item.quantity}</p>
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="font-medium text-sm">{item.book.title}</h4>
+                            <p className="text-xs text-gray-600">by {item.book.author}</p>
+                            <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
+                          </>
+                        )}
                       </div>
-                      <CheckoutItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                      {item.isGift ? (
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-green-600">FREE</p>
+                          <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Gift</span>
+                        </div>
+                      ) : (
+                        <CheckoutItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                      )}
                     </div>
                   ))}
                 </div>
