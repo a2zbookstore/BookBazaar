@@ -1137,10 +1137,16 @@ export default function CheckoutPage() {
                             <p className="text-xs text-green-600">Complimentary item</p>
                             <p className="text-xs text-green-500">Qty: {item.quantity}</p>
                           </>
-                        ) : (
+                        ) : item.book ? (
                           <>
                             <h4 className="font-medium text-sm">{item.book.title}</h4>
                             <p className="text-xs text-gray-600">by {item.book.author}</p>
+                            <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="font-medium text-sm text-gray-600">Unknown Item</h4>
+                            <p className="text-xs text-gray-500">Details unavailable</p>
                             <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
                           </>
                         )}
@@ -1150,8 +1156,10 @@ export default function CheckoutPage() {
                           <p className="text-sm font-bold text-green-600">FREE</p>
                           <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Gift</span>
                         </div>
-                      ) : (
+                      ) : item.book ? (
                         <CheckoutItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                      ) : (
+                        <span className="text-sm text-gray-500">N/A</span>
                       )}
                     </div>
                   ))}

@@ -307,7 +307,7 @@ export default function CartPage() {
                             <p className="text-green-600 text-sm">Selected gift item</p>
                             <p className="text-green-500 text-xs font-medium">Complimentary with your purchase</p>
                           </>
-                        ) : (
+                        ) : item.book ? (
                           <>
                             <Link href={`/books/${item.book.id}`}>
                               <h4 className="font-bookerly font-semibold text-base-black hover:text-primary-aqua transition-colors line-clamp-2">
@@ -316,6 +316,13 @@ export default function CartPage() {
                             </Link>
                             <p className="text-secondary-black text-sm">{item.book.author}</p>
                             <p className="text-tertiary-black text-xs">Condition: {item.book.condition}</p>
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="font-bookerly font-semibold text-gray-700 line-clamp-2">
+                              Unknown Item
+                            </h4>
+                            <p className="text-gray-600 text-sm">Item details unavailable</p>
                           </>
                         )}
                       </div>
@@ -370,8 +377,10 @@ export default function CartPage() {
                             <span className="text-xl font-bold text-green-600">FREE</span>
                             <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Gift</span>
                           </div>
-                        ) : (
+                        ) : item.book ? (
                           <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                        ) : (
+                          <span className="text-sm text-gray-500">N/A</span>
                         )}
                         
                         <Button
