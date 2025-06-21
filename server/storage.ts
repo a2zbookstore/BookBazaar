@@ -1060,6 +1060,31 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+
+  // Gift Categories Methods
+  async getGiftCategories(): Promise<GiftCategory[]> {
+    return await db.select().from(giftCategories).orderBy(giftCategories.sortOrder, giftCategories.name);
+  }
+
+  async createGiftCategory(categoryData: InsertGiftCategory): Promise<GiftCategory> {
+    const [category] = await db.insert(giftCategories).values(categoryData).returning();
+    return category;
+  }
+
+  async updateGiftCategory(id: number, categoryData: Partial<InsertGiftCategory>): Promise<GiftCategory> {
+    const [category] = await db.update(giftCategories)
+      .set({ ...categoryData, updatedAt: new Date() })
+      .where(eq(giftCategories.id, id))
+      .returning();
+    return category;
+  }
+
+  async deleteGiftCategory(id: number): Promise<void> {
+    // First delete all gift items in this category
+    await db.delete(giftItems).where(eq(giftItems.categoryId, id));
+    // Then delete the category
+    await db.delete(giftCategories).where(eq(giftCategories.id, id));
+  }
 }
 
 export const storage = new DatabaseStorage();

@@ -5,7 +5,7 @@ import { Gift, Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { GiftItem } from '@/shared/schema';
+import type { GiftItem, GiftCategory } from '@/shared/schema';
 
 interface GiftWithPurchaseProps {
   hasItemsInCart: boolean;
@@ -13,16 +13,29 @@ interface GiftWithPurchaseProps {
 
 export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchaseProps) {
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
+  // Fetch gift categories from database
+  const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
+    queryKey: ["/api/admin/gift-categories"],
+  });
+
   // Fetch gift items from database
-  const { data: giftItems = [], isLoading } = useQuery<GiftItem[]>({
+  const { data: giftItems = [], isLoading: itemsLoading } = useQuery<GiftItem[]>({
     queryKey: ["/api/admin/gift-items"],
   });
 
+  const isLoading = categoriesLoading || itemsLoading;
+
+  // Filter active categories and sort by sortOrder
+  const activeCategories = giftCategories
+    .filter(category => category.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
   // Filter active items and sort by sortOrder
   const activeGiftItems = giftItems
-    .filter(item => item.isActive)
+    .filter(item => item.isActive && (!selectedCategory || item.categoryId === selectedCategory))
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
   useEffect(() => {
@@ -201,6 +214,40 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
                 <span className="font-medium">Gift selected! It will be added to your cart.</span>
               </motion.div>
             )}
+          </motion.div>
+
+          {/* Category Filter Buttons */}
+          <motion.div 
+            className="flex flex-wrap justify-center gap-4 mb-8"
+            variants={itemVariants}
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedCategory(null)}
+              className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+                selectedCategory === null
+                  ? 'bg-green-500 text-white shadow-lg'
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400'
+              }`}
+            >
+              All Categories
+            </motion.button>
+            {activeCategories.map((category) => (
+              <motion.button
+                key={category.id}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+                  selectedCategory === category.id
+                    ? 'bg-green-500 text-white shadow-lg'
+                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400'
+                }`}
+              >
+                {category.type === 'novel' ? '📖' : '📝'} {category.name}
+              </motion.button>
+            ))}
           </motion.div>
 
           {/* Gift Selection Grid */}

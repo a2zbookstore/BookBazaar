@@ -14,9 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, GripVertical, Gift, Settings, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { GiftItem, HomepageContent } from "@/shared/schema";
+import type { GiftItem, HomepageContent, GiftCategory } from "@/shared/schema";
 
 interface GiftForm {
+  categoryId: number;
   name: string;
   type: "novel" | "notebook" | "";
   description: string;
@@ -54,8 +55,14 @@ export default function GiftManagementPage() {
     queryKey: ["/api/admin/homepage-content"],
   });
 
+  // Fetch gift categories for dropdown
+  const { data: categories = [] } = useQuery<GiftCategory[]>({
+    queryKey: ["/api/admin/gift-categories"],
+  });
+
   // Gift form state
   const [giftForm, setGiftForm] = useState<GiftForm>({
+    categoryId: 0,
     name: "",
     type: "novel",
     description: "",
@@ -174,6 +181,7 @@ export default function GiftManagementPage() {
 
   const resetGiftForm = () => {
     setGiftForm({
+      categoryId: categories.length > 0 ? categories[0].id : 0,
       name: "",
       type: "novel",
       description: "",
@@ -282,12 +290,29 @@ export default function GiftManagementPage() {
                 <form onSubmit={handleGiftSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
+                      <Label htmlFor="categoryId">Category</Label>
+                      <select
+                        id="categoryId"
+                        value={giftForm.categoryId}
+                        onChange={(e) => setGiftForm({ ...giftForm, categoryId: parseInt(e.target.value) })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
                       <Label htmlFor="name">Name</Label>
                       <Input
                         id="name"
                         value={giftForm.name}
                         onChange={(e) => setGiftForm({ ...giftForm, name: e.target.value })}
-                        placeholder="e.g., Classic Novel"
+                        placeholder="e.g., Classic Mystery Book"
                         required
                       />
                     </div>
