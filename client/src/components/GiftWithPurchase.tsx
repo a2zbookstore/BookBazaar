@@ -116,7 +116,11 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
         }
       } else {
         const error = await response.json();
-        alert(`Error adding gift: ${error.message}`);
+        if (error.message.includes("must have at least one book")) {
+          alert(`❌ ${error.message}`);
+        } else {
+          alert(`Error adding gift: ${error.message}`);
+        }
       }
     } catch (error) {
       console.error('Error adding gift to cart:', error);

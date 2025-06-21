@@ -65,13 +65,20 @@ export default function CartPage() {
       }
     } else {
       setGiftItem(null);
-      // Clear localStorage if no books remain
-      if (!hasNonGiftBooks) {
+      // Clear localStorage if no books remain and show notification
+      if (!hasNonGiftBooks && localStorage.getItem('selectedGift')) {
         localStorage.removeItem('giftDetails');
         localStorage.removeItem('selectedGift');
+        if (cartItems.length > 0) {
+          toast({
+            title: "Gift Removed",
+            description: "Your free gift has been removed because no books remain in your cart. Add a book to select a gift again.",
+            variant: "default",
+          });
+        }
       }
     }
-  }, [cartItems, hasNonGiftBooks]);
+  }, [cartItems, hasNonGiftBooks, toast]);
 
 
   // Get shipping rate from admin panel - default to India if no location detected

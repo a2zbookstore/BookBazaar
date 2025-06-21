@@ -297,10 +297,13 @@ export default function CheckoutPage() {
   const [loginPassword, setLoginPassword] = useState("");
   const [giftItem, setGiftItem] = useState<any>(null);
 
-  // Load gift item from localStorage
+  // Check if cart has any non-gift books
+  const hasNonGiftBooks = cartItems.some(item => !item.isGift);
+
+  // Load gift item from localStorage and auto-remove if no books
   useEffect(() => {
     const savedGift = localStorage.getItem('giftDetails');
-    if (savedGift && cartItems.length > 0) {
+    if (savedGift && cartItems.length > 0 && hasNonGiftBooks) {
       try {
         setGiftItem(JSON.parse(savedGift));
       } catch (error) {
@@ -308,8 +311,20 @@ export default function CheckoutPage() {
       }
     } else {
       setGiftItem(null);
+      // Clear localStorage if no books remain and show notification
+      if (!hasNonGiftBooks && localStorage.getItem('selectedGift')) {
+        localStorage.removeItem('giftDetails');
+        localStorage.removeItem('selectedGift');
+        if (cartItems.length > 0) {
+          toast({
+            title: "Gift Removed",
+            description: "Your free gift has been removed because no books remain in your cart. Add a book to select a gift again.",
+            variant: "default",
+          });
+        }
+      }
     }
-  }, [cartItems]);
+  }, [cartItems, hasNonGiftBooks, toast]);
 
   // Calculate totals - Use detected location's shipping rate as primary source
   const subtotal = cartItems.reduce((total, item) => {
