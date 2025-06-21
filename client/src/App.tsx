@@ -83,6 +83,7 @@ function AppRouter() {
       <Route path="/return-policy" component={ReturnPolicyPage} />
       <Route path="/cancellation-policy" component={CancellationPolicyPage} />
       <Route path="/terms-and-conditions" component={TermsAndConditionsPage} />
+      <Route path="/gift-items" component={GiftItemsPage} />
       <Route path="/faq" component={FAQPage} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/admin-login" component={AdminLoginPage} />
