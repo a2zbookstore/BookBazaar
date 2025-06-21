@@ -227,38 +227,103 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
             )}
           </motion.div>
 
-          {/* Category Filter Buttons */}
+          {/* Category Horizontal Moving Carousel */}
           <motion.div 
-            className="flex flex-wrap justify-center gap-4 mb-8"
             variants={itemVariants}
+            className="mb-8"
           >
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedCategory(null)}
-              className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                selectedCategory === null
-                  ? 'bg-green-500 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400'
-              }`}
-            >
-              All Categories
-            </motion.button>
-            {activeCategories.map((category) => (
-              <motion.button
-                key={category.id}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                  selectedCategory === category.id
-                    ? 'bg-green-500 text-white shadow-lg'
-                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400'
-                }`}
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Gift Category</h3>
+              <p className="text-gray-600">Select a category to see available gifts</p>
+            </div>
+            
+            <div className="relative overflow-hidden">
+              <motion.div 
+                className="flex gap-6 py-4"
+                animate={{ 
+                  x: activeCategories.length > 2 ? [-50, -300, -50] : [0, 0, 0]
+                }}
+                transition={{ 
+                  duration: activeCategories.length > 2 ? 20 : 0, 
+                  repeat: activeCategories.length > 2 ? Infinity : 0, 
+                  ease: "linear" 
+                }}
+                style={{ 
+                  width: activeCategories.length > 2 ? `${activeCategories.length * 220 + 400}px` : 'auto',
+                  justifyContent: activeCategories.length <= 2 ? 'center' : 'flex-start'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeCategories.length > 2) {
+                    e.currentTarget.style.animationPlayState = 'paused';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeCategories.length > 2) {
+                    e.currentTarget.style.animationPlayState = 'running';
+                  }
+                }}
               >
-                {category.type === 'novel' ? '📖' : '📝'} {category.name.trim()}
-              </motion.button>
-            ))}
+                {/* Show categories with duplication for seamless scroll if needed */}
+                {(activeCategories.length > 2 ? [...activeCategories, ...activeCategories] : activeCategories).map((category, index) => (
+                  <motion.div
+                    key={`${category.id}-${index}`}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`
+                      flex-shrink-0 cursor-pointer transition-all duration-300 group
+                      ${selectedCategory === category.id ? 'transform scale-110' : 'hover:scale-105'}
+                    `}
+                    whileHover={{ y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div className={`
+                      w-52 h-40 rounded-xl overflow-hidden shadow-lg border-4 transition-all duration-300 bg-white
+                      ${selectedCategory === category.id 
+                        ? 'border-green-500 shadow-green-200 ring-2 ring-green-300' 
+                        : 'border-gray-200 group-hover:border-blue-300 group-hover:shadow-blue-200'
+                      }
+                    `}>
+                      {/* Category Image */}
+                      <div className="relative h-28 overflow-hidden">
+                        {category.imageUrl ? (
+                          <img 
+                            src={category.imageUrl}
+                            alt={category.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                            <span className="text-4xl">
+                              {category.type === 'novel' ? '📖' : '📝'}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Selection indicator */}
+                        {selectedCategory === category.id && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute top-2 right-2 bg-green-500 rounded-full p-2 shadow-lg"
+                          >
+                            <Check className="w-4 h-4 text-white" />
+                          </motion.div>
+                        )}
+                      </div>
+                      
+                      {/* Category Info */}
+                      <div className="p-3">
+                        <h4 className="font-bold text-gray-800 text-center truncate">
+                          {category.name}
+                        </h4>
+                        <p className="text-xs text-gray-500 text-center mt-1 truncate">
+                          {category.description || (category.type === 'novel' ? 'Novel Collection' : 'Notebook Collection')}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
           </motion.div>
 
           {/* Gift Selection Grid */}
