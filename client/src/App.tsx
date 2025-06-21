@@ -27,6 +27,7 @@ import ShippingPage from "@/pages/admin/ShippingPage";
 import ReturnsPage from "@/pages/admin/ReturnsPage";
 import AdminAccountPage from "@/pages/admin/AdminAccountPage";
 import MessagesPage from "@/pages/admin/MessagesPage";
+import GiftCategoriesPage from "@/pages/admin/GiftCategoriesPage";
 import GiftManagementPage from "@/pages/admin/GiftManagementPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
@@ -116,6 +117,11 @@ function AppRouter() {
       <Route path="/admin/returns">
         <AdminProtectedRoute>
           <ReturnsPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/gift-categories">
+        <AdminProtectedRoute>
+          <GiftCategoriesPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/gift-management">

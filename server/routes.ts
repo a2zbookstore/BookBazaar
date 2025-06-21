@@ -2345,5 +2345,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Gift Categories API Routes
+  app.get("/api/admin/gift-categories", requireAdminAuth, async (req, res) => {
+    try {
+      const categories = await storage.getGiftCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching gift categories:", error);
+      res.status(500).json({ message: "Failed to fetch gift categories" });
+    }
+  });
+
+  app.post("/api/admin/gift-categories", requireAdminAuth, async (req, res) => {
+    try {
+      const categoryData = insertGiftCategorySchema.parse(req.body);
+      const category = await storage.createGiftCategory(categoryData);
+      res.json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating gift category:", error);
+      res.status(500).json({ message: "Failed to create gift category" });
+    }
+  });
+
+  app.put("/api/admin/gift-categories/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const categoryData = insertGiftCategorySchema.partial().parse(req.body);
+      const category = await storage.updateGiftCategory(id, categoryData);
+      res.json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating gift category:", error);
+      res.status(500).json({ message: "Failed to update gift category" });
+    }
+  });
+
+  app.delete("/api/admin/gift-categories/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteGiftCategory(id);
+      res.json({ message: "Gift category deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting gift category:", error);
+      res.status(500).json({ message: "Failed to delete gift category" });
+    }
+  });
+
   return httpServer;
 }

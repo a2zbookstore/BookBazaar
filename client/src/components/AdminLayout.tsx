@@ -30,6 +30,7 @@ const sidebarItems = [
   { href: "/admin/customers", icon: Users, label: "Customers" },
   { href: "/admin/messages", icon: Mail, label: "Messages" },
   { href: "/admin/returns", icon: RotateCcw, label: "Returns" },
+  { href: "/admin/gift-categories", icon: Gift, label: "Gift Categories" },
   { href: "/admin/gift-management", icon: Gift, label: "Gift Management" },
   { href: "/admin/welcome-email", icon: Mail, label: "Welcome Email" },
   { href: "/admin/shipping", icon: Truck, label: "Shipping" },
