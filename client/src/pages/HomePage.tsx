@@ -16,7 +16,6 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [hasItemsInCart, setHasItemsInCart] = useState(false);
-  const [selectedGift, setSelectedGift] = useState<string | null>(null);
   
   const { data: featuredBooksResponse } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
@@ -40,51 +39,6 @@ export default function HomePage() {
   useEffect(() => {
     setHasItemsInCart(cartItems && cartItems.length > 0);
   }, [cartItems]);
-
-  // Load selected gift from localStorage
-  useEffect(() => {
-    const savedGift = localStorage.getItem('selectedGift');
-    if (savedGift) {
-      setSelectedGift(savedGift);
-    }
-  }, []);
-
-  // Handle gift selection
-  const handleGiftSelection = (giftId: string) => {
-    if (!hasItemsInCart) {
-      alert('Please add a book to your cart first to select a gift!');
-      return;
-    }
-    
-    setSelectedGift(giftId);
-    localStorage.setItem('selectedGift', giftId);
-    
-    // Store gift details for cart/checkout
-    const giftDetails = {
-      id: giftId,
-      name: getGiftName(giftId),
-      type: giftId.includes('novel') ? 'novel' : 'notebook',
-      price: 0,
-      quantity: 1,
-      isGift: true
-    };
-    localStorage.setItem('giftDetails', JSON.stringify(giftDetails));
-    
-    alert(`${getGiftName(giftId)} selected as your free gift!`);
-  };
-
-  // Get gift name helper
-  const getGiftName = (giftId: string) => {
-    const giftNames: { [key: string]: string } = {
-      'classic-novel': 'Classic Novel',
-      'mystery-novel': 'Mystery Novel',
-      'adventure-novel': 'Adventure Novel',
-      'premium-notebook': 'Premium Notebook',
-      'leather-notebook': 'Leather Notebook',
-      'journal-notebook': 'Journal Notebook'
-    };
-    return giftNames[giftId] || 'Gift Item';
-  };
 
   // Auto-scroll for moving sections - pauses when hovering
   useEffect(() => {
@@ -163,165 +117,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Gift with Purchase Section - Always Visible at Top */}
-      <div className="py-16 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 shadow-xl border-b-4 border-green-400">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-5xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            🎁 SPECIAL GIFT OFFER! 🎁
-          </h2>
-          <p className="text-2xl text-gray-700 mb-6 font-semibold">
-            Buy any book and get <span className="font-bold text-green-600 text-3xl">1 FREE Novel or Notebook</span> as a gift!
-          </p>
-          <div className="bg-gradient-to-r from-orange-100 to-yellow-100 border-2 border-orange-300 rounded-xl p-4 mb-6 shadow-lg inline-block">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl animate-bounce">🛒</div>
-              <p className="text-orange-800 font-medium">
-                Add any book to your cart to activate this special gift offer!
-              </p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-8">
-            <div className={`bg-white rounded-lg p-4 border-2 transition-all cursor-pointer ${
-              selectedGift === 'classic-novel' 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-gray-200 hover:border-blue-400'
-            } ${!hasItemsInCart ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => handleGiftSelection('classic-novel')}>
-              <div className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 rounded mb-2 flex items-center justify-center">
-                <span className="text-2xl">📚</span>
-              </div>
-              <h3 className="font-medium text-sm mb-2">Classic Novel</h3>
-              <button className={`w-full px-3 py-1 text-xs rounded transition-colors ${
-                selectedGift === 'classic-novel'
-                  ? 'bg-green-500 text-white'
-                  : hasItemsInCart 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              }`} 
-              onClick={(e) => { e.stopPropagation(); handleGiftSelection('classic-novel'); }}
-              disabled={!hasItemsInCart}>
-                {selectedGift === 'classic-novel' ? '✓ Selected' : hasItemsInCart ? 'Select Gift' : 'Add to Cart First'}
-              </button>
-            </div>
-            
-            <div className={`bg-white rounded-lg p-4 border-2 transition-all cursor-pointer ${
-              selectedGift === 'mystery-novel' 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-gray-200 hover:border-blue-400'
-            } ${!hasItemsInCart ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => handleGiftSelection('mystery-novel')}>
-              <div className="aspect-square bg-gradient-to-br from-blue-100 to-indigo-100 rounded mb-2 flex items-center justify-center">
-                <span className="text-2xl">📖</span>
-              </div>
-              <h3 className="font-medium text-sm mb-2">Mystery Novel</h3>
-              <button className={`w-full px-3 py-1 text-xs rounded transition-colors ${
-                selectedGift === 'mystery-novel'
-                  ? 'bg-green-500 text-white'
-                  : hasItemsInCart 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              }`} 
-              onClick={(e) => { e.stopPropagation(); handleGiftSelection('mystery-novel'); }}
-              disabled={!hasItemsInCart}>
-                {selectedGift === 'mystery-novel' ? '✓ Selected' : hasItemsInCart ? 'Select Gift' : 'Add to Cart First'}
-              </button>
-            </div>
-            
-            <div className={`bg-white rounded-lg p-4 border-2 transition-all cursor-pointer ${
-              selectedGift === 'adventure-novel' 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-gray-200 hover:border-blue-400'
-            } ${!hasItemsInCart ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => handleGiftSelection('adventure-novel')}>
-              <div className="aspect-square bg-gradient-to-br from-green-100 to-emerald-100 rounded mb-2 flex items-center justify-center">
-                <span className="text-2xl">📗</span>
-              </div>
-              <h3 className="font-medium text-sm mb-2">Adventure Novel</h3>
-              <button className={`w-full px-3 py-1 text-xs rounded transition-colors ${
-                selectedGift === 'adventure-novel'
-                  ? 'bg-green-500 text-white'
-                  : hasItemsInCart 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              }`} 
-              onClick={(e) => { e.stopPropagation(); handleGiftSelection('adventure-novel'); }}
-              disabled={!hasItemsInCart}>
-                {selectedGift === 'adventure-novel' ? '✓ Selected' : hasItemsInCart ? 'Select Gift' : 'Add to Cart First'}
-              </button>
-            </div>
-            
-            <div className={`bg-white rounded-lg p-4 border-2 transition-all cursor-pointer ${
-              selectedGift === 'premium-notebook' 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-gray-200 hover:border-blue-400'
-            } ${!hasItemsInCart ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => handleGiftSelection('premium-notebook')}>
-              <div className="aspect-square bg-gradient-to-br from-yellow-100 to-orange-100 rounded mb-2 flex items-center justify-center">
-                <span className="text-2xl">📒</span>
-              </div>
-              <h3 className="font-medium text-sm mb-2">Premium Notebook</h3>
-              <button className={`w-full px-3 py-1 text-xs rounded transition-colors ${
-                selectedGift === 'premium-notebook'
-                  ? 'bg-green-500 text-white'
-                  : hasItemsInCart 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              }`} 
-              onClick={(e) => { e.stopPropagation(); handleGiftSelection('premium-notebook'); }}
-              disabled={!hasItemsInCart}>
-                {selectedGift === 'premium-notebook' ? '✓ Selected' : hasItemsInCart ? 'Select Gift' : 'Add to Cart First'}
-              </button>
-            </div>
-            
-            <div className={`bg-white rounded-lg p-4 border-2 transition-all cursor-pointer ${
-              selectedGift === 'leather-notebook' 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-gray-200 hover:border-blue-400'
-            } ${!hasItemsInCart ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => handleGiftSelection('leather-notebook')}>
-              <div className="aspect-square bg-gradient-to-br from-red-100 to-pink-100 rounded mb-2 flex items-center justify-center">
-                <span className="text-2xl">📕</span>
-              </div>
-              <h3 className="font-medium text-sm mb-2">Leather Notebook</h3>
-              <button className={`w-full px-3 py-1 text-xs rounded transition-colors ${
-                selectedGift === 'leather-notebook'
-                  ? 'bg-green-500 text-white'
-                  : hasItemsInCart 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              }`} 
-              onClick={(e) => { e.stopPropagation(); handleGiftSelection('leather-notebook'); }}
-              disabled={!hasItemsInCart}>
-                {selectedGift === 'leather-notebook' ? '✓ Selected' : hasItemsInCart ? 'Select Gift' : 'Add to Cart First'}
-              </button>
-            </div>
-            
-            <div className={`bg-white rounded-lg p-4 border-2 transition-all cursor-pointer ${
-              selectedGift === 'journal-notebook' 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-gray-200 hover:border-blue-400'
-            } ${!hasItemsInCart ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={() => handleGiftSelection('journal-notebook')}>
-              <div className="aspect-square bg-gradient-to-br from-teal-100 to-cyan-100 rounded mb-2 flex items-center justify-center">
-                <span className="text-2xl">📘</span>
-              </div>
-              <h3 className="font-medium text-sm mb-2">Journal Notebook</h3>
-              <button className={`w-full px-3 py-1 text-xs rounded transition-colors ${
-                selectedGift === 'journal-notebook'
-                  ? 'bg-green-500 text-white'
-                  : hasItemsInCart 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              }`} 
-              onClick={(e) => { e.stopPropagation(); handleGiftSelection('journal-notebook'); }}
-              disabled={!hasItemsInCart}>
-                {selectedGift === 'journal-notebook' ? '✓ Selected' : hasItemsInCart ? 'Select Gift' : 'Add to Cart First'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Database-driven Gift with Purchase Section */}
+      <GiftWithPurchase hasItemsInCart={hasItemsInCart} />
 
       {/* Bestsellers Section - Moving Carousel */}
       <section className="py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
