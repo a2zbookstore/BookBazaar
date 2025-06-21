@@ -296,10 +296,11 @@ export default function InventoryPageNew() {
       return;
     }
     
-    if (!bookForm.price || bookForm.price.trim() === "" || parseFloat(bookForm.price) < 0 || isNaN(parseFloat(bookForm.price))) {
+    // Price validation - allow empty price (will default to 0)
+    if (bookForm.price && bookForm.price.trim() !== "" && (parseFloat(bookForm.price) < 0 || isNaN(parseFloat(bookForm.price)))) {
       toast({
         title: "Validation Error",
-        description: "Please enter a valid price (must be a positive number)",
+        description: "Price must be a positive number",
         variant: "destructive",
       });
       return;
