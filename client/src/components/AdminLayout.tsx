@@ -51,8 +51,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col shadow-2xl border-r border-slate-700">
-        <div className="p-6">
+      <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-2xl border-r border-slate-700">
+        <div className="p-6 bg-slate-900">
           <Link href="/" className="flex items-center mb-8">
             <h2 className="text-xl font-bookerly font-bold text-white">A2Z BOOKSHOP</h2>
           </Link>
@@ -62,7 +62,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 bg-transparent">
+        <nav className="flex-1 px-4 bg-slate-900">
           <ul className="space-y-1">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
@@ -94,7 +94,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-slate-600 bg-slate-900">
+        <div className="p-4 border-t border-slate-700 bg-slate-900">
           <Link href="/">
             <Button variant="ghost" className="w-full justify-start text-slate-200 hover:text-white hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 transition-all duration-300 font-medium px-4 py-3 rounded-xl transform hover:scale-105">
               <LogOut className="h-6 w-6 mr-4 text-slate-300 hover:text-white transition-colors duration-300" />
