@@ -124,6 +124,8 @@ export default function InventoryPageNew() {
 
   const createBookMutation = useMutation({
     mutationFn: async (data: BookForm) => {
+      console.log("Form data being submitted:", data);
+      
       const bookData = {
         title: data.title,
         author: data.author,
@@ -144,6 +146,8 @@ export default function InventoryPageNew() {
         featured: data.featured || false,
         bestseller: data.bestseller || false,
       };
+      
+      console.log("Processed book data:", bookData);
       return apiRequest('POST', '/api/books', bookData);
     },
     onSuccess: () => {
