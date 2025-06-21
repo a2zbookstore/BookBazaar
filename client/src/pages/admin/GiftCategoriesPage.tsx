@@ -19,6 +19,7 @@ interface CategoryForm {
   type: "novel" | "notebook" | "";
   description: string;
   imageUrl: string;
+  price: number;
   isActive: boolean;
   sortOrder: number;
 }
@@ -43,6 +44,7 @@ export default function GiftCategoriesPage() {
     type: "novel",
     description: "",
     imageUrl: "",
+    price: 0,
     isActive: true,
     sortOrder: 0,
   });
@@ -101,6 +103,7 @@ export default function GiftCategoriesPage() {
       type: "novel",
       description: "",
       imageUrl: "",
+      price: 0,
       isActive: true,
       sortOrder: 0,
     });
@@ -119,6 +122,7 @@ export default function GiftCategoriesPage() {
       type: category.type as "novel" | "notebook",
       description: category.description || "",
       imageUrl: category.imageUrl || "",
+      price: Number(category.price) || 0,
       isActive: category.isActive,
       sortOrder: category.sortOrder,
     });
@@ -297,6 +301,19 @@ export default function GiftCategoriesPage() {
               </div>
 
               <div>
+                <Label htmlFor="price">Price ($)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
                 <Label>Category Image</Label>
                 
                 {/* Image Upload Section */}
@@ -451,6 +468,7 @@ export default function GiftCategoriesPage() {
                   <TableHead>Category</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Sort Order</TableHead>
                   <TableHead>Actions</TableHead>
