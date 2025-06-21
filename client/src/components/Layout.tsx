@@ -51,152 +51,246 @@ export default function Layout({ children }: LayoutProps) {
       <header className={`fixed-header bg-white border-b border-gray-200 w-full transition-all duration-300 ${
         isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''
       }`}>
-        <div className="container-custom px-3 md:px-6">
-          {/* Top Row - Logo, Search, Right Actions */}
-          <div className={`flex items-center justify-between w-full transition-all duration-300 ${
-            isScrolled ? 'h-12 md:h-18' : 'h-16 md:h-22'
-          }`}>
-            {/* Logo */}
-            <Link href="/" className="flex items-center flex-shrink-0">
-              <div className="md:hidden">
+        <div className="container-custom px-4 md:px-6">
+          {/* Mobile Header Layout */}
+          <div className="md:hidden">
+            <div className="flex items-center justify-between h-14 py-2">
+              {/* Logo */}
+              <Link href="/" className="flex items-center flex-shrink-0">
                 <Logo size="sm" variant="default" showText={true} />
-              </div>
-              <div className="hidden md:block">
-                <Logo size="md" variant="default" showText={true} />
-              </div>
-            </Link>
+              </Link>
 
-            {/* Search Bar - Hidden on mobile, shown on desktop - Made Bigger Horizontally and Narrower Vertically */}
-            <div className="hidden md:flex flex-1 max-w-6xl mx-8">
+              {/* Mobile Right Actions */}
+              <div className="flex items-center space-x-3">
+                {/* Country Selector */}
+                <CountrySelector />
+                
+                {/* Cart */}
+                <Link
+                  href="/cart"
+                  className={`transition-colors relative touch-target ${
+                    isCartAnimating 
+                      ? "cart-pulse-animation" 
+                      : "text-secondary-black hover:text-primary-aqua cart-normal"
+                  }`}
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Wishlist */}
+                <Link href="/wishlist" className="text-secondary-black hover:text-primary-aqua touch-target relative">
+                  <Heart className="h-6 w-6" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Mobile Menu Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="touch-target p-2"
+                >
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Mobile Search Bar */}
+            <div className="px-2 pb-3">
               <SearchInput 
                 placeholder="Search books, authors, ISBN..."
-                className="w-full h-8"
+                className="w-full h-10"
               />
             </div>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              
-              {isAuthenticated && (
-                <Link
-                  href="/wishlist"
-                  className={`text-secondary-black hover:text-primary-aqua transition-colors relative ${
-                    isActive("/wishlist") ? "text-primary-aqua font-semibold" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-1">
-                    <Heart className="h-4 w-4" />
-                    <span>Wishlist</span>
-                    {wishlistCount > 0 && (
-                      <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-1">
-                        {wishlistCount}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              )}
-              
-              {/* Secret Admin Access - Only visible to admins (hidden from customers) */}
-              
-              {/* Country Selector */}
-              <div className="hidden lg:flex items-center ml-2">
-                <CountrySelector compact={false} />
+            {/* Mobile Navigation Buttons */}
+            <div className="flex items-center justify-center space-x-2 px-2 pb-3">
+              <Link
+                href="/"
+                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                  isActive("/") 
+                    ? "bg-primary-aqua text-white border-primary-aqua" 
+                    : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                href="/catalog"
+                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                  isActive("/catalog") 
+                    ? "bg-primary-aqua text-white border-primary-aqua" 
+                    : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Catalog
+              </Link>
+              <Link
+                href="/track-order"
+                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                  isActive("/track-order") 
+                    ? "bg-primary-aqua text-white border-primary-aqua" 
+                    : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Track Order
+              </Link>
+              <Link
+                href="/returns"
+                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                  isActive("/returns") 
+                    ? "bg-primary-aqua text-white border-primary-aqua" 
+                    : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Returns
+              </Link>
+            </div>
+          </div>
+
+          {/* Desktop Header Layout */}
+          <div className="hidden md:block">
+            <div className={`flex items-center justify-between w-full transition-all duration-300 ${
+              isScrolled ? 'h-16' : 'h-20'
+            }`}>
+              {/* Logo */}
+              <Link href="/" className="flex items-center flex-shrink-0">
+                <Logo size="md" variant="default" showText={true} />
+              </Link>
+
+              {/* Search Bar */}
+              <div className="flex flex-1 max-w-6xl mx-8">
+                <SearchInput 
+                  placeholder="Search books, authors, ISBN..."
+                  className="w-full h-8"
+                />
               </div>
 
-              {/* Cart - accessible to all users */}
-              <Link
-                href="/cart"
-                className={`transition-colors relative mx-3 p-2 rounded-lg hover:bg-primary-aqua/10 border border-transparent hover:border-primary-aqua/20 ${
-                  isCartAnimating 
-                    ? "cart-pulse-animation" 
-                    : "text-secondary-black hover:text-primary-aqua cart-normal"
-                }`}
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-
-              {isAuthenticated ? (
-                <Button
-                  variant="ghost"
-                  onClick={async () => {
-                    try {
-                      await fetch("/api/auth/logout", { method: "POST" });
-                      window.location.href = "/";
-                    } catch (error) {
-                      // Fallback to Replit logout
-                      window.location.href = "/api/logout";
-                    }
-                  }}
-                  className="text-secondary-black hover:text-primary-aqua"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              ) : (
+              {/* Desktop Navigation */}
+              <div className="flex items-center space-x-6">
+                {/* Navigation Buttons */}
                 <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setLocation('/login')}
-                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+                  <Link
+                    href="/"
+                    className={`text-xs px-2 py-1 rounded border transition-colors ${
+                      isActive("/") 
+                        ? "bg-primary-aqua text-white border-primary-aqua" 
+                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
                   >
-                    Login
-                  </Button>
-                  <Button
-                    onClick={() => setLocation('/register')}
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
+                    Home
+                  </Link>
+                  <Link
+                    href="/catalog"
+                    className={`text-xs px-2 py-1 rounded border transition-colors ${
+                      isActive("/catalog") 
+                        ? "bg-primary-aqua text-white border-primary-aqua" 
+                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
                   >
-                    Register
-                  </Button>
+                    Catalog
+                  </Link>
+                  <Link
+                    href="/track-order"
+                    className={`text-xs px-2 py-1 rounded border transition-colors ${
+                      isActive("/track-order") 
+                        ? "bg-primary-aqua text-white border-primary-aqua" 
+                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    Track Order
+                  </Link>
+                  <Link
+                    href="/returns"
+                    className={`text-xs px-2 py-1 rounded border transition-colors ${
+                      isActive("/returns") 
+                        ? "bg-primary-aqua text-white border-primary-aqua" 
+                        : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    Returns
+                  </Link>
                 </div>
-              )}
-            </div>
 
-            {/* Mobile Navigation */}
-            <div className="flex md:hidden items-center space-x-4">
-              {/* Mobile Cart */}
-              <Link
-                href="/cart"
-                className={`transition-colors relative touch-target ${
-                  isCartAnimating 
-                    ? "cart-pulse-animation" 
-                    : "text-secondary-black hover:text-primary-aqua cart-normal"
-                }`}
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartCount}
-                  </span>
+                {/* Country Selector */}
+                <CountrySelector />
+                
+                {/* Wishlist */}
+                <Link href="/wishlist" className="text-secondary-black hover:text-primary-aqua relative">
+                  <Heart className="h-5 w-5" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Cart */}
+                <Link
+                  href="/cart"
+                  className={`transition-colors relative ${
+                    isCartAnimating 
+                      ? "cart-pulse-animation" 
+                      : "text-secondary-black hover:text-primary-aqua cart-normal"
+                  }`}
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-abe-red text-white text-sm rounded-full w-6 h-6 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Authentication */}
+                {isAuthenticated ? (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 hidden lg:inline">Hi, {user?.firstName}</span>
+                    <SecretAdminButton />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLocation('/logout')}
+                      className="text-xs px-2 py-1"
+                    >
+                      Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLocation('/login')}
+                      className="text-xs px-2 py-1"
+                    >
+                      Login
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocation('/register')}
+                      className="text-xs px-2 py-1"
+                    >
+                      Register
+                    </Button>
+                  </div>
                 )}
-              </Link>
-
-              {/* Mobile Menu Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="touch-target"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
+              </div>
             </div>
           </div>
-
-          {/* Mobile Search Bar */}
-          <div className="md:hidden px-4 pb-4">
-            <SearchInput 
-              placeholder="Search books, authors, ISBN..."
-              className="w-full"
-            />
-          </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
+        
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
             <div className="md:hidden bg-white border-t border-gray-200">
               <nav className="px-4 py-4 space-y-4">
                 <Link

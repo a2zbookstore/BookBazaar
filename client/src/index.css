@@ -320,6 +320,34 @@ button:active, .button:active {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
+  
+  /* Mobile optimizations */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Mobile header spacing */
+  @media (max-width: 768px) {
+    .container-custom {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    
+    /* Prevent horizontal scroll on mobile */
+    body {
+      overflow-x: hidden;
+    }
+    
+    /* Mobile viewport fixes */
+    .fixed-header {
+      width: 100vw;
+      max-width: 100vw;
+    }
+  }
 
   .header-shadow {
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1) !important;
