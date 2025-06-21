@@ -137,6 +137,26 @@ export default function GiftCategoriesPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (limit to 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "Image file is too large. Please choose a file smaller than 2MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select a valid image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setUploadedImage(file);
       // Create preview URL
       const reader = new FileReader();
@@ -162,18 +182,49 @@ export default function GiftCategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    let finalForm = { ...form };
-    
-    // If image file is uploaded, convert to base64 and store in imageUrl
-    if (uploadedImage) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        finalForm.imageUrl = reader.result as string;
+    try {
+      let finalForm = { ...form };
+      
+      // If image file is uploaded, convert to base64 and store in imageUrl
+      if (uploadedImage) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            finalForm.imageUrl = reader.result as string;
+            console.log('Submitting form with uploaded image:', {
+              ...finalForm,
+              imageUrl: finalForm.imageUrl.substring(0, 50) + '...' // Log truncated version
+            });
+            categoryMutation.mutate(finalForm);
+          } catch (error) {
+            console.error('Error processing uploaded image:', error);
+            toast({
+              title: "Error",
+              description: "Failed to process uploaded image. Please try again.",
+              variant: "destructive",
+            });
+          }
+        };
+        reader.onerror = () => {
+          console.error('FileReader error');
+          toast({
+            title: "Error",
+            description: "Failed to read image file. Please try again.",
+            variant: "destructive",
+          });
+        };
+        reader.readAsDataURL(uploadedImage);
+      } else {
+        console.log('Submitting form with URL:', finalForm);
         categoryMutation.mutate(finalForm);
-      };
-      reader.readAsDataURL(uploadedImage);
-    } else {
-      categoryMutation.mutate(finalForm);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit form. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
