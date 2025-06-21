@@ -72,51 +72,6 @@ export default function HomePage() {
 
   return (
     <Layout>
-      {/* Hero Section with Search */}
-      <section className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 py-20 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="grid grid-cols-6 gap-4 h-full">
-            {bookImages.map((img, i) => (
-              <div key={i} className="animate-pulse">
-                <img src={img} alt="books" className="w-full h-full object-cover opacity-20" />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="container-custom relative z-10">
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Featured Logo */}
-            <div className="flex justify-center mb-8">
-              <Logo size="xl" variant="default" showText={true} />
-            </div>
-            <p className="text-xl text-secondary-black mb-8 leading-relaxed">
-              Your ultimate destination for rare books, bestsellers, and literary treasures from around the world
-            </p>
-            
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <SearchInput 
-                placeholder="Search by title, author, ISBN, or description..."
-                className="w-full"
-              />
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/catalog">
-                <Button className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3 rounded-full">
-                  Browse All Books
-                </Button>
-              </Link>
-              <Link href="/catalog?featured=true">
-                <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white px-8 py-3 rounded-full">
-                  Featured Collection
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Database-driven Gift with Purchase Section */}
       <GiftWithPurchase hasItemsInCart={hasItemsInCart} />
 

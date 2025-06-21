@@ -341,6 +341,18 @@ export default function Layout({ children }: LayoutProps) {
                 Catalog
               </Link>
               <Link
+                href="/catalog"
+                className="text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 text-gray-600"
+              >
+                Browse All Books
+              </Link>
+              <Link
+                href="/catalog?featured=true"
+                className="text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 text-gray-600"
+              >
+                Featured Collection
+              </Link>
+              <Link
                 href="/track-order"
                 className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
                   isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
