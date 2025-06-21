@@ -1,70 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-interface GiftItem {
-  id: string;
-  name: string;
-  type: 'novel' | 'notebook';
-  image: string;
-  description: string;
-}
+import type { GiftItem } from '@/shared/schema';
 
 interface GiftWithPurchaseProps {
   hasItemsInCart: boolean;
 }
 
-const GIFT_ITEMS: GiftItem[] = [
-  {
-    id: 'novel-1',
-    name: 'Classic Mystery Novel',
-    type: 'novel',
-    image: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop',
-    description: 'A thrilling mystery novel by renowned authors'
-  },
-  {
-    id: 'novel-2',
-    name: 'Romance Collection',
-    type: 'novel',
-    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=200&h=300&fit=crop',
-    description: 'Beautiful collection of romantic short stories'
-  },
-  {
-    id: 'novel-3',
-    name: 'Adventure Chronicles',
-    type: 'novel',
-    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200&h=300&fit=crop',
-    description: 'Epic adventure tales for young readers'
-  },
-  {
-    id: 'notebook-1',
-    name: 'Premium Leather Notebook',
-    type: 'notebook',
-    image: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=200&h=300&fit=crop',
-    description: 'High-quality leather-bound writing journal'
-  },
-  {
-    id: 'notebook-2',
-    name: 'Artistic Sketch Pad',
-    type: 'notebook',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=300&fit=crop',
-    description: 'Perfect for sketching and creative writing'
-  },
-  {
-    id: 'notebook-3',
-    name: 'Business Planner',
-    type: 'notebook',
-    image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=200&h=300&fit=crop',
-    description: 'Professional planner for productivity'
-  }
-];
-
 export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchaseProps) {
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+
+  // Fetch gift items from database
+  const { data: giftItems = [], isLoading } = useQuery<GiftItem[]>({
+    queryKey: ["/api/admin/gift-items"],
+  });
+
+  // Filter active items and sort by sortOrder
+  const activeGiftItems = giftItems
+    .filter(item => item.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 
   useEffect(() => {
     // Load selected gift from localStorage
@@ -80,20 +39,19 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
 
   const handleGiftSelect = (giftId: string) => {
     if (selectedGift === giftId) return; // Already selected
-    if (!isVisible && alwaysVisible) return; // Not eligible yet
     
     setSelectedGift(giftId);
     localStorage.setItem('selectedGift', giftId);
     
     // Add gift to cart with special flag
-    const giftItem = GIFT_ITEMS.find(item => item.id === giftId);
+    const giftItem = activeGiftItems.find(item => item.id.toString() === giftId);
     if (giftItem) {
       localStorage.setItem('giftDetails', JSON.stringify({
         id: giftItem.id,
         name: giftItem.name,
         type: giftItem.type,
-        image: giftItem.image,
-        price: 0,
+        image: giftItem.imageUrl || '/placeholder-gift.jpg',
+        price: parseFloat(giftItem.price || '0'),
         quantity: 1,
         isGift: true
       }));
