@@ -251,10 +251,10 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Desktop Header */}
-      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-24' : 'bg-white h-28'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
+      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-20' : 'bg-white h-24'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
         <div className="container-custom">
           {/* Top Row - Logo, Search, Actions */}
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-1">
             <div className="flex items-center space-x-8">
               <Link href="/">
                 <Logo size="lg" variant="default" showText={true} />
@@ -330,7 +330,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Bottom Row - Navigation Buttons */}
-          <div className="flex items-center justify-center py-2 border-t border-gray-100">
+          <div className="flex items-center justify-center py-1 border-t border-gray-100">
             <nav className="flex items-center gap-4">
               <Link
                 href="/"
