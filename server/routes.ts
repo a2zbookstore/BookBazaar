@@ -16,7 +16,9 @@ import {
   insertBookSchema, 
   insertCategorySchema, 
   insertContactMessageSchema,
-  insertCartItemSchema 
+  insertCartItemSchema,
+  insertGiftCategorySchema,
+  insertGiftItemSchema
 } from "@shared/schema";
 import { z } from "zod";
 
