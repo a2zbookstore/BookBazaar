@@ -380,9 +380,23 @@ export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
 
 export type RefundTransaction = typeof refundTransactions.$inferSelect;
 
+// Gift Categories Management
+export const giftCategories = pgTable("gift_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
+  description: text("description"),
+  imageUrl: varchar("image_url", { length: 500 }),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Gift Items Management
 export const giftItems = pgTable("gift_items", {
   id: serial("id").primaryKey(),
+  categoryId: integer("category_id").references(() => giftCategories.id).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
   description: text("description"),
@@ -407,6 +421,11 @@ export const homepageContent = pgTable("homepage_content", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Gift Categories schemas
+export const insertGiftCategorySchema = createInsertSchema(giftCategories);
+export type InsertGiftCategory = z.infer<typeof insertGiftCategorySchema>;
+export type GiftCategory = typeof giftCategories.$inferSelect;
 
 // Gift Items schemas
 export const insertGiftItemSchema = createInsertSchema(giftItems);

@@ -1,0 +1,361 @@
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Edit, Trash2, Package, Gift } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import type { GiftCategory } from "@/shared/schema";
+
+interface CategoryForm {
+  name: string;
+  type: "novel" | "notebook" | "";
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export default function GiftCategoriesPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<GiftCategory | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch gift categories
+  const { data: categories = [], isLoading } = useQuery<GiftCategory[]>({
+    queryKey: ["/api/admin/gift-categories"],
+  });
+
+  // Form state
+  const [form, setForm] = useState<CategoryForm>({
+    name: "",
+    type: "novel",
+    description: "",
+    imageUrl: "",
+    isActive: true,
+    sortOrder: 0,
+  });
+
+  // Create/Update category mutation
+  const categoryMutation = useMutation({
+    mutationFn: async (data: CategoryForm) => {
+      if (editingCategory) {
+        return apiRequest('PUT', `/api/admin/gift-categories/${editingCategory.id}`, data);
+      } else {
+        return apiRequest('POST', '/api/admin/gift-categories', data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/gift-categories"] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Success",
+        description: `Category ${editingCategory ? 'updated' : 'created'} successfully!`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to ${editingCategory ? 'update' : 'create'} category`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete category mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/admin/gift-categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/gift-categories"] });
+      toast({
+        title: "Success",
+        description: "Category deleted successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete category",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setForm({
+      name: "",
+      type: "novel",
+      description: "",
+      imageUrl: "",
+      isActive: true,
+      sortOrder: 0,
+    });
+    setEditingCategory(null);
+  };
+
+  const handleEdit = (category: GiftCategory) => {
+    setEditingCategory(category);
+    setForm({
+      name: category.name,
+      type: category.type as "novel" | "notebook",
+      description: category.description || "",
+      imageUrl: category.imageUrl || "",
+      isActive: category.isActive,
+      sortOrder: category.sortOrder,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm('Are you sure you want to delete this category? All gift items in this category will also be deleted.')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    categoryMutation.mutate(form);
+  };
+
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gift Categories Management</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Manage gift categories like Classic Novel, Mystery Novel, Premium Notebook, etc.
+        </p>
+      </div>
+
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-xl font-semibold">Categories ({categories.length})</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Organize your gift items into categories
+          </p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Category
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? 'Edit Gift Category' : 'Add New Gift Category'}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Category Name</Label>
+                  <Input
+                    id="name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g., Classic Novel, Mystery Novel"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="type">Type</Label>
+                  <select
+                    id="type"
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value as "novel" | "notebook" })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select Type</option>
+                    <option value="novel">Novel</option>
+                    <option value="notebook">Notebook</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Brief description of this category"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="imageUrl">Category Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  value={form.imageUrl}
+                  onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                  placeholder="https://example.com/category-image.jpg"
+                />
+                {form.imageUrl && (
+                  <div className="mt-2">
+                    <img 
+                      src={form.imageUrl} 
+                      alt="Preview"
+                      className="w-20 h-20 object-cover rounded border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="sortOrder">Sort Order</Label>
+                  <Input
+                    id="sortOrder"
+                    type="number"
+                    value={form.sortOrder}
+                    onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex items-center space-x-2 pt-6">
+                  <Switch
+                    id="isActive"
+                    checked={form.isActive}
+                    onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
+                  />
+                  <Label htmlFor="isActive">Active</Label>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={categoryMutation.isPending}
+                  className="flex-1"
+                >
+                  {categoryMutation.isPending ? 'Saving...' : editingCategory ? 'Update Category' : 'Create Category'}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8">
+          <Package className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
+          <p className="text-gray-600">Loading categories...</p>
+        </div>
+      ) : categories.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Gift className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No gift categories found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Start by creating your first gift category
+            </p>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Category
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Gift Categories List</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Sort Order</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categories.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center space-x-3">
+                        {category.imageUrl && (
+                          <img 
+                            src={category.imageUrl} 
+                            alt={category.name}
+                            className="w-10 h-10 object-cover rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        <span>{category.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={category.type === 'novel' ? 'default' : 'secondary'}>
+                        {category.type === 'novel' ? '📖 Novel' : '📝 Notebook'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {category.description || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={category.isActive ? 'default' : 'secondary'}>
+                        {category.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{category.sortOrder}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(category)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(category.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
