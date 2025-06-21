@@ -321,21 +321,10 @@ export default function Layout({ children }: LayoutProps) {
                   Logout
                 </Button>
               ) : (
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setLocation('/login')}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Login
-                  </Button>
-                  <Button 
-                    onClick={() => setLocation('/login')}
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
-                  >
-                    Register
-                  </Button>
-                </div>
+                <Button onClick={() => setLocation('/login')}>
+                  <User className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
               )}
             </div>
           </div>
