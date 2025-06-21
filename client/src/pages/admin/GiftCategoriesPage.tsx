@@ -187,7 +187,10 @@ export default function GiftCategoriesPage() {
     e.preventDefault();
     
     try {
-      let finalForm = { ...form };
+      let finalForm = { 
+        ...form,
+        price: form.price.toString() // Convert price to string for Zod validation
+      };
       
       // If image file is uploaded, convert to base64 and store in imageUrl
       if (uploadedImage) {
