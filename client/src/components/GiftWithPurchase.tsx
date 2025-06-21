@@ -19,11 +19,13 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
   // Fetch gift categories from database (public endpoint)
   const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   // Fetch gift items from database (public endpoint)
   const { data: giftItems = [], isLoading: itemsLoading } = useQuery<GiftItem[]>({
     queryKey: ["/api/gift-items"],
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   const isLoading = categoriesLoading || itemsLoading;
