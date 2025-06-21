@@ -21,6 +21,8 @@ interface GiftForm {
   type: "novel" | "notebook";
   description: string;
   imageUrl: string;
+  price: number;
+  isbn: string;
   isActive: boolean;
   sortOrder: number;
 }
@@ -58,6 +60,8 @@ export default function GiftManagementPage() {
     type: "novel",
     description: "",
     imageUrl: "",
+    price: 0,
+    isbn: "",
     isActive: true,
     sortOrder: 0,
   });
@@ -174,6 +178,8 @@ export default function GiftManagementPage() {
       type: "novel",
       description: "",
       imageUrl: "",
+      price: 0,
+      isbn: "",
       isActive: true,
       sortOrder: 0,
     });
@@ -199,6 +205,8 @@ export default function GiftManagementPage() {
       type: gift.type as "novel" | "notebook",
       description: gift.description || "",
       imageUrl: gift.imageUrl || "",
+      price: parseFloat(gift.price || "0"),
+      isbn: gift.isbn || "",
       isActive: gift.isActive,
       sortOrder: gift.sortOrder,
     });
@@ -392,11 +400,36 @@ export default function GiftManagementPage() {
                             {gift.sortOrder}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">{gift.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div>
+                            {gift.name}
+                            {gift.price && (
+                              <div className="text-sm text-green-600 font-medium">
+                                ${parseFloat(gift.price).toFixed(2)}
+                              </div>
+                            )}
+                            {gift.isbn && (
+                              <div className="text-xs text-gray-500">
+                                ISBN: {gift.isbn}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
-                          <Badge variant={gift.type === 'novel' ? 'default' : 'secondary'}>
-                            {gift.type}
-                          </Badge>
+                          <div className="space-y-1">
+                            <Badge variant={gift.type === 'novel' ? 'default' : 'secondary'}>
+                              {gift.type}
+                            </Badge>
+                            {gift.imageUrl && (
+                              <div>
+                                <img 
+                                  src={gift.imageUrl} 
+                                  alt={gift.name}
+                                  className="w-8 h-8 object-cover rounded"
+                                />
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant={gift.isActive ? 'default' : 'secondary'}>
