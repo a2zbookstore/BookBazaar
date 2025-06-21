@@ -18,7 +18,7 @@ import type { GiftItem, HomepageContent } from "@/shared/schema";
 
 interface GiftForm {
   name: string;
-  type: "novel" | "notebook";
+  type: "novel" | "notebook" | "";
   description: string;
   imageUrl: string;
   price: number;
@@ -293,20 +293,15 @@ export default function GiftManagementPage() {
                     </div>
                     <div>
                       <Label htmlFor="type">Type</Label>
-                      <Select
-                        value={giftForm.type || "novel"}
-                        onValueChange={(value: "novel" | "notebook") => 
-                          setGiftForm({ ...giftForm, type: value })
-                        }
+                      <select
+                        id="type"
+                        value={giftForm.type}
+                        onChange={(e) => setGiftForm({ ...giftForm, type: e.target.value as "novel" | "notebook" })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gift type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="novel">Novel</SelectItem>
-                          <SelectItem value="notebook">Notebook</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <option value="novel">Novel</option>
+                        <option value="notebook">Notebook</option>
+                      </select>
                     </div>
                   </div>
                   <div>
@@ -536,8 +531,9 @@ export default function GiftManagementPage() {
                     <div>
                       <Label htmlFor="section">Section</Label>
                       <Select
-                        value={contentForm.section || "gift_offer"}
+                        value={contentForm.section}
                         onValueChange={(value) => setContentForm({ ...contentForm, section: value })}
+                        defaultValue="gift_offer"
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select section" />
