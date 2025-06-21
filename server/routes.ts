@@ -2388,11 +2388,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/gift-categories/:id", requireAdminAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log("Updating category with data:", {
+        ...req.body,
+        imageUrl: req.body.imageUrl ? req.body.imageUrl.substring(0, 50) + '...' : req.body.imageUrl
+      });
+      
       const categoryData = insertGiftCategorySchema.partial().parse(req.body);
+      console.log("Parsed category data:", {
+        ...categoryData,
+        imageUrl: categoryData.imageUrl ? categoryData.imageUrl.substring(0, 50) + '...' : categoryData.imageUrl
+      });
+      
       const category = await storage.updateGiftCategory(id, categoryData);
+      console.log("Updated category successfully:", category);
       res.json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Zod validation error:", error.errors);
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error updating gift category:", error);
