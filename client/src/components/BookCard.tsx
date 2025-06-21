@@ -129,40 +129,10 @@ export default function BookCard({ book }: BookCardProps) {
           {book.imageUrl ? (
             <>
               <img
-                src={(() => {
-                  let imageUrl = book.imageUrl;
-                  console.log('BookCard processing image URL for:', book.title, 'Original URL:', imageUrl);
-                  
-                  // Handle different domain patterns
-                  if (imageUrl.includes('www.a2zbookshop.com')) {
-                    const fileName = imageUrl.split('/').pop();
-                    if (fileName) {
-                      imageUrl = `/uploads/images/${fileName}`;
-                      console.log('Using relative path for a2zbookshop image:', imageUrl);
-                    }
-                  } else if (imageUrl.includes('.replit.dev')) {
-                    // For replit URLs, just use the filename with our server
-                    const fileName = imageUrl.split('/').pop();
-                    if (fileName) {
-                      imageUrl = `/uploads/images/${fileName}`;
-                      console.log('Using relative path for replit image:', imageUrl);
-                    }
-                  } else if (!imageUrl.startsWith('http')) {
-                    // Relative URL - add current origin
-                    imageUrl = window.location.origin + (imageUrl.startsWith('/') ? '' : '/') + imageUrl;
-                    console.log('Added origin to relative URL:', imageUrl);
-                  }
-                  
-                  console.log('Final image URL for', book.title, ':', imageUrl);
-                  return imageUrl;
-                })()}
+                src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
                 alt={book.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                onLoad={(e) => {
-                  console.log('✅ Image loaded successfully:', book.title);
-                  const target = e.target as HTMLImageElement;
-                  console.log('✅ Loaded image src:', target.src);
-                }}
+                onLoad={() => {}}
                 onError={(e) => {
                   console.log('Image failed to load:', book.title, 'URL:', book.imageUrl);
                   const target = e.target as HTMLImageElement;
