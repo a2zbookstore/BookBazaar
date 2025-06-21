@@ -278,9 +278,13 @@ export default function CartPage() {
                 <CardContent className="space-y-4">
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 py-4 border-b last:border-b-0">
-                      {/* Book Image */}
+                      {/* Book/Gift Image */}
                       <div className="w-16 h-20 flex-shrink-0">
-                        {item.book.imageUrl ? (
+                        {item.isGift ? (
+                          <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 rounded flex items-center justify-center border-2 border-green-300">
+                            <span className="text-2xl">🎁</span>
+                          </div>
+                        ) : item.book.imageUrl ? (
                           <img
                             src={item.book.imageUrl}
                             alt={item.book.title}
@@ -293,15 +297,27 @@ export default function CartPage() {
                         )}
                       </div>
 
-                      {/* Book Info */}
+                      {/* Book/Gift Info */}
                       <div className="flex-1 min-w-0">
-                        <Link href={`/books/${item.book.id}`}>
-                          <h4 className="font-bookerly font-semibold text-base-black hover:text-primary-aqua transition-colors line-clamp-2">
-                            {item.book.title}
-                          </h4>
-                        </Link>
-                        <p className="text-secondary-black text-sm">{item.book.author}</p>
-                        <p className="text-tertiary-black text-xs">Condition: {item.book.condition}</p>
+                        {item.isGift ? (
+                          <>
+                            <h4 className="font-bookerly font-semibold text-green-700 line-clamp-2">
+                              🎁 Free Gift
+                            </h4>
+                            <p className="text-green-600 text-sm">Selected gift item</p>
+                            <p className="text-green-500 text-xs font-medium">Complimentary with your purchase</p>
+                          </>
+                        ) : (
+                          <>
+                            <Link href={`/books/${item.book.id}`}>
+                              <h4 className="font-bookerly font-semibold text-base-black hover:text-primary-aqua transition-colors line-clamp-2">
+                                {item.book.title}
+                              </h4>
+                            </Link>
+                            <p className="text-secondary-black text-sm">{item.book.author}</p>
+                            <p className="text-tertiary-black text-xs">Condition: {item.book.condition}</p>
+                          </>
+                        )}
                       </div>
 
                       {/* Quantity Controls */}
@@ -361,7 +377,7 @@ export default function CartPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveItem(item.id, item.book.title)}
+                          onClick={() => handleRemoveItem(item.id, item.isGift ? 'Free Gift' : item.book.title)}
                           className="text-abe-red hover:text-abe-red hover:bg-red-50 p-1"
                         >
                           <Trash2 className="h-4 w-4" />

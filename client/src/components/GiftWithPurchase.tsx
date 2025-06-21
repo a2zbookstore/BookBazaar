@@ -54,6 +54,12 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
     if (savedGift) {
       setSelectedGift(savedGift);
     }
+    
+    // Load selected gift category from localStorage
+    const savedCategory = localStorage.getItem('selectedGiftCategory');
+    if (savedCategory) {
+      setSelectedCategory(parseInt(savedCategory));
+    }
   }, []);
 
   // Debug logging
@@ -77,6 +83,51 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
       return () => clearInterval(interval);
     }
   }, [activeCategories.length, isPaused]);
+
+  const handleCategorySelect = async (categoryId: number) => {
+    if (!hasItemsInCart) return;
+
+    try {
+      // Add gift category to cart via API
+      const response = await fetch('/api/cart/gift', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          giftCategoryId: categoryId
+        }),
+      });
+
+      if (response.ok) {
+        setSelectedCategory(categoryId);
+        localStorage.setItem('selectedGiftCategory', categoryId.toString());
+        
+        // Find category name for alert
+        const category = activeCategories.find(cat => cat.id === categoryId);
+        const categoryName = category?.name || 'Gift';
+        
+        // Show confirmation alert
+        alert(`🎁 Great choice! "${categoryName}" has been added to your cart as a free gift!`);
+        
+        // Notify parent component to refresh cart
+        if (onGiftAdded) {
+          onGiftAdded();
+        }
+      } else {
+        const error = await response.json();
+        if (error.message.includes("must have at least one book")) {
+          alert(`❌ ${error.message}`);
+        } else {
+          alert(`Error adding gift: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding gift category to cart:', error);
+      alert('Failed to add gift to cart. Please try again.');
+    }
+  };
 
   const handleGiftSelect = async (giftId: string) => {
     if (selectedGift === giftId) return; // Already selected
@@ -358,7 +409,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 {(activeCategories.length > 3 ? [...activeCategories, ...activeCategories] : activeCategories).map((category, index) => (
                   <motion.div
                     key={`${category.id}-${index}`}
-                    onClick={() => hasItemsInCart ? setSelectedCategory(category.id) : null}
+                    onClick={() => hasItemsInCart ? handleCategorySelect(category.id) : null}
                     className={`
                       flex-shrink-0 transition-all duration-300 group relative
                       ${hasItemsInCart 
