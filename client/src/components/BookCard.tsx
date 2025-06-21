@@ -128,12 +128,17 @@ export default function BookCard({ book }: BookCardProps) {
         <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative">
           {book.imageUrl ? (
             <img
-              src={book.imageUrl}
+              src={book.imageUrl.replace('https://www.a2zbookshop.com', window.location.origin)}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.parentElement?.querySelector('.fallback-icon')?.setAttribute('style', 'display: flex');
+              }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-icon" style="display: none">
               <div className="text-center p-4">
                 <div className="w-12 h-12 mx-auto mb-2 bg-primary-aqua/10 rounded-full flex items-center justify-center">
                   <span className="text-primary-aqua font-bookerly text-lg">📚</span>

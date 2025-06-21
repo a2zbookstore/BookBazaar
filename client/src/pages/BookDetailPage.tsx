@@ -120,12 +120,18 @@ export default function BookDetailPage() {
             <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
               {book.imageUrl ? (
                 <img
-                  src={book.imageUrl}
+                  src={book.imageUrl.replace('https://www.a2zbookshop.com', window.location.origin)}
                   alt={book.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.parentElement?.querySelector('.fallback-display') as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-display">
                   <div className="text-center p-8">
                     <div className="w-20 h-20 mx-auto mb-4 bg-primary-aqua/10 rounded-full flex items-center justify-center">
                       <span className="text-primary-aqua font-bookerly text-3xl">📚</span>

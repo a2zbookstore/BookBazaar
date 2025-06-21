@@ -286,12 +286,18 @@ export default function CartPage() {
                           </div>
                         ) : item.book.imageUrl ? (
                           <img
-                            src={item.book.imageUrl}
+                            src={item.book.imageUrl.replace('https://www.a2zbookshop.com', window.location.origin)}
                             alt={item.book.title}
                             className="w-full h-full object-cover rounded"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.parentElement?.querySelector('.book-fallback') as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
                           />
                         ) : (
-                          <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                          <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center book-fallback">
                             <span className="text-xs">📚</span>
                           </div>
                         )}
