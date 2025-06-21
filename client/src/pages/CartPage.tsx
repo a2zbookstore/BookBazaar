@@ -72,7 +72,11 @@ export default function CartPage() {
   });
 
   // Calculate cart totals using admin panel shipping rates
-  const cartSubtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
+  const cartSubtotal = cartItems.reduce((total, item) => {
+    // Skip gift items in subtotal calculation
+    if (item.isGift) return total;
+    return total + (parseFloat(item.book.price) * item.quantity);
+  }, 0);
   
   // Use admin panel shipping rates
   let cartShipping = 5.99; // Default fallback
@@ -287,42 +291,57 @@ export default function CartPage() {
 
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1 || isUpdating === item.id}
-                          className="w-8 h-8 p-0"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const newQuantity = parseInt(e.target.value);
-                            if (newQuantity > 0) {
-                              handleUpdateQuantity(item.id, newQuantity);
-                            }
-                          }}
-                          disabled={isUpdating === item.id}
-                          className="w-16 text-center"
-                          min="1"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                          disabled={isUpdating === item.id}
-                          className="w-8 h-8 p-0"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                        {item.isGift ? (
+                          <div className="bg-green-100 border border-green-300 rounded px-3 py-1">
+                            <span className="text-sm font-medium text-green-700">FREE GIFT - Qty: 1</span>
+                          </div>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1 || isUpdating === item.id}
+                              className="w-8 h-8 p-0"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const newQuantity = parseInt(e.target.value);
+                                if (newQuantity > 0) {
+                                  handleUpdateQuantity(item.id, newQuantity);
+                                }
+                              }}
+                              disabled={isUpdating === item.id}
+                              className="w-16 text-center"
+                              min="1"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                              disabled={isUpdating === item.id}
+                              className="w-8 h-8 p-0"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
                       </div>
 
                       {/* Price and Remove */}
                       <div className="text-right">
-                        <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                        {item.isGift ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl font-bold text-green-600">FREE</span>
+                            <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Gift</span>
+                          </div>
+                        ) : (
+                          <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                        )}
                         
                         <Button
                           variant="ghost"

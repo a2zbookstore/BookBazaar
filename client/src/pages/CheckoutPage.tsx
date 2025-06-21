@@ -312,7 +312,11 @@ export default function CheckoutPage() {
   }, [cartItems]);
 
   // Calculate totals - Use detected location's shipping rate as primary source
-  const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
+  const subtotal = cartItems.reduce((total, item) => {
+    // Skip gift items in subtotal calculation
+    if (item.isGift) return total;
+    return total + (parseFloat(item.book.price) * item.quantity);
+  }, 0);
   
   // Priority order for shipping cost:
   // 1. User's detected location shipping rate (from useShipping hook)

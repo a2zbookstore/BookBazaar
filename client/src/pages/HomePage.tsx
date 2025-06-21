@@ -31,7 +31,7 @@ export default function HomePage() {
     queryKey: ["/api/categories"],
   });
 
-  const { data: cartItems = [] } = useQuery({
+  const { data: cartItems = [], refetch } = useQuery({
     queryKey: ["/api/cart"],
   });
 
@@ -73,7 +73,10 @@ export default function HomePage() {
   return (
     <Layout>
       {/* Database-driven Gift with Purchase Section */}
-      <GiftWithPurchase hasItemsInCart={hasItemsInCart} />
+      <GiftWithPurchase 
+        hasItemsInCart={hasItemsInCart} 
+        onGiftAdded={() => refetch()}
+      />
 
       {/* Bestsellers Section - Moving Carousel */}
       <section className="py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
