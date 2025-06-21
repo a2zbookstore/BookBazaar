@@ -1,15 +1,21 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Gift, ArrowLeft } from "lucide-react";
+import { ChevronRight, Gift, ArrowLeft, Check, ShoppingCart } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useCart } from "@/contexts/CartContext";
+import { apiRequest } from "@/lib/queryClient";
 import type { GiftItem, GiftCategory } from "@/shared/schema";
 
 export default function GiftItemsPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedGift, setSelectedGift] = useState<string | null>(null);
+  const { cartCount } = useCart();
+  const queryClient = useQueryClient();
 
   const { data: giftCategories = [] } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
@@ -25,6 +31,52 @@ export default function GiftItemsPage() {
     : giftItems;
 
   const selectedCategoryData = giftCategories.find(cat => cat.id === selectedCategory);
+
+  // Add gift to cart mutation
+  const addGiftMutation = useMutation({
+    mutationFn: async (giftId: string) => {
+      const response = await apiRequest("POST", "/api/cart/gift", {
+        giftId: parseInt(giftId)
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      toast({
+        title: "Gift Added!",
+        description: "Your free gift has been added to cart",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add gift to cart",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleGiftSelect = (giftId: string) => {
+    if (cartCount === 0) {
+      toast({
+        title: "Add Books First",
+        description: "Please add books to your cart before selecting a gift",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedGift === giftId) {
+      setSelectedGift(null);
+      return;
+    }
+
+    setSelectedGift(giftId);
+    addGiftMutation.mutate(giftId);
+  };
+
+  // Check if user has books in cart (excluding gifts)
+  const hasBookInCart = cartCount > 0;
 
   return (
     <Layout>
@@ -126,99 +178,142 @@ export default function GiftItemsPage() {
           </div>
         )}
 
-        {/* Gift Items Grid */}
-        {filteredItems.length === 0 ? (
+        {/* Display Gift Categories as Selectable Items */}
+        {giftCategories.length === 0 ? (
           <div className="text-center py-12">
             <Gift className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              {selectedCategory ? 'No items in this category' : 'No gift items available'}
+              No gift categories available
             </h3>
             <p className="text-gray-500 mb-6">
-              {selectedCategory 
-                ? 'Try selecting a different category or view all items.' 
-                : 'Gift items will appear here when added by the admin.'}
+              Gift categories will appear here when added by the admin.
             </p>
-            {selectedCategory && (
-              <Button onClick={() => setSelectedCategory(null)}>
-                View All Categories
-              </Button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
-                <CardContent className="p-0">
-                  {/* Item Image */}
-                  <div className="relative aspect-[3/4] overflow-hidden">
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                        <Gift className="h-16 w-16 text-gray-400" />
-                      </div>
-                    )}
-                    
-                    {/* Category Badge */}
-                    <div className="absolute top-3 left-3">
-                      <Badge className={`
-                        ${item.type === 'novel' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}
-                      `}>
-                        {item.type === 'novel' ? '📚 Novel' : '📓 Notebook'}
-                      </Badge>
-                    </div>
-
-                    {/* FREE Badge */}
-                    <div className="absolute top-3 right-3">
-                      <Badge className="bg-green-500 text-white font-bold">
-                        FREE
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Item Details */}
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-                      {item.name}
-                    </h3>
-                    
-                    {item.description && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {item.description}
-                      </p>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        {item.price && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500 line-through">
-                              ${item.price}
-                            </span>
-                            <span className="text-lg font-bold text-green-600">
-                              FREE
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          with any book purchase
-                        </span>
-                      </div>
+            {giftCategories.map((category) => {
+              const isSelected = selectedGift === category.id.toString();
+              return (
+                <Card 
+                  key={category.id} 
+                  className={`
+                    group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer
+                    ${isSelected 
+                      ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300' 
+                      : 'hover:shadow-xl border-gray-200 hover:border-gray-300'
+                    }
+                    ${!hasBookInCart ? 'opacity-60 cursor-not-allowed' : ''}
+                  `}
+                  onClick={() => handleGiftSelect(category.id.toString())}
+                >
+                  <CardContent className="p-0">
+                    {/* Item Image */}
+                    <div className="relative aspect-[3/4] overflow-hidden">
+                      {category.imageUrl ? (
+                        <img
+                          src={category.imageUrl}
+                          alt={category.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                          <Gift className="h-16 w-16 text-gray-400" />
+                        </div>
+                      )}
                       
-                      <div className="text-right">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <Gift className="h-4 w-4 text-green-600" />
+                      {/* Category Badge */}
+                      <div className="absolute top-3 left-3">
+                        <Badge className={`
+                          ${category.type === 'novel' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}
+                        `}>
+                          {category.type === 'novel' ? '📚 Novel' : '📓 Notebook'}
+                        </Badge>
+                      </div>
+
+                      {/* FREE Badge */}
+                      <div className="absolute top-3 right-3">
+                        <Badge className="bg-green-500 text-white font-bold">
+                          FREE
+                        </Badge>
+                      </div>
+
+                      {/* Selection Check */}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                          <div className="bg-green-500 text-white rounded-full p-3 shadow-lg">
+                            <Check className="h-8 w-8" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Disabled Overlay */}
+                      {!hasBookInCart && (
+                        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                          <div className="bg-white rounded-lg p-3 text-center">
+                            <ShoppingCart className="h-6 w-6 mx-auto mb-2 text-gray-600" />
+                            <p className="text-xs text-gray-600 font-medium">Add books first</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Item Details */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
+                        {category.name}
+                      </h3>
+                      
+                      {category.description && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                          {category.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          {category.price && parseFloat(category.price) > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-500 line-through">
+                                ${parseFloat(category.price).toFixed(2)}
+                              </span>
+                              <span className="text-lg font-bold text-green-600">
+                                FREE
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-xs text-gray-500">
+                            with any book purchase
+                          </span>
+                        </div>
+                        
+                        <div className="text-right">
+                          {isSelected ? (
+                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={!hasBookInCart || addGiftMutation.isPending}
+                              className="text-xs"
+                            >
+                              {addGiftMutation.isPending ? "Adding..." : "Select"}
+                            </Button>
+                          )}
                         </div>
                       </div>
+
+                      {isSelected && (
+                        <div className="mt-3 bg-green-100 text-green-800 p-2 rounded-lg text-sm font-medium text-center">
+                          ✅ Selected as your free gift!
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -238,7 +333,7 @@ export default function GiftItemsPage() {
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">2</span>
-                    Select one free gift from the available options
+                    Select one free gift from the available options above
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">3</span>
@@ -246,9 +341,32 @@ export default function GiftItemsPage() {
                   </li>
                 </ol>
               </div>
+              
+              {hasBookInCart ? (
+                <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-center gap-2 text-green-700">
+                    <Check className="h-5 w-5" />
+                    <span className="font-semibold">Great! You have {cartCount} item(s) in your cart.</span>
+                  </div>
+                  <p className="text-green-600 text-sm mt-1">
+                    You can now select a free gift from the options above.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-center gap-2 text-yellow-700">
+                    <ShoppingCart className="h-5 w-5" />
+                    <span className="font-semibold">Your cart is empty</span>
+                  </div>
+                  <p className="text-yellow-600 text-sm mt-1">
+                    Add books to your cart first, then return here to select your free gift.
+                  </p>
+                </div>
+              )}
+
               <Link href="/catalog">
                 <Button className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full">
-                  Start Shopping for Books
+                  {hasBookInCart ? "Continue Shopping" : "Start Shopping for Books"}
                 </Button>
               </Link>
             </CardContent>
