@@ -251,22 +251,23 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Desktop Header */}
-      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg' : 'bg-white'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
-        <div className="container-custom py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/">
-              <Logo size="lg" variant="default" showText={true} />
-            </Link>
+      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-28' : 'bg-white h-32'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
+        <div className="container-custom">
+          {/* Top Row - Logo, Search, Actions */}
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-8">
+              <Link href="/">
+                <Logo size="lg" variant="default" showText={true} />
+              </Link>
+            </div>
 
-            {/* Search Bar */}
+            {/* Search Bar - Centered and Wide */}
             <div className="flex-1 max-w-6xl mx-8">
               <SearchInput />
             </div>
 
-            {/* Right Side Actions */}
+            {/* Actions */}
             <div className="flex items-center space-x-4">
-              {/* Currency & Country */}
               <div className="flex items-center space-x-2">
                 <Badge variant="outline" className="text-xs">
                   {userCurrency.symbol} {userCurrency.code}
@@ -274,51 +275,6 @@ export default function Layout({ children }: LayoutProps) {
                 <CountrySelector />
               </div>
 
-              {/* Navigation Links */}
-              <nav className="hidden lg:flex items-center space-x-4">
-                <Link
-                  href="/"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/catalog"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Catalog
-                </Link>
-                <Link
-                  href="/track-order"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Track Order
-                </Link>
-                <Link
-                  href="/returns"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Returns
-                </Link>
-                <Link
-                  href="/contact"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Contact
-                </Link>
-              </nav>
-
-              {/* Wishlist */}
               {isAuthenticated && (
                 <Link
                   href="/wishlist"
@@ -334,7 +290,6 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               )}
 
-              {/* Cart */}
               <Link
                 href="/cart"
                 className={`flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors relative ${
@@ -350,7 +305,6 @@ export default function Layout({ children }: LayoutProps) {
                 )}
               </Link>
 
-              {/* Auth Button */}
               {isAuthenticated ? (
                 <Button
                   variant="outline"
@@ -373,6 +327,52 @@ export default function Layout({ children }: LayoutProps) {
                 </Button>
               )}
             </div>
+          </div>
+
+          {/* Bottom Row - Navigation Buttons */}
+          <div className="flex items-center justify-center py-3 border-t border-gray-100">
+            <nav className="flex items-center gap-4">
+              <Link
+                href="/"
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                href="/catalog"
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Catalog
+              </Link>
+              <Link
+                href="/track-order"
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Track Order
+              </Link>
+              <Link
+                href="/returns"
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Returns
+              </Link>
+              <Link
+                href="/contact"
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                Contact
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
