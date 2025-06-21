@@ -48,8 +48,22 @@ export default function CartPage() {
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatCurrency, formatAmount, exchangeRates } = useCurrency();
   const { shipping } = useShipping();
-  const [giftItem, setGiftItem] = useState(null);
+  const [giftItem, setGiftItem] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
+  
+  // Load gift item from localStorage
+  useEffect(() => {
+    const savedGift = localStorage.getItem('giftDetails');
+    if (savedGift && cartItems.length > 0) {
+      try {
+        setGiftItem(JSON.parse(savedGift));
+      } catch (error) {
+        console.error('Error parsing gift details:', error);
+      }
+    } else {
+      setGiftItem(null);
+    }
+  }, [cartItems]);
 
 
   // Get shipping rate from admin panel - default to India if no location detected
@@ -321,6 +335,37 @@ export default function CartPage() {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Gift Item Display */}
+                  {giftItem && (
+                    <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-2 border-green-200">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm">🎁</span>
+                        </div>
+                        <h3 className="text-lg font-semibold text-green-700">Your Free Gift</h3>
+                      </div>
+                      <div className="flex items-center gap-4 py-3 bg-white rounded-lg p-3">
+                        <div className="w-16 h-20 flex-shrink-0">
+                          <img 
+                            src={giftItem.image} 
+                            alt={giftItem.name}
+                            className="w-full h-full object-cover rounded"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{giftItem.name}</h4>
+                          <p className="text-sm text-gray-600 capitalize">
+                            {giftItem.type === 'novel' ? '📚 Novel' : '📓 Notebook'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-500">Quantity: 1</p>
+                          <div className="text-lg font-bold text-green-600">FREE</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
