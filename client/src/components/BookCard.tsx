@@ -138,7 +138,7 @@ export default function BookCard({ book }: BookCardProps) {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-icon" style="display: none">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-icon" style={{display: 'none'}}>
               <div className="text-center p-4">
                 <div className="w-12 h-12 mx-auto mb-2 bg-primary-aqua/10 rounded-full flex items-center justify-center">
                   <span className="text-primary-aqua font-bookerly text-lg">📚</span>

@@ -23,8 +23,14 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Serve uploaded images statically
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Serve uploaded images statically with proper headers
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png')) {
+      res.set('Content-Type', 'image/jpeg');
+    }
+  }
+}));
 app.use('/attached_assets', express.static(path.join(process.cwd(), 'attached_assets')));
 
 app.use((req, res, next) => {
