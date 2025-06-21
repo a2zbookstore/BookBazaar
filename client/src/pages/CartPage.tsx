@@ -286,7 +286,7 @@ export default function CartPage() {
                           </div>
                         ) : item.book.imageUrl ? (
                           <img
-                            src={`/uploads/images/${item.book.imageUrl.split('/').pop()}`}
+                            src={`/uploads/images/${item.book.imageUrl.split('/').pop()}?v=${Date.now()}`}
                             alt={item.book.title}
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {

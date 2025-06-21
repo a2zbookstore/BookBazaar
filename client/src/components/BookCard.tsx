@@ -129,48 +129,13 @@ export default function BookCard({ book }: BookCardProps) {
           {book.imageUrl ? (
             <>
               <img
-                src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
+                src={`/uploads/images/${book.imageUrl.split('/').pop()}?v=${Date.now()}`}
                 alt={book.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                onLoad={() => {
-                  console.log('✅ Image loaded:', book.title);
-                }}
+                onLoad={() => {}}
                 onError={(e) => {
-                  console.log('Image failed to load:', book.title, 'URL:', book.imageUrl);
                   const target = e.target as HTMLImageElement;
-                  
-                  // Try different URL variations
-                  if (!target.dataset.retryAttempt) {
-                    target.dataset.retryAttempt = '1';
-                    console.log('Attempting retry for:', book.title);
-                    
-                    // Try direct path with filename only
-                    const imagePath = book.imageUrl.split('/').pop();
-                    if (imagePath) {
-                      const retryUrl = `/uploads/images/${imagePath}`;
-                      console.log('🔄 Retry attempt 1 - Trying relative path:', retryUrl);
-                      target.src = retryUrl;
-                      return;
-                    }
-                  } else if (target.dataset.retryAttempt === '1') {
-                    target.dataset.retryAttempt = '2';
-                    // Try with different domain patterns
-                    const imagePath = book.imageUrl.split('/').pop();
-                    if (imagePath) {
-                      const retryUrl = `/uploads/images/${imagePath}`;
-                      console.log('Trying relative path:', retryUrl);
-                      target.src = retryUrl;
-                      return;
-                    }
-                  }
-                  
-                  console.log('All retry attempts failed for:', book.title);
-                  // Show fallback if all attempts fail
-                  target.style.display = 'none';
-                  const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
-                  if (fallback) {
-                    fallback.style.display = 'flex';
-                  }
+                  target.src = 'https://via.placeholder.com/150x200/f0f0f0/666?text=No+Image';
                 }}
               />
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-icon" style={{display: 'none'}}>
