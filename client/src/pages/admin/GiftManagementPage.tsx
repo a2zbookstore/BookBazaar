@@ -319,15 +319,57 @@ export default function GiftManagementPage() {
                       rows={3}
                     />
                   </div>
+                  
                   <div>
-                    <Label htmlFor="imageUrl">Image URL</Label>
+                    <Label htmlFor="imageUpload">Upload Image</Label>
                     <Input
-                      id="imageUrl"
-                      value={giftForm.imageUrl}
-                      onChange={(e) => setGiftForm({ ...giftForm, imageUrl: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
+                      id="imageUpload"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Create blob URL for preview
+                          const imageUrl = URL.createObjectURL(file);
+                          setGiftForm({ ...giftForm, imageUrl });
+                        }
+                      }}
                     />
+                    {giftForm.imageUrl && (
+                      <div className="mt-2">
+                        <img 
+                          src={giftForm.imageUrl} 
+                          alt="Preview" 
+                          className="w-20 h-20 object-cover rounded border"
+                        />
+                      </div>
+                    )}
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="price">Price ($)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={giftForm.price}
+                        onChange={(e) => setGiftForm({ ...giftForm, price: parseFloat(e.target.value) || 0 })}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="isbn">ISBN (for books)</Label>
+                      <Input
+                        id="isbn"
+                        value={giftForm.isbn}
+                        onChange={(e) => setGiftForm({ ...giftForm, isbn: e.target.value })}
+                        placeholder="978-0-123456-78-9"
+                      />
+                    </div>
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="sortOrder">Sort Order</Label>
