@@ -351,19 +351,24 @@ button:active, .button:active {
     /* Mobile header height adjustment */
     .fixed-header {
       height: auto !important;
-      min-height: 120px;
+      min-height: 110px;
     }
     
     /* Ensure main content starts below mobile header */
     .min-h-screen {
-      padding-top: 130px;
+      padding-top: 115px;
     }
   }
   
   /* Desktop adjustment */
   @media (min-width: 768px) {
+    .fixed-header {
+      height: auto !important;
+      min-height: 80px;
+    }
+    
     .min-h-screen {
-      padding-top: 90px;
+      padding-top: 85px;
     }
   }
 
