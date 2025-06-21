@@ -649,6 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         price: string;
         title: string;
         author: string;
+        isGift?: boolean;
       }> = [];
       
       if (userId) {
@@ -658,7 +659,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           quantity: item.quantity,
           price: item.book.price.toString(),
           title: item.book.title,
-          author: item.book.author
+          author: item.book.author,
+          isGift: item.isGift || false
         }));
       } else {
         // Get guest cart from session
@@ -680,7 +682,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 quantity: item.quantity,
                 price: book.price.toString(),
                 title: book.title,
-                author: book.author
+                author: book.author,
+                isGift: item.isGift || false
               });
             }
           } catch (error) {
@@ -689,6 +692,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         console.log("Final cart items for order:", cartItems.length);
+      }
+
+      // Include gift item in order if present
+      const giftItem = (req.session as any).giftItem;
+      if (giftItem) {
+        cartItems.push({
+          bookId: giftItem.giftId,
+          quantity: 1,
+          price: "0.00",
+          title: giftItem.name,
+          author: giftItem.type,
+          isGift: true
+        });
       }
 
       // Validate cart items
