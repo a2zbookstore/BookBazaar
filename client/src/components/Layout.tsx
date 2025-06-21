@@ -53,15 +53,15 @@ export default function Layout({ children }: LayoutProps) {
       }`}>
         <div className="container-custom px-4 md:px-6">
           {/* Mobile Header Layout */}
-          <div className="md:hidden">
-            <div className="flex items-center justify-between h-14 py-2">
+          <div className="block md:hidden">
+            <div className="flex items-center justify-between h-16 py-2">
               {/* Logo */}
               <Link href="/" className="flex items-center flex-shrink-0">
                 <Logo size="sm" variant="default" showText={true} />
               </Link>
 
               {/* Mobile Right Actions */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 {/* Country Selector */}
                 <CountrySelector />
                 
@@ -104,19 +104,19 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             </div>
 
-            {/* Mobile Search Bar */}
-            <div className="px-2 pb-3">
+            {/* Mobile Search Bar - Second Row */}
+            <div className="px-2 pb-2">
               <SearchInput 
                 placeholder="Search books, authors, ISBN..."
                 className="w-full h-10"
               />
             </div>
 
-            {/* Mobile Navigation Buttons */}
-            <div className="flex items-center justify-center space-x-2 px-2 pb-3">
+            {/* Mobile Navigation Buttons - Third Row */}
+            <div className="flex items-center justify-center space-x-1 px-2 pb-2">
               <Link
                 href="/"
-                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
                   isActive("/") 
                     ? "bg-primary-aqua text-white border-primary-aqua" 
                     : "text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -126,7 +126,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/catalog"
-                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
                   isActive("/catalog") 
                     ? "bg-primary-aqua text-white border-primary-aqua" 
                     : "text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -136,7 +136,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/track-order"
-                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
                   isActive("/track-order") 
                     ? "bg-primary-aqua text-white border-primary-aqua" 
                     : "text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -146,7 +146,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/returns"
-                className={`text-xs px-3 py-2 rounded-full border transition-colors ${
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
                   isActive("/returns") 
                     ? "bg-primary-aqua text-white border-primary-aqua" 
                     : "text-gray-700 border-gray-300 hover:bg-gray-50"
