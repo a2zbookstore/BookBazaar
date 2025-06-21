@@ -51,37 +51,42 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-base-black text-white flex flex-col">
-        <div className="p-6">
+      <aside className="w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col shadow-2xl border-r border-slate-700">
+        <div className="p-6 bg-gradient-to-b from-slate-800 to-slate-900">
           <Link href="/" className="flex items-center mb-8">
-            <h2 className="text-xl font-bookerly font-bold">A2Z BOOKSHOP</h2>
+            <h2 className="text-xl font-bookerly font-bold text-white">A2Z BOOKSHOP</h2>
           </Link>
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold">Admin Dashboard</h3>
-            <p className="text-sm text-gray-400">Welcome back, {user?.firstName || 'Admin'}</p>
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-white">Admin Dashboard</h3>
+            <p className="text-sm text-slate-300 bg-slate-700 px-3 py-1 rounded-full inline-block">Welcome back, {user?.firstName || 'Admin'}</p>
           </div>
         </div>
 
         <nav className="flex-1 px-4">
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               return (
                 <li key={item.href}>
                   <div
                     className={cn(
-                      "flex items-center px-4 py-3 rounded-lg transition-colors duration-200 cursor-pointer",
+                      "flex items-center px-4 py-4 rounded-xl transition-all duration-300 cursor-pointer transform hover:scale-105 shadow-sm",
                       isActive(item.href, item.exact)
-                        ? "bg-primary-aqua text-white"
-                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border-l-4 border-blue-300 font-semibold"
+                        : "text-gray-300 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 hover:text-white hover:shadow-md font-medium border-l-4 border-transparent hover:border-gray-400"
                     )}
                     onClick={() => {
                       console.log("Navigating to:", item.href);
                       setLocation(item.href);
                     }}
                   >
-                    <Icon className="h-5 w-5 mr-3" />
-                    {item.label}
+                    <Icon className={cn(
+                      "h-6 w-6 mr-4 transition-colors duration-300",
+                      isActive(item.href, item.exact)
+                        ? "text-blue-100"
+                        : "text-gray-400 group-hover:text-white"
+                    )} />
+                    <span className="text-sm tracking-wide">{item.label}</span>
                   </div>
                 </li>
               );
@@ -89,10 +94,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-slate-600">
           <Link href="/">
-            <Button variant="ghost" className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800">
-              <LogOut className="h-4 w-4 mr-3" />
+            <Button variant="ghost" className="w-full justify-start text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 transition-all duration-300 font-medium">
+              <LogOut className="h-5 w-5 mr-3" />
               Back to Store
             </Button>
           </Link>
