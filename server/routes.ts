@@ -1242,22 +1242,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Admin authentication required" });
       }
 
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
       const bookData = insertBookSchema.parse(req.body);
-      console.log("Parsed book data:", JSON.stringify(bookData, null, 2));
       const book = await storage.createBook(bookData);
       res.json(book);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Zod validation error:", error.errors);
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error creating book:", error);
-      console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
       res.status(500).json({ message: "Failed to create book" });
     }
   });
