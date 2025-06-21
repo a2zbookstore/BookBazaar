@@ -132,14 +132,14 @@ export default function InventoryPageNew() {
         description: data.description || "",
         condition: data.condition,
         binding: data.binding,
-        price: data.price && data.price.trim() !== "" ? data.price : "0",
+        price: data.price && data.price.trim() !== "" ? parseFloat(data.price).toString() : "0",
         stock: data.stock || 0,
         imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null,
         publisher: data.publisher || "",
         pages: data.pages || null,
         language: data.language || "English",
-        weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
+        weight: data.weight && data.weight.trim() !== "" ? parseFloat(data.weight).toString() : null,
         dimensions: data.dimensions || "",
         featured: data.featured || false,
         bestseller: data.bestseller || false,
@@ -172,14 +172,14 @@ export default function InventoryPageNew() {
         description: data.description || "",
         condition: data.condition,
         binding: data.binding,
-        price: data.price && data.price.trim() !== "" ? data.price : "0",
+        price: data.price && data.price.trim() !== "" ? parseFloat(data.price).toString() : "0",
         stock: data.stock || 0,
         imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null,
         publisher: data.publisher || "",
         pages: data.pages || null,
         language: data.language || "English",
-        weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
+        weight: data.weight && data.weight.trim() !== "" ? parseFloat(data.weight).toString() : null,
         dimensions: data.dimensions || "",
         featured: data.featured || false,
         bestseller: data.bestseller || false,
@@ -292,10 +292,10 @@ export default function InventoryPageNew() {
       return;
     }
     
-    if (!bookForm.price || parseFloat(bookForm.price) < 0) {
+    if (!bookForm.price || bookForm.price.trim() === "" || parseFloat(bookForm.price) < 0 || isNaN(parseFloat(bookForm.price))) {
       toast({
         title: "Validation Error",
-        description: "Please enter a valid price",
+        description: "Please enter a valid price (must be a positive number)",
         variant: "destructive",
       });
       return;
