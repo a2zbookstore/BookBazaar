@@ -424,7 +424,12 @@ export const homepageContent = pgTable("homepage_content", {
 });
 
 // Gift Categories schemas
-export const insertGiftCategorySchema = createInsertSchema(giftCategories);
+export const insertGiftCategorySchema = createInsertSchema(giftCategories).extend({
+  price: z.union([z.string(), z.number()]).optional().transform((val) => {
+    if (val === undefined || val === null) return undefined;
+    return typeof val === 'string' ? val : val.toString();
+  })
+});
 export type InsertGiftCategory = z.infer<typeof insertGiftCategorySchema>;
 export type GiftCategory = typeof giftCategories.$inferSelect;
 

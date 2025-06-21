@@ -64,6 +64,18 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
     setIsVisible(hasItemsInCart);
   }, [hasItemsInCart]);
 
+  // Auto-advance carousel
+  useEffect(() => {
+    if (activeCategories.length > 3 && !isPaused) {
+      const interval = setInterval(() => {
+        setCarouselIndex(prev => 
+          prev < activeCategories.length - 1 ? prev + 1 : 0
+        );
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [activeCategories.length, isPaused]);
+
   const handleGiftSelect = (giftId: string) => {
     if (selectedGift === giftId) return; // Already selected
     

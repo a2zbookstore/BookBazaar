@@ -188,8 +188,8 @@ export default function GiftCategoriesPage() {
     
     try {
       let finalForm = { 
-        ...form,
-        price: form.price.toString() // Convert price to string for Zod validation
+        ...form
+        // Price will be handled by the updated Zod schema transformation
       };
       
       // If image file is uploaded, convert to base64 and store in imageUrl
