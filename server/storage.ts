@@ -1085,6 +1085,46 @@ export class DatabaseStorage implements IStorage {
     // Then delete the category
     await db.delete(giftCategories).where(eq(giftCategories.id, id));
   }
+
+  // Gift Items Methods
+  async getGiftItems(categoryId?: number): Promise<GiftItem[]> {
+    if (categoryId) {
+      return await db.select().from(giftItems)
+        .where(eq(giftItems.categoryId, categoryId))
+        .orderBy(giftItems.sortOrder, giftItems.name);
+    }
+    return await db.select().from(giftItems).orderBy(giftItems.sortOrder, giftItems.name);
+  }
+
+  async getGiftItemById(id: number): Promise<GiftItem | undefined> {
+    const [item] = await db.select().from(giftItems).where(eq(giftItems.id, id));
+    return item;
+  }
+
+  async createGiftItem(itemData: InsertGiftItem): Promise<GiftItem> {
+    const [item] = await db.insert(giftItems).values(itemData).returning();
+    return item;
+  }
+
+  async updateGiftItem(id: number, itemData: Partial<InsertGiftItem>): Promise<GiftItem> {
+    const [item] = await db.update(giftItems)
+      .set({ ...itemData, updatedAt: new Date() })
+      .where(eq(giftItems.id, id))
+      .returning();
+    return item;
+  }
+
+  async deleteGiftItem(id: number): Promise<void> {
+    await db.delete(giftItems).where(eq(giftItems.id, id));
+  }
+
+  async updateGiftItemOrder(items: { id: number; sortOrder: number }[]): Promise<void> {
+    for (const item of items) {
+      await db.update(giftItems)
+        .set({ sortOrder: item.sortOrder, updatedAt: new Date() })
+        .where(eq(giftItems.id, item.id));
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
