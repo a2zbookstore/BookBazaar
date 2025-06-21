@@ -358,19 +358,24 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 {(activeCategories.length > 3 ? [...activeCategories, ...activeCategories] : activeCategories).map((category, index) => (
                   <motion.div
                     key={`${category.id}-${index}`}
-                    onClick={() => setSelectedCategory(category.id)}
+                    onClick={() => hasItemsInCart ? setSelectedCategory(category.id) : null}
                     className={`
-                      flex-shrink-0 cursor-pointer transition-all duration-300 group
-                      ${selectedCategory === category.id ? 'transform scale-110' : 'hover:scale-105'}
+                      flex-shrink-0 transition-all duration-300 group relative
+                      ${hasItemsInCart 
+                        ? `cursor-pointer ${selectedCategory === category.id ? 'transform scale-110' : 'hover:scale-105'}`
+                        : 'cursor-not-allowed opacity-75'
+                      }
                     `}
-                    whileHover={{ y: -5 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={hasItemsInCart ? { y: -5 } : {}}
+                    whileTap={hasItemsInCart ? { scale: 0.95 } : {}}
                   >
                     <div className={`
                       w-52 h-40 rounded-xl overflow-hidden shadow-lg border-4 transition-all duration-300 bg-white
                       ${selectedCategory === category.id 
                         ? 'border-green-500 shadow-green-200 ring-2 ring-green-300' 
-                        : 'border-gray-200 group-hover:border-blue-300 group-hover:shadow-blue-200'
+                        : hasItemsInCart 
+                          ? 'border-gray-200 group-hover:border-blue-300 group-hover:shadow-blue-200'
+                          : 'border-gray-300'
                       }
                     `}>
                       {/* Category Image */}
@@ -379,7 +384,9 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                           <img 
                             src={category.imageUrl}
                             alt={category.name}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            className={`w-full h-full object-cover transition-transform duration-300 ${
+                              hasItemsInCart ? 'group-hover:scale-110' : ''
+                            }`}
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
@@ -389,8 +396,18 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                           </div>
                         )}
                         
+                        {/* Add Books First Overlay */}
+                        {!hasItemsInCart && (
+                          <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                            <div className="text-center text-white">
+                              <div className="text-lg font-bold mb-1">📚</div>
+                              <div className="text-sm font-semibold">Add Books First</div>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* Price Badge - Top Left */}
-                        {category.price && Number(category.price) > 0 && (
+                        {category.price && Number(category.price) > 0 && hasItemsInCart && (
                           <div className="absolute top-2 left-2">
                             <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
                               ${Number(category.price).toFixed(2)}
@@ -399,7 +416,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                         )}
                         
                         {/* Selection indicator */}
-                        {selectedCategory === category.id && (
+                        {selectedCategory === category.id && hasItemsInCart && (
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
@@ -447,19 +464,21 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 <motion.div
                   key={gift.id}
                   variants={itemVariants}
-                  whileHover={{ y: -8, scale: 1.02 }}
+                  whileHover={hasItemsInCart ? { y: -8, scale: 1.02 } : {}}
                   whileTap={{ scale: 0.98 }}
                   className="relative"
                 >
                   <Card 
                     className={`
-                      relative overflow-hidden transition-all duration-300 cursor-pointer group h-full
-                      ${isSelected 
-                        ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300' 
-                        : 'hover:shadow-xl border-gray-200 hover:border-gray-300'
+                      relative overflow-hidden transition-all duration-300 group h-full
+                      ${!hasItemsInCart 
+                        ? 'cursor-not-allowed opacity-75 border-gray-300' 
+                        : isSelected 
+                          ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300 cursor-pointer' 
+                          : 'hover:shadow-xl border-gray-200 hover:border-gray-300 cursor-pointer'
                       }
                     `}
-                    onClick={() => handleGiftSelect(gift.id.toString())}
+                    onClick={() => hasItemsInCart ? handleGiftSelect(gift.id.toString()) : null}
                   >
                     <CardContent className="p-6">
                       {/* Gift Image */}
@@ -467,12 +486,26 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                         <img 
                           src={gift.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop'} 
                           alt={gift.name}
-                          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                          className={`w-full h-48 object-cover transition-transform duration-300 ${
+                            hasItemsInCart ? 'group-hover:scale-110' : ''
+                          }`}
                           onError={(e) => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop';
                           }}
                         />
-                        {isSelected && (
+                        
+                        {/* Add Books First Overlay for Gift Items */}
+                        {!hasItemsInCart && (
+                          <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                            <div className="text-center text-white">
+                              <div className="text-2xl font-bold mb-2">📚</div>
+                              <div className="text-sm font-semibold">Add Books First</div>
+                              <div className="text-xs mt-1">to select gifts</div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {isSelected && hasItemsInCart && (
                           <motion.div 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
@@ -499,7 +532,9 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                           )}
                         </div>
                         
-                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-green-600 transition-colors">
+                        <h3 className={`font-semibold text-lg text-gray-900 dark:text-white transition-colors ${
+                          hasItemsInCart ? 'group-hover:text-green-600' : ''
+                        }`}>
                           {gift.name}
                         </h3>
                         
@@ -513,7 +548,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                           </p>
                         )}
 
-                        {isSelected && (
+                        {isSelected && hasItemsInCart && (
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
