@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import AdminLayout from "@/components/AdminLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -84,7 +84,6 @@ export default function AdminAccountPage() {
   };
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <User className="h-6 w-6" />
@@ -206,6 +205,5 @@ export default function AdminAccountPage() {
           </Card>
         </div>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

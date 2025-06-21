@@ -70,8 +70,12 @@ export default function CatalogPage() {
     }
     
     const featuredParam = params.get('featured');
+    const bestsellerParam = params.get('bestseller');
     if (featuredParam === 'true' && !searchParam) {
       // Handle featured filter if needed
+    }
+    if (bestsellerParam === 'true' && !searchParam) {
+      // Handle bestseller filter if needed
     }
   }, [location, search]);
 
@@ -82,6 +86,12 @@ export default function CatalogPage() {
   if (selectedConditions.length > 0) queryParams.set('condition', selectedConditions[0]); // For now, just use first condition
   if (minPrice) queryParams.set('minPrice', minPrice);
   if (maxPrice) queryParams.set('maxPrice', maxPrice);
+  
+  // Check URL params for featured/bestseller filters
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
+  if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');
+  
   queryParams.set('sortBy', sortBy);
   queryParams.set('sortOrder', sortOrder);
   queryParams.set('limit', itemsPerPage.toString());

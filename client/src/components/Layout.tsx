@@ -323,10 +323,10 @@ export default function Layout({ children }: LayoutProps) {
 
           {/* Bottom Row - Navigation Buttons */}
           <div className="hidden md:flex items-center justify-center py-3 border-t border-gray-100">
-            <nav className="flex items-center gap-6">
+            <nav className="flex items-center gap-4">
               <Link
                 href="/"
-                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
                   isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
                 }`}
               >
@@ -334,7 +334,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/catalog"
-                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
                   isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
                 }`}
               >
@@ -342,7 +342,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/track-order"
-                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
                   isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
                 }`}
               >
@@ -350,7 +350,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/returns"
-                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
                   isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
                 }`}
               >
@@ -358,7 +358,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
               <Link
                 href="/contact"
-                className={`text-sm px-3 py-2 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
                   isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
                 }`}
               >
@@ -402,7 +402,9 @@ export default function Layout({ children }: LayoutProps) {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bookerly font-bold">A<span className="text-red-500">2</span>Z BOOKSHOP</h3>
+                <h3 className="text-xl font-bookerly font-bold footer-logo">
+                  A<span className="red-2">2</span>Z BOOKSHOP
+                </h3>
                 <SecretAdminAccess />
               </div>
               <p className="text-gray-400 mb-4">

@@ -1,8 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { BookOpen, DollarSign, Clock, Star, TrendingUp, AlertTriangle, Truck, Package } from "lucide-react";
-import AdminLayout from "@/components/AdminLayout";
+import { BookOpen, DollarSign, Clock, Star, TrendingUp, AlertTriangle, Truck, Package, Gift } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,6 @@ export default function AdminDashboard() {
   };
 
   return (
-    <AdminLayout>
       <div className="space-y-8">
         {/* Welcome Section */}
         <div>
@@ -278,10 +277,17 @@ export default function AdminDashboard() {
                   <p className="text-sm text-secondary-black">Store configuration</p>
                 </div>
               </a>
+              
+              <a href="/admin/gift-management" className="block">
+                <div className="p-4 border border-gray-200 rounded-lg hover:border-primary-aqua hover:bg-primary-aqua/5 transition-colors cursor-pointer">
+                  <Gift className="h-8 w-8 text-primary-aqua mb-2" />
+                  <h3 className="font-semibold text-base-black">Gift Management</h3>
+                  <p className="text-sm text-secondary-black">Manage gift items & content</p>
+                </div>
+              </a>
             </div>
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
   );
 }

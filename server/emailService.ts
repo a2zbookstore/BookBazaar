@@ -57,6 +57,16 @@ interface StatusUpdateEmailData {
   notes?: string;
 }
 
+interface WelcomeEmailData {
+  user: {
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+    authProvider: string;
+  };
+}
+
 // Generate order confirmation email HTML
 const generateOrderConfirmationHTML = (data: OrderEmailData) => {
   const { order, customerName } = data;
@@ -410,6 +420,202 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
 };
 
 // Test email configuration
+// Export the HTML generator for admin preview
+export const generateWelcomeHTMLInternal = (data: WelcomeEmailData) => {
+  const { user } = data;
+  const registrationMethod = user.authProvider === 'email' ? 'email address' : 'phone number';
+  const contactInfo = user.email || user.phone || '';
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to A2Z BOOKSHOP</title>
+        <style>
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                line-height: 1.6; 
+                margin: 0; 
+                padding: 0; 
+                background-color: #f4f4f4; 
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background: white; 
+                border-radius: 10px; 
+                overflow: hidden; 
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            }
+            .header { 
+                background: linear-gradient(135deg, rgb(41, 128, 185) 0%, rgb(52, 152, 219) 100%); 
+                color: white; 
+                padding: 40px 30px; 
+                text-align: center; 
+            }
+            .header h1 { 
+                margin: 0; 
+                font-size: 32px; 
+                font-weight: bold; 
+            }
+            .header .subtitle { 
+                margin: 10px 0 0 0; 
+                font-size: 16px; 
+                opacity: 0.9; 
+            }
+            .content { 
+                padding: 40px 30px; 
+            }
+            .welcome-message { 
+                font-size: 18px; 
+                color: #333; 
+                margin-bottom: 25px; 
+            }
+            .personalized-section { 
+                background: #f8fafe; 
+                border-left: 4px solid rgb(41, 128, 185); 
+                padding: 20px; 
+                margin: 25px 0; 
+                border-radius: 5px; 
+            }
+            .features-grid { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 20px; 
+                margin: 30px 0; 
+            }
+            .feature-card { 
+                background: #f9f9f9; 
+                padding: 20px; 
+                border-radius: 8px; 
+                text-align: center; 
+            }
+            .feature-icon { 
+                font-size: 24px; 
+                margin-bottom: 10px; 
+            }
+            .cta-button { 
+                display: inline-block; 
+                background: linear-gradient(135deg, rgb(41, 128, 185) 0%, rgb(52, 152, 219) 100%); 
+                color: white; 
+                padding: 15px 30px; 
+                text-decoration: none; 
+                border-radius: 25px; 
+                font-weight: bold; 
+                margin: 20px 0; 
+                text-align: center; 
+            }
+            .footer { 
+                background: #333; 
+                color: white; 
+                padding: 30px; 
+                text-align: center; 
+                font-size: 14px; 
+            }
+            .footer a { 
+                color: rgb(52, 152, 219); 
+                text-decoration: none; 
+            }
+            @media (max-width: 600px) {
+                .features-grid { 
+                    grid-template-columns: 1fr; 
+                }
+                .header h1 { 
+                    font-size: 24px; 
+                }
+                .content { 
+                    padding: 20px; 
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🎉 Welcome to A2Z BOOKSHOP!</h1>
+                <p class="subtitle">Your Literary Journey Begins Here</p>
+            </div>
+            
+            <div class="content">
+                <div class="welcome-message">
+                    <h2>Hello ${user.firstName} ${user.lastName}!</h2>
+                    <p>We're absolutely delighted to welcome you to the A2Z BOOKSHOP family! Thank you for creating your account with us using your ${registrationMethod}.</p>
+                </div>
+                
+                <div class="personalized-section">
+                    <h3>🌟 Your Account Details</h3>
+                    <p><strong>Name:</strong> ${user.firstName} ${user.lastName}</p>
+                    <p><strong>Registration Method:</strong> ${user.authProvider === 'email' ? 'Email' : 'Phone Number'}</p>
+                    <p><strong>Contact:</strong> ${contactInfo}</p>
+                    <p><strong>Account Status:</strong> Active ✅</p>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h4>Vast Collection</h4>
+                        <p>Browse thousands of books across all genres</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🚚</div>
+                        <h4>Global Shipping</h4>
+                        <p>We deliver worldwide with tracking</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💝</div>
+                        <h4>Wishlist Feature</h4>
+                        <p>Save your favorite books for later</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h4>Easy Returns</h4>
+                        <p>15-day hassle-free return policy</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://a2zbookshop.com" class="cta-button">
+                        Start Shopping Now 🛒
+                    </a>
+                </div>
+                
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <h4 style="color: #856404; margin-top: 0;">🎁 Special Welcome Offer!</h4>
+                    <p style="color: #856404; margin-bottom: 0;">As a new member, enjoy browsing our featured collection and check back for exciting offers!</p>
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <h4>Need Help Getting Started?</h4>
+                    <ul style="padding-left: 20px;">
+                        <li>Browse our <a href="https://a2zbookshop.com/catalog" style="color: rgb(41, 128, 185);">book catalog</a></li>
+                        <li>Check our <a href="https://a2zbookshop.com/shipping-info" style="color: rgb(41, 128, 185);">shipping information</a></li>
+                        <li>Read our <a href="https://a2zbookshop.com/return-policy" style="color: rgb(41, 128, 185);">return policy</a></li>
+                        <li>Contact our support team if you need assistance</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <h3 style="margin-top: 0;">Stay Connected</h3>
+                <p>
+                    📧 Email: <a href="mailto:support@a2zbookshop.com">support@a2zbookshop.com</a><br>
+                    📧 Alternative: <a href="mailto:a2zbookshopglobal@gmail.com">a2zbookshopglobal@gmail.com</a><br>
+                    🌐 Website: <a href="https://a2zbookshop.com">https://a2zbookshop.com</a><br>
+                    🌐 Alternative: <a href="https://www.a2zbookshop.com">https://www.a2zbookshop.com</a>
+                </p>
+                <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">
+                    You received this email because you created an account with A2Z BOOKSHOP.<br>
+                    © 2025 A2Z BOOKSHOP. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+};
+
 export const testEmailConfiguration = async (): Promise<boolean> => {
   try {
     const transporter = createTransporter();

@@ -279,9 +279,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Customer authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { firstName, lastName, email, password } = req.body;
+      const { firstName, lastName, email, phone, password } = req.body;
       
-      if (!firstName || !lastName || !email || !password) {
+      if (!firstName || !lastName || (!email && !phone) || !password) {
         return res.status(400).json({ message: "All fields are required" });
       }
 
@@ -289,10 +289,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Password must be at least 6 characters long" });
       }
 
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ message: "User already exists with this email" });
+      // Check if user already exists by email or phone
+      if (email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          return res.status(409).json({ message: "User already exists with this email" });
+        }
+      }
+
+      if (phone) {
+        const existingUser = await storage.getUserByPhone(phone);
+        if (existingUser) {
+          return res.status(409).json({ message: "User already exists with this phone number" });
+        }
       }
 
       // Hash password
@@ -300,11 +309,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create user
       const user = await storage.createEmailUser({
-        email,
+        email: email || null,
+        phone: phone || null,
         firstName,
         lastName,
         passwordHash
       });
+
+      // Send welcome email
+      try {
+        await sendWelcomeEmail({
+          user: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phone: user.phone,
+            authProvider: user.authProvider
+          }
+        });
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail registration if email fails
+      }
 
       res.json({ 
         success: true, 
@@ -312,6 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: user.id,
           email: user.email,
+          phone: user.phone,
           firstName: user.firstName,
           lastName: user.lastName
         }
@@ -324,21 +351,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, phone, password } = req.body;
       
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
+      if ((!email && !phone) || !password) {
+        return res.status(400).json({ message: "Email/phone and password are required" });
       }
 
-      const user = await storage.getUserByEmail(email);
-      if (!user || user.authProvider !== "email") {
-        return res.status(401).json({ message: "Invalid email or password" });
+      // Find user by email or phone
+      let user;
+      if (email) {
+        user = await storage.getUserByEmail(email);
+      } else if (phone) {
+        user = await storage.getUserByPhone(phone);
+      }
+      
+      if (!user || (user.authProvider !== "email" && user.authProvider !== "phone")) {
+        return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Verify password
       const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
       if (user.passwordHash !== passwordHash) {
-        return res.status(401).json({ message: "Invalid email or password" });
+        return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Get guest cart items before login
@@ -497,6 +531,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Admin password change error:", error);
       res.status(500).json({ message: "Password change failed" });
+    }
+  });
+
+  // Admin customers route
+  app.get("/api/admin/customers", requireAdminAuth, async (req, res) => {
+    try {
+      console.log("Admin customers API called");
+      const customers = await storage.getAllCustomers();
+      console.log(`Found ${customers.length} customers`);
+      res.json(customers);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      res.status(500).json({ message: "Failed to fetch customers" });
     }
   });
 
@@ -1100,6 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryId,
         condition,
         featured,
+        bestseller,
         search,
         minPrice,
         maxPrice,
@@ -1113,6 +1161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryId: categoryId ? parseInt(categoryId as string) : undefined,
         condition: condition as string,
         featured: featured === "true" ? true : featured === "false" ? false : undefined,
+        bestseller: bestseller === "true" ? true : bestseller === "false" ? false : undefined,
         search: search as string,
         minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
@@ -1692,6 +1741,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching contact messages:", error);
       res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.put("/api/contact/:id/status", async (req: any, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !['unread', 'read', 'replied'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const updatedMessage = await storage.updateContactMessageStatus(id, status);
+      res.json(updatedMessage);
+    } catch (error) {
+      console.error("Error updating contact message status:", error);
+      res.status(500).json({ message: "Failed to update message status" });
     }
   });
 

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Truck, Plus, Edit, Trash2, Star, Globe } from "lucide-react";
-import AdminLayout from "@/components/AdminLayout";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -398,7 +398,6 @@ export default function ShippingPage() {
   const defaultRate = shippingRates.find(rate => rate.isDefault);
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -642,6 +641,5 @@ export default function ShippingPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

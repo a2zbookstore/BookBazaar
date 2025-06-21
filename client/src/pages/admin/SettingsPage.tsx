@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Settings, User, Store, Mail, Plus, Edit, Trash2, Send, CheckCircle, AlertCircle } from "lucide-react";
-import AdminLayout from "@/components/AdminLayout";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -248,7 +248,6 @@ export default function SettingsPage() {
   };
 
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -677,6 +676,5 @@ export default function SettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

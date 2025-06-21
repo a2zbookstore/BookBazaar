@@ -1,6 +1,7 @@
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
+import AdminLayout from "@/components/AdminLayout";
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
@@ -31,5 +32,9 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     return null; // Will redirect via useEffect
   }
 
-  return <>{children}</>;
+  return (
+    <AdminLayout>
+      {children}
+    </AdminLayout>
+  );
 }

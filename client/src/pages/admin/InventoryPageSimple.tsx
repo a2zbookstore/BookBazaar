@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import AdminLayout from "@/components/AdminLayout";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Book } from "@/types";
@@ -24,7 +24,6 @@ export default function InventoryPageSimple() {
   const totalBooks = booksResponse?.total || 0;
 
   return (
-    <AdminLayout>
       <div className="p-6">
         <h1 className="text-3xl font-bookerly font-bold text-base-black mb-6">
           Inventory Management (Simple Test)
@@ -67,6 +66,5 @@ export default function InventoryPageSimple() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }
