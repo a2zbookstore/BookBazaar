@@ -23,6 +23,7 @@ import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
 import ReturnsPage from "@/pages/admin/ReturnsPage";
 import AdminAccountPage from "@/pages/admin/AdminAccountPage";
+import GiftManagementPage from "@/pages/admin/GiftManagementPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";

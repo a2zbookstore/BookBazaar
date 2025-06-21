@@ -319,55 +319,8 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
               </nav>
             </div>
-          </div>
-
-          {/* Bottom Row - Navigation Buttons */}
-          <div className="hidden md:flex items-center justify-center py-3 border-t border-gray-100">
-              <nav className="flex items-center gap-4">
-                <Link
-                  href="/"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/catalog"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/catalog") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Catalog
-                </Link>
-                <Link
-                  href="/track-order"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/track-order") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Track Order
-                </Link>
-                <Link
-                  href="/returns"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/returns") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Returns
-                </Link>
-                <Link
-                  href="/contact"
-                  className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
-                    isActive("/contact") ? "bg-primary-aqua text-white" : "text-gray-600"
-                  }`}
-                >
-                  Contact
-                </Link>
-              </nav>
-            </div>
           )}
-          
+
           {/* Bottom Row - Navigation Buttons */}
           <div className="hidden md:flex items-center justify-center py-3 border-t border-gray-100">
             <nav className="flex items-center gap-6">
