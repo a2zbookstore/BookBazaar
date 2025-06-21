@@ -120,7 +120,7 @@ export default function BookDetailPage() {
             <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
               {book.imageUrl ? (
                 <img
-                  src={`/uploads/images/${book.imageUrl.split('/').pop()}?v=${Date.now()}`}
+                  src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
                   alt={book.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {

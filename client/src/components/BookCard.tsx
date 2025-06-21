@@ -131,12 +131,8 @@ export default function BookCard({ book }: BookCardProps) {
               src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              onLoad={(e) => {
-                console.log('✅ Image loaded successfully:', book.title);
-              }}
+              onLoad={() => {}}
               onError={(e) => {
-                console.log('❌ Image failed to load:', book.title);
-                console.log('❌ Failed URL:', (e.target as HTMLImageElement).src);
                 const target = e.target as HTMLImageElement;
                 target.src = 'https://via.placeholder.com/150x200/f0f0f0/666?text=No+Image';
               }}
