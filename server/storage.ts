@@ -153,6 +153,21 @@ export interface IStorage {
   createRefundTransaction(refund: InsertRefundTransaction): Promise<RefundTransaction>;
   updateRefundTransaction(id: number, updates: Partial<RefundTransaction>): Promise<RefundTransaction>;
   getRefundTransactionsByReturnId(returnRequestId: number): Promise<RefundTransaction[]>;
+
+  // Gift Items operations
+  getGiftItems(): Promise<GiftItem[]>;
+  getGiftItemById(id: number): Promise<GiftItem | undefined>;
+  createGiftItem(giftItem: InsertGiftItem): Promise<GiftItem>;
+  updateGiftItem(id: number, giftItem: Partial<InsertGiftItem>): Promise<GiftItem>;
+  deleteGiftItem(id: number): Promise<void>;
+  updateGiftItemOrder(items: { id: number; sortOrder: number }[]): Promise<void>;
+
+  // Homepage Content operations
+  getHomepageContent(): Promise<HomepageContent[]>;
+  getHomepageContentBySection(section: string): Promise<HomepageContent | undefined>;
+  createHomepageContent(content: InsertHomepageContent): Promise<HomepageContent>;
+  updateHomepageContent(id: number, content: Partial<InsertHomepageContent>): Promise<HomepageContent>;
+  deleteHomepageContent(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
