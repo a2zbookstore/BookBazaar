@@ -501,6 +501,9 @@ export default function GiftCategoriesPage() {
                       {category.description || '-'}
                     </TableCell>
                     <TableCell>
+                      ${Number(category.price || 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={category.isActive ? 'default' : 'secondary'}>
                         {category.isActive ? 'Active' : 'Inactive'}
                       </Badge>
