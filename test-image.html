@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Test</title>
+</head>
+<body>
+    <h1>Testing Book Images</h1>
+    <div>
+        <h2>Test 1: Direct relative path</h2>
+        <img src="/uploads/images/book-1750532068977-997745465.jpg" style="width: 200px; height: 250px; border: 2px solid red;" onload="console.log('Image 1 loaded successfully')" onerror="console.log('Image 1 FAILED to load')">
+        <p>Expected: Fluent Python book image</p>
+    </div>
+    <div>
+        <h2>Test 2: Different book</h2>
+        <img src="/uploads/images/book-1750407412185-570178952.jpg" style="width: 200px; height: 250px; border: 2px solid blue;" onload="console.log('Image 2 loaded successfully')" onerror="console.log('Image 2 FAILED to load')">
+        <p>Expected: Motivational Interviewing book image</p>
+    </div>
+    <div>
+        <h2>Test 3: Another book</h2>
+        <img src="/uploads/images/book-1750061802169-928467109.jpg" style="width: 200px; height: 250px; border: 2px solid green;" onload="console.log('Image 3 loaded successfully')" onerror="console.log('Image 3 FAILED to load')">
+        <p>Expected: Designing Data-Intensive Applications book image</p>
+    </div>
+    <script>
+        console.log('Test page loaded - check console for image load results');
+    </script>
+</body>
+</html>
