@@ -321,8 +321,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Gift with Purchase Section */}
-      <GiftWithPurchase hasItemsInCart={hasItemsInCart} />
     </Layout>
   );
 }

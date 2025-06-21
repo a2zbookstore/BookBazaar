@@ -80,6 +80,7 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
 
   const handleGiftSelect = (giftId: string) => {
     if (selectedGift === giftId) return; // Already selected
+    if (!isVisible && alwaysVisible) return; // Not eligible yet
     
     setSelectedGift(giftId);
     localStorage.setItem('selectedGift', giftId);
@@ -166,7 +167,10 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
     }
   };
 
-  if (!isVisible) {
+  // Always show the gift section prominently at the top
+  const alwaysVisible = true;
+  
+  if (!isVisible && !alwaysVisible) {
     return null;
   }
 
@@ -177,7 +181,7 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="py-16 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900"
+        className="py-16 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 shadow-xl border-b-4 border-green-400"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header Section */}
@@ -203,17 +207,46 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
               >
                 <Gift className="h-12 w-12 text-green-500" />
               </motion.div>
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Special Gift Offer!
+              <h2 className="text-5xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+                🎁 SPECIAL GIFT OFFER! 🎁
               </h2>
             </motion.div>
             
             <motion.p 
-              className="text-xl text-gray-700 dark:text-gray-300 mb-4"
+              className="text-2xl text-gray-700 dark:text-gray-300 mb-6 font-semibold"
               variants={itemVariants}
             >
-              Buy any book and get <span className="font-bold text-green-600">1 free Novel or Notebook</span> as a gift!
+              Buy any book and get <span className="font-bold text-green-600 text-3xl">1 FREE Novel or Notebook</span> as a gift!
             </motion.p>
+            
+            {!isVisible && alwaysVisible && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                className="bg-gradient-to-r from-orange-100 to-yellow-100 border-2 border-orange-300 rounded-xl p-4 mb-6 shadow-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 15, -15, 0],
+                      scale: [1, 1.2, 1]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3
+                    }}
+                    className="text-2xl"
+                  >
+                    🛒
+                  </motion.div>
+                  <p className="text-orange-800 font-medium">
+                    Add any book to your cart to activate this special gift offer!
+                  </p>
+                </div>
+              </motion.div>
+            )}
             
             {selectedGift && (
               <motion.div
@@ -255,6 +288,10 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
                       selectedGift && selectedGift !== gift.id 
                         ? 'opacity-60' 
                         : 'opacity-100'
+                    } ${
+                      !isVisible && alwaysVisible
+                        ? 'opacity-50 cursor-not-allowed'
+                        : ''
                     }`}
                     onClick={() => handleGiftSelect(gift.id)}
                   >
@@ -309,9 +346,9 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
                             variant={selectedGift === gift.id ? "default" : "outline"}
                             size="sm"
                             className={selectedGift === gift.id ? "bg-green-500 hover:bg-green-600" : ""}
-                            disabled={selectedGift === gift.id}
+                            disabled={selectedGift === gift.id || (!isVisible && alwaysVisible)}
                           >
-                            {selectedGift === gift.id ? 'Selected' : 'Select Gift'}
+                            {selectedGift === gift.id ? 'Selected' : (!isVisible && alwaysVisible ? 'Add to Cart First' : 'Select Gift')}
                           </Button>
                         </motion.div>
                       </div>
