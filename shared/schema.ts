@@ -387,6 +387,8 @@ export const giftItems = pgTable("gift_items", {
   type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
   description: text("description"),
   imageUrl: varchar("image_url", { length: 500 }),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  isbn: varchar("isbn", { length: 20 }),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
