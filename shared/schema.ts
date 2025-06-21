@@ -30,14 +30,13 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   email: varchar("email").unique(),
-  phone: varchar("phone").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").default("customer"), // customer, admin
   passwordHash: varchar("password_hash"), // For email-based authentication
   isEmailVerified: boolean("is_email_verified").default(false),
-  authProvider: varchar("auth_provider").default("email"), // email, phone, replit
+  authProvider: varchar("auth_provider").default("email"), // email, replit
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -379,44 +378,6 @@ export const insertReturnRequestSchema = createInsertSchema(returnRequests).omit
 export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
 
 export type RefundTransaction = typeof refundTransactions.$inferSelect;
-
-// Gift Items Management
-export const giftItems = pgTable("gift_items", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
-  description: text("description"),
-  imageUrl: varchar("image_url", { length: 500 }),
-  price: decimal("price", { precision: 10, scale: 2 }),
-  isbn: varchar("isbn", { length: 20 }),
-  isActive: boolean("is_active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-// Homepage Content Management
-export const homepageContent = pgTable("homepage_content", {
-  id: serial("id").primaryKey(),
-  section: varchar("section", { length: 100 }).notNull(), // 'gift_offer', 'hero', 'about'
-  title: varchar("title", { length: 255 }),
-  subtitle: text("subtitle"),
-  content: text("content"),
-  isActive: boolean("is_active").notNull().default(true),
-  settings: text("settings"), // JSON string for additional settings
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-// Gift Items schemas
-export const insertGiftItemSchema = createInsertSchema(giftItems);
-export type InsertGiftItem = z.infer<typeof insertGiftItemSchema>;
-export type GiftItem = typeof giftItems.$inferSelect;
-
-// Homepage Content schemas
-export const insertHomepageContentSchema = createInsertSchema(homepageContent);
-export type InsertHomepageContent = z.infer<typeof insertHomepageContentSchema>;
-export type HomepageContent = typeof homepageContent.$inferSelect;
 export const insertRefundTransactionSchema = createInsertSchema(refundTransactions).omit({
   id: true,
   refundStatus: true,

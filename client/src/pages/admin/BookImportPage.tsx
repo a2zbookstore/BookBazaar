@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-
+import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -74,6 +74,7 @@ export default function BookImportPage() {
   };
 
   return (
+    <AdminLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Import Books</h1>
@@ -236,5 +237,6 @@ export default function BookImportPage() {
           </Card>
         )}
       </div>
-    );
-  }
+    </AdminLayout>
+  );
+}

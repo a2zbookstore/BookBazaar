@@ -12,8 +12,6 @@ import {
   Truck,
   User,
   RotateCcw,
-  Mail,
-  Gift,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -24,21 +22,18 @@ interface AdminLayoutProps {
 }
 
 const sidebarItems = [
-  { href: "/admin", icon: BarChart3, label: "Dashboard", exact: true },
+  { href: "/admin", icon: BarChart3, label: "Overview", exact: true },
   { href: "/admin/inventory", icon: BookOpen, label: "Inventory" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
-  { href: "/admin/customers", icon: Users, label: "Customers" },
-  { href: "/admin/messages", icon: Mail, label: "Messages" },
-  { href: "/admin/returns", icon: RotateCcw, label: "Returns" },
-  { href: "/admin/gift-management", icon: Gift, label: "Gift Management" },
-  { href: "/admin/welcome-email", icon: Mail, label: "Welcome Email" },
-  { href: "/admin/shipping", icon: Truck, label: "Shipping" },
+  { href: "/admin/returns", icon: RotateCcw, label: "Returns & Refunds" },
+  { href: "/admin/sales", icon: TrendingUp, label: "Sales Reports" },
+  { href: "/admin/shipping", icon: Truck, label: "Shipping Rates" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
   { href: "/admin/account", icon: User, label: "Account" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const { user } = useAuth();
 
   const isActive = (href: string, exact = false) => {
@@ -51,53 +46,46 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-2xl border-r border-slate-700">
-        <div className="p-6 bg-slate-900">
+      <aside className="w-64 bg-base-black text-white flex flex-col">
+        <div className="p-6">
           <Link href="/" className="flex items-center mb-8">
-            <h2 className="text-xl font-bookerly font-bold text-white">A2Z BOOKSHOP</h2>
+            <h2 className="text-xl font-bookerly font-bold">A2Z BOOKSHOP</h2>
           </Link>
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white">Admin Dashboard</h3>
-            <p className="text-sm text-slate-300 bg-slate-700 px-3 py-1 rounded-full inline-block">Welcome back, {user?.firstName || 'Admin'}</p>
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold">Admin Dashboard</h3>
+            <p className="text-sm text-gray-400">Welcome back, {user?.firstName || 'Admin'}</p>
           </div>
         </div>
 
-        <nav className="flex-1 px-4 bg-slate-900">
-          <ul className="space-y-1">
+        <nav className="flex-1 px-4">
+          <ul className="space-y-2">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               return (
                 <li key={item.href}>
-                  <div
-                    className={cn(
-                      "flex items-center px-4 py-4 rounded-xl transition-all duration-300 cursor-pointer transform hover:scale-105 shadow-sm",
-                      isActive(item.href, item.exact)
-                        ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border-l-4 border-blue-300 font-semibold"
-                        : "text-slate-200 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 hover:text-white hover:shadow-md font-medium border-l-4 border-transparent hover:border-gray-400"
-                    )}
-                    onClick={() => {
-                      console.log("Navigating to:", item.href);
-                      setLocation(item.href);
-                    }}
-                  >
-                    <Icon className={cn(
-                      "h-6 w-6 mr-4 transition-colors duration-300",
-                      isActive(item.href, item.exact)
-                        ? "text-blue-100"
-                        : "text-slate-300 hover:text-white"
-                    )} />
-                    <span className="text-sm tracking-wide">{item.label}</span>
-                  </div>
+                  <Link href={item.href}>
+                    <a
+                      className={cn(
+                        "flex items-center px-4 py-3 rounded-lg transition-colors duration-200",
+                        isActive(item.href, item.exact)
+                          ? "bg-primary-aqua text-white"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      )}
+                    >
+                      <Icon className="h-5 w-5 mr-3" />
+                      {item.label}
+                    </a>
+                  </Link>
                 </li>
               );
             })}
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-slate-700 bg-slate-900">
+        <div className="p-4 border-t border-gray-700">
           <Link href="/">
-            <Button variant="ghost" className="w-full justify-start text-slate-200 hover:text-white hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 transition-all duration-300 font-medium px-4 py-3 rounded-xl transform hover:scale-105">
-              <LogOut className="h-6 w-6 mr-4 text-slate-300 hover:text-white transition-colors duration-300" />
+            <Button variant="ghost" className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800">
+              <LogOut className="h-4 w-4 mr-3" />
               Back to Store
             </Button>
           </Link>

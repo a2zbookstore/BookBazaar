@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
@@ -19,15 +18,11 @@ import ContactPage from "@/pages/ContactPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import InventoryPageNew from "@/pages/admin/InventoryPageNew";
 import OrdersPage from "@/pages/admin/OrdersPage";
-import CustomersPage from "@/pages/admin/CustomersPage";
-import WelcomeEmailTestPage from "@/pages/admin/WelcomeEmailTestPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
 import ReturnsPage from "@/pages/admin/ReturnsPage";
 import AdminAccountPage from "@/pages/admin/AdminAccountPage";
-import MessagesPage from "@/pages/admin/MessagesPage";
-import GiftManagementPage from "@/pages/admin/GiftManagementPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";
@@ -47,9 +42,6 @@ import NotFound from "@/pages/not-found";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
-  
-  // Auto scroll to top on page navigation
-  useScrollToTop();
 
   if (isLoading) {
     return (
@@ -103,47 +95,6 @@ function AppRouter() {
           <OrdersPage />
         </AdminProtectedRoute>
       </Route>
-      <Route path="/admin/customers">
-        <AdminProtectedRoute>
-          <CustomersPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/messages">
-        <AdminProtectedRoute>
-          <MessagesPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/returns">
-        <AdminProtectedRoute>
-          <ReturnsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/gift-management">
-        <AdminProtectedRoute>
-          <GiftManagementPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/welcome-email">
-        <AdminProtectedRoute>
-          <WelcomeEmailTestPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/shipping">
-        <AdminProtectedRoute>
-          <ShippingPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/settings">
-        <AdminProtectedRoute>
-          <SettingsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/account">
-        <AdminProtectedRoute>
-          <AdminAccountPage />
-        </AdminProtectedRoute>
-      </Route>
-
       <Route path="/admin/sales">
         <AdminProtectedRoute>
           <SalesPage />

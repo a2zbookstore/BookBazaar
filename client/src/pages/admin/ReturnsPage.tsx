@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
+import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -204,22 +204,27 @@ export default function ReturnsPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin" />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="text-center py-8">
-        <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
-        <p className="text-gray-600 mt-2">Please log in to access return management.</p>
-      </div>
+      <AdminLayout>
+        <div className="text-center py-8">
+          <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+          <p className="text-gray-600 mt-2">Please log in to access return management.</p>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
+    <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -537,5 +542,6 @@ export default function ReturnsPage() {
           </CardContent>
         </Card>
       </div>
-    );
-  }
+    </AdminLayout>
+  );
+}

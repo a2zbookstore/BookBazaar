@@ -42,17 +42,6 @@
   --radius: 0rem;
 }
 
-/* Footer logo fix */
-.footer-logo {
-  color: black !important;
-  font-weight: bold !important;
-}
-
-.footer-logo .red-2 {
-  color: #ef4444 !important;
-  font-weight: bold !important;
-}
-
 /* Global mobile fixes */
 html, body {
   overflow-x: hidden;
@@ -319,51 +308,6 @@ button:active, .button:active {
     z-index: 9999 !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-  }
-  
-  /* Mobile optimizations */
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  /* Mobile header spacing */
-  @media (max-width: 768px) {
-    .container-custom {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-    
-    /* Prevent horizontal scroll on mobile */
-    body {
-      overflow-x: hidden;
-    }
-    
-    /* Mobile viewport fixes */
-    .fixed-header {
-      width: 100vw;
-      max-width: 100vw;
-    }
-    
-    /* Mobile header adjustment */
-    .min-h-screen {
-      padding-top: 100px;
-    }
-  }
-  
-  /* Desktop adjustment */
-  @media (min-width: 768px) {
-    .fixed-header {
-      height: auto !important;
-      min-height: 80px;
-    }
-    
-    .min-h-screen {
-      padding-top: 85px;
-    }
   }
 
   .header-shadow {

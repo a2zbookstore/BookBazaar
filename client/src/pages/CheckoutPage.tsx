@@ -295,21 +295,6 @@ export default function CheckoutPage() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [giftItem, setGiftItem] = useState<any>(null);
-
-  // Load gift item from localStorage
-  useEffect(() => {
-    const savedGift = localStorage.getItem('giftDetails');
-    if (savedGift && cartItems.length > 0) {
-      try {
-        setGiftItem(JSON.parse(savedGift));
-      } catch (error) {
-        console.error('Error parsing gift details:', error);
-      }
-    } else {
-      setGiftItem(null);
-    }
-  }, [cartItems]);
 
   // Calculate totals - Use detected location's shipping rate as primary source
   const subtotal = cartItems.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
@@ -638,8 +623,7 @@ export default function CheckoutPage() {
             price: item.book.price,
             title: item.book.title,
             author: item.book.author
-          })),
-          giftItem: giftItem
+          }))
         }));
 
         toast({

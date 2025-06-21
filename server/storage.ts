@@ -37,12 +37,6 @@ import {
   type InsertReturnRequest,
   type RefundTransaction,
   type InsertRefundTransaction,
-  giftItems,
-  homepageContent,
-  type GiftItem,
-  type InsertGiftItem,
-  type HomepageContent,
-  type InsertHomepageContent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -51,9 +45,8 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByPhone(phone: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  createEmailUser(user: { email?: string; phone?: string; firstName: string; lastName: string; passwordHash: string }): Promise<User>;
+  createEmailUser(user: { email: string; firstName: string; lastName: string; passwordHash: string }): Promise<User>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -66,7 +59,6 @@ export interface IStorage {
     categoryId?: number;
     condition?: string;
     featured?: boolean;
-    bestseller?: boolean;
     search?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -140,7 +132,6 @@ export interface IStorage {
   getAdminById(id: number): Promise<Admin | undefined>;
   updateAdminLastLogin(id: number): Promise<void>;
   updateAdminPassword(id: number, passwordHash: string): Promise<void>;
-  getAllCustomers(): Promise<any[]>;
 
   // Return and refund operations
   getReturnRequests(options?: {
@@ -159,21 +150,6 @@ export interface IStorage {
   createRefundTransaction(refund: InsertRefundTransaction): Promise<RefundTransaction>;
   updateRefundTransaction(id: number, updates: Partial<RefundTransaction>): Promise<RefundTransaction>;
   getRefundTransactionsByReturnId(returnRequestId: number): Promise<RefundTransaction[]>;
-
-  // Gift Items operations
-  getGiftItems(): Promise<GiftItem[]>;
-  getGiftItemById(id: number): Promise<GiftItem | undefined>;
-  createGiftItem(giftItem: InsertGiftItem): Promise<GiftItem>;
-  updateGiftItem(id: number, giftItem: Partial<InsertGiftItem>): Promise<GiftItem>;
-  deleteGiftItem(id: number): Promise<void>;
-  updateGiftItemOrder(items: { id: number; sortOrder: number }[]): Promise<void>;
-
-  // Homepage Content operations
-  getHomepageContent(): Promise<HomepageContent[]>;
-  getHomepageContentBySection(section: string): Promise<HomepageContent | undefined>;
-  createHomepageContent(content: InsertHomepageContent): Promise<HomepageContent>;
-  updateHomepageContent(id: number, content: Partial<InsertHomepageContent>): Promise<HomepageContent>;
-  deleteHomepageContent(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -185,11 +161,6 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
-  }
-
-  async getUserByPhone(phone: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.phone, phone));
     return user;
   }
 
@@ -208,18 +179,17 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createEmailUser(userData: { email?: string; phone?: string; firstName: string; lastName: string; passwordHash: string }): Promise<User> {
-    const userId = `${userData.phone ? 'phone' : 'email'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  async createEmailUser(userData: { email: string; firstName: string; lastName: string; passwordHash: string }): Promise<User> {
+    const userId = `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const [user] = await db
       .insert(users)
       .values({
         id: userId,
-        email: userData.email || null,
-        phone: userData.phone || null,
+        email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
         passwordHash: userData.passwordHash,
-        authProvider: userData.phone ? "phone" : "email",
+        authProvider: "email",
         isEmailVerified: true,
         role: "customer",
       })
@@ -255,7 +225,6 @@ export class DatabaseStorage implements IStorage {
     categoryId?: number;
     condition?: string;
     featured?: boolean;
-    bestseller?: boolean;
     search?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -268,7 +237,6 @@ export class DatabaseStorage implements IStorage {
       categoryId,
       condition,
       featured,
-      bestseller,
       search,
       minPrice,
       maxPrice,
@@ -286,7 +254,6 @@ export class DatabaseStorage implements IStorage {
     if (categoryId) conditions.push(eq(books.categoryId, categoryId));
     if (condition) conditions.push(eq(books.condition, condition));
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
-    if (bestseller !== undefined) conditions.push(eq(books.bestseller, bestseller));
     if (search) {
       const searchTerm = search.toLowerCase();
       conditions.push(
@@ -1022,40 +989,6 @@ export class DatabaseStorage implements IStorage {
       .from(refundTransactions)
       .where(eq(refundTransactions.returnRequestId, returnRequestId))
       .orderBy(desc(refundTransactions.createdAt));
-  }
-
-  async getAllCustomers(): Promise<any[]> {
-    console.log("getAllCustomers called");
-    try {
-      // Simple approach - just get customers without complex aggregation
-      const customers = await db
-        .select()
-        .from(users)
-        .where(eq(users.role, "customer"))
-        .orderBy(desc(users.createdAt));
-
-      console.log(`Retrieved ${customers.length} customers for admin panel`);
-      
-      // Add basic stats as 0 for now
-      const customersWithStats = customers.map(customer => ({
-        id: customer.id,
-        email: customer.email,
-        phone: customer.phone,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        authProvider: customer.authProvider,
-        createdAt: customer.createdAt,
-        isEmailVerified: customer.isEmailVerified,
-        totalOrders: 0,
-        totalSpent: "0",
-        lastOrderDate: null
-      }));
-
-      return customersWithStats;
-    } catch (error) {
-      console.error("Error in getAllCustomers:", error);
-      return [];
-    }
   }
 }
 

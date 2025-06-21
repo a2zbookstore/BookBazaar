@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Edit, Trash2, Package, Upload, Download, FileText } from "lucide-react";
-
+import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,8 +124,6 @@ export default function InventoryPageNew() {
 
   const createBookMutation = useMutation({
     mutationFn: async (data: BookForm) => {
-      console.log("Form data being submitted:", data);
-      
       const bookData = {
         title: data.title,
         author: data.author,
@@ -134,20 +132,17 @@ export default function InventoryPageNew() {
         description: data.description || "",
         condition: data.condition,
         binding: data.binding,
-        price: data.price && data.price.trim() !== "" ? parseFloat(data.price).toString() : "0",
+        price: data.price && data.price.trim() !== "" ? data.price : "0",
         stock: data.stock || 0,
         imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null,
         publisher: data.publisher || "",
         pages: data.pages || null,
         language: data.language || "English",
-        weight: data.weight && data.weight.trim() !== "" ? parseFloat(data.weight).toString() : null,
+        weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
         dimensions: data.dimensions || "",
         featured: data.featured || false,
-        bestseller: data.bestseller || false,
       };
-      
-      console.log("Processed book data:", bookData);
       return apiRequest('POST', '/api/books', bookData);
     },
     onSuccess: () => {
@@ -176,17 +171,16 @@ export default function InventoryPageNew() {
         description: data.description || "",
         condition: data.condition,
         binding: data.binding,
-        price: data.price && data.price.trim() !== "" ? parseFloat(data.price).toString() : "0",
+        price: data.price && data.price.trim() !== "" ? data.price : "0",
         stock: data.stock || 0,
         imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null,
         publisher: data.publisher || "",
         pages: data.pages || null,
         language: data.language || "English",
-        weight: data.weight && data.weight.trim() !== "" ? parseFloat(data.weight).toString() : null,
+        weight: data.weight && data.weight.trim() !== "" ? data.weight : null,
         dimensions: data.dimensions || "",
         featured: data.featured || false,
-        bestseller: data.bestseller || false,
       };
       return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
@@ -296,11 +290,10 @@ export default function InventoryPageNew() {
       return;
     }
     
-    // Price validation - allow empty price (will default to 0)
-    if (bookForm.price && bookForm.price.trim() !== "" && (parseFloat(bookForm.price) < 0 || isNaN(parseFloat(bookForm.price)))) {
+    if (!bookForm.price || parseFloat(bookForm.price) < 0) {
       toast({
         title: "Validation Error",
-        description: "Price must be a positive number",
+        description: "Please enter a valid price",
         variant: "destructive",
       });
       return;
@@ -471,6 +464,7 @@ export default function InventoryPageNew() {
   };
 
   return (
+    <AdminLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bookerly font-bold text-base-black">
@@ -561,22 +555,25 @@ export default function InventoryPageNew() {
                     </div>
                     <div>
                       <Label htmlFor="category">Category</Label>
-                      <select
-                        id="category"
-                        value={bookForm.categoryId?.toString() || ""}
-                        onChange={(e) => setBookForm(prev => ({ 
+                      <Select 
+                        value={bookForm.categoryId?.toString() || "none"} 
+                        onValueChange={(value) => setBookForm(prev => ({ 
                           ...prev, 
-                          categoryId: e.target.value ? parseInt(e.target.value) : null 
+                          categoryId: value === "none" ? null : parseInt(value) 
                         }))}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <option value="">Select category</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id.toString()}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Category</SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -593,34 +590,37 @@ export default function InventoryPageNew() {
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="condition">Condition *</Label>
-                      <select
-                        id="condition"
-                        value={bookForm.condition}
-                        onChange={(e) => setBookForm(prev => ({ ...prev, condition: e.target.value }))}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        required
+                      <Select 
+                        value={bookForm.condition} 
+                        onValueChange={(value) => setBookForm(prev => ({ ...prev, condition: value }))}
                       >
-                        <option value="">Select condition</option>
-                        <option value="New">New</option>
-                        <option value="Like New">Like New</option>
-                        <option value="Very Good">Very Good</option>
-                        <option value="Good">Good</option>
-                        <option value="Acceptable">Acceptable</option>
-                      </select>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="New">New</SelectItem>
+                          <SelectItem value="Like New">Like New</SelectItem>
+                          <SelectItem value="Very Good">Very Good</SelectItem>
+                          <SelectItem value="Good">Good</SelectItem>
+                          <SelectItem value="Acceptable">Acceptable</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="binding">Binding</Label>
-                      <select
-                        id="binding"
-                        value={bookForm.binding}
-                        onChange={(e) => setBookForm(prev => ({ ...prev, binding: e.target.value }))}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      <Select 
+                        value={bookForm.binding} 
+                        onValueChange={(value) => setBookForm(prev => ({ ...prev, binding: value }))}
                       >
-                        <option value="">Select binding</option>
-                        <option value="Hardcover">Hardcover</option>
-                        <option value="Softcover">Softcover</option>
-                        <option value="No Binding">No Binding</option>
-                      </select>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Hardcover">Hardcover</SelectItem>
+                          <SelectItem value="Softcover">Softcover</SelectItem>
+                          <SelectItem value="No Binding">No Binding</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="price">Price ($) *</Label>
@@ -1033,5 +1033,6 @@ export default function InventoryPageNew() {
           </CardContent>
         </Card>
       </div>
-    );
-  }
+    </AdminLayout>
+  );
+}
