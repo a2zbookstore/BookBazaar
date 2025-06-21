@@ -251,10 +251,10 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Desktop Header */}
-      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-20' : 'bg-white h-24'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
+      <header className={`hidden md:block ${isScrolled ? 'backdrop-blur-md bg-white/90 shadow-lg h-16' : 'bg-white h-20'} transition-all duration-300 sticky top-0 z-50 border-b border-gray-200`}>
         <div className="container-custom">
           {/* Top Row - Logo, Search, Actions */}
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-1">
             {/* Left - Logo */}
             <div className="flex items-center">
               <Link href="/">
@@ -325,20 +325,19 @@ export default function Layout({ children }: LayoutProps) {
                   Logout
                 </Button>
               ) : (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
                   <Button 
                     variant="outline"
                     size="sm"
                     onClick={() => setLocation('/login')}
-                    className="text-sm px-3 py-1"
+                    className="text-xs px-2 py-1 h-7"
                   >
-                    <User className="h-3 w-3 mr-1" />
                     Login
                   </Button>
                   <Button 
                     size="sm"
                     onClick={() => setLocation('/login')}
-                    className="bg-primary-aqua hover:bg-secondary-aqua text-sm px-3 py-1"
+                    className="bg-primary-aqua hover:bg-secondary-aqua text-xs px-2 py-1 h-7"
                   >
                     Register
                   </Button>
@@ -348,7 +347,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Bottom Row - Navigation Buttons */}
-          <div className="flex items-center justify-center py-2 border-t border-gray-100">
+          <div className="flex items-center justify-center py-1 border-t border-gray-100">
             <nav className="flex items-center gap-3">
               <Link
                 href="/"
