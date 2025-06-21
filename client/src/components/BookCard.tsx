@@ -135,15 +135,20 @@ export default function BookCard({ book }: BookCardProps) {
                   
                   // Handle different domain patterns
                   if (imageUrl.includes('www.a2zbookshop.com')) {
-                    imageUrl = imageUrl.replace('https://www.a2zbookshop.com', window.location.origin);
+                    const currentOrigin = window.location.protocol + '//' + window.location.host;
+                    imageUrl = imageUrl.replace('https://www.a2zbookshop.com', currentOrigin);
                     console.log('Replaced a2zbookshop domain:', imageUrl);
                   } else if (imageUrl.includes('.replit.dev')) {
                     // Extract path after domain for replit URLs
                     const pathIndex = imageUrl.indexOf('/uploads/');
+                    console.log('PathIndex found:', pathIndex, 'for URL:', imageUrl);
                     if (pathIndex !== -1) {
                       const imagePath = imageUrl.substring(pathIndex);
-                      imageUrl = window.location.origin + imagePath;
-                      console.log('Replaced replit domain with path:', imageUrl);
+                      console.log('Extracted path:', imagePath);
+                      // Use current server origin instead of replit domain
+                      const currentOrigin = window.location.protocol + '//' + window.location.host;
+                      imageUrl = currentOrigin + imagePath;
+                      console.log('Final URL after replacement:', imageUrl);
                     }
                   } else if (!imageUrl.startsWith('http')) {
                     // Relative URL - add current origin
@@ -174,7 +179,7 @@ export default function BookCard({ book }: BookCardProps) {
                     const imagePath = book.imageUrl.split('/').pop();
                     if (imagePath) {
                       const retryUrl = `${window.location.origin}/uploads/images/${imagePath}`;
-                      console.log('Trying direct path:', retryUrl);
+                      console.log('🔄 Retry attempt 1 - Trying direct path:', retryUrl);
                       target.src = retryUrl;
                       return;
                     }

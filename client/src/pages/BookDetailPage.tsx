@@ -128,7 +128,8 @@ export default function BookDetailPage() {
                       const pathIndex = imageUrl.indexOf('/uploads/');
                       if (pathIndex !== -1) {
                         const imagePath = imageUrl.substring(pathIndex);
-                        imageUrl = window.location.origin + imagePath;
+                        const currentOrigin = window.location.protocol + '//' + window.location.host;
+                        imageUrl = currentOrigin + imagePath;
                       }
                     }
                     return imageUrl;
