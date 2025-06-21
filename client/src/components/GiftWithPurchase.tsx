@@ -16,14 +16,14 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Fetch gift categories from database
+  // Fetch gift categories from database (public endpoint)
   const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
-    queryKey: ["/api/admin/gift-categories"],
+    queryKey: ["/api/gift-categories"],
   });
 
-  // Fetch gift items from database
+  // Fetch gift items from database (public endpoint)
   const { data: giftItems = [], isLoading: itemsLoading } = useQuery<GiftItem[]>({
-    queryKey: ["/api/admin/gift-items"],
+    queryKey: ["/api/gift-items"],
   });
 
   const isLoading = categoriesLoading || itemsLoading;
@@ -245,7 +245,7 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
                     : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400'
                 }`}
               >
-                {category.type === 'novel' ? '📖' : '📝'} {category.name}
+                {category.type === 'novel' ? '📖' : '📝'} {category.name.trim()}
               </motion.button>
             ))}
           </motion.div>

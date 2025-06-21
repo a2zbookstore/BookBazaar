@@ -2347,7 +2347,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Gift Categories API Routes
+  // Public Gift Categories API Route (for homepage)
+  app.get("/api/gift-categories", async (req, res) => {
+    try {
+      const categories = await storage.getGiftCategories();
+      // Only return active categories for public use
+      const activeCategories = categories.filter(cat => cat.isActive);
+      res.json(activeCategories);
+    } catch (error) {
+      console.error("Error fetching gift categories:", error);
+      res.status(500).json({ message: "Failed to fetch gift categories" });
+    }
+  });
+
+  // Admin Gift Categories API Routes
   app.get("/api/admin/gift-categories", requireAdminAuth, async (req, res) => {
     try {
       const categories = await storage.getGiftCategories();
@@ -2395,6 +2408,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting gift category:", error);
       res.status(500).json({ message: "Failed to delete gift category" });
+    }
+  });
+
+  // Public Gift Items API Route (for homepage)
+  app.get("/api/gift-items", async (req, res) => {
+    try {
+      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+      const giftItems = await storage.getGiftItems(categoryId);
+      // Only return active items for public use
+      const activeItems = giftItems.filter(item => item.isActive);
+      res.json(activeItems);
+    } catch (error) {
+      console.error("Error fetching gift items:", error);
+      res.status(500).json({ message: "Failed to fetch gift items" });
+    }
+  });
+
+  app.post("/api/admin/gift-items", requireAdminAuth, async (req, res) => {
+    try {
+      const giftItemData = insertGiftItemSchema.parse(req.body);
+      const giftItem = await storage.createGiftItem(giftItemData);
+      res.json(giftItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating gift item:", error);
+      res.status(500).json({ message: "Failed to create gift item" });
+    }
+  });
+
+  app.put("/api/admin/gift-items/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const giftItemData = insertGiftItemSchema.partial().parse(req.body);
+      const giftItem = await storage.updateGiftItem(id, giftItemData);
+      res.json(giftItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating gift item:", error);
+      res.status(500).json({ message: "Failed to update gift item" });
+    }
+  });
+
+  app.delete("/api/admin/gift-items/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteGiftItem(id);
+      res.json({ message: "Gift item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting gift item:", error);
+      res.status(500).json({ message: "Failed to delete gift item" });
     }
   });
 
