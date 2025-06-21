@@ -48,6 +48,7 @@ export default function CartPage() {
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatCurrency, formatAmount, exchangeRates } = useCurrency();
   const { shipping } = useShipping();
+  const [giftItem, setGiftItem] = useState(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
 
 

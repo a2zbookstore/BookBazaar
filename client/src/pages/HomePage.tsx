@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
+import GiftWithPurchase from "@/components/GiftWithPurchase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import SearchInput from "@/components/SearchInput";
@@ -13,6 +14,7 @@ import { Search, Star, TrendingUp, Award } from "lucide-react";
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [hasItemsInCart, setHasItemsInCart] = useState(false);
   
   const { data: featuredBooksResponse } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
@@ -27,6 +29,15 @@ export default function HomePage() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const { data: cartItems = [] } = useQuery({
+    queryKey: ["/api/cart"],
+  });
+
+  // Check if cart has items for gift offer
+  useEffect(() => {
+    setHasItemsInCart(cartItems && cartItems.length > 0);
+  }, [cartItems]);
 
   // Auto-scroll for moving sections - pauses when hovering
   useEffect(() => {
@@ -309,6 +320,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Gift with Purchase Section */}
+      <GiftWithPurchase hasItemsInCart={hasItemsInCart} />
     </Layout>
   );
 }
