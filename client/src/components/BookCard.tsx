@@ -130,14 +130,18 @@ export default function BookCard({ book }: BookCardProps) {
             <img
               src={(() => {
                 const filename = book.imageUrl.split('/').pop();
-                // For production deployment, use relative paths that work with any domain
+                console.log('🔍 Book:', book.title.substring(0, 30), 'Filename:', filename);
                 return `/uploads/images/${filename}`;
               })()}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              onLoad={() => {}}
+              onLoad={(e) => {
+                const target = e.target as HTMLImageElement;
+                console.log('✅ SUCCESS:', book.title.substring(0, 30), 'loaded from:', target.src);
+              }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
+                console.log('❌ FAILED:', book.title.substring(0, 30), 'URL:', target.src);
                 target.src = 'https://via.placeholder.com/150x200/f0f0f0/666?text=No+Image';
               }}
             />
