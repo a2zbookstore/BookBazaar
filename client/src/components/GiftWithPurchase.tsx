@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Check, RefreshCw } from 'lucide-react';
+import { Gift, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,8 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Fetch gift categories from database (public endpoint)
   const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
@@ -232,39 +234,76 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
             variants={itemVariants}
             className="mb-8"
           >
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Gift Category</h3>
-              <p className="text-gray-600">Select a category to see available gifts</p>
+            <div className="flex justify-between items-center mb-6">
+              <div className="text-center flex-1">
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Gift Category</h3>
+                <p className="text-gray-600">Select a category to see available gifts</p>
+              </div>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                onClick={() => {
+                  // Navigate to gift categories page or show all gifts
+                  window.open('/catalog?gift=true', '_blank');
+                }}
+              >
+                <ExternalLink className="h-4 w-4" />
+                See All
+              </Button>
             </div>
             
             <div className="relative overflow-hidden">
+              {/* Navigation Arrows */}
+              {activeCategories.length > 3 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full w-10 h-10 p-0"
+                    onClick={() => {
+                      setCarouselIndex(prev => 
+                        prev > 0 ? prev - 1 : activeCategories.length - 1
+                      );
+                    }}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full w-10 h-10 p-0"
+                    onClick={() => {
+                      setCarouselIndex(prev => 
+                        prev < activeCategories.length - 1 ? prev + 1 : 0
+                      );
+                    }}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+
               <motion.div 
                 className="flex gap-6 py-4"
                 animate={{ 
-                  x: activeCategories.length > 2 ? [-50, -300, -50] : [0, 0, 0]
+                  x: activeCategories.length > 3 && !isPaused ? 
+                    [carouselIndex * -220, (carouselIndex + 1) * -220] : 
+                    activeCategories.length <= 3 ? [0, 0, 0] : [carouselIndex * -220, carouselIndex * -220]
                 }}
                 transition={{ 
-                  duration: activeCategories.length > 2 ? 20 : 0, 
-                  repeat: activeCategories.length > 2 ? Infinity : 0, 
+                  duration: activeCategories.length > 3 && !isPaused ? 15 : 0, 
+                  repeat: activeCategories.length > 3 && !isPaused ? Infinity : 0, 
                   ease: "linear" 
                 }}
                 style={{ 
-                  width: activeCategories.length > 2 ? `${activeCategories.length * 220 + 400}px` : 'auto',
-                  justifyContent: activeCategories.length <= 2 ? 'center' : 'flex-start'
+                  width: activeCategories.length > 3 ? `${activeCategories.length * 220 + 400}px` : 'auto',
+                  justifyContent: activeCategories.length <= 3 ? 'center' : 'flex-start'
                 }}
-                onMouseEnter={(e) => {
-                  if (activeCategories.length > 2) {
-                    e.currentTarget.style.animationPlayState = 'paused';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeCategories.length > 2) {
-                    e.currentTarget.style.animationPlayState = 'running';
-                  }
-                }}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
               >
                 {/* Show categories with duplication for seamless scroll if needed */}
-                {(activeCategories.length > 2 ? [...activeCategories, ...activeCategories] : activeCategories).map((category, index) => (
+                {(activeCategories.length > 3 ? [...activeCategories, ...activeCategories] : activeCategories).map((category, index) => (
                   <motion.div
                     key={`${category.id}-${index}`}
                     onClick={() => setSelectedCategory(category.id)}
