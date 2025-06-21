@@ -408,11 +408,12 @@ export default function Layout({ children }: LayoutProps) {
               >
                 Contact
               </Link>
-          </nav>
+            </nav>
+          </div>
         </div>
       )}
 
-      {/* Fixed Cart Icon - Always Visible */}
+      {/* Main Content */}
       <Link
         href="/cart"
         className={`fixed-cart-icon ${
@@ -432,21 +433,22 @@ export default function Layout({ children }: LayoutProps) {
       {/* Secret Admin Floating Button - Only visible to admins */}
       <SecretAdminButton />
 
-      {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${
-        isScrolled ? 'pt-12 md:pt-16' : 'pt-14 md:pt-20'
-      }`}>
-        {children}
-      </main>
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Main Content */}
+        <main className={`flex-1 transition-all duration-300 ${
+          isScrolled ? 'pt-12 md:pt-16' : 'pt-14 md:pt-20'
+        }`}>
+          {children}
+        </main>
 
-      {/* Footer */}
-      <footer className="bg-base-black text-white mt-16">
-        <div className="container-custom py-12">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bookerly font-bold footer-logo">
-                  A<span className="red-2">2</span>Z BOOKSHOP
+        {/* Footer */}
+        <footer className="bg-base-black text-white mt-16">
+          <div className="container-custom py-12">
+            <div className="grid md:grid-cols-4 gap-8">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bookerly font-bold footer-logo">
+                    A<span className="red-2">2</span>Z BOOKSHOP
                 </h3>
                 <SecretAdminAccess />
               </div>
@@ -491,8 +493,9 @@ export default function Layout({ children }: LayoutProps) {
           </div>
           
 
-        </div>
-      </footer>
-    </div>
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }
