@@ -294,13 +294,13 @@ export default function GiftManagementPage() {
                     <div>
                       <Label htmlFor="type">Type</Label>
                       <Select
-                        value={giftForm.type}
+                        value={giftForm.type || "novel"}
                         onValueChange={(value: "novel" | "notebook") => 
                           setGiftForm({ ...giftForm, type: value })
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select gift type" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="novel">Novel</SelectItem>
@@ -536,11 +536,11 @@ export default function GiftManagementPage() {
                     <div>
                       <Label htmlFor="section">Section</Label>
                       <Select
-                        value={contentForm.section}
+                        value={contentForm.section || "gift_offer"}
                         onValueChange={(value) => setContentForm({ ...contentForm, section: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select section" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="gift_offer">Gift Offer</SelectItem>
