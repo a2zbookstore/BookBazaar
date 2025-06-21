@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
 import GiftWithPurchase from "@/components/GiftWithPurchase";
+import TestGiftSection from "@/components/TestGiftSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import SearchInput from "@/components/SearchInput";
@@ -115,6 +116,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Gift with Purchase Section - Always Visible at Top */}
+      <TestGiftSection />
 
       {/* Bestsellers Section - Moving Carousel */}
       <section className="py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">

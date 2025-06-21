@@ -169,10 +169,6 @@ export default function GiftWithPurchase({ hasItemsInCart }: GiftWithPurchasePro
 
   // Always show the gift section prominently at the top
   const alwaysVisible = true;
-  
-  if (!isVisible && !alwaysVisible) {
-    return null;
-  }
 
   return (
     <AnimatePresence>
