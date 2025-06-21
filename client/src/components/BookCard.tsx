@@ -125,18 +125,17 @@ export default function BookCard({ book }: BookCardProps) {
     <Link href={`/books/${book.id}`}>
       <div className="book-card group cursor-pointer">
         {/* Book Image */}
-        <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative">
+        <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative" style={{ minHeight: '200px' }}>
           {book.imageUrl ? (
             <img
-              src={(() => {
-                const filename = book.imageUrl.split('/').pop();
-                console.log('📷 Processing image for:', book.title, 'Filename:', filename, 'Original URL:', book.imageUrl);
-                return `/uploads/images/${filename}`;
-              })()}
+              src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              style={{ maxWidth: '100%', height: 'auto' }}
               onLoad={(e) => {
                 console.log('✅ Image loaded for:', book.title);
+                const target = e.target as HTMLImageElement;
+                target.style.opacity = '1';
               }}
               onError={(e) => {
                 console.log('❌ Image failed for:', book.title, 'URL:', (e.target as HTMLImageElement).src);
