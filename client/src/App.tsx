@@ -90,6 +90,7 @@ function AppRouter() {
       <Route path="/admin-login" component={AdminLoginPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       
       {/* Admin routes - protected by separate admin authentication */}
       <Route path="/admin">

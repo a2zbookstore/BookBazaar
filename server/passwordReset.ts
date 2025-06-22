@@ -49,7 +49,8 @@ export async function requestPasswordReset(req: Request, res: Response) {
 
     if (!emailSent) {
       console.error('Failed to send password reset email');
-      return res.status(500).json({ message: 'Failed to send password reset email' });
+      // Still return success to not reveal if email exists
+      return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
     }
 
     res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
@@ -106,21 +107,29 @@ export async function resetPassword(req: Request, res: Response) {
 // Send password reset email using Brevo SMTP
 async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl: string }): Promise<boolean> {
   try {
+    console.log('Attempting to send password reset email to:', data.to);
+    
     const transporter = nodemailer.createTransporter({
       host: 'smtp-relay.brevo.com',
       port: 587,
       secure: false,
       auth: {
         user: '8ffc43003@smtp-brevo.com',
-        pass: process.env.BREVO_SMTP_KEY || 'xsmtpsib-cfc9c6c85f82db86c8b3b2c8f14fc8b0e9e4d6b9d3e24f4b8c2a1f9d6e5c3a8b'
+        pass: 'xsmtpsib-cfc9c6c85f82db86c8b3b2c8f14fc8b0e9e4d6b9d3e24f4b8c2a1f9d6e5c3a8b'
       },
       pool: true,
       maxConnections: 5,
       maxMessages: 100,
       connectionTimeout: 60000,
       greetingTimeout: 30000,
-      socketTimeout: 60000
+      socketTimeout: 60000,
+      debug: true,
+      logger: true
     });
+
+    // Test the connection first
+    await transporter.verify();
+    console.log('SMTP connection verified successfully');
 
     const mailOptions = {
       from: '"A2Z BOOKSHOP Support" <orders@a2zbookshop.com>',
@@ -129,11 +138,18 @@ async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl
       html: generatePasswordResetHTML({ name: data.name, resetUrl: data.resetUrl })
     };
 
+    console.log('Sending email with options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+
     const result = await transporter.sendMail(mailOptions);
     console.log('Password reset email sent successfully:', result.messageId);
     return true;
   } catch (error) {
     console.error('Failed to send password reset email:', error);
+    console.error('Error details:', error.message);
     return false;
   }
 }

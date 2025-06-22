@@ -221,6 +221,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Password reset routes
+  const { requestPasswordReset, resetPassword } = await import('./passwordReset');
+  app.post('/api/forgot-password', requestPasswordReset);
+  app.post('/api/reset-password', resetPassword);
+
   // Payment routes
   const { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } = await import("./paypal.js");
   const { createRazorpayOrder, verifyRazorpayPayment, getRazorpayConfig } = await import("./razorpay.js");
