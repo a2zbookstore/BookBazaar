@@ -104,12 +104,12 @@ export async function resetPassword(req: Request, res: Response) {
   }
 }
 
-// Send password reset email using Brevo SMTP
+// Send password reset email using existing Brevo SMTP configuration
 async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl: string }): Promise<boolean> {
   try {
     console.log('Attempting to send password reset email to:', data.to);
     
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: 'smtp-relay.brevo.com',
       port: 587,
       secure: false,
@@ -122,33 +122,16 @@ async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl
       maxMessages: 100,
       connectionTimeout: 60000,
       greetingTimeout: 30000,
-      socketTimeout: 60000,
-      debug: true,
-      logger: true
+      socketTimeout: 60000
     });
 
-    // Test the connection first
-    try {
-      await transporter.verify();
-      console.log('SMTP connection verified successfully');
-    } catch (verifyError) {
-      console.error('SMTP verification failed:', verifyError);
-      throw verifyError;
-    }
-
     const mailOptions = {
-      from: '"A2Z BOOKSHOP Support" <8ffc43003@smtp-brevo.com>',
+      from: '"A2Z BOOKSHOP Support" <orders@a2zbookshop.com>',
       to: data.to,
       subject: 'Password Reset Request - A2Z BOOKSHOP',
       html: generatePasswordResetHTML({ name: data.name, resetUrl: data.resetUrl }),
       text: `Hello ${data.name},\n\nYou have requested to reset your password for your A2Z BOOKSHOP account.\n\nPlease click the link below to reset your password:\n${data.resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this reset, please ignore this email.\n\nBest regards,\nThe A2Z BOOKSHOP Team`
     };
-
-    console.log('Sending email with options:', {
-      from: mailOptions.from,
-      to: mailOptions.to,
-      subject: mailOptions.subject
-    });
 
     const result = await transporter.sendMail(mailOptions);
     console.log('Password reset email sent successfully:', result.messageId);
