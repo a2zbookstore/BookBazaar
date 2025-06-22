@@ -281,16 +281,16 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
               >
                 <Gift className="h-12 w-12 text-green-500" />
               </motion.div>
-              <h2 className="text-5xl md:text-5xl sm:text-3xl text-2xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+              <h2 className="text-5xl md:text-5xl sm:text-2xl text-lg font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
                 🎁 SPECIAL GIFT OFFER! 🎁
               </h2>
             </motion.div>
             
             <motion.p 
-              className="text-2xl text-gray-700 dark:text-gray-300 mb-6 font-semibold"
+              className="text-2xl md:text-2xl sm:text-lg text-base text-gray-700 dark:text-gray-300 mb-6 font-semibold"
               variants={itemVariants}
             >
-              Buy any book and get <span className="font-bold text-green-600 text-3xl">1 FREE Gift</span> of your choice!
+              Buy any book and get <span className="font-bold text-green-600 text-3xl md:text-3xl sm:text-xl text-lg">1 FREE Gift</span> of your choice!
             </motion.p>
             
             {!isVisible && alwaysVisible && (
