@@ -35,10 +35,8 @@ export async function requestPasswordReset(req: Request, res: Response) {
       })
       .where(eq(users.id, user[0].id));
 
-    // Create reset URL
-    const resetUrl = `${process.env.NODE_ENV === 'production' 
-      ? 'https://a2zbookshop.com' 
-      : 'http://localhost:5000'}/reset-password?token=${resetToken}`;
+    // Create reset URL with production domain
+    const resetUrl = `https://a2zbookshop.com/reset-password?token=${resetToken}`;
 
     // Send password reset email using Brevo
     const emailSent = await sendPasswordResetEmail({
@@ -127,23 +125,48 @@ async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl
     });
 
     const mailOptions = {
-      from: '"A2Z BOOKSHOP Support" <8ffc43003@smtp-brevo.com>',
-      replyTo: 'orders@a2zbookshop.com',
+      from: '"A2Z BOOKSHOP Password Reset" <orders@a2zbookshop.com>',
       to: data.to,
-      subject: 'Password Reset Request - A2Z BOOKSHOP',
+      subject: '[A2Z BOOKSHOP] Reset Your Password',
       html: generatePasswordResetHTML({ name: data.name, resetUrl: data.resetUrl }),
-      text: `Hello ${data.name},\n\nYou have requested to reset your password for your A2Z BOOKSHOP account.\n\nPlease click the link below to reset your password:\n${data.resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this reset, please ignore this email.\n\nBest regards,\nThe A2Z BOOKSHOP Team`,
+      text: `Hello ${data.name},
+
+You requested a password reset for your A2Z BOOKSHOP account.
+
+Click this link to reset your password:
+${data.resetUrl}
+
+This link expires in 1 hour for security.
+
+If you didn't request this, please ignore this email.
+
+Best regards,
+A2Z BOOKSHOP Team
+Email: orders@a2zbookshop.com
+Website: https://a2zbookshop.com`,
       headers: {
-        'X-Mailer': 'A2Z BOOKSHOP',
-        'X-Priority': '1 (Highest)',
-        'X-MSMail-Priority': 'High',
-        'Importance': 'High'
+        'Reply-To': 'orders@a2zbookshop.com',
+        'Return-Path': 'orders@a2zbookshop.com',
+        'List-Unsubscribe': '<mailto:orders@a2zbookshop.com>',
+        'X-Entity-ID': 'a2zbookshop-password-reset'
       }
     };
 
-    // Skip verification for now to avoid authentication issues
+    // Verify connection and send email
+    try {
+      await transporter.verify();
+      console.log('SMTP connection verified for password reset');
+    } catch (verifyError) {
+      console.error('SMTP verification failed:', verifyError);
+    }
+    
     const result = await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent successfully. Message ID:', result.messageId);
+    console.log('✅ PASSWORD RESET EMAIL SENT SUCCESSFULLY');
+    console.log('📧 Message ID:', result.messageId);
+    console.log('👤 Recipient:', data.to);
+    console.log('🔗 Reset URL:', data.resetUrl);
+    console.log('📬 Subject:', mailOptions.subject);
+    console.log('🏢 From:', mailOptions.from);
     return true;
   } catch (error) {
     console.error('Failed to send password reset email:', error);
