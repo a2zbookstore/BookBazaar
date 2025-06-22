@@ -74,8 +74,8 @@ export default function Layout({ children }: LayoutProps) {
               />
             </div>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
+            {/* Desktop Right Actions */}
+            <div className="hidden md:flex items-center gap-2">
               
               {isAuthenticated && (
                 <Link
@@ -156,20 +156,20 @@ export default function Layout({ children }: LayoutProps) {
               )}
             </div>
 
-            {/* Mobile Navigation */}
-            <div className="flex md:hidden items-center space-x-4">
+            {/* Mobile Right Actions - Clean Layout */}
+            <div className="flex md:hidden items-center gap-3">
               {/* Mobile Cart */}
               <Link
                 href="/cart"
-                className={`transition-colors relative touch-target ${
+                className={`transition-colors relative p-2 rounded-lg hover:bg-primary-aqua/10 ${
                   isCartAnimating 
                     ? "cart-pulse-animation" 
                     : "text-secondary-black hover:text-primary-aqua cart-normal"
                 }`}
               >
-                <ShoppingCart className="h-6 w-6" />
+                <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
                     {cartCount}
                   </span>
                 )}
@@ -180,29 +180,29 @@ export default function Layout({ children }: LayoutProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="touch-target"
+                className="p-2 rounded-lg hover:bg-primary-aqua/10"
               >
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5" />
               </Button>
             </div>
           </div>
 
           {/* Mobile Search Bar */}
-          <div className="md:hidden px-4 pb-4">
+          <div className="md:hidden px-3 pb-3">
             <SearchInput 
               placeholder="Search books, authors, ISBN..."
-              className="w-full"
+              className="w-full h-10"
             />
           </div>
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden bg-white border-t border-gray-200">
-              <nav className="px-4 py-4 space-y-4">
+            <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
+              <nav className="px-3 py-3 space-y-3">
                 <Link
                   href="/"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
+                    isActive("/") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -210,35 +210,17 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
                 <Link
                   href="/catalog"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/catalog") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
+                    isActive("/catalog") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Catalog
                 </Link>
                 <Link
-                  href="/about"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/about") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/contact") ? "text-primary-aqua font-semibold" : "text-secondary-black"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Contact
-                </Link>
-                <Link
                   href="/track-order"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/track-order") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
+                    isActive("/track-order") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -246,25 +228,34 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
                 <Link
                   href="/returns"
-                  className={`block py-2 text-lg touch-target ${
-                    isActive("/returns") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                  className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
+                    isActive("/returns") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Returns
                 </Link>
+                <Link
+                  href="/contact"
+                  className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
+                    isActive("/contact") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Contact
+                </Link>
                 
                 {/* Mobile Country Selector */}
-                <div className="py-3 border-t border-gray-200 mt-2">
-                  <div className="text-sm text-secondary-black mb-2">Select your country:</div>
+                <div className="py-3 border-t border-gray-100 mt-2">
+                  <div className="text-sm text-gray-600 mb-2">Select your country:</div>
                   <CountrySelector compact={true} className="w-full" />
                 </div>
                 
                 {isAuthenticated && (
                   <Link
                     href="/wishlist"
-                    className={`block py-2 text-lg touch-target ${
-                      isActive("/wishlist") ? "text-primary-aqua font-semibold" : "text-secondary-black"
+                    className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
+                      isActive("/wishlist") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -281,27 +272,24 @@ export default function Layout({ children }: LayoutProps) {
                 )}
 
                 {/* Mobile Auth Buttons */}
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-3 border-t border-gray-100 space-y-2">
                   {isAuthenticated ? (
-                    <>
-
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          setIsMobileMenuOpen(false);
-                          try {
-                            await fetch("/api/auth/logout", { method: "POST" });
-                            window.location.href = "/";
-                          } catch (error) {
-                            window.location.href = "/api/logout";
-                          }
-                        }}
-                        className="w-full touch-target mobile-button"
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        Logout
-                      </Button>
-                    </>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        setIsMobileMenuOpen(false);
+                        try {
+                          await fetch("/api/auth/logout", { method: "POST" });
+                          window.location.href = "/";
+                        } catch (error) {
+                          window.location.href = "/api/logout";
+                        }
+                      }}
+                      className="w-full h-12 text-base font-medium"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
                   ) : (
                     <div className="space-y-2">
                       <Button
@@ -309,10 +297,20 @@ export default function Layout({ children }: LayoutProps) {
                           setIsMobileMenuOpen(false);
                           setLocation('/login');
                         }}
-                        className="w-full bg-primary-aqua hover:bg-secondary-aqua touch-target mobile-button"
+                        className="w-full h-12 bg-primary-aqua hover:bg-secondary-aqua text-base font-medium"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Login
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setLocation('/register');
+                        }}
+                        className="w-full h-12 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white text-base font-medium"
+                      >
+                        Register
                       </Button>
                     </div>
                   )}
