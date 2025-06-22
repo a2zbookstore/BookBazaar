@@ -19,6 +19,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
   const [isVisible, setIsVisible] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [hoveredImage, setHoveredImage] = useState<{ url: string; name: string } | null>(null);
 
   // Fetch gift categories from database (public endpoint)
   const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
@@ -226,24 +227,81 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
 
   if (isLoading) {
     return (
-      <motion.section 
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 relative overflow-hidden"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
-          <p className="text-gray-600">Loading special gift offers...</p>
-        </div>
-      </motion.section>
+      <>
+        {/* Hovered Image Modal */}
+        <AnimatePresence>
+          {hoveredImage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 pointer-events-none"
+              style={{ zIndex: 9999 }}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="relative max-w-2xl max-h-[80vh] p-4"
+              >
+                <img
+                  src={hoveredImage.url}
+                  alt={hoveredImage.name}
+                  className="w-full h-full object-contain rounded-lg shadow-2xl"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white p-4 rounded-b-lg">
+                  <h3 className="text-lg font-semibold text-center">{hoveredImage.name}</h3>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.section 
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 relative overflow-hidden"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
+            <p className="text-gray-600">Loading special gift offers...</p>
+          </div>
+        </motion.section>
+      </>
     );
   }
 
-  // Always show the section even if no gift items are available
-  // This allows users to see the gift categories and know the feature exists
-
   return (
+    <>
+      {/* Hovered Image Modal */}
+      <AnimatePresence>
+        {hoveredImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 pointer-events-none"
+            style={{ zIndex: 9999 }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-2xl max-h-[80vh] p-4"
+            >
+              <img
+                src={hoveredImage.url}
+                alt={hoveredImage.name}
+                className="w-full h-full object-contain rounded-lg shadow-2xl"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white p-4 rounded-b-lg">
+                <h3 className="text-lg font-semibold text-center">{hoveredImage.name}</h3>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     <motion.section 
       initial="hidden"
       animate="visible"
@@ -438,6 +496,8 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                             className={`w-full h-full object-cover transition-transform duration-300 ${
                               hasItemsInCart ? 'group-hover:scale-110' : ''
                             }`}
+                            onMouseEnter={() => hasItemsInCart && setHoveredImage({ url: category.imageUrl!, name: category.name })}
+                            onMouseLeave={() => setHoveredImage(null)}
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
@@ -543,6 +603,8 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                           onError={(e) => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop';
                           }}
+                          onMouseEnter={() => hasItemsInCart && setHoveredImage({ url: gift.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop', name: gift.name })}
+                          onMouseLeave={() => setHoveredImage(null)}
                         />
                         
                         {/* Add Books First Overlay for Gift Items */}
@@ -620,5 +682,6 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
         </div>
       </div>
     </motion.section>
+    </>
   );
 }
