@@ -39,6 +39,7 @@ import WishlistPage from "@/pages/WishlistPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import ShippingInfoPage from "@/pages/ShippingInfoPage";
 import ReturnPolicyPage from "@/pages/ReturnPolicyPage";
 import CancellationPolicyPage from "@/pages/CancellationPolicyPage";

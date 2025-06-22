@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Eye, EyeOff, Mail, Lock, Phone, LogIn } from "lucide-react";
 
 export default function LoginPage() {
@@ -15,6 +16,11 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState("email");
+  
+  // Forgot password states
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isForgotDialogOpen, setIsForgotDialogOpen] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   
   const [emailFormData, setEmailFormData] = useState({
     email: "",
@@ -111,6 +117,57 @@ export default function LoginPage() {
       phone: fullPhone,
       password: phoneFormData.password,
     });
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!forgotEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingReset(true);
+
+    try {
+      const response = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Password Reset Email Sent",
+          description: "If an account with that email exists, a password reset link has been sent.",
+        });
+        setForgotEmail("");
+        setIsForgotDialogOpen(false);
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to send password reset email",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Password reset error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
   };
 
   return (
@@ -261,7 +318,53 @@ export default function LoginPage() {
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-3">
+              <Dialog open={isForgotDialogOpen} onOpenChange={setIsForgotDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="link" className="text-sm text-gray-600 hover:text-gray-900 p-0">
+                    Forgot your password?
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Reset Password</DialogTitle>
+                    <DialogDescription>
+                      Enter your email address and we'll send you a link to reset your password.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div>
+                      <Label htmlFor="forgot-email">Email Address</Label>
+                      <Input
+                        id="forgot-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsForgotDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSendingReset}
+                        className="flex-1 bg-primary-aqua hover:bg-secondary-aqua"
+                      >
+                        {isSendingReset ? "Sending..." : "Send Reset Link"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
                 <Link href="/register" className="text-primary-aqua hover:underline font-medium">
