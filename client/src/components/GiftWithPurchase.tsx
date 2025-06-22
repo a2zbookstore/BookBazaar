@@ -315,7 +315,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                   >
                     🛒
                   </motion.div>
-                  <p className="text-orange-800 font-medium">
+                  <p className="text-orange-800 font-medium md:text-base sm:text-sm text-xs">
                     Add any book to your cart to activate this special gift offer!
                   </p>
                 </div>
@@ -341,8 +341,8 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
           >
             <div className="flex justify-between items-center mb-6">
               <div className="text-center flex-1">
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Gift Category</h3>
-                <p className="text-gray-600">Select a category to see available gifts</p>
+                <h3 className="text-2xl md:text-2xl sm:text-lg text-base font-bold text-gray-800 mb-2">Choose Your Gift Category</h3>
+                <p className="text-gray-600 md:text-base sm:text-sm text-xs">Select a category to see available gifts</p>
               </div>
               <Link href="/gift-items">
                 <Button
