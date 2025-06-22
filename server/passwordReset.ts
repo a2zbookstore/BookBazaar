@@ -96,9 +96,7 @@ export async function resetPassword(req: Request, res: Response) {
       })
       .where(eq(users.id, user[0].id));
 
-    console.log('✅ Password successfully updated for user:', user[0].email);
-    console.log('🔐 New password hash created using SHA256 (same as registration)');
-    console.log('📝 Hash preview:', hashedPassword.substring(0, 20) + '...');
+    console.log('Password successfully updated for user:', user[0].email);
 
     res.status(200).json({ message: 'Password has been reset successfully' });
   } catch (error) {
@@ -166,12 +164,7 @@ Website: https://a2zbookshop.com`,
     }
     
     const result = await transporter.sendMail(mailOptions);
-    console.log('✅ PASSWORD RESET EMAIL SENT SUCCESSFULLY');
-    console.log('📧 Message ID:', result.messageId);
-    console.log('👤 Recipient:', data.to);
-    console.log('🔗 Reset URL:', data.resetUrl);
-    console.log('📬 Subject:', mailOptions.subject);
-    console.log('🏢 From:', mailOptions.from);
+    console.log('Password reset email sent successfully. Message ID:', result.messageId);
     return true;
   } catch (error) {
     console.error('Failed to send password reset email:', error);
