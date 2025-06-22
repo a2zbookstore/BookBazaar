@@ -83,8 +83,8 @@ export async function resetPassword(req: Request, res: Response) {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
 
-    // Hash new password with same salt rounds as registration (12)
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    // Hash password using same method as registration (SHA256)
+    const hashedPassword = crypto.createHash('sha256').update(newPassword).digest('hex');
 
     // Update user password and clear reset token
     await db.update(users)
@@ -97,7 +97,7 @@ export async function resetPassword(req: Request, res: Response) {
       .where(eq(users.id, user[0].id));
 
     console.log('✅ Password successfully updated for user:', user[0].email);
-    console.log('🔐 New password hash created with 12 salt rounds');
+    console.log('🔐 New password hash created using SHA256 (same as registration)');
     console.log('📝 Hash preview:', hashedPassword.substring(0, 20) + '...');
 
     res.status(200).json({ message: 'Password has been reset successfully' });
