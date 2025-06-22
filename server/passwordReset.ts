@@ -86,10 +86,10 @@ export async function resetPassword(req: Request, res: Response) {
     // Hash password using same method as registration (SHA256)
     const hashedPassword = crypto.createHash('sha256').update(newPassword).digest('hex');
 
-    // Update user password and clear reset token
+    // Update user password and clear reset token using correct field name
     await db.update(users)
       .set({ 
-        password: hashedPassword,
+        passwordHash: hashedPassword,  // Use passwordHash field like registration
         resetToken: null,
         resetTokenExpiry: null,
         updatedAt: new Date()
