@@ -514,14 +514,23 @@ button:active, .button:active {
     min-height: 48px;
   }
   
-  /* Hide scrollbar for mobile horizontal scroll */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
+  /* Mobile horizontal scrolling for book sections */
+  .md\:hidden.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    -ms-overflow-style: none;
   }
   
-  .scrollbar-hide::-webkit-scrollbar {
+  .md\:hidden.overflow-x-auto::-webkit-scrollbar {
     display: none;
+  }
+  
+  /* Ensure mobile book cards are properly sized */
+  @media (max-width: 768px) {
+    .book-card {
+      min-width: 250px;
+      width: 250px;
+    }
   }
 }
 

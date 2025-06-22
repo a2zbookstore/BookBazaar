@@ -94,12 +94,12 @@ export default function HomePage() {
           </div>
           
           {bestsellerBooks.length > 0 ? (
-            <div className="relative overflow-hidden">
+            <>
               {/* Mobile horizontal scroll view */}
-              <div className="md:hidden">
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              <div className="md:hidden overflow-x-auto">
+                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {bestsellerBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-64">
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -107,7 +107,7 @@ export default function HomePage() {
               </div>
               
               {/* Desktop carousel view */}
-              <div className="hidden md:block">
+              <div className="hidden md:block relative overflow-hidden">
                 <div 
                   className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
                   style={{ transform: `translateX(-${currentSlide * 25}%)` }}
@@ -121,7 +121,7 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-secondary-black text-lg">Loading bestsellers...</p>
@@ -146,12 +146,12 @@ export default function HomePage() {
           </div>
           
           {featuredBooks.length > 0 ? (
-            <div className="relative overflow-hidden">
+            <>
               {/* Mobile horizontal scroll view */}
-              <div className="md:hidden">
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              <div className="md:hidden overflow-x-auto">
+                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {featuredBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-64">
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -159,7 +159,7 @@ export default function HomePage() {
               </div>
               
               {/* Desktop carousel view */}
-              <div className="hidden md:block">
+              <div className="hidden md:block relative overflow-hidden">
                 <div 
                   className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
                   style={{ transform: `translateX(-${(currentSlide * 25) % 100}%)` }}
@@ -173,7 +173,7 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-secondary-black text-lg">No featured books available at the moment.</p>
