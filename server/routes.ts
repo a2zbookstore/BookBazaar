@@ -377,8 +377,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify password
-      const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-      if (user.passwordHash !== passwordHash) {
+      const inputPasswordHash = crypto.createHash('sha256').update(password).digest('hex');
+      if (user.passwordHash !== inputPasswordHash) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
