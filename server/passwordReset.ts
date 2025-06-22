@@ -127,11 +127,18 @@ async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl
     });
 
     const mailOptions = {
-      from: '"A2Z BOOKSHOP Support" <orders@a2zbookshop.com>',
+      from: '"A2Z BOOKSHOP Support" <8ffc43003@smtp-brevo.com>',
+      replyTo: 'orders@a2zbookshop.com',
       to: data.to,
       subject: 'Password Reset Request - A2Z BOOKSHOP',
       html: generatePasswordResetHTML({ name: data.name, resetUrl: data.resetUrl }),
-      text: `Hello ${data.name},\n\nYou have requested to reset your password for your A2Z BOOKSHOP account.\n\nPlease click the link below to reset your password:\n${data.resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this reset, please ignore this email.\n\nBest regards,\nThe A2Z BOOKSHOP Team`
+      text: `Hello ${data.name},\n\nYou have requested to reset your password for your A2Z BOOKSHOP account.\n\nPlease click the link below to reset your password:\n${data.resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this reset, please ignore this email.\n\nBest regards,\nThe A2Z BOOKSHOP Team`,
+      headers: {
+        'X-Mailer': 'A2Z BOOKSHOP',
+        'X-Priority': '1 (Highest)',
+        'X-MSMail-Priority': 'High',
+        'Importance': 'High'
+      }
     };
 
     // Skip verification for now to avoid authentication issues
