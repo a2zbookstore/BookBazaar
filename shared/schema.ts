@@ -38,6 +38,8 @@ export const users = pgTable("users", {
   passwordHash: varchar("password_hash"), // For email-based authentication
   isEmailVerified: boolean("is_email_verified").default(false),
   authProvider: varchar("auth_provider").default("email"), // email, phone, replit
+  resetToken: varchar("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
