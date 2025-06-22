@@ -513,6 +513,16 @@ button:active, .button:active {
     width: 100%;
     min-height: 48px;
   }
+  
+  /* Hide scrollbar for mobile horizontal scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Wishlist Heart Animation */
