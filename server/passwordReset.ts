@@ -128,14 +128,20 @@ async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl
     });
 
     // Test the connection first
-    await transporter.verify();
-    console.log('SMTP connection verified successfully');
+    try {
+      await transporter.verify();
+      console.log('SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('SMTP verification failed:', verifyError);
+      throw verifyError;
+    }
 
     const mailOptions = {
-      from: '"A2Z BOOKSHOP Support" <orders@a2zbookshop.com>',
+      from: '"A2Z BOOKSHOP Support" <8ffc43003@smtp-brevo.com>',
       to: data.to,
       subject: 'Password Reset Request - A2Z BOOKSHOP',
-      html: generatePasswordResetHTML({ name: data.name, resetUrl: data.resetUrl })
+      html: generatePasswordResetHTML({ name: data.name, resetUrl: data.resetUrl }),
+      text: `Hello ${data.name},\n\nYou have requested to reset your password for your A2Z BOOKSHOP account.\n\nPlease click the link below to reset your password:\n${data.resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this reset, please ignore this email.\n\nBest regards,\nThe A2Z BOOKSHOP Team`
     };
 
     console.log('Sending email with options:', {
