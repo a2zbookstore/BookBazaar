@@ -1412,7 +1412,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Cart routes - support both authenticated and guest users
   app.get("/api/cart", async (req: any, res) => {
+    console.log("Cart GET request received");
     try {
+      // Set JSON content type explicitly
+      res.setHeader('Content-Type', 'application/json');
+      
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
@@ -1423,6 +1427,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
+      
+      console.log("Cart - userId:", userId, "sessionUserId:", sessionUserId, "isCustomerAuth:", isCustomerAuth);
       
       if (userId) {
         const cartItems = await storage.getCartItems(userId);
@@ -1449,10 +1455,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        res.json(fullCart);
+        console.log("Returning authenticated user cart:", fullCart.length, "items");
+        return res.json(fullCart);
       } else {
         // Guest user - return session-based cart with book details
         const guestCart = (req.session as any).guestCart || [];
+        console.log("Guest cart from session:", guestCart.length, "items");
         
         // Auto-remove gifts if no books remain
         await autoRemoveGiftsIfNoBooks(req, guestCart);
@@ -1460,13 +1468,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const giftItem = (req.session as any).giftItem;
         
         // Ensure each cart item has complete book data
-        const cartWithBooks = await Promise.all(guestCart.map(async (item: any) => {
-          if (!item.book || !item.book.id) {
-            const book = await storage.getBookById(item.bookId);
-            return { ...item, book };
+        const cartWithBooks = [];
+        for (const item of guestCart) {
+          try {
+            if (!item.book || !item.book.id) {
+              const book = await storage.getBookById(item.bookId);
+              if (book) {
+                cartWithBooks.push({ ...item, book });
+              }
+            } else {
+              cartWithBooks.push(item);
+            }
+          } catch (error) {
+            console.error("Error processing cart item:", error);
           }
-          return item;
-        }));
+        }
         
         // Add gift item to cart if present and there are books
         if (giftItem && hasNonGiftBooks(cartWithBooks)) {
@@ -1484,7 +1500,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        res.json(cartWithBooks);
+        console.log("Returning guest cart:", cartWithBooks.length, "items");
+        return res.json(cartWithBooks);
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -1492,8 +1509,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/cart", async (req: any, res) => {
+  app.post("/api/cart/add", async (req: any, res) => {
+    console.log("Cart ADD request received:", req.body);
     try {
+      res.setHeader('Content-Type', 'application/json');
+      
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
@@ -1505,11 +1525,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId = req.user.claims.sub;
       }
       
+      console.log("Cart ADD - userId:", userId, "sessionUserId:", sessionUserId);
+      
       if (userId) {
         // Authenticated user - save to database
         const cartData = insertCartItemSchema.parse({ ...req.body, userId });
         const cartItem = await storage.addToCart(cartData);
-        res.json(cartItem);
+        return res.json(cartItem);
       } else {
         // Guest user - save to session
         const { bookId, quantity } = req.body;
@@ -1519,7 +1541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Book not found" });
         }
         
-        if (!req.session.guestCart) {
+        if (!(req.session as any).guestCart) {
           (req.session as any).guestCart = [];
         }
         
@@ -1537,8 +1559,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        req.session.save(() => {
-          res.json(guestCart[guestCart.length - 1]);
+        console.log("Guest cart after add:", guestCart.length, "items");
+        
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ message: "Failed to save cart" });
+          }
+          res.json({ message: "Item added to cart", item: guestCart[guestCart.length - 1] });
         });
       }
     } catch (error) {
