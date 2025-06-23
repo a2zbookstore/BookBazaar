@@ -86,13 +86,32 @@ export default function PayPalCompletePage() {
         
         const captureData = await captureResponse.json();
 
-        // Complete the order with PayPal payment details
-        completeOrderMutation.mutate({
-          ...orderData,
-          paymentId: captureData.id || token,
-          paypalToken: token,
-          paypalPayerId: PayerID
-        });
+        // If PayPal capture included order creation, handle success
+        if (captureData.orderId) {
+          clearCart();
+          setOrderCompleted(true);
+          toast({
+            title: "Order Placed Successfully!",
+            description: `Your order #${captureData.orderId} has been confirmed.`,
+          });
+          
+          // Clear session storage
+          sessionStorage.removeItem('pendingOrder');
+          
+          // Redirect to order detail page after 3 seconds
+          setTimeout(() => {
+            const email = orderData.customerEmail;
+            setLocation(`/orders/${captureData.orderId}${email ? `?email=${encodeURIComponent(email)}` : ''}`);
+          }, 3000);
+        } else {
+          // Fallback to complete order mutation if needed
+          completeOrderMutation.mutate({
+            ...orderData,
+            paymentId: captureData.id || token,
+            paypalToken: token,
+            paypalPayerId: PayerID
+          });
+        }
 
         // Clear session storage
         sessionStorage.removeItem('pendingOrder');

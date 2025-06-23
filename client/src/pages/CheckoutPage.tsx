@@ -624,14 +624,37 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     try {
-      // Create PayPal order with return URLs
-      const orderResponse = await apiRequest("POST", "/api/paypal/order", {
-        amount: parseFloat(total.toFixed(2)),
-        currency: "USD",
-        intent: "CAPTURE",
-        return_url: `${window.location.origin}/api/paypal/success`,
-        cancel_url: `${window.location.origin}/checkout`
+      // Create PayPal order with return URLs and order data
+      const orderResponse = await fetch("/api/paypal/order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: total.toFixed(2),
+          currency: "USD",
+          intent: "CAPTURE",
+          return_url: `${window.location.origin}/paypal-complete`,
+          cancel_url: `${window.location.origin}/checkout`,
+          orderData: {
+            customerName,
+            customerEmail,
+            customerPhone,
+            shippingAddress,
+            billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
+            subtotal: subtotal.toFixed(2),
+            shipping: shippingCost.toFixed(2),
+            tax: tax.toFixed(2),
+            total: total.toFixed(2),
+            paymentMethod: "paypal"
+          }
+        }),
       });
+      
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
+        throw new Error(errorData.error || "Failed to create PayPal order");
+      }
 
       const orderData = await orderResponse.json();
       
@@ -650,7 +673,7 @@ export default function CheckoutPage() {
           shipping: shippingCost.toFixed(2),
           tax: tax.toFixed(2),
           total: total.toFixed(2),
-          paymentMethod: "PayPal",
+          paymentMethod: "paypal",
           items: cartItems.map(item => ({
             bookId: item.book.id,
             quantity: item.quantity,
