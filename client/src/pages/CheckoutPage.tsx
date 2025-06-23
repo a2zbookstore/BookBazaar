@@ -795,6 +795,12 @@ export default function CheckoutPage() {
             };
 
             // Verify payment and create order in one step
+            console.log("Sending payment verification request...", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              orderData: orderData
+            });
+
             const verifyResponse = await apiRequest("POST", "/api/razorpay/verify", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -802,9 +808,19 @@ export default function CheckoutPage() {
               orderData: orderData
             });
 
-            const verifyResult = await verifyResponse.json();
+            console.log("Payment verification response status:", verifyResponse.status);
+            
+            let verifyResult;
+            try {
+              verifyResult = await verifyResponse.json();
+              console.log("Payment verification result:", verifyResult);
+            } catch (parseError) {
+              console.error("Failed to parse verification response:", parseError);
+              throw new Error("Invalid response from payment verification");
+            }
             
             if (verifyResult.status === "success" && verifyResult.orderId) {
+              console.log("Payment verified successfully, order created:", verifyResult.orderId);
               clearCart();
               toast({
                 title: "Order Placed Successfully!",
@@ -813,6 +829,7 @@ export default function CheckoutPage() {
               // Navigate to order detail page with email for guest access
               setLocation(`/orders/${verifyResult.orderId}?email=${encodeURIComponent(customerEmail)}`);
             } else {
+              console.error("Payment verification failed:", verifyResult);
               throw new Error(verifyResult.message || "Payment verification failed");
             }
           } catch (error) {

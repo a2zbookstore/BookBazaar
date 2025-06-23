@@ -80,7 +80,7 @@ export async function createRazorpayOrder(req: Request, res: Response) {
 
 export async function verifyRazorpayPayment(req: Request, res: Response) {
   try {
-    console.log("Razorpay verification request body:", req.body);
+    console.log("Razorpay verification request body:", JSON.stringify(req.body, null, 2));
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -285,10 +285,12 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
           
         } catch (orderError) {
           console.error("Failed to create order after payment verification:", orderError);
+          console.error("Order error stack:", orderError instanceof Error ? orderError.stack : orderError);
           return res.status(500).json({ 
             status: "failed", 
             message: "Payment verified but order creation failed",
-            error: orderError instanceof Error ? orderError.message : "Unknown error"
+            error: orderError instanceof Error ? orderError.message : "Unknown error",
+            details: orderError instanceof Error ? orderError.stack : String(orderError)
           });
         }
       }
