@@ -68,8 +68,22 @@ export default function PayPalCompletePage() {
 
         const orderData = JSON.parse(pendingOrderData);
 
-        // Capture PayPal payment
-        const captureResponse = await apiRequest("POST", `/api/paypal/order/${token}/capture`, {});
+        // Capture PayPal payment with order data
+        const captureResponse = await fetch(`/api/paypal/order/${token}/capture`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderData: orderData
+          }),
+        });
+        
+        if (!captureResponse.ok) {
+          const errorData = await captureResponse.json();
+          throw new Error(errorData.error || "Failed to capture PayPal payment");
+        }
+        
         const captureData = await captureResponse.json();
 
         // Complete the order with PayPal payment details
