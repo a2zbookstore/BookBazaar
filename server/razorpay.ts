@@ -171,17 +171,21 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
 
           // Get cart items for the order
           let cartItems = [];
+          console.log("Getting cart items for order creation, userId:", userId);
+          
           if (userId) {
             cartItems = await storage.getCartItems(userId);
+            console.log("Authenticated user cart items:", cartItems.length);
           } else {
-            // Check both guestCart and cartItems from session
+            // For guest users, get cart from session
             const guestCart = (req as any).session?.guestCart || [];
-            const sessionCartItems = (req as any).session?.cartItems || [];
-            cartItems = guestCart.length > 0 ? guestCart : sessionCartItems;
+            console.log("Guest cart from session:", guestCart.length, "items");
+            cartItems = guestCart;
           }
 
           // If no cart items but items provided in request, use those
           if (cartItems.length === 0 && items && items.length > 0) {
+            console.log("Using items from request payload:", items.length);
             cartItems = items.map((item: any) => ({
               book: {
                 id: item.bookId,
@@ -192,6 +196,8 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
               quantity: item.quantity
             }));
           }
+          
+          console.log("Final cart items for order:", cartItems.length);
 
           // Process cart items for guest users (fetch book details if needed)
           if (!userId && cartItems.length > 0) {

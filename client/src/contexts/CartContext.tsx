@@ -39,7 +39,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ bookId, quantity }: { bookId: number; quantity: number }) => {
-      return await apiRequest("POST", "/api/cart", { bookId, quantity });
+      return await apiRequest("POST", "/api/cart/add", { bookId, quantity });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
