@@ -834,11 +834,27 @@ export default function CheckoutPage() {
             }
           } catch (error) {
             console.error("Payment verification error:", error);
-            toast({
-              title: "Order Failed",
-              description: error instanceof Error ? error.message : "Payment verification failed. Please contact support.",
-              variant: "destructive",
-            });
+            
+            // Check if it's a network error or parsing error
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+              toast({
+                title: "Connection Error",
+                description: "Unable to connect to payment server. Please check your internet connection and try again.",
+                variant: "destructive",
+              });
+            } else if (error instanceof SyntaxError) {
+              toast({
+                title: "Server Error",
+                description: "Server responded with invalid data. Please try again or contact support.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Payment Verification Failed",
+                description: error instanceof Error ? error.message : "Payment verification failed. Please contact support with your payment ID.",
+                variant: "destructive",
+              });
+            }
           }
         },
         prefill: {

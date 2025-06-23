@@ -467,16 +467,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<Order> {
-    return await db.transaction(async (tx) => {
-      const [newOrder] = await tx.insert(orders).values(order).returning();
+    try {
+      console.log("Creating order without transaction...");
+      
+      // Insert order first
+      const [newOrder] = await db.insert(orders).values(order).returning();
+      console.log("Order created with ID:", newOrder.id);
 
-      await tx.insert(orderItems).values(
-        items.map((item) => ({ ...item, orderId: newOrder.id }))
-      );
+      // Insert order items
+      if (items.length > 0) {
+        await db.insert(orderItems).values(
+          items.map((item) => ({ ...item, orderId: newOrder.id }))
+        );
+        console.log("Order items inserted successfully");
+      }
 
       // Update book stock
       for (const item of items) {
-        await tx
+        await db
           .update(books)
           .set({
             stock: sql`${books.stock} - ${item.quantity}`,
@@ -484,9 +492,13 @@ export class DatabaseStorage implements IStorage {
           })
           .where(eq(books.id, item.bookId));
       }
+      console.log("Book stock updated");
 
       return newOrder;
-    });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw error;
+    }
   }
 
   async updateOrderStatus(id: number, status: string, trackingInfo?: { trackingNumber?: string; shippingCarrier?: string; notes?: string }): Promise<Order> {
