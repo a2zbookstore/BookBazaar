@@ -180,6 +180,7 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
             // For guest users, get cart from session
             const guestCart = (req as any).session?.guestCart || [];
             console.log("Guest cart from session:", guestCart.length, "items");
+            console.log("Guest cart details:", JSON.stringify(guestCart, null, 2));
             cartItems = guestCart;
           }
 
@@ -193,41 +194,60 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
                 author: item.author,
                 price: parseFloat(item.price)
               },
-              quantity: item.quantity
+              quantity: item.quantity,
+              isGift: false
             }));
           }
           
           console.log("Final cart items for order:", cartItems.length);
-
-          // Process cart items for guest users (fetch book details if needed)
-          if (!userId && cartItems.length > 0) {
-            const processedCartItems = [];
-            for (const item of cartItems) {
-              try {
-                let book = item.book;
-                if (!book && item.bookId) {
-                  book = await storage.getBookById(item.bookId);
-                }
-                
-                if (book) {
-                  processedCartItems.push({
-                    book: book,
-                    quantity: item.quantity || 1
-                  });
-                }
-              } catch (error) {
-                console.error("Error processing cart item:", error);
-              }
-            }
-            cartItems = processedCartItems;
-          }
-
+          
           if (cartItems.length === 0) {
+            console.error("No cart items found for order creation");
             return res.status(400).json({ 
               status: "failed", 
-              message: "No items found in cart" 
+              message: "No items found in cart. Please add items and try again." 
             });
           }
+
+          // Process cart items to ensure proper format
+          const processedCartItems = [];
+          for (const item of cartItems) {
+            try {
+              let book = item.book;
+              
+              // For guest users or incomplete book data, fetch from database
+              if (!book || !book.id) {
+                if (item.bookId) {
+                  book = await storage.getBookById(item.bookId);
+                } else {
+                  console.error("No bookId found for cart item:", item);
+                  continue;
+                }
+              }
+              
+              if (book && book.id) {
+                processedCartItems.push({
+                  book: book,
+                  quantity: item.quantity || 1,
+                  isGift: item.isGift || false
+                });
+              }
+            } catch (error) {
+              console.error("Error processing cart item:", error);
+            }
+          }
+          
+          cartItems = processedCartItems;
+
+          if (cartItems.length === 0) {
+            console.error("No valid cart items found after processing");
+            return res.status(400).json({ 
+              status: "failed", 
+              message: "No valid items found in cart. Please add items and try again." 
+            });
+          }
+          
+          console.log("Processed cart items:", cartItems.length);
 
           // Create order
           const order = await storage.createOrder({
