@@ -768,14 +768,7 @@ export default function CheckoutPage() {
         order_id: orderData.id,
         handler: async (response: any) => {
           try {
-            // Verify payment
-            await apiRequest("POST", "/api/razorpay/verify", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
-            });
-
-            // Complete order
+            // Prepare order data
             const orderItems = cartItems.map(item => ({
               bookId: item.book.id,
               quantity: item.quantity,
@@ -784,7 +777,7 @@ export default function CheckoutPage() {
               author: item.book.author
             }));
 
-            completeOrderMutation.mutate({
+            const orderData = {
               customerName,
               customerEmail,
               customerPhone,
@@ -796,13 +789,37 @@ export default function CheckoutPage() {
               total: total.toFixed(2),
               totalInINR: totalInINR.toFixed(2),
               paymentMethod: "Razorpay",
-              paymentId: response.razorpay_payment_id,
-              items: orderItems
+              items: orderItems,
+              checkoutType: checkoutType,
+              registerPassword: checkoutType === "register" ? registerPassword : undefined
+            };
+
+            // Verify payment and create order in one step
+            const verifyResponse = await apiRequest("POST", "/api/razorpay/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderData: orderData
             });
+
+            const verifyResult = await verifyResponse.json();
+            
+            if (verifyResult.status === "success" && verifyResult.orderId) {
+              clearCart();
+              toast({
+                title: "Order Placed Successfully!",
+                description: `Your order #${verifyResult.orderId} has been confirmed.`,
+              });
+              // Navigate to order detail page with email for guest access
+              setLocation(`/orders/${verifyResult.orderId}?email=${encodeURIComponent(customerEmail)}`);
+            } else {
+              throw new Error(verifyResult.message || "Payment verification failed");
+            }
           } catch (error) {
+            console.error("Payment verification error:", error);
             toast({
-              title: "Payment Verification Failed",
-              description: "Please contact support",
+              title: "Order Failed",
+              description: error instanceof Error ? error.message : "Payment verification failed. Please contact support.",
               variant: "destructive",
             });
           }

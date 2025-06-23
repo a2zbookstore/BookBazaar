@@ -81,7 +81,7 @@ export async function createRazorpayOrder(req: Request, res: Response) {
 export async function verifyRazorpayPayment(req: Request, res: Response) {
   try {
     console.log("Razorpay verification request body:", req.body);
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       console.log("Missing required parameters for verification");
@@ -105,6 +105,194 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
 
     if (expectedSignature === razorpay_signature) {
       console.log("Payment verified successfully");
+      
+      // If order data is provided, complete the order creation
+      if (orderData) {
+        console.log("Processing order completion after payment verification...");
+        try {
+          // Import storage to create the order
+          const { storage } = await import("./storage.js");
+          const { sendOrderConfirmationEmail } = await import("./emailService.js");
+          
+          let userId = null;
+          let user = null;
+          
+          // Check for authenticated user
+          const sessionUserId = (req as any).session?.userId;
+          const isCustomerAuth = (req as any).session?.isCustomerAuth;
+          
+          if (sessionUserId && isCustomerAuth) {
+            userId = sessionUserId;
+            user = await storage.getUser(userId);
+          } else if ((req as any).isAuthenticated && (req as any).isAuthenticated()) {
+            userId = (req as any).user.claims.sub;
+            user = await storage.getUser(userId);
+          }
+
+          const {
+            customerName,
+            customerEmail,
+            customerPhone,
+            shippingAddress,
+            billingAddress,
+            subtotal,
+            shipping,
+            tax,
+            total,
+            totalInINR,
+            paymentMethod = "Razorpay",
+            items,
+            checkoutType,
+            registerPassword
+          } = orderData;
+
+          // Handle guest registration if requested
+          if (checkoutType === "register" && registerPassword && !userId) {
+            console.log("Creating new user account during checkout...");
+            const passwordHash = crypto.createHash('sha256').update(registerPassword).digest('hex');
+            
+            try {
+              user = await storage.createEmailUser({
+                email: customerEmail,
+                firstName: customerName.split(' ')[0] || customerName,
+                lastName: customerName.split(' ').slice(1).join(' ') || '',
+                passwordHash
+              });
+              userId = user.id;
+              console.log("User account created successfully:", userId);
+            } catch (userError: any) {
+              if (userError.message?.includes('duplicate') || userError.message?.includes('unique')) {
+                console.log("User already exists, proceeding with guest checkout");
+              } else {
+                throw userError;
+              }
+            }
+          }
+
+          // Get cart items for the order
+          let cartItems = [];
+          if (userId) {
+            cartItems = await storage.getCartItems(userId);
+          } else {
+            // Check both guestCart and cartItems from session
+            const guestCart = (req as any).session?.guestCart || [];
+            const sessionCartItems = (req as any).session?.cartItems || [];
+            cartItems = guestCart.length > 0 ? guestCart : sessionCartItems;
+          }
+
+          // If no cart items but items provided in request, use those
+          if (cartItems.length === 0 && items && items.length > 0) {
+            cartItems = items.map((item: any) => ({
+              book: {
+                id: item.bookId,
+                title: item.title,
+                author: item.author,
+                price: parseFloat(item.price)
+              },
+              quantity: item.quantity
+            }));
+          }
+
+          // Process cart items for guest users (fetch book details if needed)
+          if (!userId && cartItems.length > 0) {
+            const processedCartItems = [];
+            for (const item of cartItems) {
+              try {
+                let book = item.book;
+                if (!book && item.bookId) {
+                  book = await storage.getBookById(item.bookId);
+                }
+                
+                if (book) {
+                  processedCartItems.push({
+                    book: book,
+                    quantity: item.quantity || 1
+                  });
+                }
+              } catch (error) {
+                console.error("Error processing cart item:", error);
+              }
+            }
+            cartItems = processedCartItems;
+          }
+
+          if (cartItems.length === 0) {
+            return res.status(400).json({ 
+              status: "failed", 
+              message: "No items found in cart" 
+            });
+          }
+
+          // Create order
+          const order = await storage.createOrder({
+            userId: userId,
+            customerName,
+            customerEmail,
+            customerPhone,
+            shippingAddress: JSON.stringify(shippingAddress),
+            billingAddress: JSON.stringify(billingAddress),
+            subtotal: parseFloat(subtotal),
+            shipping: parseFloat(shipping),
+            tax: parseFloat(tax),
+            total: parseFloat(total),
+            paymentMethod,
+            paymentId: razorpay_payment_id,
+            status: "confirmed",
+            razorpayOrderId: razorpay_order_id
+          }, cartItems.map((item: any) => ({
+            bookId: item.book.id,
+            quantity: item.quantity,
+            price: item.book.price,
+            title: item.book.title,
+            author: item.book.author
+          })));
+
+          // Clear cart after successful order
+          if (userId) {
+            await storage.clearCart(userId);
+          } else {
+            // Clear both guest cart formats
+            (req as any).session.cartItems = [];
+            (req as any).session.guestCart = [];
+          }
+
+          // Send order confirmation email
+          try {
+            await sendOrderConfirmationEmail({
+              order: {
+                ...order,
+                items: cartItems.map((item: any) => ({
+                  ...item,
+                  book: item.book
+                }))
+              },
+              customerEmail,
+              customerName
+            });
+            console.log("Order confirmation email sent successfully");
+          } catch (emailError) {
+            console.error("Failed to send order confirmation email:", emailError);
+          }
+
+          console.log("Order created successfully:", order.id);
+          
+          return res.json({ 
+            status: "success", 
+            message: "Payment verified and order created successfully",
+            orderId: order.id,
+            paymentId: razorpay_payment_id
+          });
+          
+        } catch (orderError) {
+          console.error("Failed to create order after payment verification:", orderError);
+          return res.status(500).json({ 
+            status: "failed", 
+            message: "Payment verified but order creation failed",
+            error: orderError instanceof Error ? orderError.message : "Unknown error"
+          });
+        }
+      }
+      
       res.json({ status: "success", message: "Payment verified successfully" });
     } else {
       console.log("Signature verification failed");
