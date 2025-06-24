@@ -1138,14 +1138,28 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
-                      <RadioGroupItem value="razorpay" id="razorpay" />
-                      <div className="flex items-center space-x-2 flex-1">
-                        <CreditCard className="w-5 h-5 text-purple-600" />
-                        <Label htmlFor="razorpay" className="flex-1 cursor-pointer">
-                          Credit/Debit Card & UPI
-                          <Badge variant="secondary" className="ml-2">India</Badge>
-                        </Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                        <RadioGroupItem value="razorpay" id="razorpay" />
+                        <div className="flex items-center space-x-2 flex-1">
+                          <CreditCard className="w-5 h-5 text-purple-600" />
+                          <Label htmlFor="razorpay" className="flex-1 cursor-pointer">
+                            Credit/Debit Card & UPI
+                            <Badge variant="secondary" className="ml-2">India</Badge>
+                          </Label>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                        <RadioGroupItem value="razorpay-international" id="razorpay-international" />
+                        <div className="flex items-center space-x-2 flex-1">
+                          <Globe className="w-5 h-5 text-blue-600" />
+                          <Label htmlFor="razorpay-international" className="flex-1 cursor-pointer">
+                            International Cards
+                            <Badge variant="secondary" className="ml-2">Global</Badge>
+                            <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex worldwide</p>
+                          </Label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1178,6 +1192,21 @@ export default function CheckoutPage() {
                         className="w-full bg-purple-600 hover:bg-purple-700 touch-target mobile-button"
                       >
                         {isProcessing ? "Processing..." : "Pay with Razorpay"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {paymentMethod === "razorpay-international" && isFormValid && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">
+                        Pay with international credit/debit cards. Supports Visa, Mastercard, and Amex worldwide.
+                      </p>
+                      <Button
+                        onClick={handleRazorpayInternationalPayment}
+                        disabled={isProcessing}
+                        className="w-full bg-blue-600 hover:bg-blue-700 touch-target mobile-button"
+                      >
+                        {isProcessing ? "Processing..." : "Pay with International Card"}
                       </Button>
                     </div>
                   )}
