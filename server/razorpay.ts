@@ -60,32 +60,6 @@ export async function createRazorpayOrder(req: Request, res: Response) {
     res.status(500).json({ error: "Failed to create order" });
   }
 }
-    };
-
-    const order = await razorpay.orders.create(options);
-    console.log("Razorpay order created successfully:", order);
-    res.json(order);
-  } catch (error) {
-    console.error("Failed to create Razorpay order:", error);
-    
-    // Enhanced error handling for live Razorpay issues
-    if (error instanceof Error) {
-      if (error.message.includes('live') || error.message.includes('test')) {
-        res.status(400).json({ 
-          error: "Payment gateway configuration issue. Please contact support.",
-          details: error.message 
-        });
-      } else {
-        res.status(500).json({ 
-          error: "Failed to create Razorpay order.",
-          details: error.message 
-        });
-      }
-    } else {
-      res.status(500).json({ error: "Failed to create Razorpay order." });
-    }
-  }
-}
 
 export async function verifyRazorpayPayment(req: Request, res: Response) {
   try {

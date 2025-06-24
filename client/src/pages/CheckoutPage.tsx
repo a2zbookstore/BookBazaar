@@ -858,11 +858,12 @@ export default function CheckoutPage() {
                 title: "Payment Successful!",
                 description: `Your order #${verifyData.orderId} has been placed successfully.`,
               });
+              
               // Navigate to order detail page with email for guest access
-              setLocation(`/orders/${verifyResult.orderId}?email=${encodeURIComponent(customerEmail)}`);
+              setLocation(`/orders/${verifyData.orderId}?email=${encodeURIComponent(customerEmail)}`);
             } else {
-              console.error("Payment verification failed:", verifyResult);
-              throw new Error(verifyResult.message || "Payment verification failed");
+              console.error("Payment verification failed:", verifyData);
+              throw new Error(verifyData.message || "Payment verification failed");
             }
           } catch (error) {
             console.error("Payment verification error:", error);
