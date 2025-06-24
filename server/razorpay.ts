@@ -19,38 +19,47 @@ console.log(`Razorpay initialized with ${isLiveEnvironment ? 'LIVE' : 'TEST'} cr
 
 export async function createRazorpayOrder(req: Request, res: Response) {
   try {
-    const { amount, currency = 'INR', receipt } = req.body;
-
-    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      return res.status(400).json({
-        error: "Invalid amount. Amount must be a positive number.",
-      });
+    console.log("Creating Razorpay order with request body:", req.body);
+    
+    const { amount, currency, receipt, international } = req.body;
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid amount" });
     }
 
-    // Check for live Razorpay minimum amount requirements
-    const isLiveKey = RAZORPAY_KEY_ID?.startsWith('rzp_live_');
-    const minAmount = isLiveKey ? 100 : 1; // Live accounts often require ₹100 minimum
+    let finalAmount;
+    let finalCurrency = currency || "INR";
     
-    if (parseFloat(amount) < minAmount) {
-      return res.status(400).json({
-        error: `Minimum transaction amount is ₹${minAmount}.00`,
-        isLive: isLiveKey,
-        suggestion: isLiveKey ? "Please add more items to reach ₹100 minimum for live payments" : undefined
-      });
+    // For international payments, use cents/paise based on currency
+    if (international && finalCurrency !== "INR") {
+      // For USD, EUR, etc. - convert to cents (multiply by 100)
+      finalAmount = Math.round(amount * 100);
+      console.log(`International payment: ${finalCurrency} ${amount} = ${finalAmount} cents`);
+    } else {
+      // For INR - convert to paise (multiply by 100)
+      finalAmount = Math.round(amount * 100);
+      finalCurrency = "INR";
+      console.log(`Domestic payment: INR ${amount} = ${finalAmount} paise`);
     }
 
-    const amountInPaise = Math.round(parseFloat(amount) * 100);
-    console.log(`Creating Razorpay order: ${amount} ${currency} = ${amountInPaise} paise`);
-    
     const options = {
-      amount: amountInPaise, // Razorpay expects amount in paise
-      currency: currency.toUpperCase(),
+      amount: finalAmount,
+      currency: finalCurrency,
       receipt: receipt || `receipt_${Date.now()}`,
-      payment_capture: 1, // Auto capture
-      notes: {
-        order_amount: `${amount} ${currency}`,
-        converted_amount: `${amountInPaise} paise`
-      }
+      payment_capture: 1
+    };
+
+    console.log("Razorpay order options:", options);
+
+    const order = await razorpay.orders.create(options);
+    console.log("Razorpay order created:", order);
+
+    res.json(order);
+  } catch (error) {
+    console.error("Failed to create Razorpay order:", error);
+    res.status(500).json({ error: "Failed to create order" });
+  }
+}
     };
 
     const order = await razorpay.orders.create(options);

@@ -895,7 +895,7 @@ export default function CheckoutPage() {
           contact: customerPhone
         },
         theme: {
-          color: "#2563eb"
+          color: isInternational ? "#2563EB" : "#7C3AED"
         }
       };
 
