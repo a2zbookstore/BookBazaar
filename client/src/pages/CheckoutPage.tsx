@@ -734,6 +734,14 @@ export default function CheckoutPage() {
   };
 
   const handleRazorpayPayment = async () => {
+    await processRazorpayPayment(false); // Domestic payment
+  };
+
+  const handleRazorpayInternationalPayment = async () => {
+    await processRazorpayPayment(true); // International payment
+  };
+
+  const processRazorpayPayment = async (isInternational: boolean) => {
     if (!(razorpayConfig as any)?.key_id) {
       toast({
         title: "Payment Error",
@@ -755,99 +763,100 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // Create Razorpay order (convert USD to INR)
-      const usdToInrRate = 83; // Current exchange rate
-      const totalInINR = Math.round(total * usdToInrRate * 100) / 100; // Round to 2 decimal places
-      
-      // Check if amount is too small for live Razorpay
-      if (totalInINR < 100) {
-        toast({
-          title: "Minimum Amount Required",
-          description: "Razorpay requires a minimum transaction of ₹100. Please add more items to your cart.",
-          variant: "destructive",
-        });
-        setIsProcessing(false);
-        return;
+      let finalAmount;
+      let currency;
+      let paymentDescription;
+
+      if (isInternational) {
+        // International payment in USD
+        finalAmount = total;
+        currency = "USD";
+        paymentDescription = "International Book Order Payment";
+        
+        // Check minimum amount for USD (usually $0.50)
+        if (finalAmount < 0.50) {
+          toast({
+            title: "Minimum Amount Required",
+            description: "International payments require a minimum of $0.50. Please add more items to your cart.",
+            variant: "destructive",
+          });
+          setIsProcessing(false);
+          return;
+        }
+      } else {
+        // Domestic payment in INR
+        const usdToInrRate = 83;
+        finalAmount = Math.round(total * usdToInrRate * 100) / 100;
+        currency = "INR";
+        paymentDescription = "Book Order Payment";
+        
+        // Check minimum amount for INR
+        if (finalAmount < 100) {
+          toast({
+            title: "Minimum Amount Required",
+            description: "Razorpay requires a minimum transaction of ₹100. Please add more items to your cart.",
+            variant: "destructive",
+          });
+          setIsProcessing(false);
+          return;
+        }
       }
       
       const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
-        amount: totalInINR,
-        currency: "INR",
-        receipt: `receipt_${Date.now()}`
-      }) as any;
+        amount: finalAmount,
+        currency: currency,
+        receipt: `order_${Date.now()}`,
+        international: isInternational
+      });
       
-      // Validate Razorpay response
       const orderData = await orderResponse.json();
-      if (!orderData.amount || orderData.amount <= 100) {
-        throw new Error(`Invalid Razorpay amount: ${orderData.amount}. Expected: ${Math.round(totalInINR * 100)} paise`);
-      }
+      console.log("Razorpay order created:", orderData);
       
       const options = {
         key: (razorpayConfig as any).key_id,
-        amount: orderData.amount, // Use server-validated amount
-        currency: orderData.currency || "INR",
+        amount: orderData.amount,
+        currency: orderData.currency,
         name: "A2Z BOOKSHOP",
-        description: `Book Purchase - Total: ₹${totalInINR.toFixed(2)}`,
+        description: paymentDescription,
         order_id: orderData.id,
         handler: async (response: any) => {
+          console.log("Razorpay payment response:", response);
+          
           try {
-            // Prepare order data
-            const orderItems = cartItems.map(item => ({
-              bookId: item.book.id,
-              quantity: item.quantity,
-              price: item.book.price,
-              title: item.book.title,
-              author: item.book.author
-            }));
-
-            const orderData = {
-              customerName,
-              customerEmail,
-              customerPhone,
-              shippingAddress,
-              billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-              subtotal: subtotal.toFixed(2),
-              shipping: shippingCost.toFixed(2),
-              tax: tax.toFixed(2),
-              total: total.toFixed(2),
-              totalInINR: totalInINR.toFixed(2),
-              paymentMethod: "Razorpay",
-              items: orderItems,
-              checkoutType: checkoutType,
-              registerPassword: checkoutType === "register" ? registerPassword : undefined
-            };
-
-            // Verify payment and create order in one step
-            console.log("Sending payment verification request...", {
-              razorpay_order_id: response.razorpay_order_id,
+            const verifyResult = await apiRequest("POST", "/api/razorpay/verify", {
               razorpay_payment_id: response.razorpay_payment_id,
-              orderData: orderData
-            });
-
-            const verifyResponse = await apiRequest("POST", "/api/razorpay/verify", {
               razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              orderData: orderData
+              orderData: {
+                customerName,
+                customerEmail,
+                customerPhone,
+                shippingAddress,
+                billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
+                subtotal: subtotal.toFixed(2),
+                shipping: shippingCost.toFixed(2),
+                tax: tax.toFixed(2),
+                total: total.toFixed(2),
+                paymentMethod: isInternational ? "razorpay-international" : "razorpay",
+                items: cartItems.map(item => ({
+                  bookId: item.book.id,
+                  quantity: item.quantity,
+                  price: item.book.price,
+                  title: item.book.title,
+                  author: item.book.author
+                }))
+              }
             });
 
-            console.log("Payment verification response status:", verifyResponse.status);
+            const verifyData = await verifyResult.json();
+            console.log("Payment verification result:", verifyData);
             
-            let verifyResult;
-            try {
-              verifyResult = await verifyResponse.json();
-              console.log("Payment verification result:", verifyResult);
-            } catch (parseError) {
-              console.error("Failed to parse verification response:", parseError);
-              throw new Error("Invalid response from payment verification");
-            }
-            
-            if (verifyResult.status === "success" && verifyResult.orderId) {
-              console.log("Payment verified successfully, order created:", verifyResult.orderId);
+            if (verifyData.status === "success") {
+              setIsProcessing(false);
               clearCart();
               toast({
-                title: "Order Placed Successfully!",
-                description: `Your order #${verifyResult.orderId} has been confirmed.`,
+                title: "Payment Successful!",
+                description: `Your order #${verifyData.orderId} has been placed successfully.`,
               });
               // Navigate to order detail page with email for guest access
               setLocation(`/orders/${verifyResult.orderId}?email=${encodeURIComponent(customerEmail)}`);
