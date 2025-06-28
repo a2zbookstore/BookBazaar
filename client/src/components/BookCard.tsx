@@ -11,23 +11,25 @@ import WishlistHeart from "@/components/WishlistHeart";
 import { Book } from "@/types";
 
 // Image helper functions
-const normalizeImageUrl = (imageUrl: string | null | undefined): string => {
-  if (!imageUrl) return '';
+const getImageSrc = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+  }
+  
+  // If it's already a full external URL, return as-is
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    if (imageUrl.includes('/uploads/images/')) {
-      const filename = imageUrl.split('/uploads/images/').pop();
-      return `/uploads/images/${filename}`;
-    }
     return imageUrl;
   }
-  if (imageUrl.startsWith('/uploads/images/')) return imageUrl;
-  if (!imageUrl.includes('/')) return `/uploads/images/${imageUrl}`;
-  const filename = imageUrl.split('/').pop();
+  
+  // If it's already a correct path, return as-is
+  if (imageUrl.startsWith('/uploads/images/')) {
+    return imageUrl;
+  }
+  
+  // If it's just a filename, prepend the uploads path
+  const filename = imageUrl.split('/').pop() || imageUrl;
   return `/uploads/images/${filename}`;
 };
-
-const getFallbackImageUrl = () => 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-const hasValidImage = (imageUrl: string | null | undefined): boolean => Boolean(imageUrl && imageUrl.trim().length > 0);
 
 interface BookCardProps {
   book: Book;
@@ -145,27 +147,17 @@ export default function BookCard({ book }: BookCardProps) {
       <div className="book-card group cursor-pointer">
         {/* Book Image */}
         <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative" style={{ minHeight: '200px' }}>
-          {hasValidImage(book.imageUrl) ? (
-            <img
-              src={normalizeImageUrl(book.imageUrl)}
-              alt={book.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              onLoad={() => {}}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = getFallbackImageUrl();
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-              <div className="text-center p-4">
-                <div className="w-12 h-12 mx-auto mb-2 bg-primary-aqua/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary-aqua font-bookerly text-lg">📚</span>
-                </div>
-                <p className="text-xs text-gray-500 font-medium">No Image</p>
-              </div>
-            </div>
-          )}
+          <img
+            src={getImageSrc(book.imageUrl)}
+            alt={book.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+              }
+            }}
+          />
           
           {/* Wishlist Heart */}
           <div className="absolute top-2 right-2 z-10">

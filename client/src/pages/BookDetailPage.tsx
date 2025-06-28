@@ -11,6 +11,21 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { Book } from "@/types";
 
+// Image helper function
+const getImageSrc = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+  }
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  if (imageUrl.startsWith('/uploads/images/')) {
+    return imageUrl;
+  }
+  const filename = imageUrl.split('/').pop() || imageUrl;
+  return `/uploads/images/${filename}`;
+};
+
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
@@ -118,26 +133,17 @@ export default function BookDetailPage() {
           {/* Book Image */}
           <div className="space-y-4">
             <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
-              {hasValidImage(book.imageUrl) ? (
-                <img
-                  src={normalizeImageUrl(book.imageUrl)}
-                  alt={book.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = getFallbackImageUrl();
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 fallback-display">
-                  <div className="text-center p-8">
-                    <div className="w-20 h-20 mx-auto mb-4 bg-primary-aqua/10 rounded-full flex items-center justify-center">
-                      <span className="text-primary-aqua font-bookerly text-3xl">📚</span>
-                    </div>
-                    <p className="text-gray-500 font-medium">No Image Available</p>
-                  </div>
-                </div>
-              )}
+              <img
+                src={getImageSrc(book.imageUrl)}
+                alt={book.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                  }
+                }}
+              />
             </div>
           </div>
 

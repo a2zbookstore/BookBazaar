@@ -15,6 +15,21 @@ import { useQuery } from "@tanstack/react-query";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShippingCostDisplay from "@/components/ShippingCostDisplay";
 
+// Image helper function
+const getImageSrc = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+  }
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  if (imageUrl.startsWith('/uploads/images/')) {
+    return imageUrl;
+  }
+  const filename = imageUrl.split('/').pop() || imageUrl;
+  return `/uploads/images/${filename}`;
+};
+
 // Component to handle individual item price conversion
 function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: number }) {
   const { formatAmount, convertPrice } = useCurrency();
@@ -284,20 +299,18 @@ export default function CartPage() {
                           <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 rounded flex items-center justify-center border-2 border-green-300">
                             <span className="text-2xl">🎁</span>
                           </div>
-                        ) : hasValidImage(item.book.imageUrl) ? (
+                        ) : (
                           <img
-                            src={normalizeImageUrl(item.book.imageUrl)}
+                            src={getImageSrc(item.book.imageUrl)}
                             alt={item.book.title}
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.src = getFallbackImageUrl();
+                              if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                              }
                             }}
                           />
-                        ) : (
-                          <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center book-fallback">
-                            <span className="text-xs">📚</span>
-                          </div>
                         )}
                       </div>
 
