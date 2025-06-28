@@ -678,10 +678,10 @@ export default function InventoryPageNew() {
                       <div className="flex gap-2">
                         <Input
                           id="imageUrl"
-                          type="url"
+                          type="text"
                           value={bookForm.imageUrl}
                           onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                          placeholder="https://example.com/book-cover.jpg"
+                          placeholder="https://example.com/book-cover.jpg or /uploads/images/book.jpg"
                           className="flex-1"
                         />
                         <Button
