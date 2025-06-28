@@ -698,7 +698,9 @@ export default function InventoryPageNew() {
                       {bookForm.imageUrl && (
                         <div className="w-20 h-28 border rounded overflow-hidden">
                           <img
-                            src={bookForm.imageUrl}
+                            src={bookForm.imageUrl.startsWith('/uploads/images/') || bookForm.imageUrl.startsWith('http') ? 
+                              bookForm.imageUrl : 
+                              `/uploads/images/${bookForm.imageUrl}`}
                             alt="Book cover preview"
                             className="w-full h-full object-cover"
                             onError={(e) => {

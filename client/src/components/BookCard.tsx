@@ -10,6 +10,25 @@ import { useShipping } from "@/hooks/useShipping";
 import WishlistHeart from "@/components/WishlistHeart";
 import { Book } from "@/types";
 
+// Image helper functions
+const normalizeImageUrl = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl) return '';
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    if (imageUrl.includes('/uploads/images/')) {
+      const filename = imageUrl.split('/uploads/images/').pop();
+      return `/uploads/images/${filename}`;
+    }
+    return imageUrl;
+  }
+  if (imageUrl.startsWith('/uploads/images/')) return imageUrl;
+  if (!imageUrl.includes('/')) return `/uploads/images/${imageUrl}`;
+  const filename = imageUrl.split('/').pop();
+  return `/uploads/images/${filename}`;
+};
+
+const getFallbackImageUrl = () => 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+const hasValidImage = (imageUrl: string | null | undefined): boolean => Boolean(imageUrl && imageUrl.trim().length > 0);
+
 interface BookCardProps {
   book: Book;
 }
@@ -126,15 +145,15 @@ export default function BookCard({ book }: BookCardProps) {
       <div className="book-card group cursor-pointer">
         {/* Book Image */}
         <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative" style={{ minHeight: '200px' }}>
-          {book.imageUrl ? (
+          {hasValidImage(book.imageUrl) ? (
             <img
-              src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
+              src={normalizeImageUrl(book.imageUrl)}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               onLoad={() => {}}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = 'https://via.placeholder.com/150x200/f0f0f0/666?text=No+Image';
+                target.src = getFallbackImageUrl();
               }}
             />
           ) : (

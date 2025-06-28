@@ -284,16 +284,14 @@ export default function CartPage() {
                           <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 rounded flex items-center justify-center border-2 border-green-300">
                             <span className="text-2xl">🎁</span>
                           </div>
-                        ) : item.book.imageUrl ? (
+                        ) : hasValidImage(item.book.imageUrl) ? (
                           <img
-                            src={`/uploads/images/${item.book.imageUrl.split('/').pop()}`}
+                            src={normalizeImageUrl(item.book.imageUrl)}
                             alt={item.book.title}
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const fallback = target.parentElement?.querySelector('.book-fallback') as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
+                              target.src = getFallbackImageUrl();
                             }}
                           />
                         ) : (

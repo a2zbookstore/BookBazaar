@@ -118,16 +118,14 @@ export default function BookDetailPage() {
           {/* Book Image */}
           <div className="space-y-4">
             <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
-              {book.imageUrl ? (
+              {hasValidImage(book.imageUrl) ? (
                 <img
-                  src={`/uploads/images/${book.imageUrl.split('/').pop()}`}
+                  src={normalizeImageUrl(book.imageUrl)}
                   alt={book.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.parentElement?.querySelector('.fallback-display') as HTMLElement;
-                    if (fallback) fallback.style.display = 'flex';
+                    target.src = getFallbackImageUrl();
                   }}
                 />
               ) : (
