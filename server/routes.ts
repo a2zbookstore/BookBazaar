@@ -1380,9 +1380,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No image file provided" });
       }
 
-      // Generate the URL for the uploaded image
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const imageUrl = `${baseUrl}/uploads/images/${req.file.filename}`;
+      // Generate the URL for the uploaded image using relative path
+      // This ensures images work regardless of domain changes
+      const imageUrl = `/uploads/images/${req.file.filename}`;
+
+      console.log("Image uploaded successfully:", {
+        filename: req.file.filename,
+        imageUrl: imageUrl,
+        fullPath: req.file.path
+      });
 
       res.json({ 
         message: "Image uploaded successfully",
