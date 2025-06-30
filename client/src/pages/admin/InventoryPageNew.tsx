@@ -13,8 +13,28 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { getImageSrc, handleImageError } from "@/utils/imageUtils";
 import { Book, Category } from "@/types";
+
+// Image helper function (same as BookCard)
+const getImageSrc = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+  }
+  
+  // If it's already a full external URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // If it's already a correct path, return as-is
+  if (imageUrl.startsWith('/uploads/images/')) {
+    return imageUrl;
+  }
+  
+  // If it's just a filename, prepend the uploads path
+  const filename = imageUrl.split('/').pop() || imageUrl;
+  return `/uploads/images/${filename}`;
+};
 
 interface BooksResponse {
   books: Book[];
@@ -702,7 +722,12 @@ export default function InventoryPageNew() {
                             src={getImageSrc(bookForm.imageUrl)}
                             alt="Book cover preview"
                             className="w-full h-full object-cover"
-                            onError={handleImageError}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                              }
+                            }}
                           />
                         </div>
                       )}
@@ -915,7 +940,12 @@ export default function InventoryPageNew() {
                           src={getImageSrc(book.imageUrl)}
                           alt={book.title}
                           className="w-full h-full object-cover rounded"
-                          onError={handleImageError}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                              target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                            }
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">

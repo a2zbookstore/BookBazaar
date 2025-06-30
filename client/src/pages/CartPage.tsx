@@ -14,7 +14,21 @@ import { useShipping } from "@/hooks/useShipping";
 import { useQuery } from "@tanstack/react-query";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShippingCostDisplay from "@/components/ShippingCostDisplay";
-import { getImageSrc, handleImageError } from "@/utils/imageUtils";
+
+// Image helper function
+const getImageSrc = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+  }
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  if (imageUrl.startsWith('/uploads/images/')) {
+    return imageUrl;
+  }
+  const filename = imageUrl.split('/').pop() || imageUrl;
+  return `/uploads/images/${filename}`;
+};
 
 // Component to handle individual item price conversion
 function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: number }) {
@@ -290,7 +304,12 @@ export default function CartPage() {
                             src={getImageSrc(item.book.imageUrl)}
                             alt={item.book.title}
                             className="w-full h-full object-cover rounded"
-                            onError={handleImageError}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                              }
+                            }}
                           />
                         )}
                       </div>

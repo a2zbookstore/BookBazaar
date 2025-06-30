@@ -8,8 +8,28 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import WishlistHeart from "@/components/WishlistHeart";
-import { getImageSrc, handleImageError } from "@/utils/imageUtils";
 import { Book } from "@/types";
+
+// Image helper functions
+const getImageSrc = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+  }
+  
+  // If it's already a full external URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // If it's already a correct path, return as-is
+  if (imageUrl.startsWith('/uploads/images/')) {
+    return imageUrl;
+  }
+  
+  // If it's just a filename, prepend the uploads path
+  const filename = imageUrl.split('/').pop() || imageUrl;
+  return `/uploads/images/${filename}`;
+};
 
 interface BookCardProps {
   book: Book;
@@ -131,7 +151,12 @@ export default function BookCard({ book }: BookCardProps) {
             src={getImageSrc(book.imageUrl)}
             alt={book.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-            onError={handleImageError}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+              }
+            }}
           />
           
           {/* Wishlist Heart */}
