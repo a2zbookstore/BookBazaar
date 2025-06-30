@@ -20,16 +20,16 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
   }
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    console.log('BookDetailPage getImageSrc: returning external URL:', imageUrl);
+
     return imageUrl;
   }
   if (imageUrl.startsWith('/uploads/images/')) {
-    console.log('BookDetailPage getImageSrc: returning path as-is:', imageUrl);
+
     return imageUrl;
   }
   const filename = imageUrl.split('/').pop() || imageUrl;
   const finalPath = `/uploads/images/${filename}`;
-  console.log('BookDetailPage getImageSrc: returning constructed path:', finalPath);
+
   return finalPath;
 };
 
