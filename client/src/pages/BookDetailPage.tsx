@@ -13,17 +13,24 @@ import { Book } from "@/types";
 
 // Image helper function
 const getImageSrc = (imageUrl: string | null | undefined): string => {
+  console.log('BookDetailPage getImageSrc input:', imageUrl);
+  
   if (!imageUrl || imageUrl.trim() === '') {
+    console.log('BookDetailPage getImageSrc: returning placeholder for empty/null imageUrl');
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
   }
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    console.log('BookDetailPage getImageSrc: returning external URL:', imageUrl);
     return imageUrl;
   }
   if (imageUrl.startsWith('/uploads/images/')) {
+    console.log('BookDetailPage getImageSrc: returning path as-is:', imageUrl);
     return imageUrl;
   }
   const filename = imageUrl.split('/').pop() || imageUrl;
-  return `/uploads/images/${filename}`;
+  const finalPath = `/uploads/images/${filename}`;
+  console.log('BookDetailPage getImageSrc: returning constructed path:', finalPath);
+  return finalPath;
 };
 
 export default function BookDetailPage() {
