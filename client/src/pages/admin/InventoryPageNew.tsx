@@ -940,8 +940,12 @@ export default function InventoryPageNew() {
                           src={getImageSrc(book.imageUrl)}
                           alt={book.title}
                           className="w-full h-full object-cover rounded"
+                          onLoad={() => {
+                            console.log("Admin Image loaded successfully:", book.title, getImageSrc(book.imageUrl));
+                          }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
+                            console.log("Admin Image failed to load:", book.title, target.src);
                             if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
                               target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
                             }
