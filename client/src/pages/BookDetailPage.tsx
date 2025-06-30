@@ -9,22 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { getImageSrc, handleImageError } from "@/utils/imageUtils";
 import { Book } from "@/types";
-
-// Image helper function
-const getImageSrc = (imageUrl: string | null | undefined): string => {
-  if (!imageUrl || imageUrl.trim() === '') {
-    return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-  }
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-  if (imageUrl.startsWith('/uploads/images/')) {
-    return imageUrl;
-  }
-  const filename = imageUrl.split('/').pop() || imageUrl;
-  return `/uploads/images/${filename}`;
-};
 
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
