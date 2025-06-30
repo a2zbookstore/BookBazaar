@@ -12,30 +12,23 @@ import { Book } from "@/types";
 
 // Image helper functions
 const getImageSrc = (imageUrl: string | null | undefined): string => {
-  console.log('BookCard getImageSrc input:', imageUrl);
-  
   if (!imageUrl || imageUrl.trim() === '') {
-    console.log('BookCard getImageSrc: returning placeholder for empty/null imageUrl');
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
   }
   
   // If it's already a full external URL, return as-is
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    console.log('BookCard getImageSrc: returning external URL:', imageUrl);
     return imageUrl;
   }
   
   // If it's already a correct path, return as-is
   if (imageUrl.startsWith('/uploads/images/')) {
-    console.log('BookCard getImageSrc: returning path as-is:', imageUrl);
     return imageUrl;
   }
   
   // If it's just a filename, prepend the uploads path
   const filename = imageUrl.split('/').pop() || imageUrl;
-  const finalPath = `/uploads/images/${filename}`;
-  console.log('BookCard getImageSrc: returning constructed path:', finalPath);
-  return finalPath;
+  return `/uploads/images/${filename}`;
 };
 
 interface BookCardProps {
