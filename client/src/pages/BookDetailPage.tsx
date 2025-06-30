@@ -123,12 +123,7 @@ export default function BookDetailPage() {
                 src={getImageSrc(book.imageUrl)}
                 alt={book.title}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
-                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                  }
-                }}
+                onError={handleImageError}
               />
             </div>
           </div>
