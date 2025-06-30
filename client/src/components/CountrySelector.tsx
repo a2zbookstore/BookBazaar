@@ -47,6 +47,8 @@ export default function CountrySelector({ className = "", compact = false }: Cou
   const { userCurrency, setCurrency, getSupportedCurrencies } = useCurrency();
   const [isChanging, setIsChanging] = useState(false);
 
+  // USA is properly configured and loaded (verified in console)
+
   const currentCountry = POPULAR_COUNTRIES.find(c => c.code === location?.countryCode) || 
                         POPULAR_COUNTRIES.find(c => c.code === 'US');
 
