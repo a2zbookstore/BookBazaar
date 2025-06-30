@@ -332,7 +332,7 @@ export default function InventoryPage() {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => window.open('/api/books/export?format=xlsx', '_blank')}
+              onClick={() => window.open('/api/admin/books/export?format=xlsx', '_blank')}
               variant="outline"
               className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
             >

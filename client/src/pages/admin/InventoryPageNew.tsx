@@ -445,7 +445,7 @@ export default function InventoryPageNew() {
 
   const exportBooks = async () => {
     try {
-      const response = await fetch('/api/books/export', {
+      const response = await fetch('/api/admin/books/export', {
         credentials: 'include',
       });
       

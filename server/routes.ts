@@ -2017,6 +2017,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Legacy export route (keeping for backward compatibility)
+  app.get('/api/books/export', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const format = req.query.format || 'xlsx';
+      const { books } = await storage.getBooks({ limit: 10000, offset: 0 });
+
+      // Prepare data for export
+      const exportData = books.map(book => ({
+        title: book.title,
+        author: book.author,
+        isbn: book.isbn || '',
+        categoryId: book.categoryId || '',
+        description: book.description || '',
+        condition: book.condition,
+        binding: book.binding || 'No Binding',
+        price: book.price,
+        stock: book.stock,
+        imageUrl: book.imageUrl || '',
+        publishedYear: book.publishedYear || '',
+        publisher: book.publisher || '',
+        pages: book.pages || '',
+        language: book.language || 'English',
+        weight: book.weight || '',
+        dimensions: book.dimensions || '',
+        featured: book.featured
+      }));
+
+      if (format === 'csv') {
+        const csv = stringify(exportData, { header: true });
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="inventory.csv"');
+        res.send(csv);
+      } else {
+        // Excel format
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="inventory.xlsx"');
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ message: "Failed to export books" });
+    }
+  });
+
   // Bulk Import/Export Routes
   app.post('/api/books/import', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
@@ -2146,13 +2202,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/books/export', isAuthenticated, async (req: any, res) => {
+  // Admin export route using session authentication
+  app.get('/api/admin/books/export', requireAdminAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
       const format = req.query.format || 'xlsx';
       const { books } = await storage.getBooks({ limit: 10000, offset: 0 });
