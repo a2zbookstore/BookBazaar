@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { storage } from './storage';
 import { InsertBook } from '@shared/schema';
+import { CloudinaryService } from './cloudinaryService';
 
 interface BookRow {
   title?: string;
@@ -87,24 +88,21 @@ export class BookImporter {
 
   private static async downloadAndSaveImage(imageUrl: string, isbn: string): Promise<string | null> {
     try {
-      const response = await fetch(imageUrl);
-      if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+      // Upload directly to Cloudinary from URL for permanent storage
+      const uploadResult = await CloudinaryService.uploadFromUrl(
+        imageUrl,
+        'a2z-bookshop/books',
+        `book-${isbn}-${Date.now()}`
+      );
       
-      const buffer = await response.buffer();
-      const extension = imageUrl.includes('.jpg') ? '.jpg' : '.jpeg';
-      const filename = `book-${Date.now()}-${Math.floor(Math.random() * 1000000)}${extension}`;
-      const filepath = path.join('uploads', 'images', filename);
+      console.log(`Image uploaded to Cloudinary for ISBN ${isbn}:`, {
+        public_id: uploadResult.public_id,
+        secure_url: uploadResult.secure_url
+      });
       
-      // Ensure directory exists
-      const dir = path.dirname(filepath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      
-      fs.writeFileSync(filepath, buffer);
-      return `/uploads/images/${filename}`;
+      return uploadResult.secure_url;
     } catch (error) {
-      console.error(`Failed to download image for ISBN ${isbn}:`, error);
+      console.error(`Failed to upload image to Cloudinary for ISBN ${isbn}:`, error);
       return null;
     }
   }

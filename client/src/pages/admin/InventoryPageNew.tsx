@@ -702,7 +702,7 @@ export default function InventoryPageNew() {
                           type="text"
                           value={bookForm.imageUrl}
                           onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                          placeholder="https://example.com/book-cover.jpg or /uploads/images/book.jpg"
+                          placeholder="https://res.cloudinary.com/... or upload an image using the button"
                           className="flex-1"
                         />
                         <Button
