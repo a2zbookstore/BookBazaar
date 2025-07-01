@@ -9,6 +9,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
 import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration } from "./emailService";
+import { CloudinaryService } from "./cloudinaryService";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
@@ -44,20 +45,7 @@ const upload = multer({
 
 // Configure multer for image uploads
 const imageUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      const uploadDir = path.join(process.cwd(), 'uploads', 'images');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const ext = path.extname(file.originalname);
-      cb(null, `book-${uniqueSuffix}${ext}`);
-    }
-  }),
+  storage: multer.memoryStorage(), // Use memory storage for Cloudinary upload
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -1380,20 +1368,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No image file provided" });
       }
 
-      // Generate the URL for the uploaded image using relative path
-      // This ensures images work regardless of domain changes
-      const imageUrl = `/uploads/images/${req.file.filename}`;
+      // Upload to Cloudinary for permanent storage
+      const uploadResult = await CloudinaryService.uploadImage(
+        req.file.buffer,
+        'a2z-bookshop/books',
+        `book-${Date.now()}-${Math.round(Math.random() * 1E9)}`
+      );
 
-      console.log("Image uploaded successfully:", {
-        filename: req.file.filename,
-        imageUrl: imageUrl,
-        fullPath: req.file.path
+      console.log("Image uploaded to Cloudinary successfully:", {
+        public_id: uploadResult.public_id,
+        secure_url: uploadResult.secure_url,
+        size: uploadResult.bytes
       });
 
       res.json({ 
         message: "Image uploaded successfully",
-        imageUrl: imageUrl,
-        filename: req.file.filename
+        imageUrl: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+        size: uploadResult.bytes
       });
     } catch (error) {
       console.error("Error uploading image:", error);
