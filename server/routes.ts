@@ -2316,16 +2316,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      const totalProcessed = migratedCount + defaultImageCount;
       console.log(`Enhanced migration completed. Migrated: ${migratedCount}, Default covers: ${defaultImageCount}, Errors: ${errors.length}`);
       
-      res.json({
-        success: true,
-        message: `Enhanced image migration completed successfully`,
-        migratedCount,
-        defaultImageCount,
-        errorCount: errors.length,
-        errors: errors.slice(0, 10) // Return only first 10 errors
-      });
+      // Check if no images needed migration
+      const booksWithLocalUrls = books.books.filter(book => book.imageUrl && book.imageUrl.startsWith('/uploads/images/')).length;
+      
+      if (booksWithLocalUrls === 0) {
+        res.json({
+          success: true,
+          message: `All images are already migrated to Cloudinary! No local images found.`,
+          migratedCount: 0,
+          defaultImageCount: 0,
+          errorCount: 0,
+          totalBooks: books.books.length,
+          cloudinaryBooks: books.books.filter(book => book.imageUrl && book.imageUrl.includes('cloudinary')).length,
+          alreadyMigrated: true
+        });
+      } else {
+        res.json({
+          success: true,
+          message: totalProcessed > 0 ? `Successfully processed ${totalProcessed} images (${migratedCount} existing + ${defaultImageCount} default covers)` : `Migration completed - ${booksWithLocalUrls} books found with local URLs`,
+          migratedCount,
+          defaultImageCount,
+          errorCount: errors.length,
+          totalBooks: books.books.length,
+          remainingLocalImages: booksWithLocalUrls - totalProcessed,
+          errors: errors.slice(0, 10)
+        });
+      }
     } catch (error) {
       console.error('Enhanced image migration failed:', error);
       res.status(500).json({
