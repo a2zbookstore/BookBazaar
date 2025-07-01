@@ -475,6 +475,40 @@ export default function InventoryPageNew() {
     }
   };
 
+  const migrateImages = async () => {
+    setIsMigrating(true);
+    
+    try {
+      const response = await fetch('/api/admin/migrate-images', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Migration failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Migration Complete",
+        description: `Successfully migrated ${result.migratedCount} images to cloud storage. ${result.errorCount} errors.`,
+      });
+
+      // Refresh the books list to show updated image URLs
+      queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+      
+    } catch (error) {
+      toast({
+        title: "Migration Failed",
+        description: error instanceof Error ? error.message : "Failed to migrate images",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
   const getConditionColor = (condition: string) => {
     switch (condition.toLowerCase()) {
       case "new":
