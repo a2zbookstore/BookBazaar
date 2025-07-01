@@ -1379,25 +1379,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No image file provided" });
       }
 
-      // Upload to Cloudinary for permanent storage
-      const uploadResult = await CloudinaryService.uploadImage(
-        req.file.buffer,
-        'a2z-bookshop/books',
-        `book-${Date.now()}-${Math.round(Math.random() * 1E9)}`
-      );
+      try {
+        // Try uploading to Cloudinary for permanent storage
+        const uploadResult = await CloudinaryService.uploadImage(
+          req.file.buffer,
+          'a2z-bookshop/books',
+          `book-${Date.now()}-${Math.round(Math.random() * 1E9)}`
+        );
 
-      console.log("Image uploaded to Cloudinary successfully:", {
-        public_id: uploadResult.public_id,
-        secure_url: uploadResult.secure_url,
-        size: uploadResult.bytes
-      });
+        console.log("Image uploaded to Cloudinary successfully:", {
+          public_id: uploadResult.public_id,
+          secure_url: uploadResult.secure_url,
+          size: uploadResult.bytes
+        });
 
-      res.json({ 
-        message: "Image uploaded successfully",
-        imageUrl: uploadResult.secure_url,
-        public_id: uploadResult.public_id,
-        size: uploadResult.bytes
-      });
+        res.json({ 
+          message: "Image uploaded successfully to cloud storage",
+          imageUrl: uploadResult.secure_url,
+          public_id: uploadResult.public_id,
+          size: uploadResult.bytes,
+          storage: "cloudinary"
+        });
+      } catch (cloudinaryError) {
+        // Fallback to local storage with warning
+        console.warn("Cloudinary upload failed, falling back to local storage:", cloudinaryError);
+        
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(req.file.originalname) || '.jpg';
+        const filename = `book-${uniqueSuffix}${ext}`;
+        const uploadDir = path.join(process.cwd(), 'uploads', 'images');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        const filepath = path.join(uploadDir, filename);
+        fs.writeFileSync(filepath, req.file.buffer);
+        
+        const imageUrl = `/uploads/images/${filename}`;
+        
+        console.log("Image saved locally (TEMPORARY):", {
+          filename: filename,
+          imageUrl: imageUrl,
+          warning: "This image will be lost on server restart"
+        });
+
+        res.json({ 
+          message: "Image uploaded successfully (TEMPORARY - fix Cloudinary for permanent storage)",
+          imageUrl: imageUrl,
+          filename: filename,
+          storage: "local",
+          warning: "Image stored locally - will disappear on server restart"
+        });
+      }
     } catch (error) {
       console.error("Error uploading image:", error);
       res.status(500).json({ message: "Failed to upload image" });
