@@ -816,7 +816,7 @@ export default function CheckoutPage() {
                 shipping: shippingCost.toFixed(2),
                 tax: tax.toFixed(2),
                 total: total.toFixed(2),
-                paymentMethod: isInternational ? "razorpay-international" : "razorpay",
+                paymentMethod: "razorpay-international",
                 items: cartItems.map(item => ({
                   bookId: item.book.id,
                   quantity: item.quantity,
