@@ -733,15 +733,13 @@ export default function CheckoutPage() {
     });
   };
 
-  const handleRazorpayPayment = async () => {
-    await processRazorpayPayment(false); // Domestic payment
-  };
+
 
   const handleRazorpayInternationalPayment = async () => {
     await processRazorpayPayment(true); // International payment
   };
 
-  const processRazorpayPayment = async (isInternational: boolean) => {
+  const processRazorpayPayment = async (isInternational: boolean = true) => {
     if (!(razorpayConfig as any)?.key_id) {
       toast({
         title: "Payment Error",
@@ -767,39 +765,20 @@ export default function CheckoutPage() {
       let currency;
       let paymentDescription;
 
-      if (isInternational) {
-        // International payment in USD
-        finalAmount = total;
-        currency = "USD";
-        paymentDescription = "International Book Order Payment";
-        
-        // Check minimum amount for USD (usually $0.50)
-        if (finalAmount < 0.50) {
-          toast({
-            title: "Minimum Amount Required",
-            description: "International payments require a minimum of $0.50. Please add more items to your cart.",
-            variant: "destructive",
-          });
-          setIsProcessing(false);
-          return;
-        }
-      } else {
-        // Domestic payment in INR
-        const usdToInrRate = 83;
-        finalAmount = Math.round(total * usdToInrRate * 100) / 100;
-        currency = "INR";
-        paymentDescription = "Book Order Payment";
-        
-        // Check minimum amount for INR
-        if (finalAmount < 100) {
-          toast({
-            title: "Minimum Amount Required",
-            description: "Razorpay requires a minimum transaction of ₹100. Please add more items to your cart.",
-            variant: "destructive",
-          });
-          setIsProcessing(false);
-          return;
-        }
+      // International payment in USD only
+      finalAmount = total;
+      currency = "USD";
+      paymentDescription = "International Book Order Payment";
+      
+      // Check minimum amount for USD (usually $0.50)
+      if (finalAmount < 0.50) {
+        toast({
+          title: "Minimum Amount Required",
+          description: "International payments require a minimum of $0.50. Please add more items to your cart.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
       }
       
       const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
@@ -1148,28 +1127,15 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg">
-                        <RadioGroupItem value="razorpay" id="razorpay" />
-                        <div className="flex items-center space-x-2 flex-1">
-                          <CreditCard className="w-5 h-5 text-purple-600" />
-                          <Label htmlFor="razorpay" className="flex-1 cursor-pointer">
-                            Credit/Debit Card & UPI
-                            <Badge variant="secondary" className="ml-2">India</Badge>
-                          </Label>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg">
-                        <RadioGroupItem value="razorpay-international" id="razorpay-international" />
-                        <div className="flex items-center space-x-2 flex-1">
-                          <Globe className="w-5 h-5 text-blue-600" />
-                          <Label htmlFor="razorpay-international" className="flex-1 cursor-pointer">
-                            International Cards
-                            <Badge variant="secondary" className="ml-2">Global</Badge>
-                            <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex worldwide</p>
-                          </Label>
-                        </div>
+                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                      <RadioGroupItem value="razorpay-international" id="razorpay-international" />
+                      <div className="flex items-center space-x-2 flex-1">
+                        <Globe className="w-5 h-5 text-blue-600" />
+                        <Label htmlFor="razorpay-international" className="flex-1 cursor-pointer">
+                          International Cards
+                          <Badge variant="secondary" className="ml-2">Global</Badge>
+                          <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex worldwide</p>
+                        </Label>
                       </div>
                     </div>
                   </div>
@@ -1191,20 +1157,7 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {paymentMethod === "razorpay" && isFormValid && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-600">
-                        Pay securely with UPI, Credit/Debit cards, Net Banking, and more.
-                      </p>
-                      <Button
-                        onClick={handleRazorpayPayment}
-                        disabled={isProcessing}
-                        className="w-full bg-purple-600 hover:bg-purple-700 touch-target mobile-button"
-                      >
-                        {isProcessing ? "Processing..." : "Pay with Razorpay"}
-                      </Button>
-                    </div>
-                  )}
+
 
                   {paymentMethod === "razorpay-international" && isFormValid && (
                     <div className="space-y-4">
