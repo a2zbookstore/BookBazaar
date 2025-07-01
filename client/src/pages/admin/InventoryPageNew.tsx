@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Edit, Trash2, Package, Upload, Download, FileText } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package, Upload, Download, FileText, CloudUpload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +78,7 @@ export default function InventoryPageNew() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
   const [importResults, setImportResults] = useState<any>(null);
 
   const [bookForm, setBookForm] = useState<BookForm>({
@@ -526,6 +527,16 @@ export default function InventoryPageNew() {
             >
               <Download className="h-4 w-4 mr-2" />
               Export
+            </Button>
+
+            <Button
+              onClick={migrateImages}
+              variant="outline"
+              disabled={isMigrating}
+              className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
+            >
+              <CloudUpload className="h-4 w-4 mr-2" />
+              {isMigrating ? "Migrating..." : "Migrate Images"}
             </Button>
 
             <input
