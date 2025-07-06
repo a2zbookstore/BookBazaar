@@ -27,12 +27,14 @@ interface ShippingHook {
 export const useShipping = (): ShippingHook => {
   const { location, isLoading: locationLoading } = useLocation();
 
+
+
   const {
     data: shippingRate,
     isLoading: shippingLoading,
     error,
   } = useQuery<ShippingRate>({
-    queryKey: ['/api/shipping-rates/country', location?.countryCode],
+    queryKey: [`/api/shipping-rates/country/${location?.countryCode}`],
     enabled: !!location?.countryCode && !locationLoading,
   });
 
