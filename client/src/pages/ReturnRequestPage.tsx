@@ -48,6 +48,7 @@ export default function ReturnRequestPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [guestEmail, setGuestEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [returnRequestNumber, setReturnRequestNumber] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [returnReason, setReturnReason] = useState("none");
   const [returnDescription, setReturnDescription] = useState("");
@@ -82,9 +83,12 @@ export default function ReturnRequestPage() {
       customerName: string;
       customerEmail: string;
     }) => {
-      return await apiRequest("POST", "/api/returns/request", data);
+      const response = await apiRequest("POST", "/api/returns/request", data);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      // Store the return request number from the response
+      setReturnRequestNumber(data.returnRequestNumber);
       toast({
         title: "Return Request Submitted",
         description: "Your return request has been submitted successfully. We'll review it within 24 hours.",
@@ -456,10 +460,19 @@ export default function ReturnRequestPage() {
                 <Package className="h-8 w-8 text-green-600" />
               </div>
               <h2 className="text-2xl font-bold text-base-black mb-4">Return Request Submitted!</h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-4">
                 Your return request has been submitted successfully. We'll review it within 24 hours
                 and send you further instructions via email.
               </p>
+              {returnRequestNumber && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <h3 className="font-semibold text-green-800 mb-2">Return Request Number</h3>
+                  <p className="text-lg font-mono text-green-700">{returnRequestNumber}</p>
+                  <p className="text-sm text-green-600 mt-1">
+                    Please save this number for your records. You'll need it to track your return request.
+                  </p>
+                </div>
+              )}
               <div className="bg-blue-50 p-4 rounded-lg mb-6 text-left">
                 <h3 className="font-semibold mb-2">Next Steps:</h3>
                 <ul className="space-y-2 text-sm">

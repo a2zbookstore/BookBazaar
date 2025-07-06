@@ -184,6 +184,7 @@ export const shippingRates = pgTable("shipping_rates", {
 // Return requests table
 export const returnRequests = pgTable("return_requests", {
   id: serial("id").primaryKey(),
+  returnRequestNumber: varchar("return_request_number").unique().notNull(), // Unique return request number
   orderId: integer("order_id").notNull().references(() => orders.id),
   userId: varchar("user_id").references(() => users.id),
   customerEmail: varchar("customer_email").notNull(),
@@ -200,6 +201,10 @@ export const returnRequests = pgTable("return_requests", {
   returnDeadline: timestamp("return_deadline").notNull(), // 30 days from order delivery
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => {
+  return {
+    uniqueOrderReturn: unique().on(table.orderId, table.userId), // Ensure one return request per order per user
+  };
 });
 
 // Refund transactions table

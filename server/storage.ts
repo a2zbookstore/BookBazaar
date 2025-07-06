@@ -983,11 +983,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createReturnRequest(returnRequestData: InsertReturnRequest): Promise<ReturnRequest> {
+    // Check if user already has a return request for this order
+    if (returnRequestData.userId) {
+      const existingRequest = await db
+        .select()
+        .from(returnRequests)
+        .where(
+          and(
+            eq(returnRequests.orderId, returnRequestData.orderId),
+            eq(returnRequests.userId, returnRequestData.userId)
+          )
+        )
+        .limit(1);
+
+      if (existingRequest.length > 0) {
+        throw new Error("Return request already exists for this order");
+      }
+    }
+
+    // Generate unique return request number
+    const returnRequestNumber = this.generateReturnRequestNumber();
+
     const [returnRequest] = await db
       .insert(returnRequests)
-      .values(returnRequestData)
+      .values({
+        ...returnRequestData,
+        returnRequestNumber
+      })
       .returning();
     return returnRequest;
+  }
+
+  private generateReturnRequestNumber(): string {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return `RET${timestamp}${random}`;
   }
 
   async updateReturnRequestStatus(id: number, status: string, adminNotes?: string): Promise<ReturnRequest> {
@@ -1024,9 +1054,24 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions))
       .orderBy(desc(orders.createdAt));
 
-    // Get order items for each order
-    const ordersWithItems = await Promise.all(
+    // Filter out orders that already have return requests
+    const ordersWithoutReturns = await Promise.all(
       eligibleOrders.map(async (order) => {
+        const existingReturn = await db
+          .select()
+          .from(returnRequests)
+          .where(eq(returnRequests.orderId, order.id))
+          .limit(1);
+
+        return existingReturn.length === 0 ? order : null;
+      })
+    );
+
+    const filteredOrders = ordersWithoutReturns.filter(order => order !== null) as Order[];
+
+    // Get order items for each filtered order
+    const ordersWithItems = await Promise.all(
+      filteredOrders.map(async (order) => {
         const items = await db
           .select({
             id: orderItems.id,
