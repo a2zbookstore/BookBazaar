@@ -62,7 +62,7 @@ export default function CartPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatCurrency, formatAmount, exchangeRates } = useCurrency();
-  const { shipping } = useShipping();
+  const { shippingCost } = useShipping();
   const [giftItem, setGiftItem] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   
@@ -96,26 +96,15 @@ export default function CartPage() {
   }, [cartItems, hasNonGiftBooks, toast]);
 
 
-  // Get shipping rate from admin panel - default to India if no location detected
-  const { data: adminShippingRate } = useQuery({
-    queryKey: ["/api/shipping-rates/country/IN"],
-  });
-
-  // Calculate cart totals using admin panel shipping rates
+  // Calculate cart totals using dynamic shipping rates
   const cartSubtotal = cartItems.reduce((total, item) => {
     // Skip gift items in subtotal calculation
     if (item.isGift) return total;
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
   
-  // Use admin panel shipping rates
-  let cartShipping = 5.99; // Default fallback
-  
-  if ((adminShippingRate as any)?.shippingCost) {
-    cartShipping = parseFloat((adminShippingRate as any).shippingCost.toString());
-  } else if (shipping?.cost) {
-    cartShipping = parseFloat(shipping.cost.toString());
-  }
+  // Use dynamic shipping rates based on user location
+  const cartShipping = shippingCost || 0;
 
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
@@ -177,12 +166,7 @@ export default function CartPage() {
   }, [cartSubtotal, cartShipping, cartTax, cartTotal, userCurrency, convertPrice, exchangeRates]);
 
 
-  // Debug shipping cost
-  console.log('Cart Page - Admin Shipping Debug:', {
-    adminShippingRate: adminShippingRate,
-    finalShippingCost: cartShipping,
-    isUsingAdminRate: !!(adminShippingRate as any)?.shippingCost
-  });
+
 
 
 

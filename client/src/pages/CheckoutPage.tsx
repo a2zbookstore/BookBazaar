@@ -258,7 +258,7 @@ export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuth();
   const { cartItems, cartCount, clearCart } = useCart();
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
-  const { shipping } = useShipping();
+  const { shippingCost } = useShipping();
   const { toast } = useToast();
 
   // Form state
@@ -357,24 +357,11 @@ export default function CheckoutPage() {
     return countryCodeMap[countryName] || "XX";
   };
 
-  // Get shipping rate from admin panel for India (matching cart page)
-  const { data: adminShippingRate } = useQuery({
-    queryKey: ["/api/shipping-rates/country/IN"],
-  });
-
-  // Calculate shipping cost using admin panel rates
-  let shippingCost = 5.99; // Default fallback
-  
-  if ((adminShippingRate as any)?.shippingCost) {
-    // Use admin panel India shipping rate (primary)
-    shippingCost = parseFloat((adminShippingRate as any).shippingCost.toString());
-  } else if (shipping?.cost) {
-    // Fallback to detected location shipping
-    shippingCost = parseFloat(shipping.cost.toString());
-  }
+  // Use dynamic shipping cost based on user location
+  const checkoutShippingCost = shippingCost || 0;
 
   const tax = subtotal * 0.01; // 1% tax
-  const total = subtotal + shippingCost + tax;
+  const total = subtotal + checkoutShippingCost + tax;
 
   // Convert all amounts to user's currency for display
   const [convertedAmounts, setConvertedAmounts] = useState({
@@ -430,16 +417,7 @@ export default function CheckoutPage() {
         total: total
       });
     }
-  }, [subtotal, shippingCost, tax, total, userCurrency, convertPrice, exchangeRates]);
-
-  // Debug shipping cost in checkout
-  console.log('Checkout Page - Admin Shipping Debug:', {
-    adminShippingRate: adminShippingRate,
-    finalShippingCost: shippingCost,
-    isUsingAdminRate: !!(adminShippingRate as any)?.shippingCost,
-    shippingSource: (adminShippingRate as any)?.shippingCost ? 'admin_panel' : 
-                   shipping?.cost ? 'fallback_shipping' : 'hardcoded_fallback'
-  });
+  }, [subtotal, checkoutShippingCost, tax, total, userCurrency, convertPrice, exchangeRates]);
 
   // Razorpay config
   const { data: razorpayConfig } = useQuery({
