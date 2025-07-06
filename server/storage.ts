@@ -446,24 +446,42 @@ export class DatabaseStorage implements IStorage {
     return { orders: ordersList, total };
   }
 
-  async getOrderById(id: number): Promise<(Order & { items: OrderItem[] }) | undefined> {
+  async getOrderById(id: number): Promise<(Order & { items: (OrderItem & { book: Book })[] }) | undefined> {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));
     if (!order) return undefined;
 
-    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
+    const items = await db
+      .select()
+      .from(orderItems)
+      .leftJoin(books, eq(orderItems.bookId, books.id))
+      .where(eq(orderItems.orderId, id));
 
-    return { ...order, items };
+    const itemsWithBooks = items.map(item => ({
+      ...item.order_items,
+      book: item.books!
+    }));
+
+    return { ...order, items: itemsWithBooks };
   }
 
-  async getOrderByIdAndEmail(id: number, email: string): Promise<(Order & { items: OrderItem[] }) | undefined> {
+  async getOrderByIdAndEmail(id: number, email: string): Promise<(Order & { items: (OrderItem & { book: Book })[] }) | undefined> {
     const [order] = await db.select().from(orders).where(
       and(eq(orders.id, id), eq(orders.customerEmail, email))
     );
     if (!order) return undefined;
 
-    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
+    const items = await db
+      .select()
+      .from(orderItems)
+      .leftJoin(books, eq(orderItems.bookId, books.id))
+      .where(eq(orderItems.orderId, id));
 
-    return { ...order, items };
+    const itemsWithBooks = items.map(item => ({
+      ...item.order_items,
+      book: item.books!
+    }));
+
+    return { ...order, items: itemsWithBooks };
   }
 
   async createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<Order> {

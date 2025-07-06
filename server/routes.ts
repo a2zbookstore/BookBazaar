@@ -876,14 +876,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send order confirmation email
       try {
+        console.log(`Attempting to send order confirmation email for order #${order.id}`);
         const orderWithItems = await storage.getOrderById(order.id);
+        console.log("Order retrieved for email:", orderWithItems ? "Found" : "Not Found");
+        
         if (orderWithItems) {
-          await sendOrderConfirmationEmail({
+          console.log("Order items count:", orderWithItems.items?.length || 0);
+          const emailResult = await sendOrderConfirmationEmail({
             order: orderWithItems,
             customerEmail,
             customerName
           });
-          console.log(`Order confirmation email sent for order #${order.id}`);
+          console.log(`Order confirmation email result for order #${order.id}:`, emailResult);
+        } else {
+          console.error("Order not found for email sending:", order.id);
         }
       } catch (emailError) {
         console.error("Failed to send order confirmation email:", emailError);
