@@ -31,6 +31,7 @@ import GiftCategoriesPage from "@/pages/admin/GiftCategoriesPage";
 import GiftItemsPage from "@/pages/GiftItemsPage";
 import GiftManagementPage from "@/pages/admin/GiftManagementPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
+import MyOrdersPage from "@/pages/MyOrdersPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderDetailPage from "@/pages/OrderDetailPage";
 import PayPalCompletePage from "@/pages/PayPalCompletePage";
@@ -74,6 +75,7 @@ function AppRouter() {
       <Route path="/about" component={AboutPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/track-order" component={TrackOrderPage} />
+      <Route path="/my-orders" component={MyOrdersPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/paypal-complete" component={PayPalCompletePage} />

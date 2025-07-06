@@ -218,6 +218,15 @@ export default function Layout({ children }: LayoutProps) {
                   Catalog
                 </Link>
                 <Link
+                  href="/my-orders"
+                  className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
+                    isActive("/my-orders") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  My Orders
+                </Link>
+                <Link
                   href="/track-order"
                   className={`block py-3 px-2 text-base font-medium rounded-lg transition-colors ${
                     isActive("/track-order") ? "bg-primary-aqua/10 text-primary-aqua" : "text-secondary-black hover:bg-gray-50"
@@ -349,6 +358,14 @@ export default function Layout({ children }: LayoutProps) {
                 className="text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 text-gray-600"
               >
                 Featured Collection
+              </Link>
+              <Link
+                href="/my-orders"
+                className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
+                  isActive("/my-orders") ? "bg-primary-aqua text-white" : "text-gray-600"
+                }`}
+              >
+                My Orders
               </Link>
               <Link
                 href="/track-order"

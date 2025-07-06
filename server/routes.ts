@@ -1956,6 +1956,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Orders route for authenticated customers
+  app.get("/api/my-orders", async (req: any, res) => {
+    try {
+      // Check for authenticated user first  
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Get orders for the authenticated user only
+      const options = { userId };
+      const result = await storage.getOrders(options);
+      
+      // Return only the orders array
+      res.json(result.orders || []);
+    } catch (error) {
+      console.error("Error fetching my orders:", error);
+      res.status(500).json({ message: "Failed to fetch your orders" });
+    }
+  });
+
   // Contact routes
   app.post("/api/contact", async (req, res) => {
     try {
