@@ -36,7 +36,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Copy
 } from "lucide-react";
 
 interface Order {
@@ -76,6 +77,24 @@ export default function OrdersPage() {
   const { isAuthenticated, isLoading: authLoading } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Copy to clipboard function
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied!",
+        description: `${type} copied to clipboard`,
+        variant: "default",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -592,18 +611,89 @@ export default function OrdersPage() {
                 {/* Customer Information */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Customer Information</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold">Customer Information</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const customerInfo = [
+                            `Name: ${selectedOrderDetails.customerName || 'N/A'}`,
+                            `Email: ${selectedOrderDetails.customerEmail || 'N/A'}`,
+                            selectedOrderDetails.customerPhone ? `Phone: ${selectedOrderDetails.customerPhone}` : '',
+                          ].filter(Boolean).join('\n');
+                          copyToClipboard(customerInfo, "Customer information");
+                        }}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <Copy className="w-3 h-3 mr-1" />
+                        Copy All
+                      </Button>
+                    </div>
                     <div className="space-y-2">
-                      <p><strong>Name:</strong> {selectedOrderDetails.customerName || 'N/A'}</p>
-                      <p><strong>Email:</strong> {selectedOrderDetails.customerEmail || 'N/A'}</p>
+                      <div className="flex items-center justify-between">
+                        <p><strong>Name:</strong> {selectedOrderDetails.customerName || 'N/A'}</p>
+                        {selectedOrderDetails.customerName && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(selectedOrderDetails.customerName, "Customer name")}
+                            className="h-6 px-2"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p><strong>Email:</strong> {selectedOrderDetails.customerEmail || 'N/A'}</p>
+                        {selectedOrderDetails.customerEmail && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(selectedOrderDetails.customerEmail, "Email")}
+                            className="h-6 px-2"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
                       {selectedOrderDetails.customerPhone && (
-                        <p><strong>Phone:</strong> {selectedOrderDetails.customerPhone}</p>
+                        <div className="flex items-center justify-between">
+                          <p><strong>Phone:</strong> {selectedOrderDetails.customerPhone}</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(selectedOrderDetails.customerPhone, "Phone number")}
+                            className="h-6 px-2"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Shipping Address</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold">Shipping Address</h3>
+                      {selectedOrderDetails.shippingAddress && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const address = [
+                              selectedOrderDetails.shippingAddress?.street || selectedOrderDetails.shippingAddress?.address,
+                              `${selectedOrderDetails.shippingAddress?.city || ''}, ${selectedOrderDetails.shippingAddress?.state || ''} ${selectedOrderDetails.shippingAddress?.zip || selectedOrderDetails.shippingAddress?.postalCode || ''}`,
+                              selectedOrderDetails.shippingAddress?.country
+                            ].filter(Boolean).join('\n');
+                            copyToClipboard(address, "Shipping address");
+                          }}
+                          className="h-6 px-2"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                     <div className="text-sm">
                       <p>{selectedOrderDetails.shippingAddress?.street || selectedOrderDetails.shippingAddress?.address || 'N/A'}</p>
                       <p>
