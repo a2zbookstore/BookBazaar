@@ -319,6 +319,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoice generation endpoint
+  app.get('/api/orders/:id/invoice', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      let order;
+      let isAuthorized = false;
+      
+      // Check for admin session authentication FIRST
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (adminId && isAdmin) {
+        // Admin can access any order invoice
+        const admin = await storage.getAdminById(adminId);
+        if (admin && admin.isActive) {
+          order = await storage.getOrderById(parseInt(id));
+          if (order) {
+            isAuthorized = true;
+          }
+        }
+      }
+      
+      // Check for session-based customer authentication
+      if (!isAuthorized) {
+        const sessionUserId = (req.session as any).userId;
+        const isCustomerAuth = (req.session as any).isCustomerAuth;
+        
+        if (sessionUserId && isCustomerAuth) {
+          order = await storage.getOrderById(parseInt(id));
+          if (order && order.userId === sessionUserId) {
+            isAuthorized = true;
+          }
+        }
+      }
+      
+      // Check for Replit authentication
+      if (!isAuthorized && req.isAuthenticated && req.isAuthenticated()) {
+        const userId = (req.user as any).claims.sub;
+        order = await storage.getOrderById(parseInt(id));
+        if (order && order.userId === userId) {
+          isAuthorized = true;
+        }
+      }
+      
+      if (!isAuthorized) {
+        return res.status(401).json({ message: "Access denied" });
+      }
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Generate HTML invoice that can be printed as PDF
+      const invoiceHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice #${order.id}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+    .order-info { margin-bottom: 20px; }
+    .items { border-collapse: collapse; width: 100%; margin: 20px 0; }
+    .items th, .items td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .items th { background-color: #f2f2f2; font-weight: bold; }
+    .total-section { margin-top: 20px; text-align: right; }
+    .total-line { margin: 5px 0; }
+    .final-total { font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; }
+    .customer-info { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    @media print {
+      body { margin: 0; }
+      .header { page-break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>A<span style="color: red;">2</span>Z BOOKSHOP</h1>
+    <h2>Invoice #${order.id}</h2>
+    <p>Date: ${new Date(order.createdAt).toLocaleDateString()}</p>
+  </div>
+  
+  <div class="customer-info">
+    <h3>Customer Information</h3>
+    <p><strong>Name:</strong> ${order.customerName}</p>
+    <p><strong>Email:</strong> ${order.customerEmail}</p>
+    ${order.customerPhone ? `<p><strong>Phone:</strong> ${order.customerPhone}</p>` : ''}
+    <p><strong>Order Status:</strong> ${order.status}</p>
+    ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${order.trackingNumber}</p>` : ''}
+  </div>
+  
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Book Title</th>
+        <th>Author</th>
+        <th>Quantity</th>
+        <th>Unit Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${order.items?.map(item => `
+        <tr>
+          <td>${item.book?.title || 'Unknown Book'}</td>
+          <td>${item.book?.author || 'Unknown Author'}</td>
+          <td>${item.quantity}</td>
+          <td>$${parseFloat(item.price).toFixed(2)}</td>
+          <td>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5">No items found</td></tr>'}
+    </tbody>
+  </table>
+  
+  <div class="total-section">
+    <div class="total-line">Subtotal: $${parseFloat(order.subtotal || '0').toFixed(2)}</div>
+    <div class="total-line">Shipping: $${parseFloat(order.shipping || '0').toFixed(2)}</div>
+    <div class="total-line">Tax: $${parseFloat(order.tax || '0').toFixed(2)}</div>
+    <div class="final-total">Total: $${parseFloat(order.total).toFixed(2)}</div>
+  </div>
+  
+  <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+    <p>Thank you for your business!</p>
+    <p>A2Z BOOKSHOP - Your Global Book Destination</p>
+    <p>Visit us at: https://a2zbookshop.com</p>
+  </div>
+</body>
+</html>`;
+      
+      // Set proper headers for HTML content that can be printed as PDF
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', `inline; filename="invoice-${order.id}.html"`);
+      
+      res.send(invoiceHtml);
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      res.status(500).json({ message: "Failed to generate invoice" });
+    }
+  });
+
   // Public order tracking route (no auth required)
   app.post('/api/track-order', async (req, res) => {
     try {

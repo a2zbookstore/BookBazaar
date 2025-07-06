@@ -4,8 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
-import { Package, Eye, FileDown } from "lucide-react";
+import { Package, Eye, FileDown, Home, Calendar, CreditCard, Mail } from "lucide-react";
 import { Link } from "wouter";
 
 interface Order {
@@ -212,6 +214,14 @@ export default function MyOrdersPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
+          {/* Homepage Navigation */}
+          <div className="mb-6">
+            <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+              <Home className="h-6 w-6" />
+              A<span className="text-red-500">2</span>Z BOOKSHOP
+            </Link>
+          </div>
+          
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
             <p className="text-gray-600">View and track your order history</p>
@@ -345,6 +355,173 @@ export default function MyOrdersPage() {
           )}
         </div>
       </div>
+      
+      {/* View Details Dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Order Details - #{selectedOrder?.id}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* Order Status and Info */}
+              <div className="flex flex-wrap gap-4 items-center">
+                <Badge className={`${statusColors[selectedOrder.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'} px-3 py-1`}>
+                  {statusLabels[selectedOrder.status as keyof typeof statusLabels] || selectedOrder.status}
+                </Badge>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  Ordered {formatDistanceToNow(new Date(selectedOrder.createdAt), { addSuffix: true })}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <CreditCard className="h-4 w-4" />
+                  ${parseFloat(selectedOrder.total).toFixed(2)}
+                </div>
+              </div>
+              
+              {/* Customer Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Customer Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div>
+                      <span className="font-medium">Name:</span> {selectedOrder.customerName}
+                    </div>
+                    <div>
+                      <span className="font-medium">Email:</span> {selectedOrder.customerEmail}
+                    </div>
+                    {selectedOrder.customerPhone && (
+                      <div>
+                        <span className="font-medium">Phone:</span> {selectedOrder.customerPhone}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                {/* Shipping Address */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Shipping Address</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm">
+                      {selectedOrder.shippingAddress ? (
+                        <div className="space-y-1">
+                          <div>{selectedOrder.shippingAddress.street || selectedOrder.shippingAddress.address}</div>
+                          <div>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state || selectedOrder.shippingAddress.region}</div>
+                          <div>{selectedOrder.shippingAddress.postalCode || selectedOrder.shippingAddress.zip} {selectedOrder.shippingAddress.country}</div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-500">No shipping address available</div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Order Items */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Order Items</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                        {item.book?.imageUrl ? (
+                          <img
+                            src={item.book.imageUrl}
+                            alt={item.book.title}
+                            className="w-16 h-20 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-16 h-20 bg-gray-200 rounded flex items-center justify-center">
+                            <Package className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 line-clamp-2">
+                            {item.book?.title || 'Unknown Book'}
+                          </h4>
+                          <p className="text-sm text-gray-600">{item.book?.author || 'Unknown Author'}</p>
+                          <p className="text-sm text-gray-600">
+                            Quantity: {item.quantity} × ${parseFloat(item.price).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="text-center text-gray-500 py-4">
+                        No items found for this order
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Tracking Information */}
+              {selectedOrder.trackingNumber && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Tracking Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="font-medium">Tracking Number:</span> {selectedOrder.trackingNumber}
+                      </div>
+                      {selectedOrder.shippingCarrier && (
+                        <div>
+                          <span className="font-medium">Shipping Carrier:</span> {selectedOrder.shippingCarrier}
+                        </div>
+                      )}
+                      {selectedOrder.notes && (
+                        <div>
+                          <span className="font-medium">Notes:</span> {selectedOrder.notes}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Order Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>${parseFloat(selectedOrder.subtotal || '0').toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Shipping:</span>
+                      <span>${parseFloat(selectedOrder.shipping || '0').toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tax:</span>
+                      <span>${parseFloat(selectedOrder.tax || '0').toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold border-t pt-2">
+                      <span>Total:</span>
+                      <span>${parseFloat(selectedOrder.total).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
