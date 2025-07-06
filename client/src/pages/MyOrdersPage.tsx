@@ -263,7 +263,7 @@ export default function MyOrdersPage() {
                     <div className="space-y-4">
                       {/* Order Items */}
                       <div className="space-y-3">
-                        {order.items.map((item) => (
+                        {order.items && order.items.length > 0 ? order.items.map((item) => (
                           <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                             {item.book.imageUrl ? (
                               <img
@@ -286,7 +286,11 @@ export default function MyOrdersPage() {
                               </p>
                             </div>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="text-center text-gray-500 py-4">
+                            No items found for this order
+                          </div>
+                        )}
                       </div>
 
                       {/* Tracking Information */}

@@ -421,7 +421,7 @@ export class DatabaseStorage implements IStorage {
     status?: string;
     limit?: number;
     offset?: number;
-  } = {}): Promise<{ orders: Order[]; total: number }> {
+  } = {}): Promise<{ orders: (Order & { items?: (OrderItem & { book: Book })[] })[]; total: number }> {
     const { userId, status, limit = 20, offset = 0 } = options;
 
     const conditions = [];
@@ -443,7 +443,26 @@ export class DatabaseStorage implements IStorage {
       .limit(limit)
       .offset(offset);
 
-    return { orders: ordersList, total };
+    // Get order items for each order
+    const ordersWithItems = await Promise.all(
+      ordersList.map(async (order) => {
+        const items = await db
+          .select()
+          .from(orderItems)
+          .innerJoin(books, eq(orderItems.bookId, books.id))
+          .where(eq(orderItems.orderId, order.id));
+
+        return {
+          ...order,
+          items: items.map((item) => ({
+            ...item.order_items,
+            book: item.books,
+          })),
+        };
+      })
+    );
+
+    return { orders: ordersWithItems, total };
   }
 
   async getOrderById(id: number): Promise<(Order & { items: (OrderItem & { book: Book })[] }) | undefined> {
