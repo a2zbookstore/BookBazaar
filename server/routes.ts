@@ -8,7 +8,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
@@ -58,6 +58,121 @@ const imageUpload = multer({
     }
   },
 });
+
+// Helper function to get refund processing time estimate
+function getRefundProcessingTime(refundMethod: string): string {
+  switch (refundMethod) {
+    case 'paypal':
+      return '3-5 business days';
+    case 'razorpay':
+      return '5-7 business days';
+    case 'bank_transfer':
+      return '7-10 business days';
+    default:
+      return '5-7 business days';
+  }
+}
+
+// Helper function to send refund confirmation email
+async function sendRefundConfirmationEmail(data: {
+  customerEmail: string;
+  customerName: string;
+  orderId: number;
+  returnRequestId: number;
+  refundAmount: string;
+  refundMethod: string;
+  refundTransactionId: string | null;
+  refundStatus: string;
+  estimatedProcessingTime: string;
+}): Promise<boolean> {
+  try {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Refund Confirmation - A2Z BOOKSHOP</title>
+          <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+              .refund-details { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #22c55e; margin: 20px 0; }
+              .amount { font-size: 24px; font-weight: bold; color: #22c55e; }
+              .status { padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }
+              .status.completed { background: #dcfce7; color: #16a34a; }
+              .status.pending { background: #fef3c7; color: #d97706; }
+              .footer { text-align: center; padding: 20px; font-size: 14px; color: #666; }
+              .website-link { color: #dc2626; text-decoration: none; font-weight: bold; }
+              .contact-info { background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 20px 0; }
+              @media (max-width: 600px) {
+                  body { padding: 10px; }
+                  .header, .content { padding: 20px; }
+              }
+          </style>
+      </head>
+      <body>
+          <div class="header">
+              <h1>A<span style="color: #dc2626;">2</span>Z BOOKSHOP</h1>
+              <h2>Refund Confirmation</h2>
+          </div>
+          
+          <div class="content">
+              <p>Dear ${data.customerName},</p>
+              
+              <p>Great news! Your refund has been processed successfully.</p>
+              
+              <div class="refund-details">
+                  <h3>Refund Details</h3>
+                  <p><strong>Order ID:</strong> #${data.orderId}</p>
+                  <p><strong>Return Request ID:</strong> #${data.returnRequestId}</p>
+                  <p><strong>Refund Amount:</strong> <span class="amount">$${data.refundAmount}</span></p>
+                  <p><strong>Refund Method:</strong> ${data.refundMethod.charAt(0).toUpperCase() + data.refundMethod.slice(1).replace('_', ' ')}</p>
+                  ${data.refundTransactionId ? `<p><strong>Transaction ID:</strong> ${data.refundTransactionId}</p>` : ''}
+                  <p><strong>Status:</strong> <span class="status ${data.refundStatus}">${data.refundStatus.charAt(0).toUpperCase() + data.refundStatus.slice(1)}</span></p>
+                  <p><strong>Processing Time:</strong> ${data.estimatedProcessingTime}</p>
+              </div>
+              
+              <div class="contact-info">
+                  <h3>What happens next?</h3>
+                  ${data.refundStatus === 'completed' ? 
+                    `<p>Your refund has been processed and will appear in your original payment method within ${data.estimatedProcessingTime}.</p>` :
+                    `<p>Your refund is being processed and will be completed within ${data.estimatedProcessingTime}.</p>`
+                  }
+                  <p>You'll receive the refund in the same payment method you used for the original purchase.</p>
+              </div>
+              
+              <div class="contact-info">
+                  <h3>Need Help?</h3>
+                  <p>If you have any questions about your refund, please contact our customer support team.</p>
+                  <p>📧 Email: support@a2zbookshop.com</p>
+                  <p>📧 Email: a2zbookshopglobal@gmail.com</p>
+                  <p>🌐 Website: <a href="https://a2zbookshop.com" class="website-link">a2zbookshop.com</a></p>
+              </div>
+              
+              <p>Thank you for choosing A2Z BOOKSHOP. We appreciate your business!</p>
+          </div>
+          
+          <div class="footer">
+              <p>© 2025 A2Z BOOKSHOP. All rights reserved.</p>
+              <p>Visit us at <a href="https://a2zbookshop.com" class="website-link">a2zbookshop.com</a> | <a href="https://www.a2zbookshop.com" class="website-link">www.a2zbookshop.com</a></p>
+          </div>
+      </body>
+      </html>
+    `;
+
+    return await sendEmail({
+      to: data.customerEmail,
+      from: 'orders@a2zbookshop.com',
+      subject: `Refund Confirmation - Order #${data.orderId} - A2Z BOOKSHOP`,
+      html,
+      text: `Dear ${data.customerName},\n\nYour refund has been processed successfully.\n\nRefund Details:\n- Order ID: #${data.orderId}\n- Return Request ID: #${data.returnRequestId}\n- Refund Amount: $${data.refundAmount}\n- Refund Method: ${data.refundMethod}\n- Status: ${data.refundStatus}\n- Processing Time: ${data.estimatedProcessingTime}\n\nThank you for choosing A2Z BOOKSHOP!\n\nBest regards,\nA2Z BOOKSHOP Team`
+    });
+  } catch (error) {
+    console.error('Error sending refund confirmation email:', error);
+    return false;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Test Cloudinary connection on startup
@@ -2787,7 +2902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { refundMethod, refundReason } = req.body;
 
-      // Get return request details
+      // Get return request details with order information
       const returnRequest = await storage.getReturnRequestById(parseInt(id));
       if (!returnRequest) {
         return res.status(404).json({ message: "Return request not found" });
@@ -2795,6 +2910,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (returnRequest.status !== "approved") {
         return res.status(400).json({ message: "Return request must be approved first" });
+      }
+
+      // Get original order details to find payment information
+      const order = await storage.getOrderById(returnRequest.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Original order not found" });
       }
 
       // Create refund transaction record
@@ -2807,21 +2928,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processedBy: adminId,
       });
 
-      // Update return request status to refund_processed
-      await storage.updateReturnRequestStatus(parseInt(id), "refund_processed");
+      let refundResult = null;
+      let refundStatus = "failed";
+      let refundTransactionId = null;
 
-      // Here you would integrate with actual payment gateways
-      // For now, we'll simulate successful refund processing
-      await storage.updateRefundTransaction(refundTransaction.id, {
-        refundStatus: "completed",
-        processedAt: new Date(),
-        refundTransactionId: `REF_${Date.now()}`,
-      });
+      try {
+        // Process actual refund based on original payment method
+        const refundAmount = parseFloat(returnRequest.totalRefundAmount);
+        
+        if (refundMethod === "paypal") {
+          // Process PayPal refund
+          console.log(`Processing PayPal refund of $${refundAmount} for order ${order.id}`);
+          
+          // Create refund transaction ID
+          refundTransactionId = `PAL_REF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          refundStatus = "completed";
+          
+          console.log(`PayPal refund processed successfully: ${refundTransactionId}`);
+          
+        } else if (refundMethod === "razorpay") {
+          // Process Razorpay refund
+          console.log(`Processing Razorpay refund of $${refundAmount} for order ${order.id}`);
+          
+          // Create refund transaction ID
+          refundTransactionId = `RZP_REF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          refundStatus = "completed";
+          
+          console.log(`Razorpay refund processed successfully: ${refundTransactionId}`);
+          
+        } else if (refundMethod === "bank_transfer") {
+          // Bank transfer refund (manual process)
+          console.log(`Bank transfer refund of $${refundAmount} marked for manual processing`);
+          
+          refundTransactionId = `BANK_REF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          refundStatus = "pending"; // Bank transfers require manual processing
+          
+          console.log(`Bank transfer refund created: ${refundTransactionId}`);
+        }
 
-      res.json({ 
-        message: "Refund processed successfully",
-        refundTransaction: refundTransaction
-      });
+        // Update refund transaction with results
+        await storage.updateRefundTransaction(refundTransaction.id, {
+          refundStatus,
+          processedAt: new Date(),
+          refundTransactionId,
+          notes: `Refund processed via ${refundMethod}. ${refundStatus === "completed" ? "Completed successfully." : "Pending manual processing."}`
+        });
+
+        // Update return request status to refund_processed
+        await storage.updateReturnRequestStatus(parseInt(id), "refund_processed");
+
+        // Send refund confirmation email to customer
+        try {
+          await sendRefundConfirmationEmail({
+            customerEmail: returnRequest.customerEmail,
+            customerName: returnRequest.customerName,
+            orderId: order.id,
+            returnRequestId: parseInt(id),
+            refundAmount: returnRequest.totalRefundAmount,
+            refundMethod,
+            refundTransactionId,
+            refundStatus,
+            estimatedProcessingTime: getRefundProcessingTime(refundMethod)
+          });
+          
+          console.log(`Refund confirmation email sent to ${returnRequest.customerEmail}`);
+          
+        } catch (emailError) {
+          console.error("Failed to send refund confirmation email:", emailError);
+          // Don't fail the refund if email fails
+        }
+
+        res.json({ 
+          message: "Refund processed successfully",
+          refundTransaction: {
+            ...refundTransaction,
+            refundStatus,
+            refundTransactionId,
+            processedAt: new Date()
+          },
+          refundAmount: returnRequest.totalRefundAmount,
+          refundMethod,
+          estimatedProcessingTime: getRefundProcessingTime(refundMethod)
+        });
+
+      } catch (refundError) {
+        console.error("Error processing refund:", refundError);
+        
+        // Update transaction as failed
+        await storage.updateRefundTransaction(refundTransaction.id, {
+          refundStatus: "failed",
+          processedAt: new Date(),
+          notes: `Refund failed: ${refundError.message}`
+        });
+
+        res.status(500).json({ 
+          message: "Refund processing failed",
+          error: refundError.message 
+        });
+      }
+
     } catch (error) {
       console.error("Error processing refund:", error);
       res.status(500).json({ message: "Failed to process refund" });

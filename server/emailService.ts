@@ -616,6 +616,40 @@ export const generateWelcomeHTMLInternal = (data: WelcomeEmailData) => {
   `;
 };
 
+// Generic email sending function
+export const sendEmail = async (params: {
+  to: string;
+  from?: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}): Promise<boolean> => {
+  try {
+    const transporter = createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not available');
+      return false;
+    }
+
+    const info = await transporter.sendMail({
+      from: params.from || {
+        name: 'A2Z BOOKSHOP',
+        address: 'orders@a2zbookshop.com'
+      },
+      to: params.to,
+      subject: params.subject,
+      text: params.text,
+      html: params.html
+    });
+
+    console.log('Email sent successfully:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return false;
+  }
+};
+
 export const testEmailConfiguration = async (): Promise<boolean> => {
   try {
     const transporter = createTransporter();
