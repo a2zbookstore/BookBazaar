@@ -392,8 +392,9 @@ export default function ReturnRequestPage() {
                           <div>
                             <Label>Item-specific Reason</Label>
                             <Select
-                              value={selectedItem?.reason || ""}
+                              value={selectedItem?.reason || "none"}
                               onValueChange={(reason) => {
+                                if (reason === "none") return;
                                 handleItemSelection(
                                   item.bookId,
                                   selectedItem?.quantity || 0,
@@ -405,6 +406,7 @@ export default function ReturnRequestPage() {
                                 <SelectValue placeholder="Select reason" />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="none">Select reason</SelectItem>
                                 {returnReasons.map((reason) => (
                                   <SelectItem key={reason.value} value={reason.value}>
                                     {reason.label}
