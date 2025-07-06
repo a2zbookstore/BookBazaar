@@ -1054,20 +1054,31 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions))
       .orderBy(desc(orders.createdAt));
 
-    // Filter out orders that already have return requests
-    const ordersWithoutReturns = await Promise.all(
+    // Filter out orders that have active (pending/approved/processing) return requests
+    // Allow new returns if all previous returns were rejected or cancelled
+    const ordersWithoutActiveReturns = await Promise.all(
       eligibleOrders.map(async (order) => {
-        const existingReturn = await db
+        const activeReturns = await db
           .select()
           .from(returnRequests)
-          .where(eq(returnRequests.orderId, order.id))
+          .where(
+            and(
+              eq(returnRequests.orderId, order.id),
+              or(
+                eq(returnRequests.status, 'pending'),
+                eq(returnRequests.status, 'approved'),
+                eq(returnRequests.status, 'processing'),
+                eq(returnRequests.status, 'refund_processed')
+              )
+            )
+          )
           .limit(1);
 
-        return existingReturn.length === 0 ? order : null;
+        return activeReturns.length === 0 ? order : null;
       })
     );
 
-    const filteredOrders = ordersWithoutReturns.filter(order => order !== null) as Order[];
+    const filteredOrders = ordersWithoutActiveReturns.filter(order => order !== null) as Order[];
 
     // Get order items for each filtered order
     const ordersWithItems = await Promise.all(

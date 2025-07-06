@@ -252,8 +252,18 @@ export default function ReturnRequestPage() {
                 <div className="text-center py-8">
                   <AlertCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="font-semibold text-gray-900 mb-2">No Eligible Orders</h3>
-                  <p className="text-gray-600">
-                    No delivered orders found within the 30-day return window.
+                  <p className="text-gray-600 mb-4">
+                    No orders are currently eligible for returns. This could be because:
+                  </p>
+                  <div className="text-left bg-gray-50 p-4 rounded-lg max-w-md mx-auto">
+                    <ul className="text-sm text-gray-600 space-y-2">
+                      <li>• No delivered orders within the 30-day return window</li>
+                      <li>• Orders already have approved/processed return requests</li>
+                      <li>• Orders are still being processed or shipped</li>
+                    </ul>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-4">
+                    If you believe this is an error, please contact our support team.
                   </p>
                 </div>
               ) : (
