@@ -845,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipping,
         tax,
         total,
-        status: "confirmed",
+        status: "pending",
         paymentStatus: "paid",
         notes: `Payment via ${paymentMethod}. Payment ID: ${paymentId}`
       }, cartItems);
