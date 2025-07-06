@@ -43,24 +43,49 @@ export default function CountrySelector({
   showShippingCost = true 
 }: CountrySelectorProps) {
   const { location, setManualCountry, isLoading: locationLoading } = useLocation();
-  const { shippingCost, isLoading: shippingLoading } = useShipping();
+  const { shippingCost, isLoading: shippingLoading, error: shippingError } = useShipping();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleCountrySelect = (countryCode: string, countryName: string) => {
-    setManualCountry(countryCode, countryName);
-    setIsOpen(false);
-    // Refresh page to update shipping costs and currency
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
+    try {
+      setManualCountry(countryCode, countryName);
+      setIsOpen(false);
+      // Refresh page to update shipping costs and currency
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Error selecting country:', error);
+      setIsOpen(false);
+    }
   };
 
   const getCurrentFlag = () => {
-    const country = POPULAR_COUNTRIES.find(c => c.code === location?.countryCode);
-    return country?.flag || '🌍';
+    try {
+      const country = POPULAR_COUNTRIES.find(c => c.code === location?.countryCode);
+      return country?.flag || '🌍';
+    } catch (error) {
+      console.error('Error getting flag:', error);
+      return '🌍';
+    }
   };
 
   const isLoading = locationLoading || shippingLoading;
+
+  // Return error state if shipping error
+  if (shippingError) {
+    return (
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className={`text-xs px-2 py-1 rounded border hover:bg-gray-50 ${className}`}
+        disabled
+      >
+        <Globe className="h-3 w-3 mr-1" />
+        Error
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>

@@ -34,7 +34,10 @@ export const useShipping = (): ShippingHook => {
     isLoading: shippingLoading,
     error,
   } = useQuery<ShippingRate>({
-    queryKey: [`/api/shipping-rates/country/${location?.countryCode}`],
+    queryKey: ['/api/shipping-rates/country', location?.countryCode],
+    queryFn: () => 
+      fetch(`/api/shipping-rates/country/${location?.countryCode}`)
+        .then(res => res.json()),
     enabled: !!location?.countryCode && !locationLoading,
   });
 
