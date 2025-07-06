@@ -258,22 +258,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
       
-      console.log("Order detail admin auth check:", {
-        adminId,
-        isAdmin,
-        sessionData: req.session,
-        orderId: id
-      });
-      
       if (adminId && isAdmin) {
         // Admin can access any order
         const admin = await storage.getAdminById(adminId);
-        console.log("Admin found:", admin);
         if (admin && admin.isActive) {
           order = await storage.getOrderById(parseInt(id));
           if (order) {
             isAuthorized = true;
-            console.log("Admin authorized for order:", order.id);
           }
         }
       }

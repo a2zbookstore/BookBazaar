@@ -90,7 +90,7 @@ export default function OrdersPage() {
   });
 
   const { data: selectedOrderDetails, isLoading: isLoadingOrderDetails } = useQuery({
-    queryKey: ["/api/orders", selectedBillOrderId],
+    queryKey: [`/api/orders/${selectedBillOrderId}`],
     enabled: isAuthenticated && selectedBillOrderId !== null,
   });
 
