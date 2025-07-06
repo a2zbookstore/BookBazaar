@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Package, Calendar, AlertCircle, ArrowLeft, FileText } from "lucide-react";
+import { Package, Calendar, AlertCircle, ArrowLeft, FileText, History, Clock, XCircle, DollarSign, CheckCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface Order {
@@ -37,6 +37,26 @@ interface ReturnItem {
   bookId: number;
   quantity: number;
   reason: string;
+}
+
+interface ReturnRequest {
+  id: number;
+  orderId: number;
+  customerName: string;
+  customerEmail: string;
+  returnReason: string;
+  returnDescription: string;
+  totalRefundAmount: string;
+  status: string;
+  createdAt: string;
+  returnRequestNumber: string;
+  order: {
+    id: number;
+    customerName: string;
+    totalAmount: string;
+    createdAt: string;
+    items: OrderItem[];
+  };
 }
 
 export default function ReturnRequestPage() {
@@ -65,6 +85,22 @@ export default function ReturnRequestPage() {
       const url = `/api/returns/eligible-orders${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch eligible orders");
+      return response.json();
+    },
+    enabled: user !== null || (step === 1 && guestEmail.length > 0),
+  });
+
+  // Fetch customer's return request history
+  const { data: returnHistory = [], isLoading: historyLoading } = useQuery<ReturnRequest[]>({
+    queryKey: ["/api/returns/my-returns", guestEmail],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (!user && guestEmail) {
+        params.append("email", guestEmail);
+      }
+      const url = `/api/returns/my-returns${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch return history");
       return response.json();
     },
     enabled: user !== null || (step === 1 && guestEmail.length > 0),
@@ -202,6 +238,82 @@ export default function ReturnRequestPage() {
             </div>
           </div>
         </div>
+
+        {/* Return Request History */}
+        {returnHistory.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Your Return Request History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {historyLoading ? (
+                  <div className="text-center py-4">Loading return history...</div>
+                ) : (
+                  returnHistory.map((returnRequest) => (
+                    <div key={returnRequest.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {returnRequest.returnRequestNumber}
+                            </Badge>
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                              returnRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              returnRequest.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                              returnRequest.status === 'processing' ? 'bg-purple-100 text-purple-800' :
+                              returnRequest.status === 'refund_processed' ? 'bg-green-100 text-green-800' :
+                              returnRequest.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              returnRequest.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {returnRequest.status === 'pending' && <Clock className="h-3 w-3" />}
+                              {returnRequest.status === 'approved' && <CheckCircle className="h-3 w-3" />}
+                              {returnRequest.status === 'processing' && <Package className="h-3 w-3" />}
+                              {returnRequest.status === 'refund_processed' && <DollarSign className="h-3 w-3" />}
+                              {returnRequest.status === 'rejected' && <XCircle className="h-3 w-3" />}
+                              {returnRequest.status === 'cancelled' && <XCircle className="h-3 w-3" />}
+                              {returnRequest.status.charAt(0).toUpperCase() + returnRequest.status.slice(1).replace('_', ' ')}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Order #{returnRequest.order.id} • {new Date(returnRequest.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">${returnRequest.totalRefundAmount}</p>
+                          <p className="text-xs text-gray-500">Refund Amount</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {returnRequest.order.items.map((item) => (
+                          <Badge key={item.id} variant="secondary" className="text-xs">
+                            {item.title}
+                          </Badge>
+                        ))}
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm text-gray-700">
+                          <span className="font-medium">Reason:</span> {returnRequest.returnReason}
+                        </p>
+                        {returnRequest.returnDescription && (
+                          <p className="text-sm text-gray-700 mt-1">
+                            <span className="font-medium">Details:</span> {returnRequest.returnDescription}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {step === 1 && (
           <Card>

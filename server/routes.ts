@@ -3066,6 +3066,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get customer's return request history (supports both authenticated and guest users)
+  app.get("/api/returns/my-returns", async (req: any, res) => {
+    try {
+      const email = req.query.email as string;
+      let userEmail = email;
+
+      // If authenticated user, get their email
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      
+      if (sessionUserId && isCustomerAuth) {
+        const user = await storage.getUserById(sessionUserId);
+        if (user?.email) {
+          userEmail = user.email;
+        }
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        if (req.user?.email) {
+          userEmail = req.user.email;
+        }
+      }
+
+      if (!userEmail) {
+        return res.status(400).json({ error: "Email required" });
+      }
+
+      const returnRequests = await storage.getReturnRequestsByEmail(userEmail);
+      res.json(returnRequests);
+    } catch (error) {
+      console.error("Error fetching customer return requests:", error);
+      res.status(500).json({ error: "Failed to fetch return requests" });
+    }
+  });
+
   // Admin routes - Get all return requests
   app.get("/api/admin/returns", async (req: any, res) => {
     try {

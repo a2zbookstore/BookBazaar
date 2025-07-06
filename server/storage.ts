@@ -157,6 +157,7 @@ export interface IStorage {
   createReturnRequest(returnRequest: InsertReturnRequest): Promise<ReturnRequest>;
   updateReturnRequestStatus(id: number, status: string, adminNotes?: string): Promise<ReturnRequest>;
   getEligibleOrdersForReturn(userId?: string, email?: string): Promise<Order[]>;
+  getReturnRequestsByEmail(email: string): Promise<(ReturnRequest & { order: Order & { items: OrderItem[] } })[]>;
   
   // Refund operations
   createRefundTransaction(refund: InsertRefundTransaction): Promise<RefundTransaction>;
@@ -1105,6 +1106,47 @@ export class DatabaseStorage implements IStorage {
     );
 
     return ordersWithItems;
+  }
+
+  async getReturnRequestsByEmail(email: string): Promise<(ReturnRequest & { order: Order & { items: OrderItem[] } })[]> {
+    const results = await db
+      .select({
+        returnRequest: returnRequests,
+        order: orders,
+      })
+      .from(returnRequests)
+      .innerJoin(orders, eq(returnRequests.orderId, orders.id))
+      .where(eq(orders.customerEmail, email))
+      .orderBy(desc(returnRequests.createdAt));
+
+    // Get order items for each return request
+    const returnRequestsWithItems = await Promise.all(
+      results.map(async ({ returnRequest, order }) => {
+        const items = await db
+          .select({
+            id: orderItems.id,
+            orderId: orderItems.orderId,
+            bookId: orderItems.bookId,
+            quantity: orderItems.quantity,
+            price: orderItems.price,
+            title: books.title,
+            author: books.author,
+          })
+          .from(orderItems)
+          .innerJoin(books, eq(orderItems.bookId, books.id))
+          .where(eq(orderItems.orderId, order.id));
+
+        return {
+          ...returnRequest,
+          order: {
+            ...order,
+            items,
+          },
+        };
+      })
+    );
+
+    return returnRequestsWithItems;
   }
 
   async createRefundTransaction(refundData: InsertRefundTransaction): Promise<RefundTransaction> {
