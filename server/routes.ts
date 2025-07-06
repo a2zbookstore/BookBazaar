@@ -3077,7 +3077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       
       if (sessionUserId && isCustomerAuth) {
-        const user = await storage.getUserById(sessionUserId);
+        const user = await storage.getUser(sessionUserId);
         if (user?.email) {
           userEmail = user.email;
         }
