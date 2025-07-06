@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -232,19 +232,29 @@ function CheckoutItemPrice({ bookPrice, quantity }: { bookPrice: number; quantit
   const { formatAmount, convertPrice } = useCurrency();
   const [convertedPrice, setConvertedPrice] = useState<number>(bookPrice * quantity);
 
+  const convertItemPrice = React.useCallback(async () => {
+    try {
+      const converted = await convertPrice(bookPrice * quantity);
+      setConvertedPrice(converted?.convertedAmount || (bookPrice * quantity));
+    } catch (error) {
+      console.error('Error converting checkout item price:', error);
+      setConvertedPrice(bookPrice * quantity);
+    }
+  }, [bookPrice, quantity, convertPrice]);
+
+  // Listen for currency changes
   useEffect(() => {
-    const convertItemPrice = async () => {
-      try {
-        const converted = await convertPrice(bookPrice * quantity);
-        setConvertedPrice(converted?.convertedAmount || (bookPrice * quantity));
-      } catch (error) {
-        console.error('Error converting checkout item price:', error);
-        setConvertedPrice(bookPrice * quantity);
-      }
+    const handleCurrencyChange = () => {
+      convertItemPrice();
     };
 
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    return () => window.removeEventListener('currencyChanged', handleCurrencyChange);
+  }, [convertItemPrice]);
+
+  useEffect(() => {
     convertItemPrice();
-  }, [bookPrice, quantity, convertPrice]);
+  }, [convertItemPrice]);
 
   return (
     <p className="font-medium text-sm">
@@ -371,40 +381,51 @@ export default function CheckoutPage() {
     total: total
   });
 
-  // Convert prices when currency or amounts change
+  // Convert amounts function
+  const convertAmounts = React.useCallback(async () => {
+    try {
+      console.log('Checkout conversion attempt:', { subtotal, userCurrency, exchangeRates });
+      
+      const convertedSubtotal = await convertPrice(subtotal);
+      const convertedShipping = await convertPrice(checkoutShippingCost);
+      const convertedTax = await convertPrice(tax);
+      const convertedTotal = await convertPrice(total);
+
+      console.log('Checkout conversion results:', {
+        original: { subtotal, checkoutShippingCost, tax, total },
+        converted: { convertedSubtotal, convertedShipping, convertedTax, convertedTotal }
+      });
+
+      setConvertedAmounts({
+        subtotal: convertedSubtotal?.convertedAmount || subtotal,
+        shipping: convertedShipping?.convertedAmount || checkoutShippingCost,
+        tax: convertedTax?.convertedAmount || tax,
+        total: convertedTotal?.convertedAmount || total
+      });
+    } catch (error) {
+      console.error('Error converting currencies:', error);
+      // Fallback to original amounts
+      setConvertedAmounts({
+        subtotal: subtotal,
+        shipping: checkoutShippingCost,
+        tax: tax,
+        total: total
+      });
+    }
+  }, [subtotal, checkoutShippingCost, tax, total, userCurrency, convertPrice, exchangeRates]);
+
+  // Listen for currency changes
   useEffect(() => {
-    const convertAmounts = async () => {
-      try {
-        console.log('Checkout conversion attempt:', { subtotal, userCurrency, exchangeRates });
-        
-        const convertedSubtotal = await convertPrice(subtotal);
-        const convertedShipping = await convertPrice(shippingCost);
-        const convertedTax = await convertPrice(tax);
-        const convertedTotal = await convertPrice(total);
-
-        console.log('Checkout conversion results:', {
-          original: { subtotal, shippingCost, tax, total },
-          converted: { convertedSubtotal, convertedShipping, convertedTax, convertedTotal }
-        });
-
-        setConvertedAmounts({
-          subtotal: convertedSubtotal?.convertedAmount || subtotal,
-          shipping: convertedShipping?.convertedAmount || shippingCost,
-          tax: convertedTax?.convertedAmount || tax,
-          total: convertedTotal?.convertedAmount || total
-        });
-      } catch (error) {
-        console.error('Error converting currencies:', error);
-        // Fallback to original amounts
-        setConvertedAmounts({
-          subtotal: subtotal,
-          shipping: shippingCost,
-          tax: tax,
-          total: total
-        });
-      }
+    const handleCurrencyChange = () => {
+      convertAmounts();
     };
 
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    return () => window.removeEventListener('currencyChanged', handleCurrencyChange);
+  }, [convertAmounts]);
+
+  // Convert prices when currency or amounts change
+  useEffect(() => {
     // Only convert if we have exchange rates and the currency is not USD
     if (exchangeRates && userCurrency !== 'USD') {
       convertAmounts();
@@ -412,12 +433,12 @@ export default function CheckoutPage() {
       // For USD or when no exchange rates, use original amounts
       setConvertedAmounts({
         subtotal: subtotal,
-        shipping: shippingCost,
+        shipping: checkoutShippingCost,
         tax: tax,
         total: total
       });
     }
-  }, [subtotal, checkoutShippingCost, tax, total, userCurrency, convertPrice, exchangeRates]);
+  }, [convertAmounts, exchangeRates, userCurrency]);
 
   // Razorpay config
   const { data: razorpayConfig } = useQuery({
