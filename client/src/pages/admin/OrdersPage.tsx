@@ -222,8 +222,8 @@ export default function OrdersPage() {
             
             <h4>Shipping Address</h4>
             <p>
-              ${order.shippingAddress?.address || ''}<br>
-              ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.postalCode || ''}<br>
+              ${order.shippingAddress?.street || order.shippingAddress?.address || ''}<br>
+              ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.zip || order.shippingAddress?.postalCode || ''}<br>
               ${order.shippingAddress?.country || ''}
             </p>
           </div>
@@ -605,9 +605,9 @@ export default function OrdersPage() {
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Shipping Address</h3>
                     <div className="text-sm">
-                      <p>{selectedOrderDetails.shippingAddress?.address || 'N/A'}</p>
+                      <p>{selectedOrderDetails.shippingAddress?.street || selectedOrderDetails.shippingAddress?.address || 'N/A'}</p>
                       <p>
-                        {selectedOrderDetails.shippingAddress?.city || 'N/A'}, {selectedOrderDetails.shippingAddress?.state || 'N/A'} {selectedOrderDetails.shippingAddress?.postalCode || 'N/A'}
+                        {selectedOrderDetails.shippingAddress?.city || 'N/A'}, {selectedOrderDetails.shippingAddress?.state || 'N/A'} {selectedOrderDetails.shippingAddress?.zip || selectedOrderDetails.shippingAddress?.postalCode || 'N/A'}
                       </p>
                       <p>{selectedOrderDetails.shippingAddress?.country || 'N/A'}</p>
                     </div>
