@@ -195,15 +195,40 @@ export default function MyOrdersPage() {
       });
       
       if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoice-${orderId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        const htmlContent = await response.text();
+        
+        // Open in new tab for printing as PDF
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(htmlContent);
+          newWindow.document.close();
+          
+          // Add print button and auto-focus for user convenience
+          newWindow.onload = () => {
+            // Add print button to the page
+            const printButton = newWindow.document.createElement('button');
+            printButton.textContent = 'Print / Save as PDF';
+            printButton.style.cssText = `
+              position: fixed;
+              top: 10px;
+              right: 10px;
+              z-index: 1000;
+              background: #007bff;
+              color: white;
+              border: none;
+              padding: 10px 15px;
+              border-radius: 5px;
+              cursor: pointer;
+              font-size: 14px;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            `;
+            printButton.onclick = () => newWindow.print();
+            newWindow.document.body.appendChild(printButton);
+            
+            // Auto-focus the window
+            newWindow.focus();
+          };
+        }
       }
     } catch (error) {
       console.error('Error downloading invoice:', error);
@@ -344,7 +369,7 @@ export default function MyOrdersPage() {
                           className="flex items-center gap-2"
                         >
                           <FileDown className="h-4 w-4" />
-                          Download Invoice
+                          View Invoice
                         </Button>
                       </div>
                     </div>
