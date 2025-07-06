@@ -117,6 +117,10 @@ export function useCurrency(countryCode?: string): UseCurrencyReturn {
     if (SUPPORTED_CURRENCIES.find(c => c.code === currencyCode)) {
       setUserCurrency(currencyCode);
       localStorage.setItem('user_preferred_currency', currencyCode);
+      
+      // Force re-render of all components using currency
+      window.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency: currencyCode } }));
+      
       // Reload exchange rates if needed
       if (currencyCode !== 'USD') {
         loadExchangeRates('USD');

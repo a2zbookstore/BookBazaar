@@ -39,67 +39,77 @@ export default function BookCard({ book }: BookCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
-  const { shipping } = useShipping();
+  const { shippingRate, shippingCost: shipCost } = useShipping();
   const [, setLocation] = useLocation();
   const [displayPrice, setDisplayPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
   const [shippingCost, setShippingCost] = useState<string>('');
 
   // Convert price and shipping cost to user's currency
-  useEffect(() => {
-    const convertPrices = async () => {
-      if (userCurrency !== 'USD') {
-        setIsConverting(true);
-        try {
-          const converted = await convertPrice(parseFloat(book.price));
-          if (converted) {
-            setDisplayPrice(formatAmount(converted.convertedAmount, userCurrency));
-          } else {
-            setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
-          }
-          
-          // Convert shipping cost if available from location-based shipping
-          if (shipping?.cost) {
-            const shippingAmount = parseFloat(shipping.cost);
-            if (shippingAmount === 0) {
-              setShippingCost('Free Delivery');
-            } else {
-              const convertedShipping = await convertPrice(shippingAmount);
-              if (convertedShipping) {
-                setShippingCost(formatAmount(convertedShipping.convertedAmount, userCurrency));
-              } else {
-                setShippingCost(formatAmount(shippingAmount, 'USD'));
-              }
-            }
-          }
-        } catch (error) {
+  const convertPrices = React.useCallback(async () => {
+    if (userCurrency !== 'USD') {
+      setIsConverting(true);
+      try {
+        const converted = await convertPrice(parseFloat(book.price));
+        if (converted) {
+          setDisplayPrice(formatAmount(converted.convertedAmount, userCurrency));
+        } else {
           setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
-          if (shipping?.cost) {
-            const shippingAmount = parseFloat(shipping.cost);
-            if (shippingAmount === 0) {
-              setShippingCost('Free Delivery');
-            } else {
-              setShippingCost(formatAmount(shippingAmount, 'USD'));
-            }
-          }
-        } finally {
-          setIsConverting(false);
         }
-      } else {
-        setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
-        if (shipping?.cost) {
-          const shippingAmount = parseFloat(shipping.cost);
-          if (shippingAmount === 0) {
+        
+        // Convert shipping cost if available from location-based shipping
+        if (shipCost !== undefined) {
+          if (shipCost === 0) {
             setShippingCost('Free Delivery');
           } else {
-            setShippingCost(formatAmount(shippingAmount, 'USD'));
+            const convertedShipping = await convertPrice(shipCost);
+            if (convertedShipping) {
+              setShippingCost(formatAmount(convertedShipping.convertedAmount, userCurrency));
+            } else {
+              setShippingCost(formatAmount(shipCost, 'USD'));
+            }
           }
         }
+      } catch (error) {
+        setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+        if (shipCost !== undefined) {
+          if (shipCost === 0) {
+            setShippingCost('Free Delivery');
+          } else {
+            setShippingCost(formatAmount(shipCost, 'USD'));
+          }
+        }
+      } finally {
+        setIsConverting(false);
       }
+    } else {
+      setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+      if (shipCost !== undefined) {
+        if (shipCost === 0) {
+          setShippingCost('Free Delivery');
+        } else {
+          setShippingCost(formatAmount(shipCost, 'USD'));
+        }
+      }
+    }
+  }, [book.price, userCurrency, convertPrice, formatAmount, shipCost]);
+
+  // Listen for currency changes to force re-conversion
+  useEffect(() => {
+    const handleCurrencyChange = (event: CustomEvent) => {
+      // Force re-conversion when currency changes
+      setIsConverting(true);
+      convertPrices();
     };
 
+    window.addEventListener('currencyChanged', handleCurrencyChange as EventListener);
+    return () => window.removeEventListener('currencyChanged', handleCurrencyChange as EventListener);
+  }, [convertPrices]);
+
+  // Convert prices when dependencies change
+  useEffect(() => {
     convertPrices();
-  }, [book.price, userCurrency, convertPrice, formatAmount, shipping]);
+  }, [convertPrices]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -116,93 +126,96 @@ export default function BookCard({ book }: BookCardProps) {
       setTimeout(() => {
         setLocation("/checkout");
       }, 500);
+      
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add to cart",
-        variant: "destructive",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive"
       });
     }
   };
 
-  const getConditionColor = (condition: string) => {
-    switch (condition.toLowerCase()) {
-      case "new":
-        return "bg-green-100 text-green-800";
-      case "like new":
-        return "bg-blue-100 text-blue-800";
-      case "very good":
-        return "bg-yellow-100 text-yellow-800";
-      case "good":
-        return "bg-orange-100 text-orange-800";
-      case "fair":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   return (
-    <Link href={`/books/${book.id}`}>
-      <div className="book-card group cursor-pointer">
-        {/* Book Image */}
-        <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100 relative" style={{ minHeight: '200px' }}>
-          <img
-            src={getImageSrc(book.imageUrl)}
+    <div className="group relative bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border">
+      {/* Wishlist Heart */}
+      <div className="absolute top-2 right-2 z-10">
+        <WishlistHeart bookId={book.id} />
+      </div>
+
+      <Link to={`/book/${book.id}`} className="block">
+        <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative">
+          <img 
+            src={getImageSrc(book.imageUrl)} 
             alt={book.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
-                target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-              }
+              e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
             }}
           />
-          
-          {/* Wishlist Heart */}
-          <div className="absolute top-2 right-2 z-10">
-            <WishlistHeart bookId={book.id} size={24} className="bg-white/80 backdrop-blur-sm rounded-full p-1" />
-          </div>
+          {book.featured && (
+            <Badge className="absolute top-2 left-2 bg-amber-500 text-white">
+              Featured
+            </Badge>
+          )}
+          {book.bestseller && (
+            <Badge className="absolute top-8 left-2 bg-purple-500 text-white">
+              Bestseller
+            </Badge>
+          )}
         </div>
-
-        {/* Book Info */}
-        <div className="space-y-3">
-          <div>
-            <h3 className="font-bookerly font-semibold text-base-black line-clamp-2 group-hover:text-primary-aqua transition-colors">
-              {book.title}
-            </h3>
-            <p className="text-secondary-black text-sm">{book.author}</p>
-          </div>
+        
+        <div className="p-4">
+          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm">
+            {book.title}
+          </h3>
+          <p className="text-sm text-gray-600 mb-2">{book.author}</p>
           
-          {/* Book Details Grid */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {/* Condition */}
-            <div className="flex items-center gap-1">
-              <Badge variant="secondary" className={`text-xs ${getConditionColor(book.condition)}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-lg font-bold text-secondary-aqua">
+              {isConverting ? (
+                <span className="text-sm">Converting...</span>
+              ) : (
+                displayPrice || formatAmount(parseFloat(book.price), 'USD')
+              )}
+            </div>
+            {book.condition && (
+              <Badge variant="outline" className="text-xs">
                 {book.condition}
               </Badge>
-            </div>
-            
-            {/* Binding */}
-            <div className="flex items-center gap-1">
-              <BookIcon className="h-3 w-3 text-gray-500" />
-              <span className="text-secondary-black">{book.binding || 'Paperback'}</span>
-            </div>
+            )}
           </div>
 
-          {/* Shipping & Delivery Info */}
-          <div className="space-y-1 text-xs">
+          {/* Rating */}
+          <div className="flex items-center mb-2">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-3 w-3 ${
+                    i < Math.floor(Math.random() * 5 + 3) 
+                      ? 'text-yellow-400 fill-current' 
+                      : 'text-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-gray-500 ml-1">(4.5)</span>
+          </div>
+
+          {/* Shipping and Return Info */}
+          <div className="space-y-1 text-xs text-gray-500 mb-3">
             <div className="flex items-center gap-1">
               <Truck className="h-3 w-3 text-green-600" />
-              <span className="text-secondary-black">
-                Shipping: {shippingCost || '$25.00'}
+              <span className="text-secondary-black font-medium">
+                {shippingCost || 'Calculating shipping...'}
               </span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 text-blue-600" />
               <span className="text-secondary-black">
-                {shipping?.minDeliveryDays && shipping?.maxDeliveryDays ? 
-                  `${shipping.minDeliveryDays}-${shipping.maxDeliveryDays} days delivery` : 
+                {shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ? 
+                  `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days delivery` : 
                   '5-7 days delivery'
                 }
               </span>
@@ -212,68 +225,20 @@ export default function BookCard({ book }: BookCardProps) {
               <span className="text-secondary-black">15-day returns</span>
             </div>
           </div>
-
-          {/* Rating */}
-          <div className="flex items-center gap-1">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className="h-3 w-3 fill-yellow-400 text-yellow-400"
-                />
-              ))}
-            </div>
-            <span className="text-xs text-secondary-black">(4.8)</span>
-          </div>
-
-          {/* Price and Add to Cart */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <div className="flex flex-col">
-              {isConverting ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
-                  <span className="text-xs text-secondary-black">Converting...</span>
-                </div>
-              ) : (
-                <>
-                  <span className="text-xl font-bold text-primary-aqua">
-                    {displayPrice || `$${parseFloat(book.price).toFixed(2)}`}
-                  </span>
-                  {userCurrency !== 'USD' && displayPrice && (
-                    <span className="text-xs text-secondary-black">
-                      from ${parseFloat(book.price).toFixed(2)} USD
-                    </span>
-                  )}
-                  {userCurrency !== 'USD' && (
-                    <Badge variant="secondary" className="text-xs mt-1 bg-green-50 text-green-700 border-green-200">
-                      Your Currency
-                    </Badge>
-                  )}
-                </>
-              )}
-            </div>
-            <Button
-              size="sm"
-              onClick={handleAddToCart}
-              className="bg-primary-aqua hover:bg-secondary-aqua text-white px-4 py-3 text-sm flex items-center gap-2 touch-target min-h-[44px] w-full sm:w-auto"
-              disabled={book.stock === 0}
-            >
-              {book.stock === 0 ? (
-                "Out of Stock"
-              ) : (
-                <>
-                  <ShoppingCart className="h-4 w-4" />
-                  Add to Cart
-                </>
-              )}
-            </Button>
-          </div>
-
-          {book.stock > 0 && book.stock <= 5 && (
-            <p className="text-xs text-abe-red font-medium">Only {book.stock} left in stock!</p>
-          )}
         </div>
+      </Link>
+      
+      {/* Add to Cart Button */}
+      <div className="px-4 pb-4">
+        <Button
+          onClick={handleAddToCart}
+          className="w-full bg-primary-aqua hover:bg-primary-aqua/90 text-white text-sm py-2"
+          size="sm"
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Add to Cart
+        </Button>
       </div>
-    </Link>
+    </div>
   );
 }
