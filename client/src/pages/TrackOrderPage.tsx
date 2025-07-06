@@ -62,7 +62,8 @@ export default function TrackOrderPage() {
 
   const trackOrderMutation = useMutation({
     mutationFn: async (data: { orderId: string; email: string }): Promise<TrackingInfo> => {
-      return await apiRequest("/api/track-order", "POST", data);
+      const response = await apiRequest("/api/track-order", "POST", data);
+      return await response.json();
     },
     onSuccess: (data: TrackingInfo) => {
       setTrackingInfo(data);
