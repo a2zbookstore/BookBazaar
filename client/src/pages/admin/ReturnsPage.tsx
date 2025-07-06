@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -229,18 +229,17 @@ export default function ReturnsPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="refund_processed">Refund Processed</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="refund_processed">Refund Processed</option>
+              </select>
             </div>
           </div>
         </div>
@@ -432,16 +431,16 @@ export default function ReturnsPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
                                     <Label htmlFor="status">Status</Label>
-                                    <Select value={newStatus} onValueChange={setNewStatus}>
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="approved">Approved</SelectItem>
-                                        <SelectItem value="rejected">Rejected</SelectItem>
-                                      </SelectContent>
-                                    </Select>
+                                    <select
+                                      id="status"
+                                      value={newStatus}
+                                      onChange={(e) => setNewStatus(e.target.value)}
+                                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      <option value="pending">Pending</option>
+                                      <option value="approved">Approved</option>
+                                      <option value="rejected">Rejected</option>
+                                    </select>
                                   </div>
                                   <div></div>
                                 </div>
@@ -468,16 +467,16 @@ export default function ReturnsPage() {
 
                                   {returnRequest.status === "approved" && (
                                     <div className="flex gap-2">
-                                      <Select value={refundMethod} onValueChange={setRefundMethod}>
-                                        <SelectTrigger className="w-40">
-                                          <SelectValue placeholder="Refund Method" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="paypal">PayPal</SelectItem>
-                                          <SelectItem value="razorpay">Razorpay</SelectItem>
-                                          <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                        </SelectContent>
-                                      </Select>
+                                      <select
+                                        value={refundMethod}
+                                        onChange={(e) => setRefundMethod(e.target.value)}
+                                        className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                        <option value="">Select Method</option>
+                                        <option value="paypal">PayPal</option>
+                                        <option value="razorpay">Razorpay</option>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                      </select>
                                       <Input
                                         placeholder="Refund reason"
                                         value={refundReason}
