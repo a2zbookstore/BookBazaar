@@ -60,6 +60,14 @@ export default function MyOrdersPage() {
   // Guest order lookup functionality
   const { data: guestOrders = [], isLoading: guestLoading, refetch: refetchGuestOrders } = useQuery<Order[]>({
     queryKey: ["/api/guest-orders", guestEmail],
+    queryFn: async () => {
+      if (!guestEmail) return [];
+      const response = await fetch(`/api/guest-orders?email=${encodeURIComponent(guestEmail)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+      return response.json();
+    },
     enabled: !isAuthenticated && guestEmail.length > 0,
   });
 
