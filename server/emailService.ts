@@ -616,6 +616,43 @@ export const generateWelcomeHTMLInternal = (data: WelcomeEmailData) => {
   `;
 };
 
+// Send welcome email to new customers
+export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<boolean> => {
+  try {
+    const transporter = createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not available - skipping welcome email');
+      return false;
+    }
+
+    const htmlContent = generateWelcomeHTMLInternal(data);
+    const customerEmail = data.user.email;
+
+    if (!customerEmail) {
+      console.log('No email provided for welcome email - skipping');
+      return false;
+    }
+
+    const mailOptions = {
+      from: {
+        name: 'A2Z BOOKSHOP',
+        address: 'orders@a2zbookshop.com'
+      },
+      to: customerEmail,
+      subject: 'Welcome to A2Z BOOKSHOP - Your Book Journey Begins!',
+      html: htmlContent,
+      text: `Welcome to A2Z BOOKSHOP! Thank you for joining our community of book lovers. We're excited to help you discover amazing books from around the world.`
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Welcome email sent successfully to ${customerEmail}:`, info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    return false;
+  }
+};
+
 // Generic email sending function
 export const sendEmail = async (params: {
   to: string;

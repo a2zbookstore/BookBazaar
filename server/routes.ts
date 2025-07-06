@@ -8,7 +8,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
@@ -441,11 +441,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         await sendWelcomeEmail({
           user: {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            phone: user.phone,
-            authProvider: user.authProvider
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.email || undefined,
+            phone: user.phone || undefined,
+            authProvider: user.authProvider || "email"
           }
         });
       } catch (emailError) {
@@ -750,6 +750,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             userId = newUser.id;
             user = newUser;
+            
+            // Send welcome email
+            try {
+              await sendWelcomeEmail({
+                user: {
+                  firstName: newUser.firstName,
+                  lastName: newUser.lastName,
+                  email: newUser.email || undefined,
+                  phone: newUser.phone || undefined,
+                  authProvider: newUser.authProvider
+                }
+              });
+            } catch (emailError) {
+              console.error("Failed to send welcome email during checkout:", emailError);
+              // Don't fail checkout if email fails
+            }
             
             // Set user session
             (req.session as any).userId = newUser.id;
