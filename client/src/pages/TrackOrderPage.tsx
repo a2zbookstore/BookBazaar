@@ -64,7 +64,7 @@ export default function TrackOrderPage() {
     mutationFn: async (data: { orderId: string; email: string }): Promise<TrackingInfo> => {
       console.log("Tracking order with data:", data);
       try {
-        const response = await apiRequest("/api/track-order", "POST", data);
+        const response = await apiRequest("POST", "/api/track-order", data);
         console.log("API response status:", response.status);
         const result = await response.json();
         console.log("API response data:", result);
