@@ -241,18 +241,10 @@ export default function MyOrdersPage() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            {/* Homepage Navigation */}
-            <div className="mb-6">
-              <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
-                <Home className="h-6 w-6" />
-                A<span className="text-red-500">2</span>Z BOOKSHOP
-              </Link>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
+              <p className="text-gray-600">View and track your order history</p>
             </div>
-          
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
-            <p className="text-gray-600">View and track your order history</p>
-          </div>
 
           {!orders || orders.length === 0 ? (
             <Card>
