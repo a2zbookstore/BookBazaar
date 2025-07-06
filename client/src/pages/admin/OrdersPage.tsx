@@ -94,6 +94,12 @@ export default function OrdersPage() {
     enabled: isAuthenticated && selectedBillOrderId !== null,
   });
 
+  useEffect(() => {
+    if (selectedOrderDetails) {
+      console.log("Selected order details data:", selectedOrderDetails);
+    }
+  }, [selectedOrderDetails]);
+
   const updateOrderMutation = useMutation({
     mutationFn: async (data: { 
       orderId: number; 
@@ -551,21 +557,34 @@ export default function OrdersPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Order Date</p>
-                      <p className="font-semibold">{format(new Date(selectedOrderDetails.createdAt), 'MMM dd, yyyy')}</p>
+                      <p className="font-semibold">
+                        {selectedOrderDetails.createdAt 
+                          ? format(new Date(selectedOrderDetails.createdAt), 'MMM dd, yyyy')
+                          : 'N/A'
+                        }
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Status</p>
-                      <Badge variant={getStatusVariant(selectedOrderDetails.status)}>
-                        {selectedOrderDetails.status.charAt(0).toUpperCase() + selectedOrderDetails.status.slice(1)}
+                      <Badge variant={getStatusVariant(selectedOrderDetails.status || 'pending')}>
+                        {selectedOrderDetails.status 
+                          ? selectedOrderDetails.status.charAt(0).toUpperCase() + selectedOrderDetails.status.slice(1)
+                          : 'Pending'
+                        }
                       </Badge>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Payment</p>
-                      <Badge variant="outline">{selectedOrderDetails.paymentStatus}</Badge>
+                      <Badge variant="outline">{selectedOrderDetails.paymentStatus || 'N/A'}</Badge>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Total Amount</p>
-                      <p className="font-semibold text-lg">${parseFloat(selectedOrderDetails.total).toFixed(2)}</p>
+                      <p className="font-semibold text-lg">
+                        ${selectedOrderDetails.total 
+                          ? parseFloat(selectedOrderDetails.total).toFixed(2) 
+                          : '0.00'
+                        }
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -575,8 +594,8 @@ export default function OrdersPage() {
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Customer Information</h3>
                     <div className="space-y-2">
-                      <p><strong>Name:</strong> {selectedOrderDetails.customerName}</p>
-                      <p><strong>Email:</strong> {selectedOrderDetails.customerEmail}</p>
+                      <p><strong>Name:</strong> {selectedOrderDetails.customerName || 'N/A'}</p>
+                      <p><strong>Email:</strong> {selectedOrderDetails.customerEmail || 'N/A'}</p>
                       {selectedOrderDetails.customerPhone && (
                         <p><strong>Phone:</strong> {selectedOrderDetails.customerPhone}</p>
                       )}
@@ -586,9 +605,11 @@ export default function OrdersPage() {
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Shipping Address</h3>
                     <div className="text-sm">
-                      <p>{selectedOrderDetails.shippingAddress?.address}</p>
-                      <p>{selectedOrderDetails.shippingAddress?.city}, {selectedOrderDetails.shippingAddress?.state} {selectedOrderDetails.shippingAddress?.postalCode}</p>
-                      <p>{selectedOrderDetails.shippingAddress?.country}</p>
+                      <p>{selectedOrderDetails.shippingAddress?.address || 'N/A'}</p>
+                      <p>
+                        {selectedOrderDetails.shippingAddress?.city || 'N/A'}, {selectedOrderDetails.shippingAddress?.state || 'N/A'} {selectedOrderDetails.shippingAddress?.postalCode || 'N/A'}
+                      </p>
+                      <p>{selectedOrderDetails.shippingAddress?.country || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -610,13 +631,26 @@ export default function OrdersPage() {
                       <tbody>
                         {selectedOrderDetails.items?.map((item: any, index: number) => (
                           <tr key={index} className="border-t">
-                            <td className="px-4 py-3">{item.title}</td>
-                            <td className="px-4 py-3">{item.author}</td>
-                            <td className="px-4 py-3 text-right">${parseFloat(item.price).toFixed(2)}</td>
-                            <td className="px-4 py-3 text-right">{item.quantity}</td>
-                            <td className="px-4 py-3 text-right">${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                            <td className="px-4 py-3">{item.title || item.book?.title || 'N/A'}</td>
+                            <td className="px-4 py-3">{item.author || item.book?.author || 'N/A'}</td>
+                            <td className="px-4 py-3 text-right">
+                              ${item.price ? parseFloat(item.price).toFixed(2) : item.book?.price ? parseFloat(item.book.price).toFixed(2) : '0.00'}
+                            </td>
+                            <td className="px-4 py-3 text-right">{item.quantity || 0}</td>
+                            <td className="px-4 py-3 text-right">
+                              ${item.price && item.quantity 
+                                ? (parseFloat(item.price) * item.quantity).toFixed(2) 
+                                : item.book?.price && item.quantity 
+                                ? (parseFloat(item.book.price) * item.quantity).toFixed(2) 
+                                : '0.00'
+                              }
+                            </td>
                           </tr>
-                        ))}
+                        )) || (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-3 text-center text-gray-500">No items found</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -628,19 +662,19 @@ export default function OrdersPage() {
                     <div className="w-64 space-y-2">
                       <div className="flex justify-between">
                         <span>Subtotal:</span>
-                        <span>${parseFloat(selectedOrderDetails.subtotal).toFixed(2)}</span>
+                        <span>${selectedOrderDetails.subtotal ? parseFloat(selectedOrderDetails.subtotal).toFixed(2) : '0.00'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Shipping:</span>
-                        <span>${parseFloat(selectedOrderDetails.shipping).toFixed(2)}</span>
+                        <span>${selectedOrderDetails.shipping ? parseFloat(selectedOrderDetails.shipping).toFixed(2) : '0.00'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Tax:</span>
-                        <span>${parseFloat(selectedOrderDetails.tax).toFixed(2)}</span>
+                        <span>${selectedOrderDetails.tax ? parseFloat(selectedOrderDetails.tax).toFixed(2) : '0.00'}</span>
                       </div>
                       <div className="flex justify-between font-bold text-lg border-t pt-2">
                         <span>Total:</span>
-                        <span>${parseFloat(selectedOrderDetails.total).toFixed(2)}</span>
+                        <span>${selectedOrderDetails.total ? parseFloat(selectedOrderDetails.total).toFixed(2) : '0.00'}</span>
                       </div>
                     </div>
                   </div>

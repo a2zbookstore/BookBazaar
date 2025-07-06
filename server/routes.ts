@@ -245,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Get individual order (accessible to both authenticated users and guests with email)
+  // Get individual order (accessible to admins, authenticated users, and guests with email)
   app.get('/api/orders/:id', async (req, res) => {
     try {
       const { id } = req.params;
@@ -254,31 +254,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let order;
       let isAuthorized = false;
       
-      // Check for session-based customer authentication
-      const sessionUserId = (req.session as any).userId;
-      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      // Check for admin session authentication FIRST
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
       
-      if (sessionUserId && isCustomerAuth) {
-        order = await storage.getOrderById(parseInt(id));
-        if (order && order.userId === sessionUserId) {
-          isAuthorized = true;
+      console.log("Order detail admin auth check:", {
+        adminId,
+        isAdmin,
+        sessionData: req.session,
+        orderId: id
+      });
+      
+      if (adminId && isAdmin) {
+        // Admin can access any order
+        const admin = await storage.getAdminById(adminId);
+        console.log("Admin found:", admin);
+        if (admin && admin.isActive) {
+          order = await storage.getOrderById(parseInt(id));
+          if (order) {
+            isAuthorized = true;
+            console.log("Admin authorized for order:", order.id);
+          }
         }
       }
-      // Check for Replit authentication
-      else if (req.isAuthenticated && req.isAuthenticated()) {
+      
+      // If not authorized as admin, check for session-based customer authentication
+      if (!isAuthorized) {
+        const sessionUserId = (req.session as any).userId;
+        const isCustomerAuth = (req.session as any).isCustomerAuth;
+        
+        if (sessionUserId && isCustomerAuth) {
+          order = await storage.getOrderById(parseInt(id));
+          if (order && order.userId === sessionUserId) {
+            isAuthorized = true;
+          }
+        }
+      }
+      
+      // If still not authorized, check for Replit authentication
+      if (!isAuthorized && req.isAuthenticated && req.isAuthenticated()) {
         const userId = (req.user as any).claims.sub;
         order = await storage.getOrderById(parseInt(id));
         if (order && order.userId === userId) {
           isAuthorized = true;
         }
       }
-      // Guest access with email
-      else if (email) {
+      
+      // If still not authorized, try guest access with email
+      if (!isAuthorized && email) {
         order = await storage.getOrderByIdAndEmail(parseInt(id), email as string);
         if (order) {
           isAuthorized = true;
         }
-      } else {
+      }
+      
+      // If still not authorized after all checks, require email for guest access
+      if (!isAuthorized) {
         return res.status(401).json({ message: "Email required for guest access" });
       }
       
