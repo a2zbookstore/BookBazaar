@@ -69,9 +69,11 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
+    console.log("PayPal order creation request body:", req.body);
     const { amount, currency, intent, return_url, cancel_url } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      console.log("Invalid amount:", amount);
       return res
         .status(400)
         .json({
@@ -80,12 +82,14 @@ export async function createPaypalOrder(req: Request, res: Response) {
     }
 
     if (!currency) {
+      console.log("Missing currency");
       return res
         .status(400)
         .json({ error: "Invalid currency. Currency is required." });
     }
 
     if (!intent) {
+      console.log("Missing intent");
       return res
         .status(400)
         .json({ error: "Invalid intent. Intent is required." });
@@ -113,15 +117,21 @@ export async function createPaypalOrder(req: Request, res: Response) {
       prefer: "return=representation",
     };
 
+    console.log("PayPal order collection object:", JSON.stringify(collect, null, 2));
+
     const { body, ...httpResponse } =
           await ordersController.createOrder(collect);
+
+    console.log("PayPal response status:", httpResponse.statusCode);
+    console.log("PayPal response body:", String(body));
 
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;
 
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
-    console.error("Failed to create order:", error);
+    console.error("Failed to create order - full error:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({ error: "Failed to create order." });
   }
 }
