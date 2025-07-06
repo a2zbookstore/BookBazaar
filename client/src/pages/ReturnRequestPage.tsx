@@ -49,7 +49,7 @@ export default function ReturnRequestPage() {
   const [guestEmail, setGuestEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
-  const [returnReason, setReturnReason] = useState("");
+  const [returnReason, setReturnReason] = useState("none");
   const [returnDescription, setReturnDescription] = useState("");
   const [selectedItems, setSelectedItems] = useState<ReturnItem[]>([]);
 
@@ -120,8 +120,8 @@ export default function ReturnRequestPage() {
   const handleItemSelection = (bookId: number, quantity: number, reason: string) => {
     const existingIndex = selectedItems.findIndex(item => item.bookId === bookId);
     
-    if (quantity === 0 || !reason) {
-      // Remove item if quantity is 0 or no reason
+    if (quantity === 0 || !reason || reason === "none") {
+      // Remove item if quantity is 0 or no reason selected
       if (existingIndex !== -1) {
         setSelectedItems(prev => prev.filter((_, index) => index !== existingIndex));
       }
@@ -151,7 +151,7 @@ export default function ReturnRequestPage() {
   };
 
   const handleSubmitReturn = () => {
-    if (!selectedOrderId || !returnReason || !returnDescription || selectedItems.length === 0) {
+    if (!selectedOrderId || !returnReason || returnReason === "none" || !returnDescription || selectedItems.length === 0) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields and select items to return.",
@@ -372,7 +372,7 @@ export default function ReturnRequestPage() {
                                 handleItemSelection(
                                   item.bookId,
                                   qty,
-                                  selectedItem?.reason || returnReason
+                                  selectedItem?.reason || returnReason || "none"
                                 );
                               }}
                             >
