@@ -472,7 +472,7 @@ export default function ReturnRequestPage() {
               <div className="space-x-4">
                 <Button 
                   variant="outline" 
-                  onClick={() => window.location.href = '/orders'}
+                  onClick={() => window.location.href = '/my-orders'}
                 >
                   View My Orders
                 </Button>
