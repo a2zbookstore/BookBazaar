@@ -1,27 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, ChevronDown } from 'lucide-react';
+import { useCurrency } from '@/hooks/useCurrency';
+import { getCurrencyForCountry } from '@/lib/currencyUtils';
 
 const POPULAR_COUNTRIES = [
-  { code: 'US', name: 'United States', flag: '🇺🇸' },
-  { code: 'CA', name: 'Canada', flag: '🇨🇦' },
-  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
-  { code: 'AU', name: 'Australia', flag: '🇦🇺' },
-  { code: 'DE', name: 'Germany', flag: '🇩🇪' },
-  { code: 'FR', name: 'France', flag: '🇫🇷' },
-  { code: 'IN', name: 'India', flag: '🇮🇳' },
-  { code: 'JP', name: 'Japan', flag: '🇯🇵' },
-  { code: 'CN', name: 'China', flag: '🇨🇳' },
-  { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
-  { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
-  { code: 'IT', name: 'Italy', flag: '🇮🇹' },
-  { code: 'ES', name: 'Spain', flag: '🇪🇸' },
-  { code: 'NL', name: 'Netherlands', flag: '🇳🇱' },
-  { code: 'SE', name: 'Sweden', flag: '🇸🇪' },
-  { code: 'NO', name: 'Norway', flag: '🇳🇴' },
-  { code: 'DK', name: 'Denmark', flag: '🇩🇰' },
-  { code: 'CH', name: 'Switzerland', flag: '🇨🇭' },
-  { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
-  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿' },
+  { code: 'US', name: 'United States', flag: '🇺🇸', currency: 'USD' },
+  { code: 'CA', name: 'Canada', flag: '🇨🇦', currency: 'CAD' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺', currency: 'AUD' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪', currency: 'EUR' },
+  { code: 'FR', name: 'France', flag: '🇫🇷', currency: 'EUR' },
+  { code: 'IN', name: 'India', flag: '🇮🇳', currency: 'INR' },
+  { code: 'JP', name: 'Japan', flag: '🇯🇵', currency: 'JPY' },
+  { code: 'CN', name: 'China', flag: '🇨🇳', currency: 'CNY' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷', currency: 'BRL' },
+  { code: 'MX', name: 'Mexico', flag: '🇲🇽', currency: 'MXN' },
+  { code: 'IT', name: 'Italy', flag: '🇮🇹', currency: 'EUR' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸', currency: 'EUR' },
+  { code: 'NL', name: 'Netherlands', flag: '🇳🇱', currency: 'EUR' },
+  { code: 'SE', name: 'Sweden', flag: '🇸🇪', currency: 'SEK' },
+  { code: 'NO', name: 'Norway', flag: '🇳🇴', currency: 'NOK' },
+  { code: 'DK', name: 'Denmark', flag: '🇩🇰', currency: 'DKK' },
+  { code: 'CH', name: 'Switzerland', flag: '🇨🇭', currency: 'CHF' },
+  { code: 'SG', name: 'Singapore', flag: '🇸🇬', currency: 'SGD' },
+  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿', currency: 'NZD' },
 ];
 
 interface CountrySelectorProps {
@@ -34,7 +36,8 @@ export default function CountrySelector({
   showShippingCost = true 
 }: CountrySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentCountry, setCurrentCountry] = useState<{code: string, name: string, flag: string} | null>(null);
+  const [currentCountry, setCurrentCountry] = useState<{code: string, name: string, flag: string, currency: string} | null>(null);
+  const { setCurrency } = useCurrency();
 
   useEffect(() => {
     // Get saved country from localStorage or default to US
@@ -56,7 +59,7 @@ export default function CountrySelector({
     }
   }, []);
 
-  const handleCountrySelect = (country: {code: string, name: string, flag: string}) => {
+  const handleCountrySelect = (country: {code: string, name: string, flag: string, currency: string}) => {
     try {
       setCurrentCountry(country);
       setIsOpen(false);
@@ -67,10 +70,12 @@ export default function CountrySelector({
         country: country.name
       }));
       
-      // Refresh page to update shipping costs and currency
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      // Update currency without page refresh
+      setCurrency(country.currency);
+      
+      // Save the currency preference
+      localStorage.setItem('user_preferred_currency', country.currency);
+      
     } catch (error) {
       console.error('Error selecting country:', error);
       setIsOpen(false);
@@ -116,15 +121,16 @@ export default function CountrySelector({
                 <div className="flex items-center">
                   <span className="mr-2">{country.flag}</span>
                   <span>{country.name}</span>
+                  <span className="ml-2 text-xs text-gray-500">({country.currency})</span>
                 </div>
-                {currentCountry.code === country.code && (
+                {currentCountry && currentCountry.code === country.code && (
                   <span className="text-green-600 text-xs">✓</span>
                 )}
               </div>
             ))}
           </div>
           <div className="px-2 py-1 text-xs text-gray-500 border-t">
-            Shipping costs will update automatically
+            Currency and shipping costs will update automatically
           </div>
         </div>
       )}
