@@ -319,21 +319,19 @@ export default function ReturnRequestPage() {
 
               <div>
                 <Label htmlFor="returnReason">Reason for Return *</Label>
-                <Select value={returnReason} onValueChange={(value) => {
-                  if (value !== "none") setReturnReason(value);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Select a reason</SelectItem>
-                    {returnReasons.map((reason) => (
-                      <SelectItem key={reason.value} value={reason.value}>
-                        {reason.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select 
+                  id="returnReason"
+                  value={returnReason} 
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
+                >
+                  <option value="none">Select a reason</option>
+                  {returnReasons.map((reason) => (
+                    <option key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -368,35 +366,32 @@ export default function ReturnRequestPage() {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label>Return Quantity</Label>
-                            <Select
+                            <select
                               value={selectedItem?.quantity?.toString() || "0"}
-                              onValueChange={(value) => {
-                                const qty = parseInt(value);
+                              onChange={(e) => {
+                                const qty = parseInt(e.target.value);
                                 handleItemSelection(
                                   item.bookId,
                                   qty,
                                   selectedItem?.reason || returnReason || "none"
                                 );
                               }}
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
                             >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="0">Don't return</SelectItem>
-                                {Array.from({ length: item.quantity }, (_, i) => (
-                                  <SelectItem key={i + 1} value={(i + 1).toString()}>
-                                    {i + 1}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              <option value="0">Don't return</option>
+                              {Array.from({ length: item.quantity }, (_, i) => (
+                                <option key={i + 1} value={(i + 1).toString()}>
+                                  {i + 1}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                           <div>
                             <Label>Item-specific Reason</Label>
-                            <Select
+                            <select
                               value={selectedItem?.reason || "none"}
-                              onValueChange={(reason) => {
+                              onChange={(e) => {
+                                const reason = e.target.value;
                                 if (reason === "none") return;
                                 handleItemSelection(
                                   item.bookId,
@@ -404,19 +399,15 @@ export default function ReturnRequestPage() {
                                   reason
                                 );
                               }}
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
                             >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select reason" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Select reason</SelectItem>
-                                {returnReasons.map((reason) => (
-                                  <SelectItem key={reason.value} value={reason.value}>
-                                    {reason.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              <option value="none">Select reason</option>
+                              {returnReasons.map((reason) => (
+                                <option key={reason.value} value={reason.value}>
+                                  {reason.label}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         </div>
                       </div>
