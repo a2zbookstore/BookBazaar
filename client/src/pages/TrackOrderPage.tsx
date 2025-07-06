@@ -62,13 +62,24 @@ export default function TrackOrderPage() {
 
   const trackOrderMutation = useMutation({
     mutationFn: async (data: { orderId: string; email: string }): Promise<TrackingInfo> => {
-      const response = await apiRequest("/api/track-order", "POST", data);
-      return await response.json();
+      console.log("Tracking order with data:", data);
+      try {
+        const response = await apiRequest("/api/track-order", "POST", data);
+        console.log("API response status:", response.status);
+        const result = await response.json();
+        console.log("API response data:", result);
+        return result;
+      } catch (error) {
+        console.error("Track order error:", error);
+        throw error;
+      }
     },
     onSuccess: (data: TrackingInfo) => {
+      console.log("Track order success:", data);
       setTrackingInfo(data);
     },
     onError: (error: any) => {
+      console.error("Track order mutation error:", error);
       toast({
         title: "Order Not Found",
         description: error.message || "Please check your order ID and email address.",
