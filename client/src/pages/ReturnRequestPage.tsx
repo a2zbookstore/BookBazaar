@@ -319,11 +319,14 @@ export default function ReturnRequestPage() {
 
               <div>
                 <Label htmlFor="returnReason">Reason for Return *</Label>
-                <Select value={returnReason} onValueChange={setReturnReason}>
+                <Select value={returnReason} onValueChange={(value) => {
+                  if (value !== "none") setReturnReason(value);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a reason" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">Select a reason</SelectItem>
                     {returnReasons.map((reason) => (
                       <SelectItem key={reason.value} value={reason.value}>
                         {reason.label}
