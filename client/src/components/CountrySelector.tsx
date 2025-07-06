@@ -1,14 +1,5 @@
-import React, { useState } from 'react';
-import { Globe, ChevronDown, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { useLocation } from '@/hooks/useLocation';
-import { useShipping } from '@/hooks/useShipping';
+import React, { useState, useEffect } from 'react';
+import { Globe, ChevronDown } from 'lucide-react';
 
 const POPULAR_COUNTRIES = [
   { code: 'US', name: 'United States', flag: '🇺🇸' },
@@ -42,14 +33,40 @@ export default function CountrySelector({
   className = "", 
   showShippingCost = true 
 }: CountrySelectorProps) {
-  const { location, setManualCountry, isLoading: locationLoading } = useLocation();
-  const { shippingCost, isLoading: shippingLoading, error: shippingError } = useShipping();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentCountry, setCurrentCountry] = useState<{code: string, name: string, flag: string} | null>(null);
 
-  const handleCountrySelect = (countryCode: string, countryName: string) => {
+  useEffect(() => {
+    // Get saved country from localStorage or default to US
     try {
-      setManualCountry(countryCode, countryName);
+      const saved = localStorage.getItem('manual_country_selection');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const country = POPULAR_COUNTRIES.find(c => c.code === parsed.countryCode);
+        if (country) {
+          setCurrentCountry(country);
+        }
+      } else {
+        // Default to US
+        setCurrentCountry(POPULAR_COUNTRIES[0]);
+      }
+    } catch (error) {
+      // Default to US if any error
+      setCurrentCountry(POPULAR_COUNTRIES[0]);
+    }
+  }, []);
+
+  const handleCountrySelect = (country: {code: string, name: string, flag: string}) => {
+    try {
+      setCurrentCountry(country);
       setIsOpen(false);
+      
+      // Save to localStorage
+      localStorage.setItem('manual_country_selection', JSON.stringify({
+        countryCode: country.code,
+        country: country.name
+      }));
+      
       // Refresh page to update shipping costs and currency
       setTimeout(() => {
         window.location.reload();
@@ -60,91 +77,65 @@ export default function CountrySelector({
     }
   };
 
-  const getCurrentFlag = () => {
-    try {
-      const country = POPULAR_COUNTRIES.find(c => c.code === location?.countryCode);
-      return country?.flag || '🌍';
-    } catch (error) {
-      console.error('Error getting flag:', error);
-      return '🌍';
-    }
-  };
-
-  const isLoading = locationLoading || shippingLoading;
-
-  // Return error state if shipping error
-  if (shippingError) {
+  if (!currentCountry) {
     return (
-      <Button 
-        variant="outline" 
-        size="sm" 
+      <button 
         className={`text-xs px-2 py-1 rounded border hover:bg-gray-50 ${className}`}
         disabled
       >
-        <Globe className="h-3 w-3 mr-1" />
-        Error
-      </Button>
+        <Globe className="h-3 w-3 mr-1 inline" />
+        Loading...
+      </button>
     );
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className={`text-xs px-2 py-1 rounded border hover:bg-gray-50 ${className}`}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Globe className="h-3 w-3 mr-1" />
-              Loading...
-            </>
-          ) : (
-            <>
-              <span className="mr-1">{getCurrentFlag()}</span>
-              <span className="hidden sm:inline">{location?.country || 'Select Country'}</span>
-              <span className="sm:hidden">{location?.countryCode || 'Country'}</span>
-              {showShippingCost && shippingCost > 0 && (
-                <span className="ml-1 text-green-600">
-                  (${shippingCost.toFixed(2)})
-                </span>
-              )}
-              {showShippingCost && shippingCost === 0 && (
-                <span className="ml-1 text-green-600">
-                  (Free)
-                </span>
-              )}
-              <ChevronDown className="h-3 w-3 ml-1" />
-            </>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <div className="px-2 py-1 text-xs font-medium text-gray-500 border-b">
-          <MapPin className="h-3 w-3 inline mr-1" />
-          Select Your Country
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`text-xs px-2 py-1 rounded border hover:bg-gray-50 flex items-center ${className}`}
+      >
+        <span className="mr-1">{currentCountry.flag}</span>
+        <span className="hidden sm:inline">{currentCountry.name}</span>
+        <span className="sm:hidden">{currentCountry.code}</span>
+        <ChevronDown className="h-3 w-3 ml-1" />
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+          <div className="px-2 py-1 text-xs font-medium text-gray-500 border-b">
+            Select Your Country
+          </div>
+          <div className="max-h-64 overflow-y-auto">
+            {POPULAR_COUNTRIES.map((country) => (
+              <div
+                key={country.code}
+                onClick={() => handleCountrySelect(country)}
+                className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-100"
+              >
+                <div className="flex items-center">
+                  <span className="mr-2">{country.flag}</span>
+                  <span>{country.name}</span>
+                </div>
+                {currentCountry.code === country.code && (
+                  <span className="text-green-600 text-xs">✓</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="px-2 py-1 text-xs text-gray-500 border-t">
+            Shipping costs will update automatically
+          </div>
         </div>
-        {POPULAR_COUNTRIES.map((country) => (
-          <DropdownMenuItem
-            key={country.code}
-            onClick={() => handleCountrySelect(country.code, country.name)}
-            className="flex items-center justify-between cursor-pointer"
-          >
-            <div className="flex items-center">
-              <span className="mr-2">{country.flag}</span>
-              <span>{country.name}</span>
-            </div>
-            {location?.countryCode === country.code && (
-              <span className="text-green-600 text-xs">✓</span>
-            )}
-          </DropdownMenuItem>
-        ))}
-        <div className="px-2 py-1 text-xs text-gray-500 border-t">
-          Shipping costs will update automatically
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      )}
+      
+      {/* Backdrop to close dropdown */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </div>
   );
 }
