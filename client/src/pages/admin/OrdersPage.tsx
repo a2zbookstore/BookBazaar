@@ -132,7 +132,13 @@ export default function OrdersPage() {
     setSelectedOrderId(order.id);
     setNewStatus(order.status);
     setTrackingNumber(order.trackingNumber || "");
-    setShippingCarrier(order.shippingCarrier || "no-carrier");
+    // Handle shipping carrier initialization properly
+    const carrier = order.shippingCarrier || "";
+    if (carrier === "" || carrier === null) {
+      setShippingCarrier("no-carrier");
+    } else {
+      setShippingCarrier(carrier);
+    }
     setNotes(order.notes || "");
     setIsDialogOpen(true);
   };
@@ -147,12 +153,18 @@ export default function OrdersPage() {
       return;
     }
 
+    // Handle shipping carrier value properly
+    let finalShippingCarrier = "";
+    if (shippingCarrier && shippingCarrier !== "no-carrier") {
+      finalShippingCarrier = shippingCarrier;
+    }
+
     updateOrderMutation.mutate({
       orderId: selectedOrderId,
       status: newStatus,
-      trackingNumber,
-      shippingCarrier: !shippingCarrier || shippingCarrier === "no-carrier" ? "" : shippingCarrier,
-      notes,
+      trackingNumber: trackingNumber || "",
+      shippingCarrier: finalShippingCarrier,
+      notes: notes || "",
     });
   };
 
@@ -316,21 +328,30 @@ export default function OrdersPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="carrier">Shipping Carrier</Label>
-                <Select value={shippingCarrier} onValueChange={setShippingCarrier}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select carrier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="no-carrier">No Carrier</SelectItem>
-                    <SelectItem value="FedEx">FedEx</SelectItem>
-                    <SelectItem value="UPS">UPS</SelectItem>
-                    <SelectItem value="DHL">DHL</SelectItem>
-                    <SelectItem value="USPS">USPS</SelectItem>
-                    <SelectItem value="India Post">India Post</SelectItem>
-                    <SelectItem value="Blue Dart">Blue Dart</SelectItem>
-                    <SelectItem value="Delhivery">Delhivery</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  id="carrier"
+                  value={shippingCarrier === "" ? "no-carrier" : shippingCarrier}
+                  onChange={(e) => setShippingCarrier(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
+                >
+                  <option value="no-carrier">No Carrier</option>
+                  <option value="FedEx">FedEx</option>
+                  <option value="UPS">UPS</option>
+                  <option value="DHL">DHL</option>
+                  <option value="USPS">USPS</option>
+                  <option value="India Post">India Post</option>
+                  <option value="Blue Dart">Blue Dart</option>
+                  <option value="Delhivery">Delhivery</option>
+                  <option value="Other">Other</option>
+                </select>
+                {shippingCarrier === "Other" && (
+                  <Input
+                    placeholder="Enter custom carrier name"
+                    value={shippingCarrier}
+                    onChange={(e) => setShippingCarrier(e.target.value)}
+                    className="mt-2"
+                  />
+                )}
               </div>
 
               <div className="space-y-2">
