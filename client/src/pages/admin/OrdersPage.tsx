@@ -66,6 +66,8 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBillDialogOpen, setIsBillDialogOpen] = useState(false);
+  const [selectedBillOrderId, setSelectedBillOrderId] = useState<number | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
@@ -85,6 +87,11 @@ export default function OrdersPage() {
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ["/api/orders"],
     enabled: isAuthenticated,
+  });
+
+  const { data: selectedOrderDetails, isLoading: isLoadingOrderDetails } = useQuery({
+    queryKey: ["/api/orders", selectedBillOrderId],
+    enabled: isAuthenticated && selectedBillOrderId !== null,
   });
 
   const updateOrderMutation = useMutation({
@@ -141,6 +148,132 @@ export default function OrdersPage() {
     }
     setNotes(order.notes || "");
     setIsDialogOpen(true);
+  };
+
+  const handleOrderNumberClick = (orderId: number) => {
+    setSelectedBillOrderId(orderId);
+    setIsBillDialogOpen(true);
+  };
+
+  const handleDownloadBill = () => {
+    if (selectedOrderDetails) {
+      const printWindow = window.open('', '', 'height=600,width=800');
+      if (printWindow) {
+        printWindow.document.write(generateBillHTML(selectedOrderDetails));
+        printWindow.document.close();
+        printWindow.print();
+      }
+    }
+  };
+
+  const generateBillHTML = (order: any) => {
+    const items = order.items || [];
+    const subtotal = parseFloat(order.subtotal || '0');
+    const shipping = parseFloat(order.shipping || '0');
+    const tax = parseFloat(order.tax || '0');
+    const total = parseFloat(order.total || '0');
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - Order #${order.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; }
+            .company-name { font-size: 24px; font-weight: bold; color: #d32f2f; }
+            .invoice-details { margin: 20px 0; }
+            .customer-details { margin: 20px 0; }
+            .order-items { margin: 20px 0; }
+            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .total-row { font-weight: bold; }
+            .footer { margin-top: 30px; text-align: center; border-top: 1px solid #ddd; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">A2Z BOOKSHOP</div>
+            <p>International Online Bookstore</p>
+            <p>Email: orders@a2zbookshop.com | Website: https://a2zbookshop.com</p>
+          </div>
+          
+          <div class="invoice-details">
+            <h2>INVOICE</h2>
+            <p><strong>Order Number:</strong> #${order.id}</p>
+            <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
+            <p><strong>Payment Status:</strong> ${order.paymentStatus}</p>
+            <p><strong>Order Status:</strong> ${order.status}</p>
+            ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${order.trackingNumber}</p>` : ''}
+          </div>
+          
+          <div class="customer-details">
+            <h3>Customer Information</h3>
+            <p><strong>Name:</strong> ${order.customerName}</p>
+            <p><strong>Email:</strong> ${order.customerEmail}</p>
+            ${order.customerPhone ? `<p><strong>Phone:</strong> ${order.customerPhone}</p>` : ''}
+            
+            <h4>Shipping Address</h4>
+            <p>
+              ${order.shippingAddress?.address || ''}<br>
+              ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.postalCode || ''}<br>
+              ${order.shippingAddress?.country || ''}
+            </p>
+          </div>
+          
+          <div class="order-items">
+            <h3>Order Items</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Author</th>
+                  <th>Price</th>
+                  <th>Quantity</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map((item: any) => `
+                  <tr>
+                    <td>${item.title}</td>
+                    <td>${item.author}</td>
+                    <td>$${parseFloat(item.price).toFixed(2)}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <table style="margin-top: 20px;">
+              <tr>
+                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Subtotal:</strong></td>
+                <td style="border: none; text-align: right;">$${subtotal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Shipping:</strong></td>
+                <td style="border: none; text-align: right;">$${shipping.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Tax:</strong></td>
+                <td style="border: none; text-align: right;">$${tax.toFixed(2)}</td>
+              </tr>
+              <tr class="total-row">
+                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Total:</strong></td>
+                <td style="border: none; text-align: right;"><strong>$${total.toFixed(2)}</strong></td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>A2Z BOOKSHOP - Your Global Book Destination</p>
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   const handleUpdateOrder = () => {
@@ -253,7 +386,12 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-4 mb-4">
                           <div className="flex items-center gap-2">
                             {getStatusIcon(order.status)}
-                            <span className="font-semibold">Order #{order.id}</span>
+                            <button 
+                              onClick={() => handleOrderNumberClick(order.id)}
+                              className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                            >
+                              Order #{order.id}
+                            </button>
                           </div>
                           <Badge variant={getStatusVariant(order.status)}>
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
@@ -392,6 +530,141 @@ export default function OrdersPage() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bill Details Dialog */}
+        <Dialog open={isBillDialogOpen} onOpenChange={setIsBillDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Customer Bill - Order #{selectedBillOrderId}</DialogTitle>
+            </DialogHeader>
+            
+            {isLoadingOrderDetails ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : selectedOrderDetails ? (
+              <div className="space-y-6">
+                {/* Order Overview */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Order Date</p>
+                      <p className="font-semibold">{format(new Date(selectedOrderDetails.createdAt), 'MMM dd, yyyy')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Status</p>
+                      <Badge variant={getStatusVariant(selectedOrderDetails.status)}>
+                        {selectedOrderDetails.status.charAt(0).toUpperCase() + selectedOrderDetails.status.slice(1)}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Payment</p>
+                      <Badge variant="outline">{selectedOrderDetails.paymentStatus}</Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Amount</p>
+                      <p className="font-semibold text-lg">${parseFloat(selectedOrderDetails.total).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Customer Information</h3>
+                    <div className="space-y-2">
+                      <p><strong>Name:</strong> {selectedOrderDetails.customerName}</p>
+                      <p><strong>Email:</strong> {selectedOrderDetails.customerEmail}</p>
+                      {selectedOrderDetails.customerPhone && (
+                        <p><strong>Phone:</strong> {selectedOrderDetails.customerPhone}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Shipping Address</h3>
+                    <div className="text-sm">
+                      <p>{selectedOrderDetails.shippingAddress?.address}</p>
+                      <p>{selectedOrderDetails.shippingAddress?.city}, {selectedOrderDetails.shippingAddress?.state} {selectedOrderDetails.shippingAddress?.postalCode}</p>
+                      <p>{selectedOrderDetails.shippingAddress?.country}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Order Items</h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left">Book</th>
+                          <th className="px-4 py-3 text-left">Author</th>
+                          <th className="px-4 py-3 text-right">Price</th>
+                          <th className="px-4 py-3 text-right">Quantity</th>
+                          <th className="px-4 py-3 text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedOrderDetails.items?.map((item: any, index: number) => (
+                          <tr key={index} className="border-t">
+                            <td className="px-4 py-3">{item.title}</td>
+                            <td className="px-4 py-3">{item.author}</td>
+                            <td className="px-4 py-3 text-right">${parseFloat(item.price).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right">{item.quantity}</td>
+                            <td className="px-4 py-3 text-right">${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Order Summary */}
+                <div className="border-t pt-4">
+                  <div className="flex justify-end">
+                    <div className="w-64 space-y-2">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span>${parseFloat(selectedOrderDetails.subtotal).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Shipping:</span>
+                        <span>${parseFloat(selectedOrderDetails.shipping).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tax:</span>
+                        <span>${parseFloat(selectedOrderDetails.tax).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg border-t pt-2">
+                        <span>Total:</span>
+                        <span>${parseFloat(selectedOrderDetails.total).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleDownloadBill} className="flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    Download Bill
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsBillDialogOpen(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Order details not found.</p>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
