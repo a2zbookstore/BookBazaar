@@ -54,24 +54,107 @@ export default function MyOrdersPage() {
     enabled: isAuthenticated,
   });
 
+  const [guestEmail, setGuestEmail] = useState("");
+  const [showGuestForm, setShowGuestForm] = useState(!isAuthenticated);
+  
+  // Guest order lookup functionality
+  const { data: guestOrders = [], isLoading: guestLoading, refetch: refetchGuestOrders } = useQuery<Order[]>({
+    queryKey: ["/api/guest-orders", guestEmail],
+    enabled: !isAuthenticated && guestEmail.length > 0,
+  });
+
+  const handleGuestLookup = () => {
+    if (guestEmail) {
+      refetchGuestOrders();
+    }
+  };
+
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl text-gray-800">Login Required</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
-              Please log in to view your order history.
-            </p>
-            <Link href="/login">
-              <Button className="bg-primary-aqua hover:bg-secondary-aqua">
-                Go to Login
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl text-gray-800 flex items-center justify-center gap-2">
+                  <Package className="w-6 h-6" />
+                  View Your Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="text-center space-y-4">
+                  <p className="text-gray-600">
+                    Enter your email address to view your order history
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <Button 
+                      onClick={handleGuestLookup}
+                      disabled={!guestEmail || guestLoading}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {guestLoading ? "Searching..." : "View Orders"}
+                    </Button>
+                  </div>
+                </div>
+                
+                {guestOrders.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Your Orders</h3>
+                    {guestOrders.map((order) => (
+                      <Card key={order.id} className="border-l-4 border-l-blue-500">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-semibold">Order #{order.id}</p>
+                              <p className="text-sm text-gray-600">
+                                {formatDistanceToNow(new Date(order.createdAt))} ago
+                              </p>
+                              <p className="text-sm">
+                                {order.items?.length || 0} item(s) - ${order.total}
+                              </p>
+                            </div>
+                            <Badge className={statusColors[order.status as keyof typeof statusColors]}>
+                              {statusLabels[order.status as keyof typeof statusLabels]}
+                            </Badge>
+                          </div>
+                          {order.trackingNumber && (
+                            <p className="text-sm text-blue-600 mt-2">
+                              Tracking: {order.trackingNumber}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                
+                {guestEmail && guestOrders.length === 0 && !guestLoading && (
+                  <p className="text-center text-gray-500">
+                    No orders found for this email address
+                  </p>
+                )}
+                
+                <div className="text-center pt-4 border-t">
+                  <p className="text-sm text-gray-500 mb-2">
+                    Have an account? Log in for full order management
+                  </p>
+                  <Link href="/login">
+                    <Button variant="outline" className="bg-primary-aqua hover:bg-secondary-aqua text-white">
+                      Go to Login
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }

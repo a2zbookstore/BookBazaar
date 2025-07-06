@@ -2121,27 +2121,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for authenticated user first  
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
+      const sessionCustomerEmail = (req.session as any).customerEmail;
       let userId = null;
+      let userEmail = null;
+      
+      console.log("My Orders - sessionUserId:", sessionUserId, "isCustomerAuth:", isCustomerAuth, "sessionCustomerEmail:", sessionCustomerEmail);
       
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
+        userEmail = sessionCustomerEmail;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
+        userEmail = req.user.email;
       }
       
-      if (!userId) {
+      if (!userId && !userEmail) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      // Get orders for the authenticated user only
-      const options = { userId };
-      const result = await storage.getOrders(options);
+      console.log("Fetching orders for userId:", userId, "or email:", userEmail);
+
+      // Get orders for the authenticated user - search by both userId and email
+      let orders = [];
       
-      // Return only the orders array
-      res.json(result.orders || []);
+      if (userId) {
+        const result = await storage.getOrders({ userId });
+        orders = result.orders || [];
+      }
+      
+      // Also search by email for guest orders or orders placed before proper user auth
+      if (userEmail && orders.length === 0) {
+        const result = await storage.getOrders({});
+        const allOrders = result.orders || [];
+        // Filter orders by customer email
+        orders = allOrders.filter(order => 
+          order.customerEmail && order.customerEmail.toLowerCase() === userEmail.toLowerCase()
+        );
+      }
+      
+      console.log("Found orders:", orders.length);
+      
+      // Return the orders array
+      res.json(orders);
     } catch (error) {
       console.error("Error fetching my orders:", error);
       res.status(500).json({ message: "Failed to fetch your orders" });
+    }
+  });
+
+  // Guest Orders route - lookup orders by email
+  app.get("/api/guest-orders", async (req, res) => {
+    try {
+      const { email } = req.query;
+      
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      console.log("Guest order lookup for email:", email);
+
+      // Get all orders and filter by customer email
+      const result = await storage.getOrders({});
+      const allOrders = result.orders || [];
+      
+      // Filter orders by customer email (case-insensitive)
+      const orders = allOrders.filter(order => 
+        order.customerEmail && order.customerEmail.toLowerCase() === email.toLowerCase()
+      );
+      
+      console.log("Found guest orders:", orders.length);
+      
+      // Return the orders array
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching guest orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
