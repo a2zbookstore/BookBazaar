@@ -143,7 +143,7 @@ export default function BookCard({ book }: BookCardProps) {
         <WishlistHeart bookId={book.id} />
       </div>
 
-      <Link to={`/book/${book.id}`} className="block">
+      <Link to={`/books/${book.id}`} className="block">
         <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative">
           <img 
             src={getImageSrc(book.imageUrl)} 
