@@ -251,78 +251,89 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
             
-            {cartItems.map((item) => (
-              <Card key={item.id} className="p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                    <img
-                      src={getImageSrc(item.book.imageUrl)}
-                      alt={item.book.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-1">
-                          {item.book.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                          by {item.book.author}
-                        </p>
-                        {(item as any).isGift && (
-                          <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                            FREE Gift
-                          </span>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+            {cartItems.map((item) => {
+              const isGift = (item as any).isGift;
+              const imageUrl = isGift ? (item as any).imageUrl : item.book?.imageUrl;
+              const title = isGift ? (item as any).name : item.book?.title;
+              const author = isGift ? null : item.book?.author;
+              
+              return (
+                <Card key={item.id} className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                      <img
+                        src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
+                        alt={title || 'Item'}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = isGift 
+                            ? 'https://via.placeholder.com/300x400/f0f0f0/666?text=Gift' 
+                            : 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                        }}
+                      />
                     </div>
                     
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 mb-1">
+                            {title}
+                          </h3>
+                          {author && (
+                            <p className="text-sm text-gray-600 mb-2">
+                              by {author}
+                            </p>
+                          )}
+                          {isGift && (
+                            <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                              FREE Gift
+                            </span>
+                          )}
+                        </div>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1 || isUpdating === item.id}
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="text-red-500 hover:text-red-700"
                         >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                          disabled={isUpdating === item.id}
-                        >
-                          <Plus className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                       
-                      <div className="text-right">
-                        {(item as any).isGift ? (
-                          <p className="text-xl font-bold text-green-600">FREE</p>
-                        ) : (
-                          <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
-                        )}
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            disabled={item.quantity <= 1 || isUpdating === item.id}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            disabled={isUpdating === item.id}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="text-right">
+                          {isGift ? (
+                            <p className="text-xl font-bold text-green-600">FREE</p>
+                          ) : (
+                            <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
 
             {/* Gift Item Display */}
             {giftItem && (
