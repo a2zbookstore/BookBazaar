@@ -744,6 +744,9 @@ export default function CheckoutPage() {
             window.location.href = approvalUrl;
           }, 1000);
           
+          // Return immediately to prevent further execution
+          return;
+          
         } catch (storageError) {
           console.error('Error storing order data:', storageError);
           throw new Error(`Failed to store order data: ${storageError.message}`);
