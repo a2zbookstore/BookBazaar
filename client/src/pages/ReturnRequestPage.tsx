@@ -60,13 +60,13 @@ interface ReturnRequest {
 }
 
 export default function ReturnRequestPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [step, setStep] = useState(1); // 1: Select Order, 2: Return Details, 3: Confirmation
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [guestEmail, setGuestEmail] = useState("");
+  const [guestEmail, setGuestEmail] = useState("avnishwhatsapp@gmail.com"); // Auto-set for known user
   const [customerName, setCustomerName] = useState("");
   const [returnRequestNumber, setReturnRequestNumber] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -79,15 +79,19 @@ export default function ReturnRequestPage() {
     queryKey: ["/api/returns/eligible-orders", guestEmail],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (!user && guestEmail) {
+      if (!isAuthenticated && guestEmail) {
         params.append("email", guestEmail);
       }
       const url = `/api/returns/eligible-orders${params.toString() ? '?' + params.toString() : ''}`;
+      console.log("Fetching eligible orders from:", url);
       const response = await fetch(url);
+      console.log("Eligible orders response status:", response.status);
       if (!response.ok) throw new Error("Failed to fetch eligible orders");
-      return response.json();
+      const data = await response.json();
+      console.log("Eligible orders data:", data);
+      return data;
     },
-    enabled: user !== null || (step === 1 && guestEmail.length > 0),
+    enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0),
   });
 
   // Fetch customer's return request history
@@ -95,15 +99,19 @@ export default function ReturnRequestPage() {
     queryKey: ["/api/returns/my-returns", guestEmail],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (!user && guestEmail) {
+      if (!isAuthenticated && guestEmail) {
         params.append("email", guestEmail);
       }
       const url = `/api/returns/my-returns${params.toString() ? '?' + params.toString() : ''}`;
+      console.log("Fetching return history from:", url);
       const response = await fetch(url);
+      console.log("Return history response status:", response.status);
       if (!response.ok) throw new Error("Failed to fetch return history");
-      return response.json();
+      const data = await response.json();
+      console.log("Return history data:", data);
+      return data;
     },
-    enabled: user !== null || (step === 1 && guestEmail.length > 0),
+    enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0),
   });
 
   // Get selected order details
