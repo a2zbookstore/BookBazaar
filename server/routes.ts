@@ -2062,7 +2062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Gift cart management routes
   app.post("/api/cart/gift", async (req: any, res) => {
     try {
-      const { giftId, name, type, imageUrl, price, quantity } = req.body;
+      const { giftId, name, type, imageUrl, price, quantity, giftCategoryId } = req.body;
       
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
@@ -2089,15 +2089,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You must have at least one book in your cart to select a gift" });
       }
       
-      const giftItem = {
-        giftId,
-        name,
-        type,
-        imageUrl,
-        price: 0, // Always free
-        quantity: 1, // Always 1
-        isGift: true
-      };
+      let giftItem;
+      
+      // Handle gift category selection
+      if (giftCategoryId) {
+        // Get the gift category details
+        const giftCategory = await storage.getGiftCategoryById(giftCategoryId);
+        if (!giftCategory) {
+          return res.status(404).json({ message: "Gift category not found" });
+        }
+        
+        giftItem = {
+          giftId: giftCategory.id,
+          name: giftCategory.name,
+          type: giftCategory.type,
+          imageUrl: giftCategory.imageUrl,
+          price: 0, // Always free
+          quantity: 1, // Always 1
+          isGift: true
+        };
+      } else {
+        // Handle individual gift item selection
+        giftItem = {
+          giftId,
+          name,
+          type,
+          imageUrl,
+          price: 0, // Always free
+          quantity: 1, // Always 1
+          isGift: true
+        };
+      }
       
       if (userId) {
         // For authenticated users, store in database session or custom field
