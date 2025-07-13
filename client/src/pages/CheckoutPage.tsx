@@ -623,6 +623,19 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     try {
+      // PayPal requires original USD amounts (not converted)
+      const usdSubtotal = subtotal; // Already in USD
+      const usdShipping = checkoutShippingCost; // Already in USD
+      const usdTax = tax; // Already in USD
+      const usdTotal = total; // Already in USD
+      
+      console.log('PayPal payment amounts (USD):', {
+        subtotal: usdSubtotal,
+        shipping: usdShipping,
+        tax: usdTax,
+        total: usdTotal
+      });
+      
       // Create PayPal order with return URLs and order data
       const orderResponse = await fetch("/api/paypal/order", {
         method: "POST",
@@ -630,7 +643,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: total.toFixed(2),
+          amount: usdTotal.toFixed(2),
           currency: "USD",
           intent: "CAPTURE",
           return_url: `${window.location.origin}/paypal-complete`,
@@ -641,10 +654,10 @@ export default function CheckoutPage() {
             customerPhone,
             shippingAddress,
             billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-            subtotal: subtotal.toFixed(2),
-            shipping: shippingCost.toFixed(2),
-            tax: tax.toFixed(2),
-            total: total.toFixed(2),
+            subtotal: usdSubtotal.toFixed(2),
+            shipping: usdShipping.toFixed(2),
+            tax: usdTax.toFixed(2),
+            total: usdTotal.toFixed(2),
             paymentMethod: "paypal"
           }
         }),
