@@ -2974,11 +2974,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
+      const sessionCustomerEmail = (req.session as any).customerEmail;
       let userId = null;
       let email = null;
       
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
+        // Also check by email for orders placed before authentication
+        email = sessionCustomerEmail;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       } else {

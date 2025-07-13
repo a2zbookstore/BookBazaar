@@ -1043,7 +1043,10 @@ export class DatabaseStorage implements IStorage {
       gte(orders.createdAt, thirtyDaysAgo)
     ];
 
-    if (userId) {
+    // Search by both userId and email to catch orders placed before/after authentication
+    if (userId && email) {
+      conditions.push(or(eq(orders.userId, userId), eq(orders.customerEmail, email)));
+    } else if (userId) {
       conditions.push(eq(orders.userId, userId));
     } else if (email) {
       conditions.push(eq(orders.customerEmail, email));
