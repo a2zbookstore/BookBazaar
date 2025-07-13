@@ -164,6 +164,13 @@ export interface IStorage {
   updateRefundTransaction(id: number, updates: Partial<RefundTransaction>): Promise<RefundTransaction>;
   getRefundTransactionsByReturnId(returnRequestId: number): Promise<RefundTransaction[]>;
 
+  // Gift Categories operations
+  getGiftCategories(): Promise<GiftCategory[]>;
+  getGiftCategoryById(id: number): Promise<GiftCategory | undefined>;
+  createGiftCategory(category: InsertGiftCategory): Promise<GiftCategory>;
+  updateGiftCategory(id: number, category: Partial<InsertGiftCategory>): Promise<GiftCategory>;
+  deleteGiftCategory(id: number): Promise<void>;
+
   // Gift Items operations
   getGiftItems(): Promise<GiftItem[]>;
   getGiftItemById(id: number): Promise<GiftItem | undefined>;
@@ -1214,6 +1221,11 @@ export class DatabaseStorage implements IStorage {
   // Gift Categories Methods
   async getGiftCategories(): Promise<GiftCategory[]> {
     return await db.select().from(giftCategories).orderBy(giftCategories.sortOrder, giftCategories.name);
+  }
+
+  async getGiftCategoryById(id: number): Promise<GiftCategory | undefined> {
+    const [category] = await db.select().from(giftCategories).where(eq(giftCategories.id, id));
+    return category;
   }
 
   async createGiftCategory(categoryData: InsertGiftCategory): Promise<GiftCategory> {
