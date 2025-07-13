@@ -2064,6 +2064,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { giftId, name, type, imageUrl, price, quantity, giftCategoryId } = req.body;
       
+      console.log("Gift cart request received:", {
+        giftId, name, type, giftCategoryId,
+        hasGiftId: !!giftId,
+        hasGiftCategoryId: !!giftCategoryId
+      });
+      
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
@@ -2093,6 +2099,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle gift category selection
       if (giftCategoryId) {
+        console.log("Processing gift category selection:", giftCategoryId);
+        
+        // Debug: Check if method exists
+        console.log("Storage methods available:", Object.getOwnPropertyNames(storage));
+        console.log("getGiftCategoryById exists:", typeof storage.getGiftCategoryById);
+        
         // Get the gift category details
         const giftCategory = await storage.getGiftCategoryById(giftCategoryId);
         if (!giftCategory) {
@@ -2120,6 +2132,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isGift: true
         };
       }
+      
+      console.log("Gift item created:", giftItem);
       
       if (userId) {
         // For authenticated users, store in database session or custom field
