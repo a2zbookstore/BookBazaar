@@ -323,6 +323,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/orders/:id/invoice', async (req, res) => {
     try {
       const { id } = req.params;
+      const { email } = req.query;
+      
+      console.log(`Invoice access attempt - Order ID: ${id}, Email: ${email}`);
       
       let order;
       let isAuthorized = false;
@@ -361,6 +364,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         order = await storage.getOrderById(parseInt(id));
         if (order && order.userId === userId) {
           isAuthorized = true;
+        }
+      }
+      
+      // Check for guest access with email verification
+      if (!isAuthorized && email) {
+        console.log(`Guest invoice access attempt - Order ID: ${id}, Email: ${email}`);
+        order = await storage.getOrderByIdAndEmail(parseInt(id), email as string);
+        if (order) {
+          console.log(`Guest invoice access granted for order ${id}`);
+          isAuthorized = true;
+        } else {
+          console.log(`Guest invoice access denied - no order found with ID ${id} and email ${email}`);
         }
       }
       

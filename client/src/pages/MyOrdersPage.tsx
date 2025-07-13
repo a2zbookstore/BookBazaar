@@ -192,7 +192,9 @@ export default function MyOrdersPage() {
 
   const downloadInvoice = async (orderId: number) => {
     try {
-      const response = await fetch(`/api/orders/${orderId}/invoice`, {
+      // Use email parameter for guest users
+      const emailParam = !isAuthenticated && guestEmail ? `?email=${encodeURIComponent(guestEmail)}` : '';
+      const response = await fetch(`/api/orders/${orderId}/invoice${emailParam}`, {
         credentials: 'include',
       });
       
