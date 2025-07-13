@@ -349,10 +349,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isAuthorized) {
         const sessionUserId = (req.session as any).userId;
         const isCustomerAuth = (req.session as any).isCustomerAuth;
+        const sessionCustomerEmail = (req.session as any).customerEmail;
         
         if (sessionUserId && isCustomerAuth) {
           order = await storage.getOrderById(parseInt(id));
-          if (order && order.userId === sessionUserId) {
+          if (order && (order.userId === sessionUserId || 
+                       (sessionCustomerEmail && order.customerEmail?.toLowerCase() === sessionCustomerEmail.toLowerCase()))) {
             isAuthorized = true;
           }
         }
@@ -361,8 +363,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for Replit authentication
       if (!isAuthorized && req.isAuthenticated && req.isAuthenticated()) {
         const userId = (req.user as any).claims.sub;
+        const userEmail = (req.user as any).email;
         order = await storage.getOrderById(parseInt(id));
-        if (order && order.userId === userId) {
+        if (order && (order.userId === userId || 
+                     (userEmail && order.customerEmail?.toLowerCase() === userEmail.toLowerCase()))) {
           isAuthorized = true;
         }
       }

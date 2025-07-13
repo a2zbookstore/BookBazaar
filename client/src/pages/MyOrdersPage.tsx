@@ -19,6 +19,9 @@ interface Order {
   updatedAt: string;
   trackingNumber?: string;
   shippingCarrier?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   items: Array<{
     id: number;
     quantity: number;
@@ -192,14 +195,24 @@ export default function MyOrdersPage() {
 
   const downloadInvoice = async (orderId: number) => {
     try {
-      // Use email parameter for guest users
+      console.log('Downloading invoice for order:', orderId, 'isAuthenticated:', isAuthenticated);
+      
+      // For authenticated users, no email parameter needed
+      // For guest users, use the email from the form
       const emailParam = !isAuthenticated && guestEmail ? `?email=${encodeURIComponent(guestEmail)}` : '';
-      const response = await fetch(`/api/orders/${orderId}/invoice${emailParam}`, {
+      const url = `/api/orders/${orderId}/invoice${emailParam}`;
+      
+      console.log('Invoice URL:', url);
+      
+      const response = await fetch(url, {
         credentials: 'include',
       });
       
+      console.log('Invoice response status:', response.status);
+      
       if (response.ok) {
         const htmlContent = await response.text();
+        console.log('Invoice HTML content length:', htmlContent.length);
         
         // Open in new tab for printing as PDF
         const newWindow = window.open('', '_blank');
@@ -233,6 +246,10 @@ export default function MyOrdersPage() {
             newWindow.focus();
           };
         }
+      } else {
+        console.error('Invoice request failed:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
       }
     } catch (error) {
       console.error('Error downloading invoice:', error);
