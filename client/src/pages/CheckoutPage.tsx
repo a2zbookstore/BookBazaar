@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, Smartphone, Globe, CheckCircle, ChevronDown } from "lucide-react";
+import { PaymentSpinner } from "@/components/PaymentSpinner";
 
 declare global {
   interface Window {
@@ -635,6 +636,7 @@ export default function CheckoutPage() {
 
     console.log('Form validation passed - proceeding with PayPal payment');
     setIsProcessing(true);
+    setPaymentMethod("paypal");
     
     try {
       // PayPal requires original USD amounts (not converted)
@@ -818,6 +820,7 @@ export default function CheckoutPage() {
     }
 
     setIsProcessing(true);
+    setPaymentMethod("razorpay");
 
     try {
       let finalAmount;
@@ -1334,6 +1337,14 @@ export default function CheckoutPage() {
 
       {/* Load Razorpay Script */}
       <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+      
+      {/* Payment Loading Spinner */}
+      {isProcessing && (
+        <PaymentSpinner 
+          message={paymentMethod === 'paypal' ? 'Redirecting to PayPal...' : 'Processing payment...'}
+          paymentMethod={paymentMethod === 'paypal' ? 'paypal' : 'razorpay'}
+        />
+      )}
     </Layout>
   );
 }
