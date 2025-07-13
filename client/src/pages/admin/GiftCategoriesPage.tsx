@@ -19,6 +19,8 @@ interface CategoryForm {
   type: "novel" | "notebook" | "";
   description: string;
   imageUrl: string;
+  imageUrl2: string;
+  imageUrl3: string;
   price: number;
   isActive: boolean;
   sortOrder: number;
@@ -28,8 +30,14 @@ export default function GiftCategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<GiftCategory | null>(null);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [uploadedImage2, setUploadedImage2] = useState<File | null>(null);
+  const [uploadedImage3, setUploadedImage3] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [imagePreview2, setImagePreview2] = useState<string>('');
+  const [imagePreview3, setImagePreview3] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef2 = useRef<HTMLInputElement>(null);
+  const fileInputRef3 = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -44,6 +52,8 @@ export default function GiftCategoriesPage() {
     type: "novel",
     description: "",
     imageUrl: "",
+    imageUrl2: "",
+    imageUrl3: "",
     price: 0,
     isActive: true,
     sortOrder: 0,
@@ -103,16 +113,22 @@ export default function GiftCategoriesPage() {
       type: "novel",
       description: "",
       imageUrl: "",
+      imageUrl2: "",
+      imageUrl3: "",
       price: 0,
       isActive: true,
       sortOrder: 0,
     });
     setEditingCategory(null);
     setUploadedImage(null);
+    setUploadedImage2(null);
+    setUploadedImage3(null);
     setImagePreview('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setImagePreview2('');
+    setImagePreview3('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef2.current) fileInputRef2.current.value = '';
+    if (fileInputRef3.current) fileInputRef3.current.value = '';
   };
 
   const handleEdit = (category: GiftCategory) => {
@@ -122,12 +138,18 @@ export default function GiftCategoriesPage() {
       type: category.type as "novel" | "notebook",
       description: category.description || "",
       imageUrl: category.imageUrl || "",
+      imageUrl2: category.imageUrl2 || "",
+      imageUrl3: category.imageUrl3 || "",
       price: Number(category.price) || 0,
       isActive: category.isActive,
       sortOrder: category.sortOrder,
     });
     setImagePreview(category.imageUrl || '');
+    setImagePreview2(category.imageUrl2 || '');
+    setImagePreview3(category.imageUrl3 || '');
     setUploadedImage(null);
+    setUploadedImage2(null);
+    setUploadedImage3(null);
     setIsDialogOpen(true);
   };
 
@@ -173,6 +195,70 @@ export default function GiftCategoriesPage() {
     }
   };
 
+  const handleImageUpload2 = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 500 * 1024) {
+        toast({
+          title: "Error", 
+          description: "Image file is too large. Please choose a file smaller than 500KB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select a valid image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setUploadedImage2(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview2(result);
+        setForm({ ...form, imageUrl2: '' });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload3 = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 500 * 1024) {
+        toast({
+          title: "Error", 
+          description: "Image file is too large. Please choose a file smaller than 500KB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select a valid image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setUploadedImage3(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview3(result);
+        setForm({ ...form, imageUrl3: '' });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Clear image selection
   const clearImage = () => {
     setUploadedImage(null);
@@ -183,74 +269,97 @@ export default function GiftCategoriesPage() {
     }
   };
 
+  const clearImage2 = () => {
+    setUploadedImage2(null);
+    setImagePreview2('');
+    setForm({ ...form, imageUrl2: '' });
+    if (fileInputRef2.current) {
+      fileInputRef2.current.value = '';
+    }
+  };
+
+  const clearImage3 = () => {
+    setUploadedImage3(null);
+    setImagePreview3('');
+    setForm({ ...form, imageUrl3: '' });
+    if (fileInputRef3.current) {
+      fileInputRef3.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       let finalForm = { 
         ...form
-        // Price will be handled by the updated Zod schema transformation
       };
       
-      // If image file is uploaded, convert to base64 and store in imageUrl
-      if (uploadedImage) {
-        // Compress image before sending
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        
-        img.onload = () => {
-          // Resize image to max 400x400 to reduce size
-          const maxSize = 400;
-          let { width, height } = img;
-          
-          if (width > height) {
-            if (width > maxSize) {
-              height = (height * maxSize) / width;
-              width = maxSize;
-            }
-          } else {
-            if (height > maxSize) {
-              width = (width * maxSize) / height;
-              height = maxSize;
-            }
+      // Process images concurrently
+      const processImage = (file: File | null, imageUrl: string) => {
+        return new Promise<string>((resolve, reject) => {
+          if (!file) {
+            resolve(imageUrl);
+            return;
           }
           
-          canvas.width = width;
-          canvas.height = height;
-          ctx?.drawImage(img, 0, 0, width, height);
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
           
-          // Convert to base64 with reduced quality
-          const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
-          finalForm.imageUrl = compressedImage;
+          img.onload = () => {
+            const maxSize = 400;
+            let { width, height } = img;
+            
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx?.drawImage(img, 0, 0, width, height);
+            
+            const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(compressedImage);
+          };
           
-          console.log('Submitting form with compressed image');
-          categoryMutation.mutate(finalForm);
-        };
-        
-        img.onerror = () => {
-          toast({
-            title: "Error",
-            description: "Failed to process image. Please try again.",
-            variant: "destructive",
-          });
-        };
-        
-        // Read file as data URL
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          img.src = e.target?.result as string;
-        };
-        reader.readAsDataURL(uploadedImage);
-      } else {
-        console.log('Submitting form with URL:', finalForm);
-        categoryMutation.mutate(finalForm);
-      }
+          img.onerror = () => reject(new Error('Failed to process image'));
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            img.src = e.target?.result as string;
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+      
+      // Process all images
+      const [processedImage1, processedImage2, processedImage3] = await Promise.all([
+        processImage(uploadedImage, finalForm.imageUrl),
+        processImage(uploadedImage2, finalForm.imageUrl2),
+        processImage(uploadedImage3, finalForm.imageUrl3)
+      ]);
+      
+      finalForm.imageUrl = processedImage1;
+      finalForm.imageUrl2 = processedImage2;
+      finalForm.imageUrl3 = processedImage3;
+      
+      console.log('Submitting form with processed images');
+      categoryMutation.mutate(finalForm);
+      
     } catch (error) {
       console.error('Form submission error:', error);
       toast({
         title: "Error",
-        description: "Failed to submit form. Please try again.",
+        description: "Failed to process images. Please try again.",
         variant: "destructive",
       });
     }
@@ -349,83 +458,135 @@ export default function GiftCategoriesPage() {
                 </div>
               </div>
 
+              {/* Image Upload Sections */}
               <div>
-                <Label>Category Image</Label>
-                
-                {/* Image Upload Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <Label htmlFor="imageFile" className="text-sm text-gray-600">Upload Image File</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input
-                          ref={fileInputRef}
-                          id="imageFile"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex items-center gap-2"
-                        >
-                          <Upload className="w-4 h-4" />
-                          Choose File
-                        </Button>
-                        {uploadedImage && (
-                          <span className="text-sm text-green-600">
-                            {uploadedImage.name}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="text-sm text-gray-500 self-end pb-1">OR</div>
-                    
-                    <div className="flex-1">
-                      <Label htmlFor="imageUrl" className="text-sm text-gray-600">Image URL</Label>
-                      <Input
-                        id="imageUrl"
-                        value={form.imageUrl}
-                        onChange={(e) => {
-                          setForm({ ...form, imageUrl: e.target.value });
-                          setImagePreview(e.target.value);
-                          setUploadedImage(null);
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = '';
-                          }
-                        }}
-                        placeholder="https://example.com/image.jpg"
-                        className="mt-1"
+                <Label>Category Images</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                  {/* Image 1 */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Image 1</Label>
+                    <div className="flex flex-col space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Image 1
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
                       />
+                      {(imagePreview || uploadedImage) && (
+                        <div className="relative">
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview 1" 
+                            className="w-full h-32 object-cover rounded border"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={clearImage}
+                            className="absolute top-1 right-1 h-6 w-6 p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Image Preview */}
-                  {(imagePreview || uploadedImage) && (
-                    <div className="relative inline-block">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview"
-                        className="w-24 h-24 object-cover rounded border shadow-sm"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
+                  {/* Image 2 */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Image 2 (Optional)</Label>
+                    <div className="flex flex-col space-y-2">
                       <Button
                         type="button"
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
-                        onClick={clearImage}
-                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
+                        onClick={() => fileInputRef2.current?.click()}
+                        className="w-full"
                       >
-                        <X className="w-3 h-3" />
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Image 2
                       </Button>
+                      <input
+                        ref={fileInputRef2}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload2}
+                        className="hidden"
+                      />
+                      {(imagePreview2 || uploadedImage2) && (
+                        <div className="relative">
+                          <img 
+                            src={imagePreview2} 
+                            alt="Preview 2" 
+                            className="w-full h-32 object-cover rounded border"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={clearImage2}
+                            className="absolute top-1 right-1 h-6 w-6 p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Image 3 */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Image 3 (Optional)</Label>
+                    <div className="flex flex-col space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef3.current?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Image 3
+                      </Button>
+                      <input
+                        ref={fileInputRef3}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload3}
+                        className="hidden"
+                      />
+                      {(imagePreview3 || uploadedImage3) && (
+                        <div className="relative">
+                          <img 
+                            src={imagePreview3} 
+                            alt="Preview 3" 
+                            className="w-full h-32 object-cover rounded border"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={clearImage3}
+                            className="absolute top-1 right-1 h-6 w-6 p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
