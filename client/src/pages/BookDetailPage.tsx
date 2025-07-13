@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useShipping } from "@/hooks/useShipping";
+import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import { Book } from "@/types";
 
 // Image helper function
@@ -30,6 +32,7 @@ export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { shippingRate } = useShipping();
   const [, setLocation] = useLocation();
 
   const { data: book, isLoading } = useQuery<Book>({
@@ -288,6 +291,36 @@ export default function BookDetailPage() {
 
             <Separator />
 
+            {/* Delivery Information */}
+            {shippingRate && (
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-900 mb-1">Expected Delivery</h3>
+                    <p className="text-blue-800 text-sm">
+                      {(() => {
+                        const deliveryEstimate = calculateDeliveryDate(
+                          shippingRate.minDeliveryDays,
+                          shippingRate.maxDeliveryDays
+                        );
+                        return deliveryEstimate.deliveryText;
+                      })()}
+                    </p>
+                    <p className="text-blue-600 text-xs mt-1">
+                      To {shippingRate.countryName} • Order today for fastest delivery
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Description */}
             {book.description && (
               <div>
@@ -315,7 +348,19 @@ export default function BookDetailPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-base-black text-sm">Fast Shipping</p>
-                  <p className="text-xs text-secondary-black">Secure packaging</p>
+                  {shippingRate ? (
+                    <p className="text-xs text-secondary-black">
+                      {(() => {
+                        const deliveryEstimate = calculateDeliveryDate(
+                          shippingRate.minDeliveryDays,
+                          shippingRate.maxDeliveryDays
+                        );
+                        return `Arrives ${deliveryEstimate.deliveryRange}`;
+                      })()}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-secondary-black">Secure packaging</p>
+                  )}
                 </div>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
+import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1352,6 +1353,40 @@ export default function CheckoutPage() {
                     <span className="text-primary-aqua">{formatAmount(convertedAmounts.total)}</span>
                   </div>
                 </div>
+
+                <Separator />
+
+                {/* Delivery Date */}
+                {shippingRate && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-shrink-0">
+                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm text-blue-800">
+                          Expected Delivery
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          {(() => {
+                            const deliveryEstimate = calculateDeliveryDate(
+                              shippingRate.minDeliveryDays,
+                              shippingRate.maxDeliveryDays
+                            );
+                            return deliveryEstimate.deliveryText;
+                          })()}
+                        </p>
+                        <p className="text-xs text-blue-500 mt-1">
+                          To {shippingRate.countryName}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
