@@ -611,7 +611,20 @@ export default function CheckoutPage() {
   });
 
   const handlePayPalPayment = async () => {
+    console.log('PayPal payment initiated');
+    console.log('Form validation status:', {
+      isFormValid,
+      customerName,
+      customerEmail,
+      customerPhone,
+      shippingAddress,
+      nameError,
+      emailError,
+      phoneError
+    });
+    
     if (!isFormValid) {
+      console.log('Form validation failed - showing error');
       toast({
         title: "Invalid Form",
         description: "Please fill in all required fields",
@@ -620,6 +633,7 @@ export default function CheckoutPage() {
       return;
     }
 
+    console.log('Form validation passed - proceeding with PayPal payment');
     setIsProcessing(true);
     
     try {
@@ -663,15 +677,30 @@ export default function CheckoutPage() {
         }),
       });
       
+      console.log('PayPal order response status:', orderResponse.status);
+      console.log('PayPal order response headers:', orderResponse.headers);
+      
       if (!orderResponse.ok) {
-        const errorData = await orderResponse.json();
-        throw new Error(errorData.error || "Failed to create PayPal order");
+        const errorText = await orderResponse.text();
+        console.error('PayPal order error response:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          console.error('Failed to parse error response as JSON:', e);
+          throw new Error(`PayPal order failed with status ${orderResponse.status}: ${errorText}`);
+        }
+        
+        throw new Error(errorData.error || errorData.message || "Failed to create PayPal order");
       }
 
       const orderData = await orderResponse.json();
+      console.log('PayPal order response data:', orderData);
       
       // Get approval URL from PayPal order response
       const approvalUrl = orderData.links?.find((link: any) => link.rel === 'approve')?.href;
+      console.log('PayPal approval URL:', approvalUrl);
       
       if (approvalUrl) {
         // Store order data in session storage for completion after redirect
