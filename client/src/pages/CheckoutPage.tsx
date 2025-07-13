@@ -938,10 +938,39 @@ export default function CheckoutPage() {
         },
         theme: {
           color: isInternational ? "#2563EB" : "#7C3AED"
+        },
+        modal: {
+          ondismiss: () => {
+            console.log("Payment modal dismissed by user");
+            setIsProcessing(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "Payment was cancelled. Please try again.",
+              variant: "destructive",
+            });
+          }
         }
       };
 
       const razorpay = new window.Razorpay(options);
+      razorpay.on('payment.failed', function (response: any) {
+        console.error("Payment failed:", response.error);
+        setIsProcessing(false);
+        
+        let errorMessage = "Payment failed. Please try again.";
+        if (response.error?.description) {
+          errorMessage = response.error.description;
+        } else if (response.error?.reason) {
+          errorMessage = response.error.reason;
+        }
+        
+        toast({
+          title: "Payment Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      });
+      
       razorpay.open();
     } catch (error) {
       console.error("Razorpay payment error:", error);

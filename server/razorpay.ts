@@ -64,11 +64,17 @@ export async function createRazorpayOrder(req: Request, res: Response) {
 
 export async function verifyRazorpayPayment(req: Request, res: Response) {
   try {
-    console.log("Razorpay verification request body:", JSON.stringify(req.body, null, 2));
+    console.log("===== RAZORPAY PAYMENT VERIFICATION START =====");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    console.log("Request headers:", JSON.stringify(req.headers, null, 2));
+    
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      console.log("Missing required parameters for verification");
+      console.log("❌ Missing required parameters for verification");
+      console.log("razorpay_order_id:", razorpay_order_id);
+      console.log("razorpay_payment_id:", razorpay_payment_id);
+      console.log("razorpay_signature:", razorpay_signature);
       return res.status(400).json({ 
         status: "failed", 
         message: "Missing required parameters: razorpay_order_id, razorpay_payment_id, razorpay_signature" 
@@ -77,18 +83,19 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
 
     // Verify signature using crypto
     const body = razorpay_order_id + "|" + razorpay_payment_id;
-    console.log("Creating signature for body:", body);
+    console.log("✅ Creating signature for body:", body);
     
     const expectedSignature = crypto
       .createHmac("sha256", RAZORPAY_KEY_SECRET as string)
       .update(body.toString())
       .digest("hex");
 
-    console.log("Expected signature:", expectedSignature);
-    console.log("Received signature:", razorpay_signature);
+    console.log("✅ Expected signature:", expectedSignature);
+    console.log("✅ Received signature:", razorpay_signature);
+    console.log("✅ Signature match:", expectedSignature === razorpay_signature);
 
     if (expectedSignature === razorpay_signature) {
-      console.log("Payment verified successfully");
+      console.log("✅ Payment verified successfully");
       
       // If order data is provided, complete the order creation
       if (orderData) {
