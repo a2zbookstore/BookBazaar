@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, GripVertical, Gift, Settings, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, GripVertical, Gift, Settings, Eye, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { GiftItem, HomepageContent, GiftCategory } from "@/shared/schema";
@@ -46,6 +46,51 @@ export default function GiftManagementPage() {
   const [editingContent, setEditingContent] = useState<HomepageContent | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Image upload refs and state
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef2 = useRef<HTMLInputElement>(null);
+  const imageInputRef3 = useRef<HTMLInputElement>(null);
+  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isImageUploading2, setIsImageUploading2] = useState(false);
+  const [isImageUploading3, setIsImageUploading3] = useState(false);
+
+  // Image upload handlers
+  const handleImageUpload = async (file: File, imageField: 'imageUrl' | 'imageUrl2' | 'imageUrl3') => {
+    const setUploading = imageField === 'imageUrl' ? setIsImageUploading : 
+                        imageField === 'imageUrl2' ? setIsImageUploading2 : setIsImageUploading3;
+    
+    setUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await apiRequest('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.success) {
+        setGiftForm(prev => ({ ...prev, [imageField]: response.imageUrl }));
+        toast({
+          title: "Image uploaded successfully",
+          description: `Image ${imageField === 'imageUrl' ? '1' : imageField === 'imageUrl2' ? '2' : '3'} has been uploaded.`,
+        });
+      } else {
+        throw new Error(response.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Fetch gift items
   const { data: giftItems = [], isLoading: giftLoading } = useQuery<GiftItem[]>({
@@ -190,12 +235,18 @@ export default function GiftManagementPage() {
       type: "novel",
       description: "",
       imageUrl: "",
+      imageUrl2: "",
+      imageUrl3: "",
       price: 0,
       isbn: "",
       isActive: true,
       sortOrder: 0,
     });
     setEditingGift(null);
+    // Reset file inputs
+    if (imageInputRef.current) imageInputRef.current.value = '';
+    if (imageInputRef2.current) imageInputRef2.current.value = '';
+    if (imageInputRef3.current) imageInputRef3.current.value = '';
   };
 
   const resetContentForm = () => {
@@ -213,10 +264,13 @@ export default function GiftManagementPage() {
   const handleEditGift = (gift: GiftItem) => {
     setEditingGift(gift);
     setGiftForm({
+      categoryId: gift.categoryId,
       name: gift.name,
       type: gift.type as "novel" | "notebook",
       description: gift.description || "",
       imageUrl: gift.imageUrl || "",
+      imageUrl2: gift.imageUrl2 || "",
+      imageUrl3: gift.imageUrl3 || "",
       price: parseFloat(gift.price || "0"),
       isbn: gift.isbn || "",
       isActive: gift.isActive,
@@ -344,30 +398,151 @@ export default function GiftManagementPage() {
                     />
                   </div>
                   
-                  <div>
-                    <Label htmlFor="imageUpload">Upload Image</Label>
-                    <Input
-                      id="imageUpload"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Create blob URL for preview
-                          const imageUrl = URL.createObjectURL(file);
-                          setGiftForm({ ...giftForm, imageUrl });
-                        }
-                      }}
-                    />
-                    {giftForm.imageUrl && (
-                      <div className="mt-2">
-                        <img 
-                          src={giftForm.imageUrl} 
-                          alt="Preview" 
-                          className="w-20 h-20 object-cover rounded border"
+                  {/* Image Upload Sections */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Image 1 */}
+                    <div className="space-y-2">
+                      <Label>Image 1</Label>
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={isImageUploading}
+                          className="w-full"
+                        >
+                          {isImageUploading ? "Uploading..." : "Upload Image 1"}
+                          <Upload className="ml-2 h-4 w-4" />
+                        </Button>
+                        <input
+                          ref={imageInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, 'imageUrl');
+                            }
+                          }}
+                          className="hidden"
                         />
+                        {giftForm.imageUrl && (
+                          <div className="relative">
+                            <img 
+                              src={giftForm.imageUrl} 
+                              alt="Preview 1" 
+                              className="w-full h-32 object-cover rounded border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setGiftForm(prev => ({ ...prev, imageUrl: "" }))}
+                              className="absolute top-1 right-1 h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
+
+                    {/* Image 2 */}
+                    <div className="space-y-2">
+                      <Label>Image 2 (Optional)</Label>
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => imageInputRef2.current?.click()}
+                          disabled={isImageUploading2}
+                          className="w-full"
+                        >
+                          {isImageUploading2 ? "Uploading..." : "Upload Image 2"}
+                          <Upload className="ml-2 h-4 w-4" />
+                        </Button>
+                        <input
+                          ref={imageInputRef2}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, 'imageUrl2');
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        {giftForm.imageUrl2 && (
+                          <div className="relative">
+                            <img 
+                              src={giftForm.imageUrl2} 
+                              alt="Preview 2" 
+                              className="w-full h-32 object-cover rounded border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setGiftForm(prev => ({ ...prev, imageUrl2: "" }))}
+                              className="absolute top-1 right-1 h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Image 3 */}
+                    <div className="space-y-2">
+                      <Label>Image 3 (Optional)</Label>
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => imageInputRef3.current?.click()}
+                          disabled={isImageUploading3}
+                          className="w-full"
+                        >
+                          {isImageUploading3 ? "Uploading..." : "Upload Image 3"}
+                          <Upload className="ml-2 h-4 w-4" />
+                        </Button>
+                        <input
+                          ref={imageInputRef3}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, 'imageUrl3');
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        {giftForm.imageUrl3 && (
+                          <div className="relative">
+                            <img 
+                              src={giftForm.imageUrl3} 
+                              alt="Preview 3" 
+                              className="w-full h-32 object-cover rounded border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setGiftForm(prev => ({ ...prev, imageUrl3: "" }))}
+                              className="absolute top-1 right-1 h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -486,15 +661,29 @@ export default function GiftManagementPage() {
                             <Badge variant={gift.type === 'novel' ? 'default' : 'secondary'}>
                               {gift.type}
                             </Badge>
-                            {gift.imageUrl && (
-                              <div>
+                            <div className="flex gap-1 flex-wrap">
+                              {gift.imageUrl && (
                                 <img 
                                   src={gift.imageUrl} 
-                                  alt={gift.name}
-                                  className="w-8 h-8 object-cover rounded"
+                                  alt={`${gift.name} - Image 1`}
+                                  className="w-8 h-8 object-cover rounded border"
                                 />
-                              </div>
-                            )}
+                              )}
+                              {gift.imageUrl2 && (
+                                <img 
+                                  src={gift.imageUrl2} 
+                                  alt={`${gift.name} - Image 2`}
+                                  className="w-8 h-8 object-cover rounded border"
+                                />
+                              )}
+                              {gift.imageUrl3 && (
+                                <img 
+                                  src={gift.imageUrl3} 
+                                  alt={`${gift.name} - Image 3`}
+                                  className="w-8 h-8 object-cover rounded border"
+                                />
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
