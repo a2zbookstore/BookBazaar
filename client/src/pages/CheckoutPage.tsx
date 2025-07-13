@@ -270,7 +270,7 @@ export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuth();
   const { cartItems, cartCount, clearCart } = useCart();
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
-  const { shippingCost } = useShipping();
+  const { shippingCost, shippingRate } = useShipping();
   const { toast } = useToast();
 
   // Form state
