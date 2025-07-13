@@ -2285,19 +2285,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get orders for the authenticated user - search by both userId and email
       let orders = [];
       
-      if (userId) {
-        const result = await storage.getOrders({ userId });
-        orders = result.orders || [];
-      }
-      
-      // Also search by email for guest orders or orders placed before proper user auth
-      if (userEmail && orders.length === 0) {
+      // First, always search by email if we have it (covers both guest orders and email auth)
+      if (userEmail) {
         const result = await storage.getOrders({});
         const allOrders = result.orders || [];
         // Filter orders by customer email
         orders = allOrders.filter(order => 
           order.customerEmail && order.customerEmail.toLowerCase() === userEmail.toLowerCase()
         );
+      }
+      
+      // If no orders found by email and we have userId, search by userId
+      if (orders.length === 0 && userId) {
+        const result = await storage.getOrders({ userId });
+        orders = result.orders || [];
       }
       
       console.log("Found orders:", orders.length);
