@@ -665,6 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Set user session (similar to Replit auth)
       (req.session as any).userId = user.id;
       (req.session as any).isCustomerAuth = true;
+      (req.session as any).customerEmail = user.email;
 
       // Transfer guest cart items to authenticated user's cart
       if (guestCartItems.length > 0) {

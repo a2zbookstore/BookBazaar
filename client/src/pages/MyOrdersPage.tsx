@@ -52,15 +52,16 @@ export default function MyOrdersPage() {
   const { user, isAuthenticated } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  // Auto-set email for known user
+  const [guestEmail, setGuestEmail] = useState("avnishwhatsapp@gmail.com");
+  const [showGuestForm, setShowGuestForm] = useState(!isAuthenticated);
+
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/my-orders"],
     enabled: isAuthenticated,
   });
-
-  const [guestEmail, setGuestEmail] = useState("");
-  const [showGuestForm, setShowGuestForm] = useState(!isAuthenticated);
   
-  // Guest order lookup functionality
+  // Guest order lookup functionality - auto-enabled for avnishwhatsapp@gmail.com
   const { data: guestOrders = [], isLoading: guestLoading, refetch: refetchGuestOrders } = useQuery<Order[]>({
     queryKey: ["/api/guest-orders", guestEmail],
     queryFn: async () => {
