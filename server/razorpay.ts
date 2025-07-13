@@ -30,13 +30,14 @@ export async function createRazorpayOrder(req: Request, res: Response) {
     let finalAmount;
     let finalCurrency = currency || "INR";
     
-    // For international payments, use cents/paise based on currency
-    if (international && finalCurrency !== "INR") {
-      // For USD, EUR, etc. - convert to cents (multiply by 100)
-      finalAmount = Math.round(amount * 100);
-      console.log(`International payment: ${finalCurrency} ${amount} = ${finalAmount} cents`);
+    // For international payments, always use USD
+    if (international) {
+      // Force USD for international payments to ensure PayPal compatibility
+      finalAmount = Math.round(amount * 100); // Convert to cents
+      finalCurrency = "USD";
+      console.log(`International payment: USD ${amount} = ${finalAmount} cents`);
     } else {
-      // For INR - convert to paise (multiply by 100)
+      // For domestic payments, use INR
       finalAmount = Math.round(amount * 100);
       finalCurrency = "INR";
       console.log(`Domestic payment: INR ${amount} = ${finalAmount} paise`);
