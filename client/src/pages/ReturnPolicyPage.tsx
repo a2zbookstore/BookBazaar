@@ -14,9 +14,9 @@ export default function ReturnPolicyPage() {
         </div>
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-green-800 mb-2">15-Day Return Guarantee</h2>
+          <h2 className="text-xl font-semibold text-green-800 mb-2">30-Day Return Guarantee</h2>
           <p className="text-green-700">
-            Return any book within 15 days of delivery for a full refund, no questions asked. 
+            Return any book within 30 days of delivery for a full refund, no questions asked. 
             We stand behind the quality of our books and your satisfaction.
           </p>
         </div>
@@ -61,7 +61,7 @@ export default function ReturnPolicyPage() {
             <CardContent className="space-y-4">
               <div>
                 <h4 className="font-semibold text-gray-900">Step 1: Request Return</h4>
-                <p className="text-gray-600">Submit return request within 15 days</p>
+                <p className="text-gray-600">Submit return request within 30 days</p>
                 <p className="text-sm text-gray-500">Use our online return form or contact customer service</p>
               </div>
               <div>

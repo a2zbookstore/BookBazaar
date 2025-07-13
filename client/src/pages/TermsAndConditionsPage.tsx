@@ -156,7 +156,7 @@ export default function TermsAndConditionsPage() {
               <div>
                 <h4 className="font-semibold text-lg mb-2">5.1 Return Policy</h4>
                 <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Books may be returned within 15 days of delivery date</li>
+                  <li>Books may be returned within 30 days of delivery date</li>
                   <li>Books must be in the same condition as received</li>
                   <li>Original packaging and any included materials must be returned</li>
                   <li>Return shipping costs are the responsibility of the customer unless item was damaged</li>

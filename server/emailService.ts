@@ -172,7 +172,7 @@ const generateOrderConfirmationHTML = (data: OrderEmailData) => {
         <h4 style="color: #1e40af; margin-top: 0;">What's Next?</h4>
         <p style="margin-bottom: 10px;">• We'll process your order within 1-2 business days</p>
         <p style="margin-bottom: 10px;">• You'll receive a tracking number once your order ships</p>
-        <p style="margin-bottom: 0;">• We offer 15-day returns on all books</p>
+        <p style="margin-bottom: 0;">• We offer 30-day returns on all books</p>
       </div>
 
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -284,7 +284,7 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
           ${newStatus.toLowerCase() === 'delivered' ? 'Enjoy Your Books!' : 'What\'s Next?'}
         </h4>
         ${newStatus.toLowerCase() === 'delivered' 
-          ? '<p style="margin-bottom: 10px;">• We hope you enjoy your new books!</p><p style="margin-bottom: 10px;">• Remember, we offer 15-day returns if needed</p><p style="margin-bottom: 0;">• Please consider leaving us a review</p>'
+          ? '<p style="margin-bottom: 10px;">• We hope you enjoy your new books!</p><p style="margin-bottom: 10px;">• Remember, we offer 30-day returns if needed</p><p style="margin-bottom: 0;">• Please consider leaving us a review</p>'
           : newStatus.toLowerCase() === 'shipped'
           ? '<p style="margin-bottom: 10px;">• Your order is on its way!</p><p style="margin-bottom: 10px;">• Use the tracking number above to monitor delivery</p><p style="margin-bottom: 0;">• Expected delivery varies by location</p>'
           : '<p style="margin-bottom: 10px;">• We\'ll send another update when your order ships</p><p style="margin-bottom: 0;">• Thank you for your patience</p>'
@@ -571,7 +571,7 @@ export const generateWelcomeHTMLInternal = (data: WelcomeEmailData) => {
                     <div class="feature-card">
                         <div class="feature-icon">🔄</div>
                         <h4>Easy Returns</h4>
-                        <p>15-day hassle-free return policy</p>
+                        <p>30-day hassle-free return policy</p>
                     </div>
                 </div>
                 

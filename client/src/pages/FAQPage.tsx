@@ -101,7 +101,7 @@ export default function FAQPage() {
         {
           id: "return-policy",
           question: "What is your return policy?",
-          answer: "We offer a 15-day return guarantee on all books in original condition. Returns are easy - just submit a return request online or contact customer service. We provide prepaid return labels for your convenience."
+          answer: "We offer a 30-day return guarantee on all books in original condition. Returns are easy - just submit a return request online or contact customer service. We provide prepaid return labels for your convenience."
         },
         {
           id: "return-process",
