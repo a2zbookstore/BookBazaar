@@ -253,8 +253,8 @@ export default function CartPage() {
             
             {cartItems.map((item) => {
               const isGift = (item as any).isGift;
-              const imageUrl = isGift ? (item as any).imageUrl : item.book?.imageUrl;
-              const title = isGift ? (item as any).name : item.book?.title;
+              const imageUrl = item.book?.imageUrl;
+              const title = item.book?.title;
               const author = isGift ? null : item.book?.author;
               
               return (
