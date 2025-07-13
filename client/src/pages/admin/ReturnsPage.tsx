@@ -128,12 +128,16 @@ export default function ReturnsPage() {
   // Process refund mutation
   const processRefundMutation = useMutation({
     mutationFn: async (data: { id: number; refundMethod: string; refundReason: string }) => {
-      return await apiRequest("POST", `/api/admin/returns/${data.id}/refund`, {
+      console.log("Making API request to process refund with:", data);
+      const response = await apiRequest("POST", `/api/admin/returns/${data.id}/refund`, {
         refundMethod: data.refundMethod,
         refundReason: data.refundReason,
       });
+      console.log("Refund API response:", response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Refund processed successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/returns"] });
       toast({
         title: "Success",
@@ -144,6 +148,7 @@ export default function ReturnsPage() {
       setRefundReason("");
     },
     onError: (error: any) => {
+      console.error("Refund processing failed:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to process refund",
@@ -193,7 +198,18 @@ export default function ReturnsPage() {
   };
 
   const handleProcessRefund = () => {
-    if (!selectedReturn || !refundMethod || !refundReason) return;
+    console.log("Process Refund clicked - selectedReturn:", selectedReturn?.id, "refundMethod:", refundMethod, "refundReason:", refundReason);
+    
+    if (!selectedReturn || !refundMethod || !refundReason) {
+      console.log("Missing required fields - cannot process refund");
+      return;
+    }
+
+    console.log("Processing refund with data:", {
+      id: selectedReturn.id,
+      refundMethod,
+      refundReason: refundReason.trim(),
+    });
 
     processRefundMutation.mutate({
       id: selectedReturn.id,
