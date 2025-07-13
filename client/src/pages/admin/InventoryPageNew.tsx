@@ -52,6 +52,8 @@ interface BookForm {
   price: string;
   stock: number;
   imageUrl: string;
+  imageUrl2: string;
+  imageUrl3: string;
   publishedYear: number | null;
   publisher: string;
   pages: number | null;
@@ -76,8 +78,12 @@ export default function InventoryPageNew() {
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef2 = useRef<HTMLInputElement>(null);
+  const imageInputRef3 = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isImageUploading2, setIsImageUploading2] = useState(false);
+  const [isImageUploading3, setIsImageUploading3] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [importResults, setImportResults] = useState<any>(null);
 
@@ -92,6 +98,8 @@ export default function InventoryPageNew() {
     price: "",
     stock: 1,
     imageUrl: "",
+    imageUrl2: "",
+    imageUrl3: "",
     publishedYear: null,
     publisher: "",
     pages: null,
@@ -257,6 +265,8 @@ export default function InventoryPageNew() {
       price: "",
       stock: 1,
       imageUrl: "",
+      imageUrl2: "",
+      imageUrl3: "",
       publishedYear: null,
       publisher: "",
       pages: null,
@@ -268,6 +278,10 @@ export default function InventoryPageNew() {
       bestseller: false,
     });
     setEditingBook(null);
+    // Reset file inputs
+    if (imageInputRef.current) imageInputRef.current.value = '';
+    if (imageInputRef2.current) imageInputRef2.current.value = '';
+    if (imageInputRef3.current) imageInputRef3.current.value = '';
   };
 
   const handleEdit = (book: Book) => {
@@ -283,6 +297,8 @@ export default function InventoryPageNew() {
       price: book.price?.toString() || "",
       stock: book.stock || 1,
       imageUrl: book.imageUrl || "",
+      imageUrl2: book.imageUrl2 || "",
+      imageUrl3: book.imageUrl3 || "",
       publishedYear: book.publishedYear || null,
       publisher: book.publisher || "",
       pages: book.pages || null,
@@ -335,7 +351,7 @@ export default function InventoryPageNew() {
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, imageField: 'imageUrl' | 'imageUrl2' | 'imageUrl3') => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -359,7 +375,11 @@ export default function InventoryPageNew() {
       return;
     }
 
-    setIsImageUploading(true);
+    const setUploading = imageField === 'imageUrl' ? setIsImageUploading : 
+                        imageField === 'imageUrl2' ? setIsImageUploading2 : 
+                        setIsImageUploading3;
+
+    setUploading(true);
     const formData = new FormData();
     formData.append('image', file);
 
@@ -377,11 +397,11 @@ export default function InventoryPageNew() {
       const result = await response.json();
       
       // Update the form with the uploaded image URL
-      setBookForm(prev => ({ ...prev, imageUrl: result.imageUrl }));
+      setBookForm(prev => ({ ...prev, [imageField]: result.imageUrl }));
       
       toast({
         title: "Image Uploaded",
-        description: "Book cover image uploaded successfully",
+        description: `Book image ${imageField === 'imageUrl' ? '1' : imageField === 'imageUrl2' ? '2' : '3'} uploaded successfully`,
       });
     } catch (error) {
       toast({
@@ -390,7 +410,7 @@ export default function InventoryPageNew() {
         variant: "destructive",
       });
     } finally {
-      setIsImageUploading(false);
+      setUploading(false);
     }
   };
 
@@ -739,52 +759,159 @@ export default function InventoryPageNew() {
                   </div>
 
                   <div>
-                    <Label htmlFor="imageUrl">Book Cover Image</Label>
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Input
-                          id="imageUrl"
-                          type="text"
-                          value={bookForm.imageUrl}
-                          onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                          placeholder="https://res.cloudinary.com/... or upload an image using the button"
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => imageInputRef.current?.click()}
-                          disabled={isImageUploading}
-                          className="whitespace-nowrap"
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          {isImageUploading ? "Uploading..." : "Upload"}
-                        </Button>
-                      </div>
-                      {bookForm.imageUrl && (
-                        <div className="w-20 h-28 border rounded overflow-hidden">
-                          <img
-                            src={getImageSrc(bookForm.imageUrl)}
-                            alt="Book cover preview"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
-                                target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                              }
-                            }}
-                          />
+                    <Label className="text-base font-semibold">Book Images (1-3 images)</Label>
+                    <div className="space-y-4">
+                      {/* Image 1 */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <Label htmlFor="imageUrl" className="text-sm font-medium">Primary Image</Label>
+                        <div className="space-y-2 mt-2">
+                          <div className="flex gap-2">
+                            <Input
+                              id="imageUrl"
+                              type="text"
+                              value={bookForm.imageUrl}
+                              onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                              placeholder="https://res.cloudinary.com/... or upload below"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => imageInputRef.current?.click()}
+                              disabled={isImageUploading}
+                              className="whitespace-nowrap"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isImageUploading ? "Uploading..." : "Upload"}
+                            </Button>
+                          </div>
+                          {bookForm.imageUrl && (
+                            <div className="w-20 h-28 border rounded overflow-hidden">
+                              <img
+                                src={getImageSrc(bookForm.imageUrl)}
+                                alt="Primary image preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
+
+                      {/* Image 2 */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <Label htmlFor="imageUrl2" className="text-sm font-medium">Secondary Image (optional)</Label>
+                        <div className="space-y-2 mt-2">
+                          <div className="flex gap-2">
+                            <Input
+                              id="imageUrl2"
+                              type="text"
+                              value={bookForm.imageUrl2}
+                              onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl2: e.target.value }))}
+                              placeholder="https://res.cloudinary.com/... or upload below"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => imageInputRef2.current?.click()}
+                              disabled={isImageUploading2}
+                              className="whitespace-nowrap"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isImageUploading2 ? "Uploading..." : "Upload"}
+                            </Button>
+                          </div>
+                          {bookForm.imageUrl2 && (
+                            <div className="w-20 h-28 border rounded overflow-hidden">
+                              <img
+                                src={getImageSrc(bookForm.imageUrl2)}
+                                alt="Secondary image preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Image 3 */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <Label htmlFor="imageUrl3" className="text-sm font-medium">Third Image (optional)</Label>
+                        <div className="space-y-2 mt-2">
+                          <div className="flex gap-2">
+                            <Input
+                              id="imageUrl3"
+                              type="text"
+                              value={bookForm.imageUrl3}
+                              onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl3: e.target.value }))}
+                              placeholder="https://res.cloudinary.com/... or upload below"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => imageInputRef3.current?.click()}
+                              disabled={isImageUploading3}
+                              className="whitespace-nowrap"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isImageUploading3 ? "Uploading..." : "Upload"}
+                            </Button>
+                          </div>
+                          {bookForm.imageUrl3 && (
+                            <div className="w-20 h-28 border rounded overflow-hidden">
+                              <img
+                                src={getImageSrc(bookForm.imageUrl3)}
+                                alt="Third image preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <p className="text-xs text-gray-500">
-                        You can either paste an image URL or upload an image file (max 5MB)
+                        You can add up to 3 images. Each image can be a URL or uploaded file (max 5MB each)
                       </p>
                     </div>
+                    
+                    {/* Hidden file inputs */}
                     <input
                       ref={imageInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handleImageUpload}
+                      onChange={(e) => handleImageUpload(e, 'imageUrl')}
+                      className="hidden"
+                    />
+                    <input
+                      ref={imageInputRef2}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'imageUrl2')}
+                      className="hidden"
+                    />
+                    <input
+                      ref={imageInputRef3}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'imageUrl3')}
                       className="hidden"
                     />
                   </div>

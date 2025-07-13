@@ -22,6 +22,8 @@ interface GiftForm {
   type: "novel" | "notebook" | "";
   description: string;
   imageUrl: string;
+  imageUrl2: string;
+  imageUrl3: string;
   price: number;
   isbn: string;
   isActive: boolean;
@@ -67,6 +69,8 @@ export default function GiftManagementPage() {
     type: "novel",
     description: "",
     imageUrl: "",
+    imageUrl2: "",
+    imageUrl3: "",
     price: 0,
     isbn: "",
     isActive: true,

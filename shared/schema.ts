@@ -79,6 +79,8 @@ export const books = pgTable("books", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").default(0),
   imageUrl: varchar("image_url", { length: 500 }),
+  imageUrl2: varchar("image_url_2", { length: 500 }),
+  imageUrl3: varchar("image_url_3", { length: 500 }),
   publishedYear: integer("published_year"),
   publisher: varchar("publisher", { length: 200 }),
   pages: integer("pages"),
@@ -411,6 +413,8 @@ export const giftItems = pgTable("gift_items", {
   type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
   description: text("description"),
   imageUrl: varchar("image_url", { length: 500 }),
+  imageUrl2: varchar("image_url_2", { length: 500 }),
+  imageUrl3: varchar("image_url_3", { length: 500 }),
   price: decimal("price", { precision: 10, scale: 2 }),
   isbn: varchar("isbn", { length: 20 }),
   isActive: boolean("is_active").notNull().default(true),
