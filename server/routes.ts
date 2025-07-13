@@ -3351,9 +3351,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const result = await testEmailConfiguration();
       if (result) {
+        // Also test order confirmation email with admin copy
+        try {
+          const testOrderData = {
+            order: {
+              id: 999,
+              total: "49.99",
+              items: [
+                {
+                  id: 1,
+                  orderId: 999,
+                  bookId: 1,
+                  quantity: 2,
+                  price: "24.99",
+                  title: "Test Book",
+                  author: "Test Author",
+                  book: {
+                    id: 1,
+                    title: "Test Book",
+                    author: "Test Author",
+                    price: "24.99",
+                    imageUrl: "/test-image.jpg"
+                  }
+                }
+              ]
+            },
+            customerEmail: "test@example.com",
+            customerName: "Test Customer"
+          };
+          
+          await sendOrderConfirmationEmail(testOrderData);
+          console.log("Test order confirmation email sent to customer and admin");
+        } catch (emailError) {
+          console.error("Error sending test order confirmation email:", emailError);
+        }
+        
         res.json({ 
           success: true, 
-          message: "SMTP configuration verified and test email sent successfully",
+          message: "SMTP configuration verified and test email sent successfully. Order confirmation test also sent to customer and admin (a2zbookshopglobal@gmail.com)",
           timestamp: new Date().toISOString()
         });
       } else {

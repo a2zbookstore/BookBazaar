@@ -352,7 +352,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
         name: 'A2Z BOOKSHOP',
         address: 'orders@a2zbookshop.com'
       },
-      to: 'orders@a2zbookshop.com',
+      to: 'a2zbookshopglobal@gmail.com',
       subject: `New Order #${data.order.id} - Admin Copy`,
       html: htmlContent,
       text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${parseFloat(data.order.total.toString()).toFixed(2)}`
@@ -400,7 +400,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
         name: 'A2Z BOOKSHOP',
         address: 'orders@a2zbookshop.com'
       },
-      to: 'orders@a2zbookshop.com',
+      to: 'a2zbookshopglobal@gmail.com',
       subject: `Order Status Updated - Order #${data.order.id}`,
       html: htmlContent,
       text: `Order #${data.order.id} status updated to: ${data.newStatus} for customer: ${data.customerEmail}`
