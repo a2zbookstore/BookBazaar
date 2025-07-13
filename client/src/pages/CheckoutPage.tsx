@@ -1216,26 +1216,24 @@ export default function CheckoutPage() {
               <CardContent>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg border-green-200 bg-green-50">
+                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
                       <RadioGroupItem value="paypal" id="paypal" />
                       <div className="flex items-center space-x-2 flex-1">
                         <Globe className="w-5 h-5 text-blue-600" />
                         <Label htmlFor="paypal" className="flex-1 cursor-pointer">
                           PayPal
                           <Badge variant="secondary" className="ml-2">International</Badge>
-                          <Badge variant="outline" className="ml-2 text-green-600 border-green-600">Recommended</Badge>
                         </Label>
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg opacity-75">
+                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
                       <RadioGroupItem value="razorpay-international" id="razorpay-international" />
                       <div className="flex items-center space-x-2 flex-1">
                         <Globe className="w-5 h-5 text-blue-600" />
                         <Label htmlFor="razorpay-international" className="flex-1 cursor-pointer">
                           International Cards
                           <Badge variant="secondary" className="ml-2">Global</Badge>
-                          <Badge variant="outline" className="ml-2 text-orange-600 border-orange-600">Issues</Badge>
                           <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex worldwide</p>
                         </Label>
                       </div>
@@ -1263,11 +1261,6 @@ export default function CheckoutPage() {
 
                   {paymentMethod === "razorpay-international" && isFormValid && (
                     <div className="space-y-4">
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-800">
-                          ⚠️ International card payments are temporarily unavailable. Please use PayPal for the best experience.
-                        </p>
-                      </div>
                       <p className="text-sm text-gray-600">
                         Pay with international credit/debit cards. Supports Visa, Mastercard, and Amex worldwide.
                       </p>
