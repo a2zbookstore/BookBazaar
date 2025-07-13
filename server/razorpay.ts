@@ -255,7 +255,7 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
             paymentMethod,
             paymentId: razorpay_payment_id,
             status: "confirmed",
-            razorpayOrderId: razorpay_order_id
+            paymentStatus: "paid"
           }, cartItems.map((item: any) => ({
             bookId: item.book.id,
             quantity: item.quantity,

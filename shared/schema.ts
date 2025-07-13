@@ -107,6 +107,8 @@ export const orders = pgTable("orders", {
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   status: varchar("status", { length: 50 }).default("pending"), // pending, confirmed, processing, shipped, delivered, cancelled
   paymentStatus: varchar("payment_status", { length: 50 }).default("pending"), // pending, paid, failed, refunded
+  paymentId: varchar("payment_id", { length: 200 }), // Payment gateway transaction ID
+  paymentMethod: varchar("payment_method", { length: 50 }), // paypal, razorpay, stripe, etc.
   trackingNumber: varchar("tracking_number", { length: 100 }),
   shippingCarrier: varchar("shipping_carrier", { length: 100 }), // FedEx, UPS, DHL, etc.
   notes: text("notes"),

@@ -424,6 +424,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ${order.customerPhone ? `<p><strong>Phone:</strong> ${order.customerPhone}</p>` : ''}
     <p><strong>Order Status:</strong> ${order.status}</p>
     ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${order.trackingNumber}</p>` : ''}
+    ${order.paymentMethod ? `<p><strong>Payment Method:</strong> ${order.paymentMethod}</p>` : ''}
+    ${order.paymentId ? `<p><strong>Payment ID:</strong> ${order.paymentId}</p>` : ''}
   </div>
   
   <table class="items">
@@ -1042,6 +1044,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total,
         status: "pending",
         paymentStatus: "paid",
+        paymentId: paymentId,
+        paymentMethod: paymentMethod,
         notes: `Payment via ${paymentMethod}. Payment ID: ${paymentId}`
       }, cartItems);
 
