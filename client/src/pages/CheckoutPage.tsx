@@ -703,38 +703,53 @@ export default function CheckoutPage() {
       console.log('PayPal approval URL:', approvalUrl);
       
       if (approvalUrl) {
-        // Store order data in session storage for completion after redirect
-        sessionStorage.setItem('pendingOrder', JSON.stringify({
-          customerName,
-          customerEmail,
-          customerPhone,
-          shippingAddress,
-          billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-          subtotal: subtotal.toFixed(2),
-          shipping: shippingCost.toFixed(2),
-          tax: tax.toFixed(2),
-          total: total.toFixed(2),
-          paymentMethod: "paypal",
-          items: cartItems.map(item => ({
-            bookId: item.book.id,
-            quantity: item.quantity,
-            price: item.book.price,
-            title: item.book.title,
-            author: item.book.author
-          })),
-          giftItem: giftItem
-        }));
+        console.log('Storing order data in session storage...');
+        
+        try {
+          // Store order data in session storage for completion after redirect
+          const orderDataToStore = {
+            customerName,
+            customerEmail,
+            customerPhone,
+            shippingAddress,
+            billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
+            subtotal: subtotal.toFixed(2),
+            shipping: shippingCost.toFixed(2),
+            tax: tax.toFixed(2),
+            total: total.toFixed(2),
+            paymentMethod: "paypal",
+            items: cartItems.map(item => ({
+              bookId: item.book.id,
+              quantity: item.quantity,
+              price: item.book.price,
+              title: item.book.title,
+              author: item.book.author
+            })),
+            giftItem: giftItem
+          };
+          
+          console.log('Order data to store:', orderDataToStore);
+          sessionStorage.setItem('pendingOrder', JSON.stringify(orderDataToStore));
+          console.log('Session storage updated successfully');
 
-        toast({
-          title: "Redirecting to PayPal",
-          description: "Please complete your payment on PayPal's secure website...",
-        });
+          toast({
+            title: "Redirecting to PayPal",
+            description: "Please complete your payment on PayPal's secure website...",
+          });
 
-        // Redirect to PayPal for payment
-        setTimeout(() => {
-          window.location.href = approvalUrl;
-        }, 1000);
+          console.log('About to redirect to PayPal in 1 second...');
+          // Redirect to PayPal for payment
+          setTimeout(() => {
+            console.log('Redirecting to PayPal now:', approvalUrl);
+            window.location.href = approvalUrl;
+          }, 1000);
+          
+        } catch (storageError) {
+          console.error('Error storing order data:', storageError);
+          throw new Error(`Failed to store order data: ${storageError.message}`);
+        }
       } else {
+        console.error('No approval URL found in PayPal response');
         throw new Error("No approval URL received from PayPal");
       }
       
