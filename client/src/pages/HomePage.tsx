@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
 import { Book, Category } from "@/types";
-import { Search, Star, TrendingUp, Award } from "lucide-react";
+import { Search, Star, TrendingUp, Award, Flame } from "lucide-react";
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -26,6 +26,11 @@ export default function HomePage() {
     queryKey: ["/api/books?bestseller=true&limit=12"],
   });
   const bestsellerBooks = bestsellerBooksResponse?.books || [];
+
+  const { data: trendingBooksResponse } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: ["/api/books?trending=true&limit=12"],
+  });
+  const trendingBooks = trendingBooksResponse?.books || [];
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -179,6 +184,63 @@ export default function HomePage() {
               <p className="text-secondary-black text-lg">No featured books available at the moment.</p>
               <Link href="/catalog">
                 <Button className="mt-4 bg-primary-aqua hover:bg-secondary-aqua">
+                  Browse All Books
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Trending Items Section - Moving Carousel */}
+      <section className="py-16 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50">
+        <div className="container-custom">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <Flame className="h-8 w-8 text-red-500" />
+              <h3 className="text-3xl font-bookerly font-bold text-base-black">Trending Now</h3>
+            </div>
+            <Link href="/catalog?trending=true">
+              <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
+                View All Trending
+              </Button>
+            </Link>
+          </div>
+          
+          {trendingBooks.length > 0 ? (
+            <>
+              {/* Mobile horizontal scroll view */}
+              <div className="md:hidden overflow-x-auto">
+                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
+                  {trendingBooks.map((book) => (
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Desktop carousel view */}
+              <div className="hidden md:block relative overflow-hidden">
+                <div
+                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setIsPaused(false)}
+                >
+                  {trendingBooks.map((book) => (
+                    <div key={book.id} className="flex-none w-72">
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-secondary-black text-lg">No trending books available at the moment.</p>
+              <Link href="/catalog">
+                <Button className="mt-4 bg-red-500 hover:bg-red-600 text-white">
                   Browse All Books
                 </Button>
               </Link>

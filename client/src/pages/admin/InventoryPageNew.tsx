@@ -63,6 +63,7 @@ interface BookForm {
   dimensions: string;
   featured: boolean;
   bestseller: boolean;
+  trending: boolean;
 }
 
 export default function InventoryPageNew() {
@@ -109,6 +110,7 @@ export default function InventoryPageNew() {
     dimensions: "",
     featured: false,
     bestseller: false,
+    trending: false,
   });
 
   // Build query parameters
@@ -175,6 +177,7 @@ export default function InventoryPageNew() {
         dimensions: data.dimensions || "",
         featured: data.featured || false,
         bestseller: data.bestseller || false,
+        trending: data.trending || false,
       };
       
       console.log("Processed book data:", bookData);
@@ -217,6 +220,7 @@ export default function InventoryPageNew() {
         dimensions: data.dimensions || "",
         featured: data.featured || false,
         bestseller: data.bestseller || false,
+        trending: data.trending || false,
       };
       return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
@@ -276,6 +280,7 @@ export default function InventoryPageNew() {
       dimensions: "",
       featured: false,
       bestseller: false,
+      trending: false,
     });
     setEditingBook(null);
     // Reset file inputs
@@ -308,6 +313,7 @@ export default function InventoryPageNew() {
       dimensions: book.dimensions || "",
       featured: book.featured || false,
       bestseller: book.bestseller || false,
+      trending: book.trending || false,
     });
     setIsDialogOpen(true);
   };
@@ -969,7 +975,7 @@ export default function InventoryPageNew() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="featured"
@@ -991,6 +997,17 @@ export default function InventoryPageNew() {
                         }))}
                       />
                       <Label htmlFor="bestseller">Bestseller</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="trending"
+                        checked={bookForm.trending}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          trending: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="trending">Trending</Label>
                     </div>
                   </div>
 

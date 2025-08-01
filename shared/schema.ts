@@ -90,6 +90,7 @@ export const books = pgTable("books", {
   dimensions: varchar("dimensions", { length: 100 }), // e.g., "8x5x1 inches"
   featured: boolean("featured").default(false),
   bestseller: boolean("bestseller").default(false),
+  trending: boolean("trending").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

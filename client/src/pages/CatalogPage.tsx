@@ -71,11 +71,15 @@ export default function CatalogPage() {
     
     const featuredParam = params.get('featured');
     const bestsellerParam = params.get('bestseller');
+    const trendingParam = params.get('trending');
     if (featuredParam === 'true' && !searchParam) {
       // Handle featured filter if needed
     }
     if (bestsellerParam === 'true' && !searchParam) {
       // Handle bestseller filter if needed
+    }
+    if (trendingParam === 'true' && !searchParam) {
+      // Handle trending filter if needed
     }
   }, [location, search]);
 
@@ -87,10 +91,11 @@ export default function CatalogPage() {
   if (minPrice) queryParams.set('minPrice', minPrice);
   if (maxPrice) queryParams.set('maxPrice', maxPrice);
   
-  // Check URL params for featured/bestseller filters
+  // Check URL params for featured/bestseller/trending filters
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
   if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');
+  if (urlParams.get('trending') === 'true') queryParams.set('trending', 'true');
   
   queryParams.set('sortBy', sortBy);
   queryParams.set('sortOrder', sortOrder);
