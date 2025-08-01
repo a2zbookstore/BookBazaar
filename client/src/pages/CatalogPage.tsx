@@ -72,6 +72,8 @@ export default function CatalogPage() {
     const featuredParam = params.get('featured');
     const bestsellerParam = params.get('bestseller');
     const trendingParam = params.get('trending');
+    const newArrivalParam = params.get('newArrival');
+    const boxSetParam = params.get('boxSet');
     if (featuredParam === 'true' && !searchParam) {
       // Handle featured filter if needed
     }
@@ -80,6 +82,12 @@ export default function CatalogPage() {
     }
     if (trendingParam === 'true' && !searchParam) {
       // Handle trending filter if needed
+    }
+    if (newArrivalParam === 'true' && !searchParam) {
+      // Handle new arrival filter if needed
+    }
+    if (boxSetParam === 'true' && !searchParam) {
+      // Handle box set filter if needed
     }
   }, [location, search]);
 
@@ -91,11 +99,13 @@ export default function CatalogPage() {
   if (minPrice) queryParams.set('minPrice', minPrice);
   if (maxPrice) queryParams.set('maxPrice', maxPrice);
   
-  // Check URL params for featured/bestseller/trending filters
+  // Check URL params for special filters
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
   if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');
   if (urlParams.get('trending') === 'true') queryParams.set('trending', 'true');
+  if (urlParams.get('newArrival') === 'true') queryParams.set('newArrival', 'true');
+  if (urlParams.get('boxSet') === 'true') queryParams.set('boxSet', 'true');
   
   queryParams.set('sortBy', sortBy);
   queryParams.set('sortOrder', sortOrder);

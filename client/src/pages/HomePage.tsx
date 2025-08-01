@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
 import { Book, Category } from "@/types";
-import { Search, Star, TrendingUp, Award, Flame } from "lucide-react";
+import { Search, Star, TrendingUp, Award, Flame, Package, BookOpen } from "lucide-react";
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -31,6 +31,16 @@ export default function HomePage() {
     queryKey: ["/api/books?trending=true&limit=12"],
   });
   const trendingBooks = trendingBooksResponse?.books || [];
+
+  const { data: newArrivalsResponse } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: ["/api/books?newArrival=true&limit=12"],
+  });
+  const newArrivals = newArrivalsResponse?.books || [];
+
+  const { data: boxSetBooksResponse } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: ["/api/books?boxSet=true&limit=12"],
+  });
+  const boxSetBooks = boxSetBooksResponse?.books || [];
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -241,6 +251,120 @@ export default function HomePage() {
               <p className="text-secondary-black text-lg">No trending books available at the moment.</p>
               <Link href="/catalog">
                 <Button className="mt-4 bg-red-500 hover:bg-red-600 text-white">
+                  Browse All Books
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* New Arrivals Section - Moving Carousel */}
+      <section className="py-16 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50">
+        <div className="container-custom">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <Package className="h-8 w-8 text-green-600" />
+              <h3 className="text-3xl font-bookerly font-bold text-base-black">New Arrivals</h3>
+            </div>
+            <Link href="/catalog?newArrival=true">
+              <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white">
+                View All New Arrivals
+              </Button>
+            </Link>
+          </div>
+          
+          {newArrivals.length > 0 ? (
+            <>
+              {/* Mobile horizontal scroll view */}
+              <div className="md:hidden overflow-x-auto">
+                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
+                  {newArrivals.map((book) => (
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Desktop carousel view */}
+              <div className="hidden md:block relative overflow-hidden">
+                <div
+                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setIsPaused(false)}
+                >
+                  {newArrivals.map((book) => (
+                    <div key={book.id} className="flex-none w-72">
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-secondary-black text-lg">No new arrivals available at the moment.</p>
+              <Link href="/catalog">
+                <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white">
+                  Browse All Books
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Box Set Items Section - Moving Carousel */}
+      <section className="py-16 bg-gradient-to-r from-purple-50 via-violet-50 to-indigo-50">
+        <div className="container-custom">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-8 w-8 text-purple-600" />
+              <h3 className="text-3xl font-bookerly font-bold text-base-black">Box Set Collections</h3>
+            </div>
+            <Link href="/catalog?boxSet=true">
+              <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white">
+                View All Box Sets
+              </Button>
+            </Link>
+          </div>
+          
+          {boxSetBooks.length > 0 ? (
+            <>
+              {/* Mobile horizontal scroll view */}
+              <div className="md:hidden overflow-x-auto">
+                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
+                  {boxSetBooks.map((book) => (
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Desktop carousel view */}
+              <div className="hidden md:block relative overflow-hidden">
+                <div
+                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setIsPaused(false)}
+                >
+                  {boxSetBooks.map((book) => (
+                    <div key={book.id} className="flex-none w-72">
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-secondary-black text-lg">No box set collections available at the moment.</p>
+              <Link href="/catalog">
+                <Button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
                   Browse All Books
                 </Button>
               </Link>

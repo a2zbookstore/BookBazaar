@@ -91,6 +91,8 @@ export const books = pgTable("books", {
   featured: boolean("featured").default(false),
   bestseller: boolean("bestseller").default(false),
   trending: boolean("trending").default(false),
+  newArrival: boolean("new_arrival").default(false),
+  boxSet: boolean("box_set").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

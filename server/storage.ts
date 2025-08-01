@@ -268,6 +268,8 @@ export class DatabaseStorage implements IStorage {
     featured?: boolean;
     bestseller?: boolean;
     trending?: boolean;
+    newArrival?: boolean;
+    boxSet?: boolean;
     search?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -282,6 +284,8 @@ export class DatabaseStorage implements IStorage {
       featured,
       bestseller,
       trending,
+      newArrival,
+      boxSet,
       search,
       minPrice,
       maxPrice,
@@ -301,6 +305,8 @@ export class DatabaseStorage implements IStorage {
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
     if (bestseller !== undefined) conditions.push(eq(books.bestseller, bestseller));
     if (trending !== undefined) conditions.push(eq(books.trending, trending));
+    if (newArrival !== undefined) conditions.push(eq(books.newArrival, newArrival));
+    if (boxSet !== undefined) conditions.push(eq(books.boxSet, boxSet));
     if (search) {
       const searchTerm = search.toLowerCase();
       conditions.push(

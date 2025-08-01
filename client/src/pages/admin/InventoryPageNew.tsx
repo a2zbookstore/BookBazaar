@@ -64,6 +64,8 @@ interface BookForm {
   featured: boolean;
   bestseller: boolean;
   trending: boolean;
+  newArrival: boolean;
+  boxSet: boolean;
 }
 
 export default function InventoryPageNew() {
@@ -111,6 +113,8 @@ export default function InventoryPageNew() {
     featured: false,
     bestseller: false,
     trending: false,
+    newArrival: false,
+    boxSet: false,
   });
 
   // Build query parameters
@@ -178,6 +182,8 @@ export default function InventoryPageNew() {
         featured: data.featured || false,
         bestseller: data.bestseller || false,
         trending: data.trending || false,
+        newArrival: data.newArrival || false,
+        boxSet: data.boxSet || false,
       };
       
       console.log("Processed book data:", bookData);
@@ -221,6 +227,8 @@ export default function InventoryPageNew() {
         featured: data.featured || false,
         bestseller: data.bestseller || false,
         trending: data.trending || false,
+        newArrival: data.newArrival || false,
+        boxSet: data.boxSet || false,
       };
       return apiRequest('PUT', `/api/books/${editingBook.id}`, bookData);
     },
@@ -281,6 +289,8 @@ export default function InventoryPageNew() {
       featured: false,
       bestseller: false,
       trending: false,
+      newArrival: false,
+      boxSet: false,
     });
     setEditingBook(null);
     // Reset file inputs
@@ -314,6 +324,8 @@ export default function InventoryPageNew() {
       featured: book.featured || false,
       bestseller: book.bestseller || false,
       trending: book.trending || false,
+      newArrival: book.newArrival || false,
+      boxSet: book.boxSet || false,
     });
     setIsDialogOpen(true);
   };
@@ -975,7 +987,7 @@ export default function InventoryPageNew() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-5 gap-4">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="featured"
@@ -985,7 +997,7 @@ export default function InventoryPageNew() {
                           featured: checked as boolean 
                         }))}
                       />
-                      <Label htmlFor="featured">Featured book</Label>
+                      <Label htmlFor="featured">Featured</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -1008,6 +1020,28 @@ export default function InventoryPageNew() {
                         }))}
                       />
                       <Label htmlFor="trending">Trending</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="newArrival"
+                        checked={bookForm.newArrival}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          newArrival: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="newArrival">New Arrival</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="boxSet"
+                        checked={bookForm.boxSet}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          boxSet: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="boxSet">Box Set</Label>
                     </div>
                   </div>
 
