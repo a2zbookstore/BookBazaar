@@ -144,12 +144,11 @@ export default function BookCard({ book }: BookCardProps) {
       </div>
 
       <Link to={`/books/${book.id}`} className="block">
-        <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative" style={{ height: '180px' }}>
+        <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative">
           <img 
             src={getImageSrc(book.imageUrl)} 
             alt={book.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            style={{ maxWidth: '60%', margin: '0 auto' }}
             onError={(e) => {
               e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
             }}

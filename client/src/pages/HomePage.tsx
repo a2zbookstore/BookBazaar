@@ -114,7 +114,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {bestsellerBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -130,7 +130,7 @@ export default function HomePage() {
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {bestsellerBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-52">
+                    <div key={book.id} className="flex-none w-72">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -166,7 +166,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {featuredBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -182,7 +182,7 @@ export default function HomePage() {
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {featuredBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-52">
+                    <div key={book.id} className="flex-none w-72">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -223,7 +223,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {trendingBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -239,7 +239,7 @@ export default function HomePage() {
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {trendingBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-52">
+                    <div key={book.id} className="flex-none w-72">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -280,7 +280,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {newArrivals.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -296,7 +296,7 @@ export default function HomePage() {
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {newArrivals.map((book) => (
-                    <div key={book.id} className="flex-none w-52">
+                    <div key={book.id} className="flex-none w-72">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -337,7 +337,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {boxSetBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -353,7 +353,7 @@ export default function HomePage() {
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {boxSetBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-52">
+                    <div key={book.id} className="flex-none w-72">
                       <BookCard book={book} />
                     </div>
                   ))}
