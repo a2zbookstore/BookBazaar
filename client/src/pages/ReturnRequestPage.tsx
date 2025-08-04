@@ -66,7 +66,7 @@ export default function ReturnRequestPage() {
   
   const [step, setStep] = useState(1); // 1: Select Order, 2: Return Details, 3: Confirmation
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [guestEmail, setGuestEmail] = useState("avnishwhatsapp@gmail.com"); // Auto-set for known user
+  const [guestEmail, setGuestEmail] = useState(""); // Guest must enter their own email
   const [customerName, setCustomerName] = useState("");
   const [returnRequestNumber, setReturnRequestNumber] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -91,7 +91,7 @@ export default function ReturnRequestPage() {
       console.log("Eligible orders data:", data);
       return data;
     },
-    enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0),
+    enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0 && guestEmail.includes('@')),
   });
 
   // Fetch customer's return request history
@@ -111,7 +111,7 @@ export default function ReturnRequestPage() {
       console.log("Return history data:", data);
       return data;
     },
-    enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0),
+    enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0 && guestEmail.includes('@')),
   });
 
   // Get selected order details

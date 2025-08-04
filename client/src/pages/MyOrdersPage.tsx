@@ -55,16 +55,16 @@ export default function MyOrdersPage() {
   const { user, isAuthenticated } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // Auto-set email for known user
-  const [guestEmail, setGuestEmail] = useState("avnishwhatsapp@gmail.com");
-  const [showGuestForm, setShowGuestForm] = useState(!isAuthenticated);
+  // Guest email input for order lookup
+  const [guestEmail, setGuestEmail] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/my-orders"],
     enabled: isAuthenticated,
   });
   
-  // Guest order lookup functionality - auto-enabled for avnishwhatsapp@gmail.com
+  // Guest order lookup functionality - only enabled after user searches
   const { data: guestOrders = [], isLoading: guestLoading, refetch: refetchGuestOrders } = useQuery<Order[]>({
     queryKey: ["/api/guest-orders", guestEmail],
     queryFn: async () => {
@@ -75,11 +75,12 @@ export default function MyOrdersPage() {
       }
       return response.json();
     },
-    enabled: !isAuthenticated && guestEmail.length > 0,
+    enabled: !isAuthenticated && hasSearched && guestEmail.length > 0,
   });
 
   const handleGuestLookup = () => {
     if (guestEmail) {
+      setHasSearched(true);
       refetchGuestOrders();
     }
   };
@@ -119,7 +120,7 @@ export default function MyOrdersPage() {
                   </div>
                 </div>
                 
-                {guestOrders.length > 0 && (
+                {hasSearched && guestOrders.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Your Orders</h3>
                     {guestOrders.map((order) => (
