@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { BookOpen, Mail, Phone, User, DollarSign, Hash, Package } from "lucide-react";
 
 const RequestBookPage = () => {
@@ -33,7 +33,10 @@ const RequestBookPage = () => {
 
   const createBookRequestMutation = useMutation({
     mutationFn: async (data: InsertBookRequest) => {
-      return apiRequest("POST", "/api/book-requests", data);
+      console.log("About to call apiRequest with:", { method: "POST", url: "/api/book-requests", data });
+      const response = await apiRequest("POST", "/api/book-requests", data);
+      console.log("API request successful:", response);
+      return response;
     },
     onSuccess: () => {
       toast({
