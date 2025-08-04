@@ -29,6 +29,7 @@ import AdminAccountPage from "@/pages/admin/AdminAccountPage";
 import MessagesPage from "@/pages/admin/MessagesPage";
 import GiftCategoriesPage from "@/pages/admin/GiftCategoriesPage";
 import CouponsPage from "@/pages/admin/CouponsPage";
+import BookRequestsPage from "@/pages/admin/BookRequestsPage";
 import GiftItemsPage from "@/pages/GiftItemsPage";
 import GiftManagementPage from "@/pages/admin/GiftManagementPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
@@ -48,6 +49,7 @@ import CancellationPolicyPage from "@/pages/CancellationPolicyPage";
 import TermsAndConditionsPage from "@/pages/TermsAndConditionsPage";
 import FAQPage from "@/pages/FAQPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
+import RequestBookPage from "@/pages/RequestBookPage";
 import NotFound from "@/pages/not-found";
 
 function AppRouter() {
@@ -75,6 +77,7 @@ function AppRouter() {
       <Route path="/books/:id" component={BookDetailPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/request-book" component={RequestBookPage} />
       <Route path="/track-order" component={TrackOrderPage} />
       <Route path="/my-orders" component={MyOrdersPage} />
       <Route path="/cart" component={CartPage} />
@@ -139,6 +142,11 @@ function AppRouter() {
       <Route path="/admin/coupons">
         <AdminProtectedRoute>
           <CouponsPage />
+        </AdminProtectedRoute>
+      </Route>
+      <Route path="/admin/book-requests">
+        <AdminProtectedRoute>
+          <BookRequestsPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/welcome-email">

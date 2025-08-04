@@ -288,6 +288,14 @@ export default function AdminDashboard() {
                   <p className="text-sm text-secondary-black">Manage gift items & content</p>
                 </div>
               </a>
+              
+              <a href="/admin/book-requests" className="block">
+                <div className="p-4 border border-gray-200 rounded-lg hover:border-primary-aqua hover:bg-primary-aqua/5 transition-colors cursor-pointer">
+                  <BookOpen className="h-8 w-8 text-primary-aqua mb-2" />
+                  <h3 className="font-semibold text-base-black">Book Requests</h3>
+                  <p className="text-sm text-secondary-black">Manage customer requests</p>
+                </div>
+              </a>
             </div>
           </CardContent>
         </Card>

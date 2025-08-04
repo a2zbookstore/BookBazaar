@@ -20,7 +20,8 @@ import {
   insertCartItemSchema,
   insertGiftCategorySchema,
   insertGiftItemSchema,
-  insertCouponSchema
+  insertCouponSchema,
+  insertBookRequestSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -3789,6 +3790,193 @@ export async function registerRoutes(app: Express): Promise<Server> {
         valid: false, 
         message: "Failed to validate coupon" 
       });
+    }
+  });
+
+  // Book Request routes
+  app.post("/api/book-requests", async (req, res) => {
+    try {
+      const requestData = insertBookRequestSchema.parse(req.body);
+      const bookRequest = await storage.createBookRequest(requestData);
+      
+      // Send notification email to admin (optional)
+      try {
+        await sendEmail({
+          to: "admin@a2zbookshop.com", // Admin email
+          subject: "New Book Request Received",
+          html: `
+            <h2>New Book Request</h2>
+            <p><strong>Customer:</strong> ${bookRequest.customerName}</p>
+            <p><strong>Email:</strong> ${bookRequest.customerEmail}</p>
+            <p><strong>Phone:</strong> ${bookRequest.customerPhone || 'Not provided'}</p>
+            <p><strong>Book Title:</strong> ${bookRequest.bookTitle}</p>
+            <p><strong>Author:</strong> ${bookRequest.author || 'Not provided'}</p>
+            <p><strong>ISBN:</strong> ${bookRequest.isbn || 'Not provided'}</p>
+            <p><strong>Expected Price:</strong> $${bookRequest.expectedPrice || 'Not specified'}</p>
+            <p><strong>Quantity:</strong> ${bookRequest.quantity}</p>
+            <p><strong>Additional Notes:</strong> ${bookRequest.notes || 'None'}</p>
+            <p><strong>Request ID:</strong> #${bookRequest.id}</p>
+            <p><strong>Date:</strong> ${new Date(bookRequest.createdAt!).toLocaleString()}</p>
+          `
+        });
+      } catch (emailError) {
+        console.error("Failed to send book request notification email:", emailError);
+        // Don't fail the request if email fails
+      }
+      
+      res.json(bookRequest);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating book request:", error);
+      res.status(500).json({ message: "Failed to create book request" });
+    }
+  });
+
+  app.get("/api/book-requests", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const options: any = {};
+      if (req.query.status) options.status = req.query.status as string;
+      if (req.query.limit) options.limit = parseInt(req.query.limit as string);
+      if (req.query.offset) options.offset = parseInt(req.query.offset as string);
+
+      const result = await storage.getBookRequests(options);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching book requests:", error);
+      res.status(500).json({ message: "Failed to fetch book requests" });
+    }
+  });
+
+  app.get("/api/book-requests/:id", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const id = parseInt(req.params.id);
+      const bookRequest = await storage.getBookRequestById(id);
+      
+      if (!bookRequest) {
+        return res.status(404).json({ message: "Book request not found" });
+      }
+
+      res.json(bookRequest);
+    } catch (error) {
+      console.error("Error fetching book request:", error);
+      res.status(500).json({ message: "Failed to fetch book request" });
+    }
+  });
+
+  app.put("/api/book-requests/:id", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { status, adminNotes } = req.body;
+
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (adminNotes !== undefined) updates.adminNotes = adminNotes;
+      if (status && !updates.processedBy) {
+        updates.processedBy = adminId;
+        updates.processedAt = new Date();
+      }
+
+      const updatedRequest = await storage.updateBookRequest(id, updates);
+      
+      // Send status update email to customer
+      try {
+        const statusMessages = {
+          pending: "Your book request is under review",
+          in_progress: "We are working on finding your requested book",
+          fulfilled: "Great news! We have found your requested book and it will be added to our inventory soon",
+          rejected: "Unfortunately, we cannot fulfill your book request at this time",
+          cancelled: "Your book request has been cancelled"
+        };
+
+        await sendEmail({
+          to: updatedRequest.customerEmail,
+          subject: `Book Request Update - ${updatedRequest.bookTitle}`,
+          html: `
+            <h2>Book Request Status Update</h2>
+            <p>Dear ${updatedRequest.customerName},</p>
+            <p>${statusMessages[status as keyof typeof statusMessages] || 'Your book request status has been updated'}.</p>
+            <p><strong>Book:</strong> ${updatedRequest.bookTitle}</p>
+            <p><strong>Status:</strong> ${status}</p>
+            ${adminNotes ? `<p><strong>Notes:</strong> ${adminNotes}</p>` : ''}
+            <p><strong>Request ID:</strong> #${updatedRequest.id}</p>
+            <p>Thank you for choosing A2Z BOOKSHOP!</p>
+          `
+        });
+      } catch (emailError) {
+        console.error("Failed to send status update email:", emailError);
+        // Don't fail the update if email fails
+      }
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating book request:", error);
+      res.status(500).json({ message: "Failed to update book request" });
+    }
+  });
+
+  app.delete("/api/book-requests/:id", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const id = parseInt(req.params.id);
+      await storage.deleteBookRequest(id);
+      
+      res.json({ message: "Book request deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting book request:", error);
+      res.status(500).json({ message: "Failed to delete book request" });
     }
   });
 

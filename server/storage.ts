@@ -17,6 +17,7 @@ import {
   homepageContent,
   coupons,
   couponUsages,
+  bookRequests,
   type User,
   type UpsertUser,
   type Admin,
@@ -52,6 +53,8 @@ import {
   type InsertCoupon,
   type CouponUsage,
   type InsertCouponUsage,
+  type BookRequest,
+  type InsertBookRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -208,6 +211,17 @@ export interface IStorage {
   applyCoupon(couponId: number, orderId: number, userId: string | null, customerEmail: string, discountAmount: number): Promise<CouponUsage>;
   incrementCouponUsage(couponId: number): Promise<void>;
   getCouponUsages(couponId?: number): Promise<CouponUsage[]>;
+
+  // Book Request operations
+  getBookRequests(options?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ bookRequests: BookRequest[], total: number }>;
+  getBookRequestById(id: number): Promise<BookRequest | undefined>;
+  createBookRequest(bookRequest: InsertBookRequest): Promise<BookRequest>;
+  updateBookRequest(id: number, updates: Partial<BookRequest>): Promise<BookRequest>;
+  deleteBookRequest(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1468,6 +1482,66 @@ export class DatabaseStorage implements IStorage {
     
     return await db.select().from(couponUsages)
       .orderBy(desc(couponUsages.usedAt));
+  }
+
+  // Book Request operations
+  async getBookRequests(options?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ bookRequests: BookRequest[], total: number }> {
+    const limit = options?.limit || 50;
+    const offset = options?.offset || 0;
+
+    let whereConditions: any[] = [];
+    if (options?.status) {
+      whereConditions.push(eq(bookRequests.status, options.status));
+    }
+
+    const where = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    const [bookRequestsList, totalResult] = await Promise.all([
+      db.select()
+        .from(bookRequests)
+        .where(where)
+        .orderBy(desc(bookRequests.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: count() })
+        .from(bookRequests)
+        .where(where)
+    ]);
+
+    return {
+      bookRequests: bookRequestsList,
+      total: totalResult[0].count
+    };
+  }
+
+  async getBookRequestById(id: number): Promise<BookRequest | undefined> {
+    const [bookRequest] = await db.select()
+      .from(bookRequests)
+      .where(eq(bookRequests.id, id));
+    return bookRequest;
+  }
+
+  async createBookRequest(bookRequest: InsertBookRequest): Promise<BookRequest> {
+    const [newBookRequest] = await db.insert(bookRequests)
+      .values(bookRequest)
+      .returning();
+    return newBookRequest;
+  }
+
+  async updateBookRequest(id: number, updates: Partial<BookRequest>): Promise<BookRequest> {
+    const [updatedBookRequest] = await db.update(bookRequests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(bookRequests.id, id))
+      .returning();
+    return updatedBookRequest;
+  }
+
+  async deleteBookRequest(id: number): Promise<void> {
+    await db.delete(bookRequests).where(eq(bookRequests.id, id));
   }
 }
 

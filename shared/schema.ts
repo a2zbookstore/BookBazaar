@@ -252,6 +252,26 @@ export const coupons = pgTable("coupons", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Book Requests table - For customers to request books that are not in inventory
+export const bookRequests = pgTable("book_requests", {
+  id: serial("id").primaryKey(),
+  customerName: varchar("customer_name", { length: 200 }).notNull(),
+  customerEmail: varchar("customer_email", { length: 200 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 20 }),
+  bookTitle: varchar("book_title", { length: 500 }).notNull(),
+  author: varchar("author", { length: 300 }),
+  isbn: varchar("isbn", { length: 20 }),
+  expectedPrice: decimal("expected_price", { precision: 10, scale: 2 }),
+  quantity: integer("quantity").default(1),
+  notes: text("notes"), // Additional details from customer
+  status: varchar("status", { length: 50 }).default("pending"), // pending, in_progress, fulfilled, rejected, cancelled
+  adminNotes: text("admin_notes"), // Internal notes from admin
+  processedBy: integer("processed_by").references(() => admins.id),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Coupon usage tracking table to ensure one-time use per customer
 export const couponUsages = pgTable("coupon_usages", {
   id: serial("id").primaryKey(),
@@ -450,6 +470,19 @@ export const insertReturnRequestSchema = createInsertSchema(returnRequests).omit
 export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
 
 export type RefundTransaction = typeof refundTransactions.$inferSelect;
+
+// Book Request types
+export type BookRequest = typeof bookRequests.$inferSelect;
+export const insertBookRequestSchema = createInsertSchema(bookRequests).omit({
+  id: true,
+  status: true,
+  adminNotes: true,
+  processedBy: true,
+  processedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertBookRequest = z.infer<typeof insertBookRequestSchema>;
 
 // Gift Categories Management
 export const giftCategories = pgTable("gift_categories", {
