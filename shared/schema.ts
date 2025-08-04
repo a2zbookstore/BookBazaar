@@ -260,7 +260,8 @@ export const bookRequests = pgTable("book_requests", {
   customerPhone: varchar("customer_phone", { length: 20 }),
   bookTitle: varchar("book_title", { length: 500 }).notNull(),
   author: varchar("author", { length: 300 }),
-  isbn: varchar("isbn", { length: 20 }),
+  isbn: varchar("isbn", { length: 20 }).notNull(), // Made required
+  binding: varchar("binding", { length: 50 }).notNull(), // New field: softcover, hardcover, spiral, no binding
   expectedPrice: decimal("expected_price", { precision: 10, scale: 2 }),
   quantity: integer("quantity").default(1),
   notes: text("notes"), // Additional details from customer
