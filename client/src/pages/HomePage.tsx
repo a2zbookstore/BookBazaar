@@ -94,7 +94,7 @@ export default function HomePage() {
       />
 
       {/* Bestsellers Section - Moving Carousel */}
-      <section className="py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+      <section className="py-12 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
         <div className="container-custom">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {bestsellerBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -124,13 +124,13 @@ export default function HomePage() {
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
                 <div 
-                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
                   style={{ transform: `translateX(-${currentSlide * 25}%)` }}
                   onMouseEnter={() => setIsPaused(true)}
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {bestsellerBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-72">
+                    <div key={book.id} className="flex-none w-56">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -146,7 +146,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Books Section - Moving Carousel */}
-      <section className="py-16">
+      <section className="py-12">
         <div className="container-custom">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -166,7 +166,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {featuredBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -176,13 +176,13 @@ export default function HomePage() {
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
                 <div 
-                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
                   style={{ transform: `translateX(-${(currentSlide * 25) % 100}%)` }}
                   onMouseEnter={() => setIsPaused(true)}
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {featuredBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-72">
+                    <div key={book.id} className="flex-none w-56">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -203,7 +203,7 @@ export default function HomePage() {
       </section>
 
       {/* Trending Items Section - Moving Carousel */}
-      <section className="py-16 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50">
+      <section className="py-12 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50">
         <div className="container-custom">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {trendingBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -233,13 +233,13 @@ export default function HomePage() {
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
                 <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
                   style={{ transform: `translateX(-${currentSlide * 25}%)` }}
                   onMouseEnter={() => setIsPaused(true)}
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {trendingBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-72">
+                    <div key={book.id} className="flex-none w-56">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -260,7 +260,7 @@ export default function HomePage() {
       </section>
 
       {/* New Arrivals Section - Moving Carousel */}
-      <section className="py-16 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50">
+      <section className="py-12 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50">
         <div className="container-custom">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -280,7 +280,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {newArrivals.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -290,13 +290,13 @@ export default function HomePage() {
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
                 <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
                   style={{ transform: `translateX(-${currentSlide * 25}%)` }}
                   onMouseEnter={() => setIsPaused(true)}
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {newArrivals.map((book) => (
-                    <div key={book.id} className="flex-none w-72">
+                    <div key={book.id} className="flex-none w-56">
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -317,7 +317,7 @@ export default function HomePage() {
       </section>
 
       {/* Box Set Items Section - Moving Carousel */}
-      <section className="py-16 bg-gradient-to-r from-purple-50 via-violet-50 to-indigo-50">
+      <section className="py-12 bg-gradient-to-r from-purple-50 via-violet-50 to-indigo-50">
         <div className="container-custom">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -337,7 +337,7 @@ export default function HomePage() {
               <div className="md:hidden overflow-x-auto">
                 <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
                   {boxSetBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '250px' }}>
+                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -347,13 +347,13 @@ export default function HomePage() {
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
                 <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-4 sm:gap-6"
+                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
                   style={{ transform: `translateX(-${currentSlide * 25}%)` }}
                   onMouseEnter={() => setIsPaused(true)}
                   onMouseLeave={() => setIsPaused(false)}
                 >
                   {boxSetBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-72">
+                    <div key={book.id} className="flex-none w-56">
                       <BookCard book={book} />
                     </div>
                   ))}
