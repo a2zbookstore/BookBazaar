@@ -33,7 +33,7 @@ const RequestBookPage = () => {
 
   const createBookRequestMutation = useMutation({
     mutationFn: async (data: InsertBookRequest) => {
-      return apiRequest("/api/book-requests", "POST", data);
+      return apiRequest("POST", "/api/book-requests", data);
     },
     onSuccess: () => {
       toast({
