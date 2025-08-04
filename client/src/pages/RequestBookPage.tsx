@@ -45,16 +45,38 @@ const RequestBookPage = () => {
     },
     onError: (error: any) => {
       console.error("Error submitting book request:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      
+      let errorMessage = "Failed to submit book request. Please try again.";
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Request Failed",
-        description: error.message || "Failed to submit book request. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: InsertBookRequest) => {
-    createBookRequestMutation.mutate(data);
+    console.log("Form data before submission:", data);
+    
+    // Clean up data for submission
+    const cleanedData = {
+      ...data,
+      customerPhone: data.customerPhone || null,
+      author: data.author || null,
+      isbn: data.isbn || null,
+      expectedPrice: data.expectedPrice || null,
+      notes: data.notes || null,
+    };
+    
+    console.log("Cleaned data for submission:", cleanedData);
+    createBookRequestMutation.mutate(cleanedData);
   };
 
   if (isSubmitted) {
