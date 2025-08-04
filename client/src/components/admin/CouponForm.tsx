@@ -74,8 +74,10 @@ export function CouponForm({
       ...data,
       startDate: new Date(data.startDate).toISOString(),
       endDate: new Date(data.endDate).toISOString(),
-      usageLimit: data.usageLimit || null,
-      maximumDiscountAmount: data.maximumDiscountAmount || null,
+      usageLimit: data.usageLimit || undefined,
+      maximumDiscountAmount: data.maximumDiscountAmount || undefined,
+      description: data.description || undefined,
+      isActive: data.isActive ?? true,
     };
     onSubmit(submitData);
   };
@@ -130,7 +132,13 @@ export function CouponForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Discount Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select 
+                  onValueChange={(value) => {
+                    console.log("Discount type changed to:", value);
+                    field.onChange(value);
+                  }} 
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select discount type" />
@@ -157,6 +165,7 @@ export function CouponForm({
               <FormControl>
                 <Textarea
                   {...field}
+                  value={field.value || ""}
                   placeholder="20% off on all books"
                   rows={2}
                 />
@@ -322,7 +331,7 @@ export function CouponForm({
               </div>
               <FormControl>
                 <Switch
-                  checked={field.value}
+                  checked={field.value ?? true}
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
