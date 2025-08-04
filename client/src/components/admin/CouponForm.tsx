@@ -25,9 +25,18 @@ import {
 import { insertCouponSchema, type Coupon } from "@shared/schema";
 import { Shuffle } from "lucide-react";
 
-const formSchema = insertCouponSchema.extend({
+const formSchema = z.object({
+  code: z.string().min(1, "Coupon code is required"),
+  description: z.string().optional(),
+  discountType: z.enum(["percentage", "fixed_amount"]),
+  discountValue: z.string().min(1, "Discount value is required"),
+  minimumOrderAmount: z.string().default("0"),
+  maximumDiscountAmount: z.string().optional(),
+  usageLimit: z.number().optional(),
+  isActive: z.boolean().default(true),
   startDate: z.string(),
   endDate: z.string(),
+  createdBy: z.number().default(1),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -52,7 +61,7 @@ export function CouponForm({
     defaultValues: {
       code: coupon?.code || "",
       description: coupon?.description || "",
-      discountType: coupon?.discountType || "percentage",
+      discountType: (coupon?.discountType as "percentage" | "fixed_amount") || "percentage",
       discountValue: coupon?.discountValue || "",
       minimumOrderAmount: coupon?.minimumOrderAmount || "0",
       maximumDiscountAmount: coupon?.maximumDiscountAmount || "",
@@ -63,9 +72,12 @@ export function CouponForm({
         : new Date().toISOString().slice(0, 16),
       endDate: coupon?.endDate
         ? new Date(coupon.endDate).toISOString().slice(0, 16)
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // 30 days from now
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      createdBy: 1,
     },
   });
+
+  console.log("Form default values:", form.getValues());
 
   const discountType = form.watch("discountType");
 
@@ -134,10 +146,15 @@ export function CouponForm({
                 <FormLabel>Discount Type</FormLabel>
                 <Select 
                   onValueChange={(value) => {
-                    console.log("Discount type changed to:", value);
-                    field.onChange(value);
+                    try {
+                      console.log("Discount type changing to:", value);
+                      field.onChange(value);
+                      console.log("Discount type changed successfully to:", value);
+                    } catch (error) {
+                      console.error("Error changing discount type:", error);
+                    }
                   }} 
-                  defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
