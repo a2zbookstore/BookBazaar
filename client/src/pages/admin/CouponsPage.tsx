@@ -43,7 +43,7 @@ export default function CouponsPage() {
 
   // Create coupon mutation
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/admin/coupons", "POST", data),
+    mutationFn: (data: any) => apiRequest("POST", "/api/admin/coupons", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
       setIsCreateDialogOpen(false);
@@ -64,7 +64,7 @@ export default function CouponsPage() {
   // Update coupon mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
-      apiRequest(`/api/admin/coupons/${id}`, "PUT", data),
+      apiRequest("PUT", `/api/admin/coupons/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
       setIsEditDialogOpen(false);
@@ -86,7 +86,7 @@ export default function CouponsPage() {
   // Delete coupon mutation
   const deleteMutation = useMutation({
     mutationFn: (id: number) =>
-      apiRequest(`/api/admin/coupons/${id}`, "DELETE"),
+      apiRequest("DELETE", `/api/admin/coupons/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
       setIsDeleteDialogOpen(false);
