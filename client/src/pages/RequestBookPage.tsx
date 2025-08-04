@@ -25,7 +25,7 @@ const RequestBookPage = () => {
       bookTitle: "",
       author: "",
       isbn: "",
-      expectedPrice: undefined,
+      expectedPrice: "",
       quantity: 1,
       notes: "",
     },
@@ -33,10 +33,7 @@ const RequestBookPage = () => {
 
   const createBookRequestMutation = useMutation({
     mutationFn: async (data: InsertBookRequest) => {
-      return apiRequest("/api/book-requests", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest("/api/book-requests", "POST", data);
     },
     onSuccess: () => {
       toast({
@@ -172,7 +169,7 @@ const RequestBookPage = () => {
                           Phone Number
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your phone number" {...field} />
+                          <Input placeholder="Enter your phone number" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -208,7 +205,7 @@ const RequestBookPage = () => {
                       <FormItem>
                         <FormLabel>Author Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter the author's name" {...field} />
+                          <Input placeholder="Enter the author's name" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -225,7 +222,7 @@ const RequestBookPage = () => {
                           ISBN
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter ISBN if known" {...field} />
+                          <Input placeholder="Enter ISBN if known" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -248,6 +245,7 @@ const RequestBookPage = () => {
                               min="1" 
                               placeholder="1" 
                               {...field}
+                              value={field.value || 1}
                               onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                             />
                           </FormControl>
@@ -272,7 +270,8 @@ const RequestBookPage = () => {
                               min="0" 
                               placeholder="Optional" 
                               {...field}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value ? e.target.value : "")}
                             />
                           </FormControl>
                           <FormMessage />
@@ -291,7 +290,8 @@ const RequestBookPage = () => {
                           <Textarea 
                             placeholder="Any additional details about the book, edition preferences, condition requirements, etc."
                             className="min-h-[100px]"
-                            {...field} 
+                            {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormMessage />
