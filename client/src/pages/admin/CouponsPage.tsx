@@ -319,49 +319,53 @@ export default function CouponsPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Coupon</DialogTitle>
             <DialogDescription>
               Create a new discount coupon for your customers
             </DialogDescription>
           </DialogHeader>
-          <CouponForm
-            onSubmit={handleCreate}
-            onCancel={() => setIsCreateDialogOpen(false)}
-            isLoading={createMutation.isPending}
-            generateRandomCode={generateRandomCode}
-          />
+          <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+            <CouponForm
+              onSubmit={handleCreate}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              isLoading={createMutation.isPending}
+              generateRandomCode={generateRandomCode}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Coupon</DialogTitle>
             <DialogDescription>
               Update the coupon details
             </DialogDescription>
           </DialogHeader>
-          {selectedCoupon && (
-            <CouponForm
-              coupon={selectedCoupon}
-              onSubmit={handleEdit}
-              onCancel={() => {
-                setIsEditDialogOpen(false);
-                setSelectedCoupon(null);
-              }}
-              isLoading={updateMutation.isPending}
-              generateRandomCode={generateRandomCode}
-            />
-          )}
+          <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+            {selectedCoupon && (
+              <CouponForm
+                coupon={selectedCoupon}
+                onSubmit={handleEdit}
+                onCancel={() => {
+                  setIsEditDialogOpen(false);
+                  setSelectedCoupon(null);
+                }}
+                isLoading={updateMutation.isPending}
+                generateRandomCode={generateRandomCode}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Delete Coupon</DialogTitle>
             <DialogDescription>
@@ -370,7 +374,7 @@ export default function CouponsPage() {
             </DialogDescription>
           </DialogHeader>
           {selectedCoupon && (
-            <div className="bg-gray-50 p-3 rounded-md">
+            <div className="bg-gray-50 p-3 rounded-md my-4">
               <div className="font-semibold">{selectedCoupon.code}</div>
               <div className="text-sm text-gray-600">{selectedCoupon.description}</div>
             </div>

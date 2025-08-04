@@ -87,7 +87,7 @@ export function CouponForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Coupon Code */}
           <FormField
@@ -158,7 +158,7 @@ export function CouponForm({
                 <Textarea
                   {...field}
                   placeholder="20% off on all books"
-                  rows={3}
+                  rows={2}
                 />
               </FormControl>
               <FormDescription>
