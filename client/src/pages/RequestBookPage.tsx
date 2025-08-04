@@ -264,19 +264,18 @@ const RequestBookPage = () => {
                           <Book className="h-4 w-4" />
                           Binding *
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue="softcover">
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select binding type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="softcover">Softcover</SelectItem>
-                            <SelectItem value="hardcover">Hardcover</SelectItem>
-                            <SelectItem value="spiral">Spiral</SelectItem>
-                            <SelectItem value="no_binding">No Binding</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="">Select binding type</option>
+                            <option value="softcover">Softcover</option>
+                            <option value="hardcover">Hardcover</option>
+                            <option value="spiral">Spiral</option>
+                            <option value="no_binding">No Binding</option>
+                          </select>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
