@@ -3618,10 +3618,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Coupon creation request body:', req.body);
       console.log('Admin ID:', adminId);
 
-      const couponData = insertCouponSchema.parse({
+      // Convert date strings to Date objects
+      const requestData = {
         ...req.body,
-        createdBy: adminId
-      });
+        createdBy: adminId,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
+      };
+
+      const couponData = insertCouponSchema.parse(requestData);
 
       // Check if coupon code already exists
       const existingCoupon = await storage.getCouponByCode(couponData.code);
