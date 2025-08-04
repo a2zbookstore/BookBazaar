@@ -39,21 +39,19 @@ const BookRequestsPage = () => {
 
   const { data: bookRequestsData, isLoading } = useQuery({
     queryKey: ["/api/book-requests", selectedStatus],
-    queryFn: () => {
+    queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedStatus !== "all") {
         params.append("status", selectedStatus);
       }
-      return apiRequest(`/api/book-requests?${params.toString()}`);
+      const response = await apiRequest("GET", `/api/book-requests?${params.toString()}`);
+      return response.json();
     },
   });
 
   const updateRequestMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
-      return apiRequest(`/api/book-requests/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(updates),
-      });
+      return apiRequest("PUT", `/api/book-requests/${id}`, updates);
     },
     onSuccess: () => {
       toast({
@@ -77,9 +75,7 @@ const BookRequestsPage = () => {
 
   const deleteRequestMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/book-requests/${id}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/book-requests/${id}`);
     },
     onSuccess: () => {
       toast({
