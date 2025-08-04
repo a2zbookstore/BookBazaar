@@ -233,6 +233,40 @@ export const refundTransactions = pgTable("refund_transactions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Coupon system tables
+export const coupons = pgTable("coupons", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).unique().notNull(),
+  description: text("description"),
+  discountType: varchar("discount_type").notNull(), // percentage, fixed_amount
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  minimumOrderAmount: decimal("minimum_order_amount", { precision: 10, scale: 2 }).default("0"),
+  maximumDiscountAmount: decimal("maximum_discount_amount", { precision: 10, scale: 2 }), // For percentage discounts
+  usageLimit: integer("usage_limit"), // null = unlimited
+  usedCount: integer("used_count").default(0),
+  isActive: boolean("is_active").default(true),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  createdBy: integer("created_by").references(() => admins.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Coupon usage tracking table to ensure one-time use per customer
+export const couponUsages = pgTable("coupon_usages", {
+  id: serial("id").primaryKey(),
+  couponId: integer("coupon_id").notNull().references(() => coupons.id),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  userId: varchar("user_id").references(() => users.id),
+  customerEmail: varchar("customer_email").notNull(), // For guest users
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
+  usedAt: timestamp("used_at").defaultNow(),
+}, (table) => {
+  return {
+    uniqueCouponUser: unique().on(table.couponId, table.customerEmail), // Ensure one use per customer email
+  };
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -306,6 +340,29 @@ export const refundTransactionsRelations = relations(refundTransactions, ({ one 
   processedByAdmin: one(admins, {
     fields: [refundTransactions.processedBy],
     references: [admins.id],
+  }),
+}));
+
+export const couponsRelations = relations(coupons, ({ one, many }) => ({
+  createdByAdmin: one(admins, {
+    fields: [coupons.createdBy],
+    references: [admins.id],
+  }),
+  usages: many(couponUsages),
+}));
+
+export const couponUsagesRelations = relations(couponUsages, ({ one }) => ({
+  coupon: one(coupons, {
+    fields: [couponUsages.couponId],
+    references: [coupons.id],
+  }),
+  order: one(orders, {
+    fields: [couponUsages.orderId],
+    references: [orders.id],
+  }),
+  user: one(users, {
+    fields: [couponUsages.userId],
+    references: [users.id],
   }),
 }));
 
@@ -478,3 +535,32 @@ export const insertAdminSchema = createInsertSchema(admins).omit({
   lastLogin: true,
 });
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
+
+// Coupon types and schemas
+export type Coupon = typeof coupons.$inferSelect;
+export const insertCouponSchema = createInsertSchema(coupons).omit({
+  id: true,
+  usedCount: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  discountValue: z.union([z.string(), z.number()]).transform((val) => {
+    return typeof val === 'string' ? val : val.toString();
+  }),
+  minimumOrderAmount: z.union([z.string(), z.number()]).optional().transform((val) => {
+    if (val === undefined || val === null) return "0";
+    return typeof val === 'string' ? val : val.toString();
+  }),
+  maximumDiscountAmount: z.union([z.string(), z.number()]).optional().transform((val) => {
+    if (val === undefined || val === null) return undefined;
+    return typeof val === 'string' ? val : val.toString();
+  }),
+});
+export type InsertCoupon = z.infer<typeof insertCouponSchema>;
+
+export type CouponUsage = typeof couponUsages.$inferSelect;
+export const insertCouponUsageSchema = createInsertSchema(couponUsages).omit({
+  id: true,
+  usedAt: true,
+});
+export type InsertCouponUsage = z.infer<typeof insertCouponUsageSchema>;

@@ -19,7 +19,8 @@ import {
   insertContactMessageSchema,
   insertCartItemSchema,
   insertGiftCategorySchema,
-  insertGiftItemSchema
+  insertGiftItemSchema,
+  insertCouponSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -3575,6 +3576,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting gift item:", error);
       res.status(500).json({ message: "Failed to delete gift item" });
+    }
+  });
+
+  // Coupon Management Routes
+  
+  // Get all coupons (Admin only)
+  app.get("/api/admin/coupons", requireAdminAuth, async (req, res) => {
+    try {
+      const coupons = await storage.getCoupons();
+      res.json(coupons);
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      res.status(500).json({ message: "Failed to fetch coupons" });
+    }
+  });
+
+  // Get coupon by ID (Admin only)
+  app.get("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const coupon = await storage.getCouponById(id);
+      if (!coupon) {
+        return res.status(404).json({ message: "Coupon not found" });
+      }
+      res.json(coupon);
+    } catch (error) {
+      console.error("Error fetching coupon:", error);
+      res.status(500).json({ message: "Failed to fetch coupon" });
+    }
+  });
+
+  // Create new coupon (Admin only)
+  app.post("/api/admin/coupons", requireAdminAuth, async (req: any, res) => {
+    try {
+      const adminId = req.adminUser?.id;
+      if (!adminId) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const couponData = insertCouponSchema.parse({
+        ...req.body,
+        createdBy: adminId
+      });
+
+      // Check if coupon code already exists
+      const existingCoupon = await storage.getCouponByCode(couponData.code);
+      if (existingCoupon) {
+        return res.status(400).json({ message: "Coupon code already exists" });
+      }
+
+      const coupon = await storage.createCoupon(couponData);
+      res.status(201).json(coupon);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating coupon:", error);
+      res.status(500).json({ message: "Failed to create coupon" });
+    }
+  });
+
+  // Update coupon (Admin only)
+  app.put("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = insertCouponSchema.partial().parse(req.body);
+
+      // If updating code, check for duplicates
+      if (updateData.code) {
+        const existingCoupon = await storage.getCouponByCode(updateData.code);
+        if (existingCoupon && existingCoupon.id !== id) {
+          return res.status(400).json({ message: "Coupon code already exists" });
+        }
+      }
+
+      const coupon = await storage.updateCoupon(id, updateData);
+      res.json(coupon);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating coupon:", error);
+      res.status(500).json({ message: "Failed to update coupon" });
+    }
+  });
+
+  // Delete coupon (Admin only)
+  app.delete("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCoupon(id);
+      res.json({ message: "Coupon deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting coupon:", error);
+      res.status(500).json({ message: "Failed to delete coupon" });
+    }
+  });
+
+  // Get coupon usage statistics (Admin only)
+  app.get("/api/admin/coupons/:id/usage", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const usages = await storage.getCouponUsages(id);
+      res.json(usages);
+    } catch (error) {
+      console.error("Error fetching coupon usage:", error);
+      res.status(500).json({ message: "Failed to fetch coupon usage" });
+    }
+  });
+
+  // Validate coupon code (Public route for checkout)
+  app.post("/api/coupons/validate", async (req, res) => {
+    try {
+      const { code, customerEmail, orderAmount } = req.body;
+
+      if (!code || !customerEmail || !orderAmount) {
+        return res.status(400).json({ 
+          valid: false, 
+          message: "Code, customer email, and order amount are required" 
+        });
+      }
+
+      const result = await storage.validateCoupon(code, customerEmail, parseFloat(orderAmount));
+      res.json(result);
+    } catch (error) {
+      console.error("Error validating coupon:", error);
+      res.status(500).json({ 
+        valid: false, 
+        message: "Failed to validate coupon" 
+      });
     }
   });
 
