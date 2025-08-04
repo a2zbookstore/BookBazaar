@@ -25,8 +25,11 @@ export default function AdminDashboard() {
 
   // Query for pending orders count with auto-refresh
   const { data: pendingOrdersData } = useQuery<{ orders: Order[] }>({
-    queryKey: ["/api/orders?status=pending"],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    queryKey: ["/api/orders", "pending"],
+    queryFn: () => fetch("/api/orders?status=pending").then(res => res.json()),
+    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchOnWindowFocus: true, // Refetch when window gets focus
+    refetchOnMount: true, // Always refetch on component mount
   });
 
   const recentOrders = recentOrdersData?.orders || [];

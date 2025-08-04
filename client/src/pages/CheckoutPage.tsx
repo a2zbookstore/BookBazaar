@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -664,6 +664,9 @@ export default function CheckoutPage() {
     },
     onSuccess: (data: any) => {
       clearCart();
+      // Invalidate pending orders cache for admin dashboard
+      queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: "Order Placed Successfully!",
         description: `Your order #${data.orderId} has been confirmed.`,
@@ -964,6 +967,9 @@ export default function CheckoutPage() {
             if (verifyData.status === "success") {
               setIsProcessing(false);
               clearCart();
+              // Invalidate pending orders cache for admin dashboard
+              queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
               toast({
                 title: "Payment Successful!",
                 description: `Your order #${verifyData.orderId} has been placed successfully.`,
