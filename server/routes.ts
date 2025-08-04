@@ -3610,7 +3610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new coupon (Admin only)
   app.post("/api/admin/coupons", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = req.adminUser?.id;
+      const adminId = (req.session as any)?.adminId;
       if (!adminId) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
