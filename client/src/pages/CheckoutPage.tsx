@@ -308,9 +308,77 @@ export default function CheckoutPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [giftItem, setGiftItem] = useState<any>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // Check if cart has any non-gift books
   const hasNonGiftBooks = cartItems.some(item => !item.isGift);
+
+  // Apply coupon function
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    setCouponError("");
+
+    try {
+      const response = await apiRequest("POST", "/api/coupons/validate", {
+        code: couponCode.trim(),
+        orderAmount: convertedAmounts.subtotal
+      });
+      
+      const data = await response.json();
+      setAppliedCoupon(data);
+      setCouponCode("");
+      toast({
+        title: "Coupon Applied!",
+        description: `You saved ${data.discountType === 'percentage' ? data.discountValue + '%' : formatAmount(data.discountValue)}`,
+      });
+    } catch (error: any) {
+      setCouponError(error.message || "Invalid coupon code");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  // Remove coupon function
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+    toast({
+      title: "Coupon Removed",
+      description: "The coupon has been removed from your order",
+    });
+  };
+
+  // Calculate discount amount
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.discountType === 'percentage') {
+      const discountAmount = (convertedAmounts.subtotal * appliedCoupon.discountValue) / 100;
+      // Apply maximum discount limit if exists
+      if (appliedCoupon.maximumDiscountAmount) {
+        return Math.min(discountAmount, appliedCoupon.maximumDiscountAmount);
+      }
+      return discountAmount;
+    } else {
+      // Fixed amount discount
+      return Math.min(appliedCoupon.discountValue, convertedAmounts.subtotal);
+    }
+  };
+
+  // Calculate final total with discount
+  const calculateFinalTotal = () => {
+    const discount = calculateDiscount();
+    return Math.max(0, convertedAmounts.total - discount);
+  };
 
   // Load gift item from localStorage and auto-remove if no books
   useEffect(() => {
@@ -1333,12 +1401,65 @@ export default function CheckoutPage() {
 
                 <Separator />
 
+                {/* Coupon Code Section */}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Have a Coupon?</h4>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div>
+                        <span className="text-sm font-medium text-green-800">{appliedCoupon.code}</span>
+                        <p className="text-xs text-green-600">{appliedCoupon.description}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={removeCoupon}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter coupon code"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value);
+                          setCouponError("");
+                        }}
+                        className="flex-1"
+                        onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={applyCoupon}
+                        disabled={isApplyingCoupon || !couponCode.trim()}
+                        className="bg-primary-aqua hover:bg-primary-aqua/90"
+                      >
+                        {isApplyingCoupon ? "Applying..." : "Apply"}
+                      </Button>
+                    </div>
+                  )}
+                  {couponError && (
+                    <p className="text-xs text-red-600">{couponError}</p>
+                  )}
+                </div>
+
+                <Separator />
+
                 {/* Price Breakdown */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
                     <span>{formatAmount(convertedAmounts.subtotal)}</span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount ({appliedCoupon.code}):</span>
+                      <span>-{formatAmount(calculateDiscount())}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Shipping:</span>
                     <span>{convertedAmounts.shipping === 0 ? 'Free Delivery' : formatAmount(convertedAmounts.shipping)}</span>
@@ -1350,7 +1471,7 @@ export default function CheckoutPage() {
                   <Separator />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total:</span>
-                    <span className="text-primary-aqua">{formatAmount(convertedAmounts.total)}</span>
+                    <span className="text-primary-aqua">{formatAmount(calculateFinalTotal())}</span>
                   </div>
                 </div>
 

@@ -3695,6 +3695,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Validate coupon for customers (Public route)
+  app.post("/api/coupons/validate", async (req, res) => {
+    try {
+      const { code, orderAmount } = req.body;
+
+      if (!code) {
+        return res.status(400).json({ message: "Coupon code is required" });
+      }
+
+      if (!orderAmount || orderAmount <= 0) {
+        return res.status(400).json({ message: "Valid order amount is required" });
+      }
+
+      // Get coupon by code
+      const coupon = await storage.getCouponByCode(code.trim().toUpperCase());
+      if (!coupon) {
+        return res.status(404).json({ message: "Invalid coupon code" });
+      }
+
+      // Check if coupon is active
+      if (!coupon.isActive) {
+        return res.status(400).json({ message: "This coupon is no longer active" });
+      }
+
+      // Check if coupon has expired
+      const now = new Date();
+      if (coupon.endDate && new Date(coupon.endDate) < now) {
+        return res.status(400).json({ message: "This coupon has expired" });
+      }
+
+      // Check if coupon has started
+      if (coupon.startDate && new Date(coupon.startDate) > now) {
+        return res.status(400).json({ message: "This coupon is not yet valid" });
+      }
+
+      // Check minimum order amount
+      if (coupon.minimumOrderAmount && orderAmount < coupon.minimumOrderAmount) {
+        return res.status(400).json({ 
+          message: `Minimum order amount of ${coupon.minimumOrderAmount} required` 
+        });
+      }
+
+      // Check usage limit
+      if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+        return res.status(400).json({ message: "This coupon has reached its usage limit" });
+      }
+
+      // Calculate discount amount
+      let discountAmount = 0;
+      if (coupon.discountType === 'percentage') {
+        discountAmount = (orderAmount * coupon.discountValue) / 100;
+        if (coupon.maximumDiscountAmount) {
+          discountAmount = Math.min(discountAmount, coupon.maximumDiscountAmount);
+        }
+      } else {
+        discountAmount = Math.min(coupon.discountValue, orderAmount);
+      }
+
+      // Return valid coupon with calculated discount
+      res.json({
+        id: coupon.id,
+        code: coupon.code,
+        description: coupon.description,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        maximumDiscountAmount: coupon.maximumDiscountAmount,
+        calculatedDiscount: discountAmount
+      });
+    } catch (error) {
+      console.error("Error validating coupon:", error);
+      res.status(500).json({ message: "Failed to validate coupon" });
+    }
+  });
+
   // Validate coupon code (Public route for checkout)
   app.post("/api/coupons/validate", async (req, res) => {
     try {
