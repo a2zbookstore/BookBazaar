@@ -100,8 +100,19 @@ export function CouponForm({
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+    <div>
+      <Form {...form}>
+        <form 
+          onSubmit={(e) => {
+            try {
+              console.log("Form submit started");
+              form.handleSubmit(handleSubmit)(e);
+            } catch (error) {
+              console.error("Form submit error:", error);
+            }
+          }} 
+          className="space-y-4"
+        >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Coupon Code */}
           <FormField
@@ -138,38 +149,22 @@ export function CouponForm({
           />
 
           {/* Discount Type */}
-          <FormField
-            control={form.control}
-            name="discountType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Discount Type</FormLabel>
-                <Select 
-                  onValueChange={(value) => {
-                    try {
-                      console.log("Discount type changing to:", value);
-                      field.onChange(value);
-                      console.log("Discount type changed successfully to:", value);
-                    } catch (error) {
-                      console.error("Error changing discount type:", error);
-                    }
-                  }} 
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select discount type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage</SelectItem>
-                    <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="discountType">Discount Type</Label>
+            <select
+              id="discountType"
+              value={form.watch("discountType")}
+              onChange={(e) => {
+                console.log("Discount type changing to:", e.target.value);
+                form.setValue("discountType", e.target.value as "percentage" | "fixed_amount");
+                console.log("Discount type changed successfully");
+              }}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="percentage">Percentage</option>
+              <option value="fixed_amount">Fixed Amount</option>
+            </select>
+          </div>
         </div>
 
         {/* Description */}
@@ -363,8 +358,9 @@ export function CouponForm({
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Saving..." : coupon ? "Update Coupon" : "Create Coupon"}
           </Button>
-        </div>
-      </form>
-    </Form>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 }
