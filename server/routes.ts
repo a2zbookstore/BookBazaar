@@ -3615,6 +3615,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Admin authentication required" });
       }
 
+      console.log('Coupon creation request body:', req.body);
+      console.log('Admin ID:', adminId);
+
       const couponData = insertCouponSchema.parse({
         ...req.body,
         createdBy: adminId
@@ -3630,6 +3633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(coupon);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Coupon validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error creating coupon:", error);
