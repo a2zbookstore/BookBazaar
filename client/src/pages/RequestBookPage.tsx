@@ -6,11 +6,12 @@ import { insertBookRequestSchema, type InsertBookRequest } from "@shared/schema"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { BookOpen, Mail, Phone, User, DollarSign, Hash, Package } from "lucide-react";
+import { BookOpen, Mail, Phone, User, DollarSign, Hash, Package, Book } from "lucide-react";
 
 const RequestBookPage = () => {
   const { toast } = useToast();
@@ -25,6 +26,7 @@ const RequestBookPage = () => {
       bookTitle: "",
       author: "",
       isbn: "",
+      binding: "softcover",
       expectedPrice: "",
       quantity: 1,
       notes: "",
@@ -68,12 +70,11 @@ const RequestBookPage = () => {
   const onSubmit = (data: InsertBookRequest) => {
     console.log("Form data before submission:", data);
     
-    // Clean up data for submission
+    // Clean up data for submission - isbn and binding are now required
     const cleanedData = {
       ...data,
       customerPhone: data.customerPhone || null,
       author: data.author || null,
-      isbn: data.isbn || null,
       expectedPrice: data.expectedPrice || null,
       notes: data.notes || null,
     };
@@ -244,11 +245,38 @@ const RequestBookPage = () => {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Hash className="h-4 w-4" />
-                          ISBN
+                          ISBN *
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter ISBN if known" {...field} value={field.value || ""} />
+                          <Input placeholder="Enter ISBN number" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="binding"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Book className="h-4 w-4" />
+                          Binding *
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select binding type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="softcover">Softcover</SelectItem>
+                            <SelectItem value="hardcover">Hardcover</SelectItem>
+                            <SelectItem value="spiral">Spiral</SelectItem>
+                            <SelectItem value="no binding">No Binding</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
