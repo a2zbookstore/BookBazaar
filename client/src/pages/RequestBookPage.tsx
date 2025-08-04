@@ -264,7 +264,7 @@ const RequestBookPage = () => {
                           <Book className="h-4 w-4" />
                           Binding *
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue="softcover">
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select binding type" />
@@ -274,7 +274,7 @@ const RequestBookPage = () => {
                             <SelectItem value="softcover">Softcover</SelectItem>
                             <SelectItem value="hardcover">Hardcover</SelectItem>
                             <SelectItem value="spiral">Spiral</SelectItem>
-                            <SelectItem value="no binding">No Binding</SelectItem>
+                            <SelectItem value="no_binding">No Binding</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
