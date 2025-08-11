@@ -314,7 +314,7 @@ export default function CheckoutPage() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // Check if cart has any non-gift books
-  const hasNonGiftBooks = cartItems.some(item => !item.isGift);
+  const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
 
   // Apply coupon function
   const applyCoupon = async () => {
@@ -409,7 +409,7 @@ export default function CheckoutPage() {
   // Calculate totals - Use detected location's shipping rate as primary source
   const subtotal = cartItems.reduce((total, item) => {
     // Skip gift items in subtotal calculation
-    if (item.isGift) return total;
+    if ((item as any).isGift) return total;
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
   
@@ -882,7 +882,7 @@ export default function CheckoutPage() {
           
         } catch (storageError) {
           console.error('Error storing order data:', storageError);
-          throw new Error(`Failed to store order data: ${storageError.message}`);
+          throw new Error(`Failed to store order data: ${storageError instanceof Error ? storageError.message : 'Unknown error'}`);
         }
       } else {
         console.error('No approval URL found in PayPal response');
@@ -1436,7 +1436,7 @@ export default function CheckoutPage() {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex justify-between items-start">
                       <div className="flex-1">
-                        {item.isGift ? (
+                        {(item as any).isGift ? (
                           <>
                             <h4 className="font-medium text-sm text-green-700">🎁 Free Gift</h4>
                             <p className="text-xs text-green-600">Complimentary item</p>
@@ -1456,7 +1456,7 @@ export default function CheckoutPage() {
                           </>
                         )}
                       </div>
-                      {item.isGift ? (
+                      {(item as any).isGift ? (
                         <div className="text-right">
                           <p className="text-sm font-bold text-green-600">FREE</p>
                           <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Gift</span>
