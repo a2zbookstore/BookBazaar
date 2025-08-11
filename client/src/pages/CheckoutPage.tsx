@@ -696,6 +696,28 @@ export default function CheckoutPage() {
       phoneError
     });
     
+    // Check if cart is empty
+    if (!cartItems || cartItems.length === 0) {
+      console.log('Cart is empty - cannot proceed');
+      toast({
+        title: "Empty Cart",
+        description: "Please add some books to your cart before checkout",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if total is valid
+    if (!total || total <= 0) {
+      console.log('Invalid total amount - cannot proceed');
+      toast({
+        title: "Invalid Total",
+        description: "Order total must be greater than $0",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!isFormValid) {
       console.log('Form validation failed - showing error');
       toast({
@@ -747,6 +769,13 @@ export default function CheckoutPage() {
       
       console.log('PayPal order request data:', paypalOrderData);
       console.log('Cart items for PayPal:', cartItems);
+      console.log('Cart summary:', {
+        itemCount: cartItems.length,
+        subtotal: subtotal,
+        shipping: shippingCost,
+        tax: tax,
+        total: total
+      });
       console.log('Form validation state:', {
         isFormValid,
         customerName,
