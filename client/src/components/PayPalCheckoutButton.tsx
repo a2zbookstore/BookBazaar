@@ -116,6 +116,8 @@ export default function PayPalCheckoutButton({
       });
 
       console.log('🔵 PayPal response status:', response.status);
+      console.log('🔵 PayPal response headers:', response.headers);
+      console.log('🔵 PayPal response ok:', response.ok);
 
       if (!response.ok) {
         const errorText = await response.text();
