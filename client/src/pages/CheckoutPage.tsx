@@ -725,30 +725,42 @@ export default function CheckoutPage() {
       });
       
       // Create PayPal order with return URLs and order data
+      const paypalOrderData = {
+        amount: usdTotal.toFixed(2),
+        currency: "USD",
+        intent: "CAPTURE",
+        return_url: `${window.location.origin}/paypal-complete`,
+        cancel_url: `${window.location.origin}/checkout`,
+        orderData: {
+          customerName,
+          customerEmail,
+          customerPhone,
+          shippingAddress,
+          billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
+          subtotal: usdSubtotal.toFixed(2),
+          shipping: usdShipping.toFixed(2),
+          tax: usdTax.toFixed(2),
+          total: usdTotal.toFixed(2),
+          paymentMethod: "paypal"
+        }
+      };
+      
+      console.log('PayPal order request data:', paypalOrderData);
+      console.log('Cart items for PayPal:', cartItems);
+      console.log('Form validation state:', {
+        isFormValid,
+        customerName,
+        customerEmail,
+        customerPhone,
+        shippingAddress
+      });
+      
       const orderResponse = await fetch("/api/paypal/order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          amount: usdTotal.toFixed(2),
-          currency: "USD",
-          intent: "CAPTURE",
-          return_url: `${window.location.origin}/paypal-complete`,
-          cancel_url: `${window.location.origin}/checkout`,
-          orderData: {
-            customerName,
-            customerEmail,
-            customerPhone,
-            shippingAddress,
-            billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-            subtotal: usdSubtotal.toFixed(2),
-            shipping: usdShipping.toFixed(2),
-            tax: usdTax.toFixed(2),
-            total: usdTotal.toFixed(2),
-            paymentMethod: "paypal"
-          }
-        }),
+        body: JSON.stringify(paypalOrderData),
       });
       
       console.log('PayPal order response status:', orderResponse.status);
@@ -832,6 +844,12 @@ export default function CheckoutPage() {
       
     } catch (error) {
       console.error("PayPal payment error:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : "No stack trace",
+        type: typeof error,
+        error: error
+      });
       toast({
         title: "Payment Error",
         description: error instanceof Error ? error.message : "Failed to create PayPal order",
