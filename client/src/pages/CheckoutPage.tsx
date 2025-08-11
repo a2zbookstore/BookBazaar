@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, Smartphone, Globe, CheckCircle, ChevronDown } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
+import PayPalCheckoutButton from "@/components/PayPalCheckoutButton";
 
 declare global {
   interface Window {
@@ -683,228 +684,7 @@ export default function CheckoutPage() {
     },
   });
 
-  const handlePayPalPayment = async () => {
-    console.log('🔴 PayPal payment initiated');
-    console.log('🔴 Cart check:', {
-      cartExists: !!cartItems,
-      cartLength: cartItems?.length || 0,
-      cartItems: cartItems
-    });
-    console.log('🔴 Amount check:', {
-      total: total,
-      subtotal: subtotal,
-      shipping: shippingCost,
-      tax: tax
-    });
-    console.log('🔴 Form validation status:', {
-      isFormValid,
-      customerName: customerName || 'MISSING',
-      customerEmail: customerEmail || 'MISSING',
-      customerPhone: customerPhone || 'MISSING',
-      shippingAddress: shippingAddress || 'MISSING',
-      nameError,
-      emailError,
-      phoneError
-    });
-    
-    // Check if cart is empty
-    if (!cartItems || cartItems.length === 0) {
-      console.log('🔴 BLOCKING: Cart is empty - cannot proceed');
-      toast({
-        title: "Empty Cart",
-        description: "Please add some books to your cart before checkout",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Check if total is valid
-    if (!total || total <= 0) {
-      console.log('🔴 BLOCKING: Invalid total amount - cannot proceed');
-      toast({
-        title: "Invalid Total",
-        description: "Order total must be greater than $0",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!isFormValid) {
-      console.log('🔴 BLOCKING: Form validation failed - showing error');
-      toast({
-        title: "Invalid Form",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    console.log('🟢 All validations passed - proceeding with PayPal order creation');
 
-    console.log('Form validation passed - proceeding with PayPal payment');
-    setIsProcessing(true);
-    setPaymentMethod("paypal");
-    
-    try {
-      // PayPal requires original USD amounts (not converted)
-      const usdSubtotal = subtotal; // Already in USD
-      const usdShipping = checkoutShippingCost; // Already in USD
-      const usdTax = tax; // Already in USD
-      const usdTotal = total; // Already in USD
-      
-      console.log('PayPal payment amounts (USD):', {
-        subtotal: usdSubtotal,
-        shipping: usdShipping,
-        tax: usdTax,
-        total: usdTotal
-      });
-      
-      // Create PayPal order with return URLs and order data
-      const paypalOrderData = {
-        amount: usdTotal.toFixed(2),
-        currency: "USD",
-        intent: "CAPTURE",
-        return_url: `${window.location.origin}/paypal-complete`,
-        cancel_url: `${window.location.origin}/checkout`,
-        orderData: {
-          customerName,
-          customerEmail,
-          customerPhone,
-          shippingAddress,
-          billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-          subtotal: usdSubtotal.toFixed(2),
-          shipping: usdShipping.toFixed(2),
-          tax: usdTax.toFixed(2),
-          total: usdTotal.toFixed(2),
-          paymentMethod: "paypal"
-        }
-      };
-      
-      console.log('PayPal order request data:', paypalOrderData);
-      console.log('Cart items for PayPal:', cartItems);
-      console.log('Cart summary:', {
-        itemCount: cartItems.length,
-        subtotal: subtotal,
-        shipping: shippingCost,
-        tax: tax,
-        total: total
-      });
-      console.log('Form validation state:', {
-        isFormValid,
-        customerName,
-        customerEmail,
-        customerPhone,
-        shippingAddress
-      });
-      
-      console.log('🔵 About to send PayPal order request to:', "/api/paypal/order");
-      
-      const orderResponse = await fetch("/api/paypal/order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(paypalOrderData),
-      });
-      
-      console.log('🔵 PayPal order response received:');
-      console.log('- Status:', orderResponse.status);
-      console.log('- Status Text:', orderResponse.statusText);
-      console.log('- OK:', orderResponse.ok);
-      console.log('- Headers:', Object.fromEntries(orderResponse.headers.entries()));
-      
-      if (!orderResponse.ok) {
-        const errorText = await orderResponse.text();
-        console.error('PayPal order error response:', errorText);
-        
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          console.error('Failed to parse error response as JSON:', e);
-          throw new Error(`PayPal order failed with status ${orderResponse.status}: ${errorText}`);
-        }
-        
-        throw new Error(errorData.error || errorData.message || "Failed to create PayPal order");
-      }
-
-      const orderData = await orderResponse.json();
-      console.log('PayPal order response data:', orderData);
-      
-      // Get approval URL from PayPal order response
-      const approvalUrl = orderData.links?.find((link: any) => link.rel === 'approve')?.href;
-      console.log('PayPal approval URL:', approvalUrl);
-      
-      if (approvalUrl) {
-        console.log('Storing order data in session storage...');
-        
-        try {
-          // Store order data in session storage for completion after redirect
-          const orderDataToStore = {
-            customerName,
-            customerEmail,
-            customerPhone,
-            shippingAddress,
-            billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-            subtotal: subtotal.toFixed(2),
-            shipping: shippingCost.toFixed(2),
-            tax: tax.toFixed(2),
-            total: total.toFixed(2),
-            paymentMethod: "paypal",
-            items: cartItems.map(item => ({
-              bookId: item.book.id,
-              quantity: item.quantity,
-              price: item.book.price,
-              title: item.book.title,
-              author: item.book.author
-            })),
-            giftItem: giftItem
-          };
-          
-          console.log('Order data to store:', orderDataToStore);
-          sessionStorage.setItem('pendingOrder', JSON.stringify(orderDataToStore));
-          console.log('Session storage updated successfully');
-
-          toast({
-            title: "Redirecting to PayPal",
-            description: "Please complete your payment on PayPal's secure website...",
-          });
-
-          console.log('About to redirect to PayPal in 1 second...');
-          // Redirect to PayPal for payment
-          setTimeout(() => {
-            console.log('Redirecting to PayPal now:', approvalUrl);
-            window.location.href = approvalUrl;
-          }, 1000);
-          
-          // Return immediately to prevent further execution
-          return;
-          
-        } catch (storageError) {
-          console.error('Error storing order data:', storageError);
-          throw new Error(`Failed to store order data: ${storageError instanceof Error ? storageError.message : 'Unknown error'}`);
-        }
-      } else {
-        console.error('No approval URL found in PayPal response');
-        throw new Error("No approval URL received from PayPal");
-      }
-      
-    } catch (error) {
-      console.error("PayPal payment error:", error);
-      console.error("Error details:", {
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : "No stack trace",
-        type: typeof error,
-        error: error
-      });
-      toast({
-        title: "Payment Error",
-        description: error instanceof Error ? error.message : "Failed to create PayPal order",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    }
-  };
 
   const handlePayPalSuccess = (details: any) => {
     const orderItems = cartItems.map(item => ({
@@ -1382,18 +1162,29 @@ export default function CheckoutPage() {
                 </RadioGroup>
 
                 <div className="mt-6">
-                  {paymentMethod === "paypal" && isFormValid && (
+                  {paymentMethod === "paypal" && (
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600">
                         You will be redirected to PayPal to complete your payment securely.
                       </p>
-                      <Button
-                        onClick={handlePayPalPayment}
-                        disabled={isProcessing}
-                        className="w-full bg-blue-600 hover:bg-blue-700 touch-target mobile-button"
-                      >
-                        {isProcessing ? "Processing..." : "Pay with PayPal"}
-                      </Button>
+                      <PayPalCheckoutButton
+                        amount={total}
+                        currency={userCurrency}
+                        customerData={{
+                          name: customerName,
+                          email: customerEmail,
+                          phone: customerPhone,
+                          shippingAddress: shippingAddress
+                        }}
+                        cartItems={cartItems}
+                        disabled={!isFormValid}
+                        onSuccess={(orderId) => {
+                          console.log('PayPal payment success:', orderId);
+                        }}
+                        onError={(error) => {
+                          console.error('PayPal payment error:', error);
+                        }}
+                      />
                     </div>
                   )}
 
