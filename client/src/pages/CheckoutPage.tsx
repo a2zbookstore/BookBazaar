@@ -684,13 +684,24 @@ export default function CheckoutPage() {
   });
 
   const handlePayPalPayment = async () => {
-    console.log('PayPal payment initiated');
-    console.log('Form validation status:', {
+    console.log('🔴 PayPal payment initiated');
+    console.log('🔴 Cart check:', {
+      cartExists: !!cartItems,
+      cartLength: cartItems?.length || 0,
+      cartItems: cartItems
+    });
+    console.log('🔴 Amount check:', {
+      total: total,
+      subtotal: subtotal,
+      shipping: shippingCost,
+      tax: tax
+    });
+    console.log('🔴 Form validation status:', {
       isFormValid,
-      customerName,
-      customerEmail,
-      customerPhone,
-      shippingAddress,
+      customerName: customerName || 'MISSING',
+      customerEmail: customerEmail || 'MISSING',
+      customerPhone: customerPhone || 'MISSING',
+      shippingAddress: shippingAddress || 'MISSING',
       nameError,
       emailError,
       phoneError
@@ -698,7 +709,7 @@ export default function CheckoutPage() {
     
     // Check if cart is empty
     if (!cartItems || cartItems.length === 0) {
-      console.log('Cart is empty - cannot proceed');
+      console.log('🔴 BLOCKING: Cart is empty - cannot proceed');
       toast({
         title: "Empty Cart",
         description: "Please add some books to your cart before checkout",
@@ -709,7 +720,7 @@ export default function CheckoutPage() {
     
     // Check if total is valid
     if (!total || total <= 0) {
-      console.log('Invalid total amount - cannot proceed');
+      console.log('🔴 BLOCKING: Invalid total amount - cannot proceed');
       toast({
         title: "Invalid Total",
         description: "Order total must be greater than $0",
@@ -719,7 +730,7 @@ export default function CheckoutPage() {
     }
     
     if (!isFormValid) {
-      console.log('Form validation failed - showing error');
+      console.log('🔴 BLOCKING: Form validation failed - showing error');
       toast({
         title: "Invalid Form",
         description: "Please fill in all required fields",
@@ -727,6 +738,8 @@ export default function CheckoutPage() {
       });
       return;
     }
+    
+    console.log('🟢 All validations passed - proceeding with PayPal order creation');
 
     console.log('Form validation passed - proceeding with PayPal payment');
     setIsProcessing(true);
@@ -784,6 +797,8 @@ export default function CheckoutPage() {
         shippingAddress
       });
       
+      console.log('🔵 About to send PayPal order request to:', "/api/paypal/order");
+      
       const orderResponse = await fetch("/api/paypal/order", {
         method: "POST",
         headers: {
@@ -792,8 +807,11 @@ export default function CheckoutPage() {
         body: JSON.stringify(paypalOrderData),
       });
       
-      console.log('PayPal order response status:', orderResponse.status);
-      console.log('PayPal order response headers:', orderResponse.headers);
+      console.log('🔵 PayPal order response received:');
+      console.log('- Status:', orderResponse.status);
+      console.log('- Status Text:', orderResponse.statusText);
+      console.log('- OK:', orderResponse.ok);
+      console.log('- Headers:', Object.fromEntries(orderResponse.headers.entries()));
       
       if (!orderResponse.ok) {
         const errorText = await orderResponse.text();
