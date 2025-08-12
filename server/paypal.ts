@@ -70,7 +70,7 @@ export async function getClientToken() {
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
     console.log("PayPal order creation request body:", req.body);
-    const { amount, currency, intent, return_url, cancel_url } = req.body;
+    const { amount, currency, intent, return_url, cancel_url, orderData } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       console.log("Invalid amount:", amount);
@@ -93,6 +93,11 @@ export async function createPaypalOrder(req: Request, res: Response) {
       return res
         .status(400)
         .json({ error: "Invalid intent. Intent is required." });
+    }
+
+    // Log order data for debugging
+    if (orderData) {
+      console.log("Order metadata:", JSON.stringify(orderData, null, 2));
     }
 
     const collect = {
