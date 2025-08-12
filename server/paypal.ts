@@ -102,12 +102,14 @@ export async function createPaypalOrder(req: Request, res: Response) {
     }
 
     // Convert INR to USD for PayPal sandbox compatibility
-    const isINR = currency === "INR";
-    const paypalCurrency = isINR ? "USD" : currency;
-    const paypalAmount = isINR
-      ? (parseFloat(amount) * 0.012).toFixed(2) // rough conversion
-      : amount.toString();
-
+    // const isINR = currency === "INR";
+    // const paypalCurrency = isINR ? "USD" : currency;
+    // const paypalAmount = isINR
+    //   ? (parseFloat(amount) * 0.012).toFixed(2) // rough conversion
+    //   : amount.toString();
+    const paypalCurrency = "USD";
+    const paypalAmount = parseFloat(amount).toFixed(2);
+    
     if (isNaN(Number(paypalAmount)) || Number(paypalAmount) <= 0) {
       return res.status(400).json({ error: "Invalid converted amount." });
     }
