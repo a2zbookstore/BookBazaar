@@ -69,7 +69,7 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
-    const { amount, currency, intent } = req.body;
+     const { amount, currency, intent, return_url, cancel_url } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
@@ -91,7 +91,8 @@ export async function createPaypalOrder(req: Request, res: Response) {
 
     // Convert to USD for PayPal sandbox compatibility
     const finalCurrency = "USD";
-    const finalAmount = amount;
+     const numericAmount = parseFloat(amount);
+    const finalAmount = numericAmount.toFixed(2); 
 
     const collect = {
       body: {
@@ -104,20 +105,31 @@ export async function createPaypalOrder(req: Request, res: Response) {
             },
           },
         ],
+        applicationContext: {
+          returnUrl: return_url || `${req.protocol}://${req.get('host')}/paypal/complete`,
+          cancelUrl: cancel_url || `${req.protocol}://${req.get('host')}/checkout`,
+          brandName: "A2Z BOOKSHOP",
+          landingPage: "LOGIN" as any,
+          userAction: "PAY_NOW" as any
+        },
       },
-      prefer: "return=minimal",
+      prefer: "return=representation",
     };
 
     const { body, ...httpResponse } =
       await ordersController.createOrder(collect);
 
     const jsonResponse = JSON.parse(String(body));
+    console.log("✅ PayPal API Response:", jsonResponse);
     const httpStatusCode = httpResponse.statusCode;
 
     res.status(httpStatusCode).json(jsonResponse);
-  } catch (error) {
-    console.error("Failed to create order:", error);
-    res.status(500).json({ error: "Failed to create order." });
+   } catch (error: any) {
+    console.error("❌ Failed to create order:", error);
+    return res.status(500).json({
+      error: "Failed to create order",
+      details: error?.message || error,
+    });
   }
 }
 
