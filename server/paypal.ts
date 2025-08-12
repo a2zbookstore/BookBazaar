@@ -100,14 +100,21 @@ export async function createPaypalOrder(req: Request, res: Response) {
       console.log("Order metadata:", JSON.stringify(orderData, null, 2));
     }
 
+    // Convert INR to USD for PayPal sandbox compatibility
+    const isINR = currency === "INR";
+    const paypalCurrency = isINR ? "USD" : currency;
+    const paypalAmount = isINR ? (parseFloat(amount) * 0.012).toFixed(2) : amount.toString(); // Rough INR to USD conversion
+
+    console.log(`Currency conversion: ${currency} ${amount} -> ${paypalCurrency} ${paypalAmount}`);
+
     const collect = {
       body: {
         intent: intent,
         purchaseUnits: [
           {
             amount: {
-              currencyCode: currency,
-              value: amount.toString(),
+              currencyCode: paypalCurrency,
+              value: paypalAmount,
             },
           },
         ],
