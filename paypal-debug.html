@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PayPal Debug Test</title>
+</head>
+<body>
+    <h1>PayPal Integration Debug</h1>
+    
+    <button onclick="testPayPalAPI()">Test PayPal API</button>
+    
+    <div id="result"></div>
+    
+    <script>
+    async function testPayPalAPI() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = 'Testing PayPal API...';
+        
+        try {
+            const response = await fetch('/api/paypal/order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    amount: '10.00',
+                    currency: 'INR',
+                    intent: 'CAPTURE',
+                    orderData: {
+                        customerName: 'Test User',
+                        customerEmail: 'test@test.com',
+                        customerPhone: '1234567890',
+                        shippingAddress: {
+                            street: '123 Test St',
+                            city: 'Test City',
+                            state: 'Test State',
+                            zip: '12345',
+                            country: 'India'
+                        },
+                        subtotal: '8.00',
+                        shipping: '2.00',
+                        tax: '0.00',
+                        total: '10.00',
+                        paymentMethod: 'paypal',
+                        items: [{
+                            bookId: 1,
+                            quantity: 1,
+                            price: '8.00',
+                            title: 'Test Book',
+                            author: 'Test Author'
+                        }]
+                    }
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                resultDiv.innerHTML = `<h3>Success!</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } else {
+                resultDiv.innerHTML = `<h3>Error!</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `<h3>Network Error!</h3><pre>${error.message}</pre>`;
+        }
+    }
+    </script>
+</body>
+</html>

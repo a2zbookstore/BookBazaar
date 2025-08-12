@@ -541,7 +541,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
-    await capturePaypalOrder(req, res);
+    try {
+      const { orderID } = req.params;
+      const { orderData } = req.body;
+      
+      console.log('PayPal capture request:', orderID, orderData ? 'with order data' : 'no order data');
+      
+      // First capture the PayPal payment
+      let captureData: any = null;
+      let captureSuccess = false;
+      
+      try {
+        const mockReq = { params: { orderID } };
+        const mockRes = {
+          status: (code: number) => ({ 
+            json: (data: any) => {
+              if (code === 201 || code === 200) {
+                captureData = data;
+                captureSuccess = true;
+              }
+              return data;
+            }
+          }),
+          json: (data: any) => {
+            captureData = data;
+            captureSuccess = true;
+            return data;
+          }
+        };
+        
+        await capturePaypalOrder(mockReq as any, mockRes as any);
+      } catch (paypalError) {
+        console.error('PayPal capture failed:', paypalError);
+        return res.status(500).json({ error: "PayPal payment capture failed" });
+      }
+      
+      // If PayPal capture successful and we have order data, create order in our database
+      if (captureSuccess && orderData) {
+        console.log('Creating order after successful PayPal capture...');
+        
+        try {
+          // Create order in database
+          const orderItems = orderData.items.map((item: any) => ({
+            bookId: item.bookId,
+            quantity: item.quantity,
+            price: parseFloat(item.price),
+            title: item.title,
+            author: item.author
+          }));
+
+          const order = await storage.createOrder({
+            customerName: orderData.customerName,
+            customerEmail: orderData.customerEmail,
+            customerPhone: orderData.customerPhone || null,
+            shippingAddress: JSON.stringify(orderData.shippingAddress),
+            billingAddress: JSON.stringify(orderData.billingAddress || orderData.shippingAddress),
+            subtotal: parseFloat(orderData.subtotal),
+            shipping: parseFloat(orderData.shipping),
+            tax: parseFloat(orderData.tax),
+            total: parseFloat(orderData.total),
+            paymentMethod: 'paypal',
+            paymentId: orderID,
+            transactionId: orderID,
+            status: 'pending',
+            items: orderItems
+          });
+
+          console.log('Order created successfully:', order.id);
+          
+          // Return success with order ID
+          res.json({
+            ...captureData,
+            orderId: order.id,
+            success: true
+          });
+        } catch (dbError) {
+          console.error('Database order creation failed:', dbError);
+          res.status(500).json({ error: "Order creation failed after PayPal payment" });
+        }
+      } else if (captureSuccess) {
+        // PayPal capture successful but no order data
+        res.json(captureData);
+      } else {
+        res.status(500).json({ error: "PayPal capture failed" });
+      }
+    } catch (error) {
+      console.error("PayPal capture and order creation error:", error);
+      res.status(500).json({ error: "Failed to complete PayPal payment and create order" });
+    }
   });
 
   // PayPal success route - handle return from PayPal
