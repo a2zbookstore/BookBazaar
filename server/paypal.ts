@@ -79,7 +79,9 @@ export async function createPaypalOrder(req: Request, res: Response) {
         error: "Invalid amount. Amount must be a positive number.",
       });
     }
-
+    console.log(
+      'nk',
+    );
     if (!currency) {
       console.log("Missing currency");
       return res
@@ -93,8 +95,6 @@ export async function createPaypalOrder(req: Request, res: Response) {
         .status(400)
         .json({ error: "Invalid intent. Intent is required." });
     }
-    if (!PAYPAL_CLIENT_ID) throw new Error("Missing PAYPAL_CLIENT_ID");
-    if (!PAYPAL_CLIENT_SECRET) throw new Error("Missing PAYPAL_CLIENT_SECRET");
 
     // Log order data for debugging
     if (orderData) {
@@ -117,30 +117,31 @@ export async function createPaypalOrder(req: Request, res: Response) {
       `Currency conversion: ${currency} ${amount} -> ${paypalCurrency} ${paypalAmount}`,
     );
 
-    const collect = {
-      body: {
-        intent: intent,
-        purchaseUnits: [
-          {
-            amount: {
-              currencyCode: paypalCurrency,
-              value: paypalAmount,
-            },
-          },
-        ],
-        applicationContext: {
-          returnUrl:
-            return_url ||
-            `${req.protocol}://${req.get("host")}/paypal-complete`,
-          cancelUrl:
-            cancel_url || `${req.protocol}://${req.get("host")}/checkout`,
-          brandName: "A2Z BOOKSHOP",
-          landingPage: "LOGIN" as any,
-          userAction: "PAY_NOW" as any,
+const collect = {
+  body: {
+    intent: intent || "CAPTURE",
+    purchase_units: [
+      {
+        amount: {
+          currency_code: paypalCurrency, // "USD"
+          value: paypalAmount, // e.g., "161.60"
         },
       },
-      prefer: "return=representation",
-    };
+    ],
+    application_context: {
+      return_url:
+        return_url ||
+        `${req.protocol}://${req.get("host")}/paypal-complete`,
+      cancel_url:
+        cancel_url || `${req.protocol}://${req.get("host")}/checkout`,
+      brand_name: "A2Z BOOKSHOP",
+      landing_page: "LOGIN", // no need for "as any"
+      user_action: "PAY_NOW",
+    },
+  },
+  prefer: "return=representation",
+};
+
 
     console.log(
       "PayPal order collection object:",
