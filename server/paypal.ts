@@ -32,9 +32,9 @@ const client = new Client({
   },
   timeout: 0,
   environment:
-    process.env.NODE_ENV === "production"
-      ? Environment.Production
-      : Environment.Sandbox,
+                process.env.NODE_ENV === "production"
+                  ? Environment.Production
+                  : Environment.Sandbox,
   logging: {
     logLevel: LogLevel.Info,
     logRequest: {
@@ -69,46 +69,27 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
-    console.log("PayPal order creation request body:", req.body);
-    const { amount, currency, intent, return_url, cancel_url, orderData } =
-      req.body;
+    const { amount, currency, intent } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      console.log("Invalid amount:", amount);
-      return res.status(400).json({
-        error: "Invalid amount. Amount must be a positive number.",
-      });
+      return res
+        .status(400)
+        .json({
+          error: "Invalid amount. Amount must be a positive number.",
+        });
     }
 
     if (!currency) {
-      console.log("Missing currency");
       return res
         .status(400)
         .json({ error: "Invalid currency. Currency is required." });
     }
 
     if (!intent) {
-      console.log("Missing intent");
       return res
         .status(400)
         .json({ error: "Invalid intent. Intent is required." });
     }
-
-    // Log order data for debugging
-    if (orderData) {
-      console.log("Order metadata:", JSON.stringify(orderData, null, 2));
-    }
-
-    // Convert INR to USD for PayPal sandbox compatibility
-    const paypalCurrency = "USD";
-    const paypalAmount = parseFloat(amount).toFixed(2);
-
-    if (isNaN(Number(paypalAmount)) || Number(paypalAmount) <= 0) {
-      return res.status(400).json({ error: "Invalid converted amount." });
-    }
-    console.log(
-      `Currency conversion: ${currency} ${amount} -> ${paypalCurrency} ${paypalAmount}`,
-    );
 
     const collect = {
       body: {
@@ -116,49 +97,28 @@ export async function createPaypalOrder(req: Request, res: Response) {
         purchaseUnits: [
           {
             amount: {
-              currencyCode: paypalCurrency,
-              value: paypalAmount,
+              currencyCode: currency,
+              value: amount,
             },
           },
         ],
-        applicationContext: {
-          returnUrl:
-            return_url ||
-            `${req.protocol}://${req.get("host")}/paypal-complete`,
-          cancelUrl:
-            cancel_url || `${req.protocol}://${req.get("host")}/checkout`,
-          brandName: "A2Z BOOKSHOP",
-          landingPage: "LOGIN" as any,
-          userAction: "PAY_NOW" as any,
-        },
       },
-      prefer: "return=representation",
+      prefer: "return=minimal",
     };
 
-    console.log(
-      "PayPal order collection object:",
-      JSON.stringify(collect, null, 2),
-    );
-
     const { body, ...httpResponse } =
-      await ordersController.createOrder(collect);
-
-    console.log("PayPal response status:", httpResponse.statusCode);
-    console.log("PayPal response body:", String(body));
+          await ordersController.createOrder(collect);
 
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;
 
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
-    console.error("Failed to create order - full error:", error);
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack trace",
-    );
+    console.error("Failed to create order:", error);
     res.status(500).json({ error: "Failed to create order." });
   }
 }
+
 export async function capturePaypalOrder(req: Request, res: Response) {
   try {
     const { orderID } = req.params;
@@ -168,14 +128,14 @@ export async function capturePaypalOrder(req: Request, res: Response) {
     };
 
     const { body, ...httpResponse } =
-      await ordersController.captureOrder(collect);
+          await ordersController.captureOrder(collect);
 
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;
 
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
-    console.error("Failedd to create order:", error);
+    console.error("Failed to create order:", error);
     res.status(500).json({ error: "Failed to capture order." });
   }
 }
