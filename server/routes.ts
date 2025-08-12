@@ -527,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/reset-password', resetPassword);
 
   // Payment routes
-  const { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } = await import("./paypal.js");
+  const { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } = await import("./paypal");
   const { createRazorpayOrder, verifyRazorpayPayment, getRazorpayConfig } = await import("./razorpay.js");
 
   // PayPal routes
