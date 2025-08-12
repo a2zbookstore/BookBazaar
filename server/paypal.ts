@@ -93,6 +93,8 @@ export async function createPaypalOrder(req: Request, res: Response) {
         .status(400)
         .json({ error: "Invalid intent. Intent is required." });
     }
+    if (!PAYPAL_CLIENT_ID) throw new Error("Missing PAYPAL_CLIENT_ID");
+    if (!PAYPAL_CLIENT_SECRET) throw new Error("Missing PAYPAL_CLIENT_SECRET");
 
     // Log order data for debugging
     if (orderData) {
@@ -119,7 +121,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
         purchaseUnits: [
           {
             amount: {
-              currency_code: paypalCurrency,
+              currencyCode: paypalCurrency,
               value: paypalAmount,
             },
           },
@@ -145,6 +147,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
 
     const { body, ...httpResponse } =
       await ordersController.createOrder(collect);
+     
 
     console.log("PayPal response status:", httpResponse.statusCode);
     console.log("PayPal response body:", String(body));
