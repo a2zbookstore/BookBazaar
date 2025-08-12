@@ -91,14 +91,18 @@ export async function createPaypalOrder(req: Request, res: Response) {
         .json({ error: "Invalid intent. Intent is required." });
     }
 
+    // Convert to USD for PayPal sandbox compatibility
+    const finalCurrency = "USD";
+    const finalAmount = amount;
+
     const collect = {
       body: {
         intent: intent,
         purchaseUnits: [
           {
             amount: {
-              currencyCode: currency,
-              value: amount,
+              currencyCode: finalCurrency,
+              value: finalAmount,
             },
           },
         ],
