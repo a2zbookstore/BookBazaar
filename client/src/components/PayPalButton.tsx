@@ -36,39 +36,24 @@ export default function PayPalButton({
       currency: currency,
       intent: intent,
     };
-    console.log("PayPal order payload:", orderPayload);
     const response = await fetch("/api/paypal/order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(orderPayload),
     });
-    
-    if (!response.ok) {
-      console.error("PayPal order creation failed:", response.status, await response.text());
-      throw new Error(`PayPal order creation failed: ${response.status}`);
-    }
-    
     const output = await response.json();
-    console.log("PayPal order created:", output);
     return { orderId: output.id };
   };
 
   const captureOrder = async (orderId: string) => {
-    console.log("Capturing PayPal order:", orderId);
     const response = await fetch(`/api/paypal/order/${orderId}/capture`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
     });
-    
-    if (!response.ok) {
-      console.error("PayPal capture failed:", response.status, await response.text());
-      throw new Error(`PayPal capture failed: ${response.status}`);
-    }
-    
     const data = await response.json();
-    console.log("PayPal order captured:", data);
+
     return data;
   };
 
@@ -109,14 +94,11 @@ export default function PayPalButton({
   }, []);
   const initPayPal = async () => {
     try {
-      const setupResponse = await fetch("/api/paypal/setup");
-      if (!setupResponse.ok) {
-        console.error("PayPal setup failed:", setupResponse.status, await setupResponse.text());
-        throw new Error(`PayPal setup failed: ${setupResponse.status}`);
-      }
-      const setupData = await setupResponse.json();
-      console.log("PayPal setup response:", setupData);
-      const clientToken: string = setupData.clientToken;
+      const clientToken: string = await fetch("/api/paypal/setup")
+        .then((res) => res.json())
+        .then((data) => {
+          return data.clientToken;
+        });
       const sdkInstance = await (window as any).paypal.createInstance({
         clientToken,
         components: ["paypal-payments"],
