@@ -90,7 +90,7 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
       .update(body.toString())
       .digest("hex");
 
-    console.log("✅ Expected signature:", expectedSignature);
+    console.log("✅ Expected signature:", expectedSignature); 
     console.log("✅ Received signature:", razorpay_signature);
     console.log("✅ Signature match:", expectedSignature === razorpay_signature);
 
