@@ -3465,6 +3465,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Quick email test endpoint (for initial setup verification)
+  app.get("/api/email-test", async (req, res) => {
+    try {
+      const result = await testEmailConfiguration();
+      if (result) {
+        res.json({ 
+          success: true, 
+          message: "Google Workspace email is working! Test email sent.",
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Email test failed - check server logs" 
+        });
+      }
+    } catch (error) {
+      console.error("Email test error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error instanceof Error ? error.message : "Email test failed" 
+      });
+    }
+  });
+
   // Test SMTP configuration endpoint
   app.post("/api/test-smtp", async (req: any, res) => {
     try {

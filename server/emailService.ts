@@ -356,7 +356,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
         name: 'A2Z BOOKSHOP',
         address: getWorkspaceEmail()
       },
-      to: 'a2zbookshopglobal@gmail.com',
+      to: getWorkspaceEmail(),
       subject: `New Order #${data.order.id} - Admin Copy`,
       html: htmlContent,
       text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${parseFloat(data.order.total.toString()).toFixed(2)}`
@@ -404,7 +404,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
         name: 'A2Z BOOKSHOP',
         address: getWorkspaceEmail()
       },
-      to: 'a2zbookshopglobal@gmail.com',
+      to: getWorkspaceEmail(),
       subject: `Order Status Updated - Order #${data.order.id}`,
       html: htmlContent,
       text: `Order #${data.order.id} status updated to: ${data.newStatus} for customer: ${data.customerEmail}`
@@ -704,22 +704,24 @@ export const testEmailConfiguration = async (): Promise<boolean> => {
     console.log('✅ Email configuration test successful');
     
     // Send test email
+    const workspaceEmail = getWorkspaceEmail();
     const info = await transporter.sendMail({
       from: {
         name: 'A2Z BOOKSHOP',
-        address: getWorkspaceEmail()
+        address: workspaceEmail
       },
-      to: 'orders@a2zbookshop.com',
+      to: workspaceEmail,
       subject: 'A2Z BOOKSHOP - Email System Ready',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #d32f2f;">A<span style="color: #d32f2f;">2</span>Z BOOKSHOP</h2>
           <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px;">
             <h3 style="color: #1e40af;">Email System Test Successful!</h3>
-            <p>Your Brevo SMTP configuration is working perfectly.</p>
+            <p>Your Google Workspace SMTP configuration is working perfectly.</p>
             <p>Email system ready for order confirmations and notifications.</p>
             <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-            <p><strong>Server:</strong> smtp-relay.brevo.com</p>
+            <p><strong>Server:</strong> smtp.gmail.com</p>
+            <p><strong>Sender:</strong> ${workspaceEmail}</p>
           </div>
         </div>
       `
