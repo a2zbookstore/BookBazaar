@@ -10,6 +10,7 @@ import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
 import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
+import { generateSitemap, generateRobotsTxt } from "./seo";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
@@ -186,6 +187,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }).catch((error) => {
     console.error('Cloudinary test failed:', error);
+  });
+
+  // SEO Routes - Should be before auth middleware
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const sitemap = await generateSitemap();
+      res.header('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  app.get('/robots.txt', (req, res) => {
+    const robotsTxt = generateRobotsTxt();
+    res.header('Content-Type', 'text/plain');
+    res.send(robotsTxt);
   });
 
   // Auth middleware

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
 import GiftWithPurchase from "@/components/GiftWithPurchase";
+import SEO from "@/components/SEO";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,20 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [hasItemsInCart, setHasItemsInCart] = useState(false);
+  
+  // Structured data for homepage
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "A2Z BOOKSHOP",
+    "url": "https://a2zbookshop.com",
+    "description": "Buy books online at best prices. Fiction, non-fiction, bestsellers and more.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://a2zbookshop.com/catalog?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
   
   const { data: featuredBooksResponse } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
@@ -87,6 +102,16 @@ export default function HomePage() {
 
   return (
     <Layout>
+      <SEO
+        title="A2Z BOOKSHOP - Buy Books Online | New & Used Books"
+        description="Discover thousands of books at A2Z Bookshop. Best prices on fiction, non-fiction, bestsellers, trending books and more. Fast shipping across India with secure payment options."
+        keywords="buy books online, online bookstore India, new books, used books, fiction books, non-fiction books, bestsellers, trending books, book store"
+        image="https://a2zbookshop.com/logo.svg"
+        url="https://a2zbookshop.com"
+        type="website"
+        structuredData={structuredData}
+      />
+      
       {/* Database-driven Gift with Purchase Section */}
       <GiftWithPurchase 
         hasItemsInCart={hasItemsInCart} 

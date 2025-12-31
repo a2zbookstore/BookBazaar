@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
+import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -178,6 +179,48 @@ export default function CatalogPage() {
     setSortOrder('desc');
     setCurrentPage(1);
   };
+
+  // Dynamic SEO based on filters
+  const getPageTitle = () => {
+    if (search) return `Search Results for "${search}"`;
+    if (urlParams.get('featured') === 'true') return 'Featured Books';
+    if (urlParams.get('bestseller') === 'true') return 'Bestselling Books';
+    if (urlParams.get('trending') === 'true') return 'Trending Books';
+    if (urlParams.get('newArrival') === 'true') return 'New Arrivals';
+    if (urlParams.get('boxSet') === 'true') return 'Box Sets';
+    if (selectedCategories.length > 0) {
+      const category = categories.find(c => c.id.toString() === selectedCategories[0]);
+      return category ? `${category.name} Books` : 'Book Catalog';
+    }
+    return 'All Books - Browse Our Complete Collection';
+  };
+
+  const getPageDescription = () => {
+    if (search) return `Find books matching "${search}". Browse our extensive collection with ${totalBooks} results.`;
+    if (selectedCategories.length > 0) {
+      const category = categories.find(c => c.id.toString() === selectedCategories[0]);
+      return category 
+        ? `Explore our ${category.name} collection. ${totalBooks} books available with fast delivery.`
+        : 'Browse thousands of books across all categories at A2Z Bookshop.';
+    }
+    return 'Browse thousands of books across all categories. Fiction, non-fiction, bestsellers and more. Best prices with fast delivery.';
+  };
+
+  const getPageKeywords = () => {
+    const baseKeywords = 'buy books online, online bookstore, book catalog';
+    if (search) return `${search}, ${baseKeywords}`;
+    if (selectedCategories.length > 0) {
+      const category = categories.find(c => c.id.toString() === selectedCategories[0]);
+      return category ? `${category.name} books, buy ${category.name}, ${baseKeywords}` : baseKeywords;
+    }
+    return `${baseKeywords}, fiction, non-fiction, bestsellers`;
+  };
+
+  useSEO({
+    title: getPageTitle(),
+    description: getPageDescription(),
+    keywords: getPageKeywords()
+  });
 
   return (
     <Layout>
