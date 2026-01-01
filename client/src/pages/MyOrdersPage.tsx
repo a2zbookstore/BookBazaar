@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +47,7 @@ const statusColors = {
 
 const statusLabels = {
   pending: "Pending",
-  confirmed: "Confirmed", 
+  confirmed: "Confirmed",
   shipped: "Shipped",
   delivered: "Delivered",
   cancelled: "Cancelled",
@@ -63,7 +65,7 @@ export default function MyOrdersPage() {
     queryKey: ["/api/my-orders"],
     enabled: isAuthenticated,
   });
-  
+
   // Guest order lookup functionality - only enabled after user searches
   const { data: guestOrders = [], isLoading: guestLoading, refetch: refetchGuestOrders } = useQuery<Order[]>({
     queryKey: ["/api/guest-orders", guestEmail],
@@ -87,91 +89,102 @@ export default function MyOrdersPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-gray-800 flex items-center justify-center gap-2">
-                  <Package className="w-6 h-6" />
-                  View Your Orders
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center space-y-4">
-                  <p className="text-gray-600">
-                    Enter your email address to view your order history
-                  </p>
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      placeholder="Enter your email address"
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <Button 
-                      onClick={handleGuestLookup}
-                      disabled={!guestEmail || guestLoading}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {guestLoading ? "Searching..." : "View Orders"}
-                    </Button>
+      <Layout>
+        <SEO
+          title="My Orders"
+          description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
+          keywords="my orders, order tracking, order history, purchase history"
+          url="https://a2zbookshop.com/my-orders"
+          type="website"
+        />
+        <div className="min-h-screen bg-gray-50 py-8">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl mx-auto">
+              <Breadcrumb items={[{ label: "My Orders" }]} />
+
+              <Card>
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl text-gray-800 flex items-center justify-center gap-2">
+                    <Package className="w-6 h-6" />
+                    View Your Orders
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-600">
+                      Enter your email address to view your order history
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        type="email"
+                        placeholder="Enter your email address"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <Button
+                        onClick={handleGuestLookup}
+                        disabled={!guestEmail || guestLoading}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {guestLoading ? "Searching..." : "View Orders"}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                
-                {hasSearched && guestOrders.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Your Orders</h3>
-                    {guestOrders.map((order) => (
-                      <Card key={order.id} className="border-l-4 border-l-blue-500">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-semibold">Order #{order.id}</p>
-                              <p className="text-sm text-gray-600">
-                                {formatDistanceToNow(new Date(order.createdAt))} ago
-                              </p>
-                              <p className="text-sm">
-                                {order.items?.length || 0} item(s) - ${order.total}
-                              </p>
+
+                  {hasSearched && guestOrders.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Your Orders</h3>
+                      {guestOrders.map((order) => (
+                        <Card key={order.id} className="border-l-4 border-l-blue-500">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-semibold">Order #{order.id}</p>
+                                <p className="text-sm text-gray-600">
+                                  {formatDistanceToNow(new Date(order.createdAt))} ago
+                                </p>
+                                <p className="text-sm">
+                                  {order.items?.length || 0} item(s) - ${order.total}
+                                </p>
+                              </div>
+                              <Badge className={statusColors[order.status as keyof typeof statusColors]}>
+                                {statusLabels[order.status as keyof typeof statusLabels]}
+                              </Badge>
                             </div>
-                            <Badge className={statusColors[order.status as keyof typeof statusColors]}>
-                              {statusLabels[order.status as keyof typeof statusLabels]}
-                            </Badge>
-                          </div>
-                          {order.trackingNumber && (
-                            <p className="text-sm text-blue-600 mt-2">
-                              Tracking: {order.trackingNumber}
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
+                            {order.trackingNumber && (
+                              <p className="text-sm text-blue-600 mt-2">
+                                Tracking: {order.trackingNumber}
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {guestEmail && guestOrders.length === 0 && !guestLoading && (
+                    <p className="text-center text-gray-500">
+                      No orders found for this email address
+                    </p>
+                  )}
+
+                  <div className="text-center pt-4 border-t">
+                    <p className="text-sm text-gray-500 mb-2">
+                      Have an account? Log in for full order management
+                    </p>
+                    <Link href="/login">
+                      <Button variant="outline" className="bg-primary-aqua hover:bg-secondary-aqua text-white">
+                        Go to Login
+                      </Button>
+                    </Link>
                   </div>
-                )}
-                
-                {guestEmail && guestOrders.length === 0 && !guestLoading && (
-                  <p className="text-center text-gray-500">
-                    No orders found for this email address
-                  </p>
-                )}
-                
-                <div className="text-center pt-4 border-t">
-                  <p className="text-sm text-gray-500 mb-2">
-                    Have an account? Log in for full order management
-                  </p>
-                  <Link href="/login">
-                    <Button variant="outline" className="bg-primary-aqua hover:bg-secondary-aqua text-white">
-                      Go to Login
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -197,30 +210,30 @@ export default function MyOrdersPage() {
   const downloadInvoice = async (orderId: number) => {
     try {
       console.log('Downloading invoice for order:', orderId, 'isAuthenticated:', isAuthenticated);
-      
+
       // For authenticated users, no email parameter needed
       // For guest users, use the email from the form
       const emailParam = !isAuthenticated && guestEmail ? `?email=${encodeURIComponent(guestEmail)}` : '';
       const url = `/api/orders/${orderId}/invoice${emailParam}`;
-      
+
       console.log('Invoice URL:', url);
-      
+
       const response = await fetch(url, {
         credentials: 'include',
       });
-      
+
       console.log('Invoice response status:', response.status);
-      
+
       if (response.ok) {
         const htmlContent = await response.text();
         console.log('Invoice HTML content length:', htmlContent.length);
-        
+
         // Open in new tab for printing as PDF
         const newWindow = window.open('', '_blank');
         if (newWindow) {
           newWindow.document.write(htmlContent);
           newWindow.document.close();
-          
+
           // Add print button and auto-focus for user convenience
           newWindow.onload = () => {
             // Add print button to the page
@@ -242,7 +255,7 @@ export default function MyOrdersPage() {
             `;
             printButton.onclick = () => newWindow.print();
             newWindow.document.body.appendChild(printButton);
-            
+
             // Auto-focus the window
             newWindow.focus();
           };
@@ -259,151 +272,160 @@ export default function MyOrdersPage() {
 
   return (
     <Layout>
+      <SEO
+        title="My Orders"
+        description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
+        keywords="my orders, order tracking, order history, purchase history"
+        url="https://a2zbookshop.com/my-orders"
+        type="website"
+      />
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
+            <Breadcrumb items={[{ label: "My Orders" }]} />
+
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
               <p className="text-gray-600">View and track your order history</p>
             </div>
 
-          {!orders || orders.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Package className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Orders Yet</h3>
-                <p className="text-gray-600 mb-6">
-                  You haven't placed any orders yet. Start shopping to see your orders here.
-                </p>
-                <Link href="/catalog">
-                  <Button className="bg-primary-aqua hover:bg-secondary-aqua">
-                    Browse Books
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {orders.map((order: Order) => (
-                <Card key={order.id} className="overflow-hidden">
-                  <CardHeader className="bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-lg text-gray-900">
-                          Order #{order.id}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Placed {formatDistanceToNow(new Date(order.createdAt))} ago
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge className={`${statusColors[order.status as keyof typeof statusColors]} font-medium`}>
-                          {statusLabels[order.status as keyof typeof statusLabels]}
-                        </Badge>
-                        <div className="text-right">
-                          <p className="text-lg font-semibold text-gray-900">
-                            ${parseFloat(order.total).toFixed(2)}
+            {!orders || orders.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Package className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Orders Yet</h3>
+                  <p className="text-gray-600 mb-6">
+                    You haven't placed any orders yet. Start shopping to see your orders here.
+                  </p>
+                  <Link href="/catalog">
+                    <Button className="bg-primary-aqua hover:bg-secondary-aqua">
+                      Browse Books
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {orders.map((order: Order) => (
+                  <Card key={order.id} className="overflow-hidden">
+                    <CardHeader className="bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg text-gray-900">
+                            Order #{order.id}
+                          </CardTitle>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Placed {formatDistanceToNow(new Date(order.createdAt))} ago
                           </p>
                         </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {/* Order Items */}
-                      <div className="space-y-3">
-                        {order.items && order.items.length > 0 ? order.items.map((item) => (
-                          <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                            {item.book.imageUrl ? (
-                              <img
-                                src={item.book.imageUrl}
-                                alt={item.book.title}
-                                className="w-12 h-16 object-cover rounded"
-                              />
-                            ) : (
-                              <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                <Package className="h-6 w-6 text-gray-400" />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900 line-clamp-1">
-                                {item.book.title}
-                              </h4>
-                              <p className="text-sm text-gray-600">{item.book.author}</p>
-                              <p className="text-sm text-gray-600">
-                                Quantity: {item.quantity} × ${parseFloat(item.price).toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
-                        )) : (
-                          <div className="text-center text-gray-500 py-4">
-                            No items found for this order
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Tracking Information */}
-                      {order.trackingNumber && (
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Package className="h-5 w-5 text-blue-600" />
-                            <span className="font-medium text-blue-900">Tracking Information</span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="text-gray-600">Tracking Number:</span>
-                              <span className="ml-2 font-mono text-blue-800">{order.trackingNumber}</span>
-                            </div>
-                            {order.shippingCarrier && (
-                              <div>
-                                <span className="text-gray-600">Carrier:</span>
-                                <span className="ml-2 text-blue-800">{order.shippingCarrier}</span>
-                              </div>
-                            )}
+                        <div className="flex items-center gap-3">
+                          <Badge className={`${statusColors[order.status as keyof typeof statusColors]} font-medium`}>
+                            {statusLabels[order.status as keyof typeof statusLabels]}
+                          </Badge>
+                          <div className="text-right">
+                            <p className="text-lg font-semibold text-gray-900">
+                              ${parseFloat(order.total).toFixed(2)}
+                            </p>
                           </div>
                         </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedOrder(order)}
-                          className="flex items-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View Details
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => downloadInvoice(order.id)}
-                          className="flex items-center gap-2"
-                        >
-                          <FileDown className="h-4 w-4" />
-                          View Invoice
-                        </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                    </CardHeader>
+
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        {/* Order Items */}
+                        <div className="space-y-3">
+                          {order.items && order.items.length > 0 ? order.items.map((item) => (
+                            <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                              {item.book.imageUrl ? (
+                                <img
+                                  src={item.book.imageUrl}
+                                  alt={item.book.title}
+                                  className="w-12 h-16 object-cover rounded"
+                                />
+                              ) : (
+                                <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                  <Package className="h-6 w-6 text-gray-400" />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900 line-clamp-1">
+                                  {item.book.title}
+                                </h4>
+                                <p className="text-sm text-gray-600">{item.book.author}</p>
+                                <p className="text-sm text-gray-600">
+                                  Quantity: {item.quantity} × ${parseFloat(item.price).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          )) : (
+                            <div className="text-center text-gray-500 py-4">
+                              No items found for this order
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Tracking Information */}
+                        {order.trackingNumber && (
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Package className="h-5 w-5 text-blue-600" />
+                              <span className="font-medium text-blue-900">Tracking Information</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-gray-600">Tracking Number:</span>
+                                <span className="ml-2 font-mono text-blue-800">{order.trackingNumber}</span>
+                              </div>
+                              {order.shippingCarrier && (
+                                <div>
+                                  <span className="text-gray-600">Carrier:</span>
+                                  <span className="ml-2 text-blue-800">{order.shippingCarrier}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedOrder(order)}
+                            className="flex items-center gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View Details
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadInvoice(order.id)}
+                            className="flex items-center gap-2"
+                          >
+                            <FileDown className="h-4 w-4" />
+                            View Invoice
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-        
+
       {/* View Details Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order Details - #{selectedOrder?.id}</DialogTitle>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-6">
               {/* Order Status and Info */}
@@ -420,7 +442,7 @@ export default function MyOrdersPage() {
                   ${parseFloat(selectedOrder.total).toFixed(2)}
                 </div>
               </div>
-              
+
               {/* Customer Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
@@ -441,7 +463,7 @@ export default function MyOrdersPage() {
                     )}
                   </CardContent>
                 </Card>
-                
+
                 {/* Shipping Address */}
                 <Card>
                   <CardHeader>
@@ -462,7 +484,7 @@ export default function MyOrdersPage() {
                   </CardContent>
                 </Card>
               </div>
-              
+
               {/* Order Items */}
               <Card>
                 <CardHeader>
@@ -506,7 +528,7 @@ export default function MyOrdersPage() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Tracking Information */}
               {selectedOrder.trackingNumber && (
                 <Card>
@@ -532,7 +554,7 @@ export default function MyOrdersPage() {
                   </CardContent>
                 </Card>
               )}
-              
+
               {/* Order Summary */}
               <Card>
                 <CardHeader>

@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
 import GiftWithPurchase from "@/components/GiftWithPurchase";
 import SEO from "@/components/SEO";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import SearchInput from "@/components/SearchInput";
-import Logo from "@/components/Logo";
 import { Book, Category } from "@/types";
-import { Search, Star, TrendingUp, Award, Flame, Package, BookOpen } from "lucide-react";
+import { Star, TrendingUp, Award, Flame, Package, BookOpen } from "lucide-react";
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -61,13 +58,13 @@ export default function HomePage() {
     queryKey: ["/api/categories"],
   });
 
-  const { data: cartItems = [], refetch } = useQuery({
+  const { data: cartItems = [], refetch } = useQuery<any[]>({
     queryKey: ["/api/cart"],
   });
 
   // Check if cart has items for gift offer
   useEffect(() => {
-    setHasItemsInCart(cartItems && cartItems.length > 0);
+    setHasItemsInCart(Array.isArray(cartItems) && cartItems.length > 0);
   }, [cartItems]);
 
   // Auto-scroll for moving sections - pauses when hovering
@@ -79,17 +76,6 @@ export default function HomePage() {
     }, 4000);
     return () => clearInterval(interval);
   }, [featuredBooks.length, isPaused]);
-
-
-
-  const bookImages = [
-    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1495640452828-3df6795cf69b?w=400&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=600&fit=crop",
-  ];
 
   const categoryImages = [
     "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop",

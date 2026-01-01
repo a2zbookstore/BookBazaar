@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -222,13 +221,13 @@ export default function ReturnRequestPage() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="max-w-4xl mx-auto py-8 px-4 mt-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-base-black mb-2">Request Return & Refund</h1>
           <p className="text-secondary-black">
             Return your order within 30 days of delivery for a full refund
           </p>
-        </div>
+        </div> 
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
@@ -334,7 +333,7 @@ export default function ReturnRequestPage() {
             <CardContent className="space-y-6">
               {!user && (
                 <div className="space-y-4">
-                  <div>
+                  <div >
                     <Label htmlFor="guestEmail">Email Address</Label>
                     <Input
                       id="guestEmail"
@@ -342,6 +341,7 @@ export default function ReturnRequestPage() {
                       placeholder="Enter your email to find orders"
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
+                      className="mt-2"
                     />
                   </div>
                   <div>
@@ -351,6 +351,7 @@ export default function ReturnRequestPage() {
                       placeholder="Enter your full name"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
+                      className="mt-2"
                     />
                   </div>
                   <div>
@@ -361,6 +362,7 @@ export default function ReturnRequestPage() {
                       placeholder="Email for return updates"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
+                      className="mt-2"
                     />
                   </div>
                 </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
 import BookCard from "@/components/BookCard";
 import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
@@ -225,14 +226,7 @@ export default function CatalogPage() {
   return (
     <Layout>
       <div className="container-custom py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-secondary-black">
-            <a href="/" className="hover:text-primary-aqua">Home</a>
-            <ChevronRight className="h-4 w-4" />
-            <span>Catalog</span>
-          </div>
-        </nav>
+        <Breadcrumb items={[{ label: "Catalog" }]} />
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}

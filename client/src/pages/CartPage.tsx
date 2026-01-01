@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
-import { ChevronRight, Minus, Plus, Trash2 } from "lucide-react";
+import { Link } from "wouter";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
-import { useQuery } from "@tanstack/react-query";
-import CurrencySelector from "@/components/CurrencySelector";
-import ShippingCostDisplay from "@/components/ShippingCostDisplay";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 
 // Image helper function
@@ -68,15 +65,13 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 }
 
 export default function CartPage() {
-  const [, setLocation] = useLocation();
   const { cartItems, updateCartItem, removeFromCart, clearCart, isLoading } = useCart();
-  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatCurrency, formatAmount, exchangeRates } = useCurrency();
   const { shippingCost, shippingRate } = useShipping();
   const [giftItem, setGiftItem] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
-  
+
   // Check if cart has any non-gift books
   const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
 
@@ -112,12 +107,12 @@ export default function CartPage() {
     if ((item as any).isGift) return total;
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
-  
+
   // Use dynamic shipping rates based on user location
   const cartShipping = shippingCost || 0;
   const cartTax = cartSubtotal * 0.01; // 1% tax
   const cartTotal = cartSubtotal + cartShipping + cartTax;
-  
+
   // Convert all amounts to user's currency for display
   const [convertedAmounts, setConvertedAmounts] = useState({
     subtotal: cartSubtotal,
@@ -130,7 +125,7 @@ export default function CartPage() {
   const convertAmounts = React.useCallback(async () => {
     try {
       console.log('Cart conversion attempt:', { cartSubtotal, userCurrency, exchangeRates });
-      
+
       const convertedSubtotal = await convertPrice(cartSubtotal);
       const convertedShipping = await convertPrice(cartShipping);
       const convertedTax = await convertPrice(cartTax);
@@ -238,48 +233,72 @@ export default function CartPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Shopping Cart"
+        description="Review your cart and proceed to checkout. Buy books online at A2Z BOOKSHOP with secure payment and fast shipping."
+        keywords="shopping cart, book checkout, buy books, online bookstore"
+        url="https://a2zbookshop.com/cart"
+        type="website"
+      />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Link to="/" className="text-primary-aqua hover:underline">
-            Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-gray-700">Cart</span>
-        </div>
+        <Breadcrumb items={[{ label: "Cart" }]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
-            
+
             {cartItems.map((item) => {
               const isGift = (item as any).isGift;
               const imageUrl = item.book?.imageUrl;
               const title = item.book?.title;
               const author = isGift ? null : item.book?.author;
+              console.log(item);
               
+
               return (
-                <Card key={item.id} className="p-4">
+                <Card key={item.id} className="p-4"> 
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                      <img
-                        src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
-                        alt={title || 'Item'}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = isGift 
-                            ? 'https://via.placeholder.com/300x400/f0f0f0/666?text=Gift' 
-                            : 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                        }}
-                      />
-                    </div>
-                    
+                    {!isGift && item.book?.id ? (
+                      <Link href={`/book/${item.book.id}`} className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+                        <img
+                          src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
+                          alt={title || 'Item'}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                          }}
+                        />
+                      </Link>
+                    ) : (
+                      <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                        <img
+                          src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
+                          alt={title || 'Item'}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = isGift
+                              ? 'https://via.placeholder.com/300x400/f0f0f0/666?text=Gift'
+                              : 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                          }}
+                        />
+                      </div>
+                    )}
+
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="font-semibold text-gray-900 mb-1">
-                            {title}
-                          </h3>
+                          {!isGift && item.book?.id ? (
+                            <Link href={`/books/${item.book.id}`}>
+                              <h3 className="font-semibold text-gray-900 mb-1 cursor-pointer hover:text-primary-aqua transition-colors">
+                                {title}
+                              </h3>
+                            </Link>
+                          ) : (
+                            <h3 className="font-semibold text-gray-900 mb-1">
+                              {title}
+                            </h3>
+                          )}
                           {author && (
                             <p className="text-sm text-gray-600 mb-2">
                               by {author}
@@ -300,7 +319,7 @@ export default function CartPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <Button
@@ -321,7 +340,7 @@ export default function CartPage() {
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="text-right">
                           {isGift ? (
                             <p className="text-xl font-bold text-green-600">FREE</p>
@@ -423,7 +442,7 @@ export default function CartPage() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="pt-4">
                   <Link to="/checkout">
                     <Button className="w-full bg-primary-aqua hover:bg-primary-aqua/90">
@@ -431,7 +450,7 @@ export default function CartPage() {
                     </Button>
                   </Link>
                 </div>
-                
+
                 <div className="pt-2">
                   <Link to="/catalog">
                     <Button variant="outline" className="w-full">

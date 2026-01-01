@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Package, Truck, CheckCircle, XCircle, Clock, AlertCircle, Search } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -112,7 +112,14 @@ export default function TrackOrderPage() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <SEO
+        title="Track Your Order"
+        description="Track your book order from A2Z BOOKSHOP. Check shipping status, delivery updates, and tracking information."
+        keywords="track order, order status, shipping tracking, delivery status"
+        url="https://a2zbookshop.com/track-order"
+        type="website"
+      />
+      <div className="max-w-4xl mx-auto py-8 px-4 mt-6">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-base-black">Track Your Order</h1>
           <p className="text-secondary-black mt-2">

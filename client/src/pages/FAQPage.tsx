@@ -1,3 +1,5 @@
+import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, HelpCircle, Book, ShoppingCart, Truck, CreditCard } from "lucide-react";
@@ -8,8 +10,8 @@ export default function FAQPage() {
   const [openItems, setOpenItems] = useState<string[]>([]);
 
   const toggleItem = (item: string) => {
-    setOpenItems(prev => 
-      prev.includes(item) 
+    setOpenItems(prev =>
+      prev.includes(item)
         ? prev.filter(i => i !== item)
         : [...prev, item]
     );
@@ -149,115 +151,124 @@ export default function FAQPage() {
   ];
 
   return (
-    <div className="container-custom py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
-          <p className="text-lg text-gray-600">
-            Find answers to common questions about A2Z BOOKSHOP
-          </p>
-        </div>
+    <Layout>
+      <SEO
+        title="Frequently Asked Questions (FAQ)"
+        description="Find answers to common questions about ordering, shipping, returns, and payments at A2Z BOOKSHOP. Get help with your book purchases."
+        keywords="faq, frequently asked questions, book ordering help, shipping questions, returns policy, payment methods"
+        url="https://a2zbookshop.com/faq"
+        type="website"
+      />
+      <div className="container-custom py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
+            <p className="text-lg text-gray-600">
+              Find answers to common questions about A2Z BOOKSHOP
+            </p>
+          </div>
 
-        <div className="mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Contact</h2>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <h3 className="font-medium text-gray-900">Email Support</h3>
-                  <p className="text-sm text-gray-600">help@a2zbookshop.com</p>
-                  <p className="text-xs text-gray-500">Response within 24 hours</p>
-                </div>
-                <div className="text-center">
-                  <h3 className="font-medium text-gray-900">Phone Support</h3>
-                  <p className="text-sm text-gray-600">1-800-BOOKS-24</p>
-                  <p className="text-xs text-gray-500">Mon-Fri 9 AM - 6 PM EST</p>
-                </div>
-                <div className="text-center">
-                  <h3 className="font-medium text-gray-900">Live Chat</h3>
-                  <p className="text-sm text-gray-600">Available on website</p>
-                  <p className="text-xs text-gray-500">Mon-Fri 9 AM - 6 PM EST</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          {faqCategories.map((category) => (
-            <Card key={category.title}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {category.icon}
-                  {category.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {category.items.map((item) => (
-                    <Collapsible key={item.id}>
-                      <CollapsibleTrigger
-                        className="flex items-center justify-between w-full p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                        onClick={() => toggleItem(item.id)}
-                      >
-                        <span className="font-medium text-gray-900">{item.question}</span>
-                        <ChevronDown 
-                          className={`h-4 w-4 text-gray-500 transition-transform ${
-                            openItems.includes(item.id) ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="px-4 py-3 text-gray-600 bg-white border-l-4 border-primary-aqua">
-                        {item.answer}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
+          <div className="mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Contact</h2>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <h3 className="font-medium text-gray-900">Email Support</h3>
+                    <p className="text-sm text-gray-600">help@a2zbookshop.com</p>
+                    <p className="text-xs text-gray-500">Response within 24 hours</p>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-medium text-gray-900">Phone Support</h3>
+                    <p className="text-sm text-gray-600">1-800-BOOKS-24</p>
+                    <p className="text-xs text-gray-500">Mon-Fri 9 AM - 6 PM EST</p>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-medium text-gray-900">Live Chat</h3>
+                    <p className="text-sm text-gray-600">Available on website</p>
+                    <p className="text-xs text-gray-500">Mon-Fri 9 AM - 6 PM EST</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
 
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Still Have Questions?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Can't find the answer you're looking for? Our customer service team is here to help!
-              </p>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Contact Options</h4>
-                  <ul className="text-gray-600 space-y-1">
-                    <li>📧 Email: <a href="mailto:help@a2zbookshop.com" className="text-primary-aqua hover:underline">help@a2zbookshop.com</a></li>
-                    <li>📞 Phone: 1-800-BOOKS-24 (1-800-266-5724)</li>
-                    <li>💬 <Link href="/contact" className="text-primary-aqua hover:underline">Contact Form</Link></li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Business Hours</h4>
-                  <ul className="text-gray-600 space-y-1">
-                    <li>Monday - Friday: 9:00 AM - 6:00 PM EST</li>
-                    <li>Saturday: 10:00 AM - 4:00 PM EST</li>
-                    <li>Sunday: Closed</li>
-                    <li>Email support available 24/7</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <div className="space-y-6">
+            {faqCategories.map((category) => (
+              <Card key={category.title}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {category.icon}
+                    {category.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {category.items.map((item) => (
+                      <Collapsible key={item.id}>
+                        <CollapsibleTrigger
+                          className="flex items-center justify-between w-full p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                          onClick={() => toggleItem(item.id)}
+                        >
+                          <span className="font-medium text-gray-900">{item.question}</span>
+                          <ChevronDown
+                            className={`h-4 w-4 text-gray-500 transition-transform ${openItems.includes(item.id) ? 'rotate-180' : ''
+                              }`}
+                          />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="px-4 py-3 text-gray-600 bg-white border-l-4 border-primary-aqua">
+                          {item.answer}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-        <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-2">📚 Book Lover's Tip</h3>
-          <p className="text-blue-800">
-            Join our email newsletter for exclusive deals, new arrivals, and book recommendations tailored to your interests. 
-            Plus, get 10% off your first order when you sign up!
-          </p>
+          <div className="mt-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Still Have Questions?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Can't find the answer you're looking for? Our customer service team is here to help!
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Contact Options</h4>
+                    <ul className="text-gray-600 space-y-1">
+                      <li>📧 Email: <a href="mailto:help@a2zbookshop.com" className="text-primary-aqua hover:underline">help@a2zbookshop.com</a></li>
+                      <li>📞 Phone: 1-800-BOOKS-24 (1-800-266-5724)</li>
+                      <li>💬 <Link href="/contact" className="text-primary-aqua hover:underline">Contact Form</Link></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Business Hours</h4>
+                    <ul className="text-gray-600 space-y-1">
+                      <li>Monday - Friday: 9:00 AM - 6:00 PM EST</li>
+                      <li>Saturday: 10:00 AM - 4:00 PM EST</li>
+                      <li>Sunday: Closed</li>
+                      <li>Email support available 24/7</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">📚 Book Lover's Tip</h3>
+            <p className="text-blue-800">
+              Join our email newsletter for exclusive deals, new arrivals, and book recommendations tailored to your interests.
+              Plus, get 10% off your first order when you sign up!
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
+
   );
 }

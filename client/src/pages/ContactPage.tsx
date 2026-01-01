@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { Link } from "wouter";
-import { ChevronRight, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-// Removed Select components to fix runtime error
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -89,15 +89,15 @@ export default function ContactPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Contact Us"
+        description="Get in touch with A2Z BOOKSHOP. Contact our customer service team for book inquiries, orders, shipping questions, or general assistance. We're here to help!"
+        keywords="contact a2z bookshop, book store contact, customer service, book inquiries"
+        url="https://a2zbookshop.com/contact"
+        type="website"
+      />
       <div className="container-custom py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-secondary-black">
-            <Link href="/" className="hover:text-primary-aqua">Home</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span>Contact</span>
-          </div>
-        </nav>
+        <Breadcrumb items={[{ label: "Contact" }]} />
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Contact Form */}
