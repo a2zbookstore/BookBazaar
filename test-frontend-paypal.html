@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PayPal Frontend Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 5px; background: #007cba; color: white; border: none; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+        .error { background: #fdd; }
+        .success { background: #dfd; }
+        pre { background: #f8f8f8; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>PayPal Frontend Test</h1>
+    
+    <div class="test">
+        <h2>Test PayPal Order Creation (Same as Frontend)</h2>
+        <button onclick="testPayPalOrder()">Test PayPal Order Creation</button>
+        <div id="test-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testPayPalOrder() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = 'Testing PayPal order creation...';
+            
+            try {
+                console.log('🔴 Starting PayPal test...');
+                
+                const paypalOrderData = {
+                    amount: "10.00",
+                    currency: "USD",
+                    intent: "CAPTURE",
+                    return_url: window.location.origin + "/paypal-complete",
+                    cancel_url: window.location.origin + "/checkout",
+                    orderData: {
+                        customerName: "Test Customer",
+                        customerEmail: "test@example.com",
+                        customerPhone: "1234567890",
+                        shippingAddress: {
+                            street: "123 Test St",
+                            city: "Test City",
+                            state: "TS",
+                            zipCode: "12345",
+                            country: "US"
+                        },
+                        subtotal: "8.50",
+                        shipping: "1.50",
+                        tax: "0.00",
+                        total: "10.00",
+                        paymentMethod: "paypal"
+                    }
+                };
+                
+                console.log('🔵 Request data:', paypalOrderData);
+                
+                const response = await fetch('/api/paypal/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paypalOrderData),
+                });
+                
+                console.log('🔵 Response status:', response.status);
+                console.log('🔵 Response OK:', response.ok);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🟢 Success data:', data);
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ PayPal Order Created Successfully!</strong><br>
+                        <strong>Order ID:</strong> ${data.id}<br>
+                        <strong>Status:</strong> ${data.status}<br>
+                        <strong>Links:</strong> ${data.links?.length || 0} links found<br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    console.error('🔴 Error response:', errorText);
+                    
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <strong>❌ PayPal Order Failed!</strong><br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Error:</strong> ${errorText}<br>
+                        <pre>Response: ${errorText}</pre>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('🔴 Network/JS error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ JavaScript Error!</strong><br>
+                    <strong>Error:</strong> ${error.message}<br>
+                    <strong>Type:</strong> ${error.name}<br>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+        
+        // Log all console messages
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+        };
+    </script>
+</body>
+</html>

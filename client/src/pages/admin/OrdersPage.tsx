@@ -139,6 +139,7 @@ export default function OrdersPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
       toast({
         title: "Success",
         description: "Order status updated successfully with email notification sent.",

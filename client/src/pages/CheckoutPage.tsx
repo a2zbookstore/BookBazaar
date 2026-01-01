@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -9,17 +9,17 @@ import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CreditCard, Smartphone, Globe, CheckCircle, ChevronDown } from "lucide-react";
+import { Globe, CheckCircle } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
+import PayPalCheckoutButton from "@/components/PayPalCheckoutButton";
 
 declare global {
   interface Window {
@@ -308,9 +308,77 @@ export default function CheckoutPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [giftItem, setGiftItem] = useState<any>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // Check if cart has any non-gift books
-  const hasNonGiftBooks = cartItems.some(item => !item.isGift);
+  const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
+
+  // Apply coupon function
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    setCouponError("");
+
+    try {
+      const response = await apiRequest("POST", "/api/coupons/validate", {
+        code: couponCode.trim(),
+        orderAmount: convertedAmounts.subtotal
+      });
+      
+      const data = await response.json();
+      setAppliedCoupon(data);
+      setCouponCode("");
+      toast({
+        title: "Coupon Applied!",
+        description: `You saved ${data.discountType === 'percentage' ? data.discountValue + '%' : formatAmount(data.discountValue)}`,
+      });
+    } catch (error: any) {
+      setCouponError(error.message || "Invalid coupon code");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  // Remove coupon function
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+    toast({
+      title: "Coupon Removed",
+      description: "The coupon has been removed from your order",
+    });
+  };
+
+  // Calculate discount amount
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.discountType === 'percentage') {
+      const discountAmount = (convertedAmounts.subtotal * appliedCoupon.discountValue) / 100;
+      // Apply maximum discount limit if exists
+      if (appliedCoupon.maximumDiscountAmount) {
+        return Math.min(discountAmount, appliedCoupon.maximumDiscountAmount);
+      }
+      return discountAmount;
+    } else {
+      // Fixed amount discount
+      return Math.min(appliedCoupon.discountValue, convertedAmounts.subtotal);
+    }
+  };
+
+  // Calculate final total with discount
+  const calculateFinalTotal = () => {
+    const discount = calculateDiscount();
+    return Math.max(0, convertedAmounts.total - discount);
+  };
 
   // Load gift item from localStorage and auto-remove if no books
   useEffect(() => {
@@ -341,7 +409,7 @@ export default function CheckoutPage() {
   // Calculate totals - Use detected location's shipping rate as primary source
   const subtotal = cartItems.reduce((total, item) => {
     // Skip gift items in subtotal calculation
-    if (item.isGift) return total;
+    if ((item as any).isGift) return total;
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
   
@@ -596,6 +664,9 @@ export default function CheckoutPage() {
     },
     onSuccess: (data: any) => {
       clearCart();
+      // Invalidate pending orders cache for admin dashboard
+      queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: "Order Placed Successfully!",
         description: `Your order #${data.orderId} has been confirmed.`,
@@ -612,163 +683,7 @@ export default function CheckoutPage() {
     },
   });
 
-  const handlePayPalPayment = async () => {
-    console.log('PayPal payment initiated');
-    console.log('Form validation status:', {
-      isFormValid,
-      customerName,
-      customerEmail,
-      customerPhone,
-      shippingAddress,
-      nameError,
-      emailError,
-      phoneError
-    });
-    
-    if (!isFormValid) {
-      console.log('Form validation failed - showing error');
-      toast({
-        title: "Invalid Form",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    console.log('Form validation passed - proceeding with PayPal payment');
-    setIsProcessing(true);
-    setPaymentMethod("paypal");
-    
-    try {
-      // PayPal requires original USD amounts (not converted)
-      const usdSubtotal = subtotal; // Already in USD
-      const usdShipping = checkoutShippingCost; // Already in USD
-      const usdTax = tax; // Already in USD
-      const usdTotal = total; // Already in USD
-      
-      console.log('PayPal payment amounts (USD):', {
-        subtotal: usdSubtotal,
-        shipping: usdShipping,
-        tax: usdTax,
-        total: usdTotal
-      });
-      
-      // Create PayPal order with return URLs and order data
-      const orderResponse = await fetch("/api/paypal/order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: usdTotal.toFixed(2),
-          currency: "USD",
-          intent: "CAPTURE",
-          return_url: `${window.location.origin}/paypal-complete`,
-          cancel_url: `${window.location.origin}/checkout`,
-          orderData: {
-            customerName,
-            customerEmail,
-            customerPhone,
-            shippingAddress,
-            billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-            subtotal: usdSubtotal.toFixed(2),
-            shipping: usdShipping.toFixed(2),
-            tax: usdTax.toFixed(2),
-            total: usdTotal.toFixed(2),
-            paymentMethod: "paypal"
-          }
-        }),
-      });
-      
-      console.log('PayPal order response status:', orderResponse.status);
-      console.log('PayPal order response headers:', orderResponse.headers);
-      
-      if (!orderResponse.ok) {
-        const errorText = await orderResponse.text();
-        console.error('PayPal order error response:', errorText);
-        
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          console.error('Failed to parse error response as JSON:', e);
-          throw new Error(`PayPal order failed with status ${orderResponse.status}: ${errorText}`);
-        }
-        
-        throw new Error(errorData.error || errorData.message || "Failed to create PayPal order");
-      }
-
-      const orderData = await orderResponse.json();
-      console.log('PayPal order response data:', orderData);
-      
-      // Get approval URL from PayPal order response
-      const approvalUrl = orderData.links?.find((link: any) => link.rel === 'approve')?.href;
-      console.log('PayPal approval URL:', approvalUrl);
-      
-      if (approvalUrl) {
-        console.log('Storing order data in session storage...');
-        
-        try {
-          // Store order data in session storage for completion after redirect
-          const orderDataToStore = {
-            customerName,
-            customerEmail,
-            customerPhone,
-            shippingAddress,
-            billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-            subtotal: subtotal.toFixed(2),
-            shipping: shippingCost.toFixed(2),
-            tax: tax.toFixed(2),
-            total: total.toFixed(2),
-            paymentMethod: "paypal",
-            items: cartItems.map(item => ({
-              bookId: item.book.id,
-              quantity: item.quantity,
-              price: item.book.price,
-              title: item.book.title,
-              author: item.book.author
-            })),
-            giftItem: giftItem
-          };
-          
-          console.log('Order data to store:', orderDataToStore);
-          sessionStorage.setItem('pendingOrder', JSON.stringify(orderDataToStore));
-          console.log('Session storage updated successfully');
-
-          toast({
-            title: "Redirecting to PayPal",
-            description: "Please complete your payment on PayPal's secure website...",
-          });
-
-          console.log('About to redirect to PayPal in 1 second...');
-          // Redirect to PayPal for payment
-          setTimeout(() => {
-            console.log('Redirecting to PayPal now:', approvalUrl);
-            window.location.href = approvalUrl;
-          }, 1000);
-          
-          // Return immediately to prevent further execution
-          return;
-          
-        } catch (storageError) {
-          console.error('Error storing order data:', storageError);
-          throw new Error(`Failed to store order data: ${storageError.message}`);
-        }
-      } else {
-        console.error('No approval URL found in PayPal response');
-        throw new Error("No approval URL received from PayPal");
-      }
-      
-    } catch (error) {
-      console.error("PayPal payment error:", error);
-      toast({
-        title: "Payment Error",
-        description: error instanceof Error ? error.message : "Failed to create PayPal order",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    }
-  };
 
   const handlePayPalSuccess = (details: any) => {
     const orderItems = cartItems.map(item => ({
@@ -896,6 +811,9 @@ export default function CheckoutPage() {
             if (verifyData.status === "success") {
               setIsProcessing(false);
               clearCart();
+              // Invalidate pending orders cache for admin dashboard
+              queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
               toast({
                 title: "Payment Successful!",
                 description: `Your order #${verifyData.orderId} has been placed successfully.`,
@@ -1005,7 +923,14 @@ export default function CheckoutPage() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto py-8 px-4">
+      <SEO
+        title="Checkout"
+        description="Complete your book purchase securely at A2Z BOOKSHOP. Multiple payment options including PayPal, credit cards, and Razorpay."
+        keywords="checkout, secure payment, buy books, online payment, book purchase"
+        url="https://a2zbookshop.com/checkout"
+        type="website"
+      />
+      <div className="max-w-6xl mx-auto py-8 px-4 mt-6">
         <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
         
         <div className="grid lg:grid-cols-3 gap-8">
@@ -1243,18 +1168,29 @@ export default function CheckoutPage() {
                 </RadioGroup>
 
                 <div className="mt-6">
-                  {paymentMethod === "paypal" && isFormValid && (
+                  {paymentMethod === "paypal" && (
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600">
                         You will be redirected to PayPal to complete your payment securely.
                       </p>
-                      <Button
-                        onClick={handlePayPalPayment}
-                        disabled={isProcessing}
-                        className="w-full bg-blue-600 hover:bg-blue-700 touch-target mobile-button"
-                      >
-                        {isProcessing ? "Processing..." : "Pay with PayPal"}
-                      </Button>
+                      <PayPalCheckoutButton
+                        amount={total}
+                        currency={userCurrency}
+                        customerData={{
+                          name: customerName,
+                          email: customerEmail,
+                          phone: customerPhone,
+                          shippingAddress: shippingAddress
+                        }}
+                        cartItems={cartItems}
+                        disabled={!isFormValid}
+                        onSuccess={(orderId) => {
+                          console.log('PayPal payment success:', orderId);
+                        }}
+                        onError={(error) => {
+                          console.error('PayPal payment error:', error);
+                        }}
+                      />
                     </div>
                   )}
 
@@ -1297,7 +1233,7 @@ export default function CheckoutPage() {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex justify-between items-start">
                       <div className="flex-1">
-                        {item.isGift ? (
+                        {(item as any).isGift ? (
                           <>
                             <h4 className="font-medium text-sm text-green-700">🎁 Free Gift</h4>
                             <p className="text-xs text-green-600">Complimentary item</p>
@@ -1317,7 +1253,7 @@ export default function CheckoutPage() {
                           </>
                         )}
                       </div>
-                      {item.isGift ? (
+                      {(item as any).isGift ? (
                         <div className="text-right">
                           <p className="text-sm font-bold text-green-600">FREE</p>
                           <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Gift</span>
@@ -1333,12 +1269,65 @@ export default function CheckoutPage() {
 
                 <Separator />
 
+                {/* Coupon Code Section */}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Have a Coupon?</h4>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div>
+                        <span className="text-sm font-medium text-green-800">{appliedCoupon.code}</span>
+                        <p className="text-xs text-green-600">{appliedCoupon.description}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={removeCoupon}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter coupon code"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value);
+                          setCouponError("");
+                        }}
+                        className="flex-1"
+                        onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={applyCoupon}
+                        disabled={isApplyingCoupon || !couponCode.trim()}
+                        className="bg-primary-aqua hover:bg-primary-aqua/90"
+                      >
+                        {isApplyingCoupon ? "Applying..." : "Apply"}
+                      </Button>
+                    </div>
+                  )}
+                  {couponError && (
+                    <p className="text-xs text-red-600">{couponError}</p>
+                  )}
+                </div>
+
+                <Separator />
+
                 {/* Price Breakdown */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
                     <span>{formatAmount(convertedAmounts.subtotal)}</span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount ({appliedCoupon.code}):</span>
+                      <span>-{formatAmount(calculateDiscount())}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Shipping:</span>
                     <span>{convertedAmounts.shipping === 0 ? 'Free Delivery' : formatAmount(convertedAmounts.shipping)}</span>
@@ -1350,7 +1339,7 @@ export default function CheckoutPage() {
                   <Separator />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total:</span>
-                    <span className="text-primary-aqua">{formatAmount(convertedAmounts.total)}</span>
+                    <span className="text-primary-aqua">{formatAmount(calculateFinalTotal())}</span>
                   </div>
                 </div>
 

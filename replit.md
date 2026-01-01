@@ -32,10 +32,11 @@ Preferred communication style: Simple, everyday language.
 ### Key Features
 - **Authentication**: Dual email/phone authentication, role-based access (customer/admin), secure session management, forgot password functionality.
 - **E-commerce**: Searchable book catalog with filtering and pagination, real-time shopping cart management, complete checkout process (including guest checkout), order management, inventory control with low-stock alerts, admin dashboard.
+- **Book Request System**: Customer-facing book request form with required ISBN and binding fields, comprehensive admin management panel with status tracking (pending/in_progress/completed), automatic email notifications to both customers and admin.
 - **Internationalization**: Location-based currency display and conversion (USD to local currency for 50+ countries), dynamic shipping cost module with IP geolocation and manual country selection, multi-currency payment processing.
 - **Promotions**: "Gift with Purchase" feature with categorized gifts and automatic removal when books are absent from cart.
 - **Customer Service**: Contact messaging system, comprehensive return and refund management (30-day policy), order tracking for both authenticated and guest users, email notifications (order confirmation, status updates, welcome emails).
-- **Admin Capabilities**: Comprehensive book import system (with Google Books/Open Library integration), invoice generation, real-time pending orders counter, customer management, store settings.
+- **Admin Capabilities**: Comprehensive book import system (with Google Books/Open Library integration), invoice generation, real-time pending orders counter, customer management, store settings, book request processing.
 - **Media Handling**: Permanent Cloudinary image storage with automatic optimization and default cover generation for missing images.
 
 ## External Dependencies

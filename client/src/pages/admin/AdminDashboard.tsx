@@ -25,8 +25,11 @@ export default function AdminDashboard() {
 
   // Query for pending orders count with auto-refresh
   const { data: pendingOrdersData } = useQuery<{ orders: Order[] }>({
-    queryKey: ["/api/orders?status=pending"],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    queryKey: ["/api/orders", "pending"],
+    queryFn: () => fetch("/api/orders?status=pending").then(res => res.json()),
+    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchOnWindowFocus: true, // Refetch when window gets focus
+    refetchOnMount: true, // Always refetch on component mount
   });
 
   const recentOrders = recentOrdersData?.orders || [];
@@ -283,6 +286,14 @@ export default function AdminDashboard() {
                   <Gift className="h-8 w-8 text-primary-aqua mb-2" />
                   <h3 className="font-semibold text-base-black">Gift Management</h3>
                   <p className="text-sm text-secondary-black">Manage gift items & content</p>
+                </div>
+              </a>
+              
+              <a href="/admin/book-requests" className="block">
+                <div className="p-4 border border-gray-200 rounded-lg hover:border-primary-aqua hover:bg-primary-aqua/5 transition-colors cursor-pointer">
+                  <BookOpen className="h-8 w-8 text-primary-aqua mb-2" />
+                  <h3 className="font-semibold text-base-black">Book Requests</h3>
+                  <p className="text-sm text-secondary-black">Manage customer requests</p>
                 </div>
               </a>
             </div>

@@ -15,6 +15,9 @@ import {
   giftCategories,
   giftItems,
   homepageContent,
+  coupons,
+  couponUsages,
+  bookRequests,
   type User,
   type UpsertUser,
   type Admin,
@@ -46,6 +49,12 @@ import {
   type InsertGiftItem,
   type HomepageContent,
   type InsertHomepageContent,
+  type Coupon,
+  type InsertCoupon,
+  type CouponUsage,
+  type InsertCouponUsage,
+  type BookRequest,
+  type InsertBookRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -185,6 +194,34 @@ export interface IStorage {
   createHomepageContent(content: InsertHomepageContent): Promise<HomepageContent>;
   updateHomepageContent(id: number, content: Partial<InsertHomepageContent>): Promise<HomepageContent>;
   deleteHomepageContent(id: number): Promise<void>;
+
+  // Coupon operations
+  getCoupons(): Promise<Coupon[]>;
+  getCouponById(id: number): Promise<Coupon | undefined>;
+  getCouponByCode(code: string): Promise<Coupon | undefined>;
+  createCoupon(coupon: InsertCoupon): Promise<Coupon>;
+  updateCoupon(id: number, coupon: Partial<InsertCoupon>): Promise<Coupon>;
+  deleteCoupon(id: number): Promise<void>;
+  validateCoupon(code: string, customerEmail: string, orderAmount: number): Promise<{
+    valid: boolean;
+    coupon?: Coupon;
+    discountAmount?: number;
+    message?: string;
+  }>;
+  applyCoupon(couponId: number, orderId: number, userId: string | null, customerEmail: string, discountAmount: number): Promise<CouponUsage>;
+  incrementCouponUsage(couponId: number): Promise<void>;
+  getCouponUsages(couponId?: number): Promise<CouponUsage[]>;
+
+  // Book Request operations
+  getBookRequests(options?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ bookRequests: BookRequest[], total: number }>;
+  getBookRequestById(id: number): Promise<BookRequest | undefined>;
+  createBookRequest(bookRequest: InsertBookRequest): Promise<BookRequest>;
+  updateBookRequest(id: number, updates: Partial<BookRequest>): Promise<BookRequest>;
+  deleteBookRequest(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1295,6 +1332,216 @@ export class DatabaseStorage implements IStorage {
         .set({ sortOrder: item.sortOrder, updatedAt: new Date() })
         .where(eq(giftItems.id, item.id));
     }
+  }
+
+  // Coupon Methods
+  async getCoupons(): Promise<Coupon[]> {
+    return await db.select().from(coupons).orderBy(desc(coupons.createdAt));
+  }
+
+  async getCouponById(id: number): Promise<Coupon | undefined> {
+    const [coupon] = await db.select().from(coupons).where(eq(coupons.id, id));
+    return coupon;
+  }
+
+  async getCouponByCode(code: string): Promise<Coupon | undefined> {
+    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code.toUpperCase()));
+    return coupon;
+  }
+
+  async createCoupon(couponData: InsertCoupon): Promise<Coupon> {
+    // Ensure code is uppercase for consistency
+    const [coupon] = await db.insert(coupons).values({
+      ...couponData,
+      code: couponData.code.toUpperCase()
+    }).returning();
+    return coupon;
+  }
+
+  async updateCoupon(id: number, couponData: Partial<InsertCoupon>): Promise<Coupon> {
+    const updateData = { ...couponData, updatedAt: new Date() };
+    if (couponData.code) {
+      updateData.code = couponData.code.toUpperCase();
+    }
+    
+    const [coupon] = await db.update(coupons)
+      .set(updateData)
+      .where(eq(coupons.id, id))
+      .returning();
+    return coupon;
+  }
+
+  async deleteCoupon(id: number): Promise<void> {
+    // First delete all usages
+    await db.delete(couponUsages).where(eq(couponUsages.couponId, id));
+    // Then delete the coupon
+    await db.delete(coupons).where(eq(coupons.id, id));
+  }
+
+  async validateCoupon(code: string, customerEmail: string, orderAmount: number): Promise<{
+    valid: boolean;
+    coupon?: Coupon;
+    discountAmount?: number;
+    message?: string;
+  }> {
+    const coupon = await this.getCouponByCode(code);
+    
+    if (!coupon) {
+      return { valid: false, message: "Invalid coupon code" };
+    }
+
+    if (!coupon.isActive) {
+      return { valid: false, message: "This coupon is no longer active" };
+    }
+
+    const now = new Date();
+    if (now < new Date(coupon.startDate) || now > new Date(coupon.endDate)) {
+      return { valid: false, message: "This coupon has expired or is not yet valid" };
+    }
+
+    // Check if order meets minimum amount requirement
+    if (orderAmount < parseFloat(coupon.minimumOrderAmount)) {
+      return { 
+        valid: false, 
+        message: `Minimum order amount of $${coupon.minimumOrderAmount} required` 
+      };
+    }
+
+    // Check usage limit
+    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+      return { valid: false, message: "This coupon has reached its usage limit" };
+    }
+
+    // Check if customer has already used this coupon
+    const existingUsage = await db.select()
+      .from(couponUsages)
+      .where(and(
+        eq(couponUsages.couponId, coupon.id),
+        eq(couponUsages.customerEmail, customerEmail)
+      ))
+      .limit(1);
+
+    if (existingUsage.length > 0) {
+      return { valid: false, message: "You have already used this coupon" };
+    }
+
+    // Calculate discount amount
+    let discountAmount: number;
+    if (coupon.discountType === 'percentage') {
+      discountAmount = (orderAmount * parseFloat(coupon.discountValue)) / 100;
+      
+      // Apply maximum discount limit if set
+      if (coupon.maximumDiscountAmount) {
+        discountAmount = Math.min(discountAmount, parseFloat(coupon.maximumDiscountAmount));
+      }
+    } else {
+      // Fixed amount discount
+      discountAmount = Math.min(parseFloat(coupon.discountValue), orderAmount);
+    }
+
+    return {
+      valid: true,
+      coupon,
+      discountAmount: Math.round(discountAmount * 100) / 100 // Round to 2 decimal places
+    };
+  }
+
+  async applyCoupon(
+    couponId: number, 
+    orderId: number, 
+    userId: string | null, 
+    customerEmail: string, 
+    discountAmount: number
+  ): Promise<CouponUsage> {
+    const [usage] = await db.insert(couponUsages).values({
+      couponId,
+      orderId,
+      userId,
+      customerEmail,
+      discountAmount: discountAmount.toString()
+    }).returning();
+
+    return usage;
+  }
+
+  async incrementCouponUsage(couponId: number): Promise<void> {
+    await db.update(coupons)
+      .set({ 
+        usedCount: sql`${coupons.usedCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(coupons.id, couponId));
+  }
+
+  async getCouponUsages(couponId?: number): Promise<CouponUsage[]> {
+    if (couponId) {
+      return await db.select().from(couponUsages)
+        .where(eq(couponUsages.couponId, couponId))
+        .orderBy(desc(couponUsages.usedAt));
+    }
+    
+    return await db.select().from(couponUsages)
+      .orderBy(desc(couponUsages.usedAt));
+  }
+
+  // Book Request operations
+  async getBookRequests(options?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ bookRequests: BookRequest[], total: number }> {
+    const limit = options?.limit || 50;
+    const offset = options?.offset || 0;
+
+    let whereConditions: any[] = [];
+    if (options?.status) {
+      whereConditions.push(eq(bookRequests.status, options.status));
+    }
+
+    const where = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    const [bookRequestsList, totalResult] = await Promise.all([
+      db.select()
+        .from(bookRequests)
+        .where(where)
+        .orderBy(desc(bookRequests.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: count() })
+        .from(bookRequests)
+        .where(where)
+    ]);
+
+    return {
+      bookRequests: bookRequestsList,
+      total: totalResult[0].count
+    };
+  }
+
+  async getBookRequestById(id: number): Promise<BookRequest | undefined> {
+    const [bookRequest] = await db.select()
+      .from(bookRequests)
+      .where(eq(bookRequests.id, id));
+    return bookRequest;
+  }
+
+  async createBookRequest(bookRequest: InsertBookRequest): Promise<BookRequest> {
+    const [newBookRequest] = await db.insert(bookRequests)
+      .values(bookRequest)
+      .returning();
+    return newBookRequest;
+  }
+
+  async updateBookRequest(id: number, updates: Partial<BookRequest>): Promise<BookRequest> {
+    const [updatedBookRequest] = await db.update(bookRequests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(bookRequests.id, id))
+      .returning();
+    return updatedBookRequest;
+  }
+
+  async deleteBookRequest(id: number): Promise<void> {
+    await db.delete(bookRequests).where(eq(bookRequests.id, id));
   }
 }
 

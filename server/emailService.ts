@@ -1,23 +1,27 @@
 import nodemailer from 'nodemailer';
 import { Order, OrderItem, Book } from '../shared/schema';
 
-// Email configuration for Brevo SMTP
+// Get Google Workspace email from environment
+const getWorkspaceEmail = () => process.env.GOOGLE_WORKSPACE_EMAIL || '';
+
+// Email configuration for Google Workspace SMTP
 const createTransporter = () => {
-  // Use the provided SMTP credentials
-  const SMTP_USER = '8ffc43003@smtp-brevo.com';
-  const SMTP_PASS = 'AW6v3Nmy2CrYs8kV';
-  const FROM_EMAIL = 'orders@a2zbookshop.com';
+  // Google Workspace credentials from environment variables
+  const WORKSPACE_EMAIL = process.env.GOOGLE_WORKSPACE_EMAIL;
+  const WORKSPACE_APP_PASSWORD = process.env.GOOGLE_WORKSPACE_APP_PASSWORD;
+
+  if (!WORKSPACE_EMAIL || !WORKSPACE_APP_PASSWORD) {
+    console.error('Google Workspace credentials not configured. Set GOOGLE_WORKSPACE_EMAIL and GOOGLE_WORKSPACE_APP_PASSWORD environment variables.');
+    return null;
+  }
 
   const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false, // TLS
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // SSL
     auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS
-    },
-    tls: {
-      rejectUnauthorized: false
+      user: WORKSPACE_EMAIL,
+      pass: WORKSPACE_APP_PASSWORD
     },
     connectionTimeout: 60000,
     greetingTimeout: 30000,
@@ -29,11 +33,11 @@ const createTransporter = () => {
   // Verify SMTP connection on startup (non-blocking)
   transporter.verify((error, success) => {
     if (error) {
-      console.error('Brevo SMTP Error:', error.message);
+      console.error('Google Workspace SMTP Error:', error.message);
       console.log('Email functionality disabled - orders will complete without notifications');
     } else {
-      console.log('✅ Brevo SMTP connected successfully');
-      console.log('Email system ready: orders@a2zbookshop.com via smtp-relay.brevo.com');
+      console.log('✅ Google Workspace SMTP connected successfully');
+      console.log(`Email system ready: ${WORKSPACE_EMAIL} via smtp.gmail.com`);
       console.log('Order confirmations and admin notifications will be sent');
     }
   });
@@ -338,7 +342,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const customerMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: getWorkspaceEmail()
       },
       to: data.customerEmail,
       subject: `Order Confirmation #${data.order.id} - A2Z BOOKSHOP`,
@@ -350,9 +354,9 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
     const adminMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: getWorkspaceEmail()
       },
-      to: 'a2zbookshopglobal@gmail.com',
+      to: getWorkspaceEmail(),
       subject: `New Order #${data.order.id} - Admin Copy`,
       html: htmlContent,
       text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${parseFloat(data.order.total.toString()).toFixed(2)}`
@@ -386,7 +390,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
     const customerMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: getWorkspaceEmail()
       },
       to: data.customerEmail,
       subject: `Order Status Update - Order #${data.order.id}`,
@@ -398,9 +402,9 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
     const adminMailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: getWorkspaceEmail()
       },
-      to: 'a2zbookshopglobal@gmail.com',
+      to: getWorkspaceEmail(),
       subject: `Order Status Updated - Order #${data.order.id}`,
       html: htmlContent,
       text: `Order #${data.order.id} status updated to: ${data.newStatus} for customer: ${data.customerEmail}`
@@ -636,7 +640,7 @@ export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<boolean>
     const mailOptions = {
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: getWorkspaceEmail()
       },
       to: customerEmail,
       subject: 'Welcome to A2Z BOOKSHOP - Your Book Journey Begins!',
@@ -671,7 +675,7 @@ export const sendEmail = async (params: {
     const info = await transporter.sendMail({
       from: params.from || {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: getWorkspaceEmail()
       },
       to: params.to,
       subject: params.subject,
@@ -700,22 +704,24 @@ export const testEmailConfiguration = async (): Promise<boolean> => {
     console.log('✅ Email configuration test successful');
     
     // Send test email
+    const workspaceEmail = getWorkspaceEmail();
     const info = await transporter.sendMail({
       from: {
         name: 'A2Z BOOKSHOP',
-        address: 'orders@a2zbookshop.com'
+        address: workspaceEmail
       },
-      to: 'orders@a2zbookshop.com',
+      to: workspaceEmail,
       subject: 'A2Z BOOKSHOP - Email System Ready',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #d32f2f;">A<span style="color: #d32f2f;">2</span>Z BOOKSHOP</h2>
           <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px;">
             <h3 style="color: #1e40af;">Email System Test Successful!</h3>
-            <p>Your Brevo SMTP configuration is working perfectly.</p>
+            <p>Your Google Workspace SMTP configuration is working perfectly.</p>
             <p>Email system ready for order confirmations and notifications.</p>
             <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-            <p><strong>Server:</strong> smtp-relay.brevo.com</p>
+            <p><strong>Server:</strong> smtp.gmail.com</p>
+            <p><strong>Sender:</strong> ${workspaceEmail}</p>
           </div>
         </div>
       `

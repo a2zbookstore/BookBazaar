@@ -1,21 +1,22 @@
 import React from "react";
-import { Link } from "wouter";
-import { ChevronRight, Shield, Truck, Heart } from "lucide-react";
+import { Shield, Truck, Heart } from "lucide-react";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function AboutPage() {
   return (
     <Layout>
+      <SEO
+        title="About Us"
+        description="Learn about A2Z BOOKSHOP, your premier destination for rare, collectible, and contemporary books. Quality guaranteed, fast shipping, and exceptional customer service."
+        keywords="about a2z bookshop, online bookstore, rare books, collectible books, book seller"
+        url="https://a2zbookshop.com/about"
+        type="website"
+      />
       <div className="container-custom py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-secondary-black">
-            <Link href="/" className="hover:text-primary-aqua">Home</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span>About</span>
-          </div>
-        </nav>
+        <Breadcrumb items={[{ label: "About" }]} />
 
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
           <div>

@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Gift, ArrowLeft, Check, ShoppingCart } from "lucide-react";
+import { Gift, ArrowLeft, Check, ShoppingCart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { apiRequest } from "@/lib/queryClient";
@@ -80,15 +82,15 @@ export default function GiftItemsPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Free Gift Items"
+        description="Choose a free gift with your book purchase at A2Z BOOKSHOP. Browse our selection of complimentary bookmarks, tote bags, and more."
+        keywords="free gifts, book gifts, bookmarks, tote bags, reading accessories"
+        url="https://a2zbookshop.com/gift-items"
+        type="website"
+      />
       <div className="container-custom py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-secondary-black">
-            <Link href="/" className="hover:text-primary-aqua">Home</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span>Gift Items</span>
-          </div>
-        </nav>
+        <Breadcrumb items={[{ label: "Gift Items" }]} />
 
         {/* Header */}
         <div className="text-center mb-12">

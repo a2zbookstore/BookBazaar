@@ -1,8 +1,10 @@
 import React from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Star, ShoppingCart, Truck, Shield, ChevronRight, RotateCcw } from "lucide-react";
+import { Star, ShoppingCart, Truck, Shield, RotateCcw, ChevronRight } from "lucide-react";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO, { generateBookStructuredData } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +30,7 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
   return `/uploads/images/${filename}`;
 };
 
-export default function BookDetailPage() {
+export default function BookDetailPage() {  
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -120,17 +122,23 @@ export default function BookDetailPage() {
 
   return (
     <Layout>
+      <SEO
+        title={`${book.title} by ${book.author}`}
+        description={book.description || `Buy ${book.title} by ${book.author}. ${book.condition} condition. Available now at A2Z BOOKSHOP with fast shipping.`}
+        keywords={`${book.title}, ${book.author}, ${book.category?.name || 'books'}, buy books online, ${book.condition} books`}
+        image={getImageSrc(book.imageUrl)}
+        url={`https://a2zbookshop.com/book/${book.id}`}
+        type="product"
+        structuredData={generateBookStructuredData(book)}
+      />
       <div className="container-custom py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-secondary-black">
-            <Link href="/" className="hover:text-primary-aqua">Home</Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link href="/catalog" className="hover:text-primary-aqua">Catalog</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="truncate max-w-48">{book.title}</span>
-          </div>
-        </nav>
+        <Breadcrumb 
+          items={[
+            { label: "Catalog", href: "/catalog" },
+            { label: book.title }
+          ]}
+          className="mt-6"
+        />
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Book Image */}

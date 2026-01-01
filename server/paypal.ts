@@ -31,10 +31,7 @@ const client = new Client({
     oAuthClientSecret: PAYPAL_CLIENT_SECRET,
   },
   timeout: 0,
-  environment:
-                process.env.NODE_ENV === "production"
-                  ? Environment.Production
-                  : Environment.Sandbox,
+  environment: Environment.Production,
   logging: {
     logLevel: LogLevel.Info,
     logRequest: {
@@ -69,31 +66,30 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
-    console.log("PayPal order creation request body:", req.body);
-    const { amount, currency, intent, return_url, cancel_url } = req.body;
+     const { amount, currency, intent, return_url, cancel_url } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      console.log("Invalid amount:", amount);
-      return res
-        .status(400)
-        .json({
-          error: "Invalid amount. Amount must be a positive number.",
-        });
+      return res.status(400).json({
+        error: "Invalid amount. Amount must be a positive number.",
+      });
     }
 
     if (!currency) {
-      console.log("Missing currency");
       return res
         .status(400)
         .json({ error: "Invalid currency. Currency is required." });
     }
 
     if (!intent) {
-      console.log("Missing intent");
       return res
         .status(400)
         .json({ error: "Invalid intent. Intent is required." });
     }
+
+    // Convert to USD for PayPal sandbox compatibility
+    const finalCurrency = "USD";
+     const numericAmount = parseFloat(amount);
+    const finalAmount = numericAmount.toFixed(2); 
 
     const collect = {
       body: {
@@ -101,38 +97,36 @@ export async function createPaypalOrder(req: Request, res: Response) {
         purchaseUnits: [
           {
             amount: {
-              currencyCode: currency,
-              value: amount.toString(),
+              currencyCode: finalCurrency,
+              value: finalAmount,
             },
           },
         ],
         applicationContext: {
-          returnUrl: return_url || `${req.protocol}://${req.get('host')}/paypal-complete`,
+          returnUrl: return_url || `${req.protocol}://${req.get('host')}/paypal/complete`,
           cancelUrl: cancel_url || `${req.protocol}://${req.get('host')}/checkout`,
           brandName: "A2Z BOOKSHOP",
           landingPage: "LOGIN" as any,
           userAction: "PAY_NOW" as any
-        }
+        },
       },
       prefer: "return=representation",
     };
 
-    console.log("PayPal order collection object:", JSON.stringify(collect, null, 2));
-
     const { body, ...httpResponse } =
-          await ordersController.createOrder(collect);
-
-    console.log("PayPal response status:", httpResponse.statusCode);
-    console.log("PayPal response body:", String(body));
+      await ordersController.createOrder(collect);
 
     const jsonResponse = JSON.parse(String(body));
+    console.log("✅ PayPal API Response:", jsonResponse);
     const httpStatusCode = httpResponse.statusCode;
 
     res.status(httpStatusCode).json(jsonResponse);
-  } catch (error) {
-    console.error("Failed to create order - full error:", error);
-    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
-    res.status(500).json({ error: "Failed to create order." });
+   } catch (error: any) {
+    console.error("❌ Failed to create order:", error);
+    return res.status(500).json({
+      error: "Failed to create order",
+      details: error?.message || error,
+    });
   }
 }
 
@@ -145,7 +139,7 @@ export async function capturePaypalOrder(req: Request, res: Response) {
     };
 
     const { body, ...httpResponse } =
-          await ordersController.captureOrder(collect);
+      await ordersController.captureOrder(collect);
 
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;

@@ -10,6 +10,7 @@ import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
 import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
+import { generateSitemap, generateRobotsTxt } from "./seo";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
@@ -19,7 +20,9 @@ import {
   insertContactMessageSchema,
   insertCartItemSchema,
   insertGiftCategorySchema,
-  insertGiftItemSchema
+  insertGiftItemSchema,
+  insertCouponSchema,
+  insertBookRequestSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -184,6 +187,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }).catch((error) => {
     console.error('Cloudinary test failed:', error);
+  });
+
+  // SEO Routes - Should be before auth middleware
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const sitemap = await generateSitemap();
+      res.header('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  app.get('/robots.txt', (req, res) => {
+    const robotsTxt = generateRobotsTxt();
+    res.header('Content-Type', 'text/plain');
+    res.send(robotsTxt);
   });
 
   // Auth middleware
@@ -525,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/reset-password', resetPassword);
 
   // Payment routes
-  const { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } = await import("./paypal.js");
+  const { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } = await import("./paypal");
   const { createRazorpayOrder, verifyRazorpayPayment, getRazorpayConfig } = await import("./razorpay.js");
 
   // PayPal routes
@@ -539,7 +560,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
-    await capturePaypalOrder(req, res);
+    try {
+      const { orderID } = req.params;
+      const { orderData } = req.body;
+      
+      console.log('PayPal capture request:', orderID, orderData ? 'with order data' : 'no order data');
+      
+      // First capture the PayPal payment
+      let captureData: any = null;
+      let captureSuccess = false;
+      
+      try {
+        const mockReq = { params: { orderID } };
+        const mockRes = {
+          status: (code: number) => ({ 
+            json: (data: any) => {
+              if (code === 201 || code === 200) {
+                captureData = data;
+                captureSuccess = true;
+              }
+              return data;
+            }
+          }),
+          json: (data: any) => {
+            captureData = data;
+            captureSuccess = true;
+            return data;
+          }
+        };
+        
+        await capturePaypalOrder(mockReq as any, mockRes as any);
+      } catch (paypalError) {
+        console.error('PayPal capture failed:', paypalError);
+        return res.status(500).json({ error: "PayPal payment capture failed" });
+      }
+      
+      // If PayPal capture successful and we have order data, create order in our database
+      if (captureSuccess && orderData) {
+        console.log('Creating order after successful PayPal capture...');
+        
+        try {
+          // Create order in database
+          const orderItems = orderData.items.map((item: any) => ({
+            bookId: item.bookId,
+            quantity: item.quantity,
+            price: parseFloat(item.price),
+            title: item.title,
+            author: item.author
+          }));
+
+          const order = await storage.createOrder({
+            customerName: orderData.customerName,
+            customerEmail: orderData.customerEmail,
+            customerPhone: orderData.customerPhone || null,
+            shippingAddress: JSON.stringify(orderData.shippingAddress),
+            billingAddress: JSON.stringify(orderData.billingAddress || orderData.shippingAddress),
+            subtotal: parseFloat(orderData.subtotal),
+            shipping: parseFloat(orderData.shipping),
+            tax: parseFloat(orderData.tax),
+            total: parseFloat(orderData.total),
+            paymentMethod: 'paypal',
+            paymentId: orderID,
+            transactionId: orderID,
+            status: 'pending',
+            items: orderItems
+          });
+
+          console.log('Order created successfully:', order.id);
+          
+          // Return success with order ID
+          res.json({
+            ...captureData,
+            orderId: order.id,
+            success: true
+          });
+        } catch (dbError) {
+          console.error('Database order creation failed:', dbError);
+          res.status(500).json({ error: "Order creation failed after PayPal payment" });
+        }
+      } else if (captureSuccess) {
+        // PayPal capture successful but no order data
+        res.json(captureData);
+      } else {
+        res.status(500).json({ error: "PayPal capture failed" });
+      }
+    } catch (error) {
+      console.error("PayPal capture and order creation error:", error);
+      res.status(500).json({ error: "Failed to complete PayPal payment and create order" });
+    }
   });
 
   // PayPal success route - handle return from PayPal
@@ -3376,6 +3484,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Quick email test endpoint (for initial setup verification)
+  app.get("/api/email-test", async (req, res) => {
+    try {
+      const result = await testEmailConfiguration();
+      if (result) {
+        res.json({ 
+          success: true, 
+          message: "Google Workspace email is working! Test email sent.",
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Email test failed - check server logs" 
+        });
+      }
+    } catch (error) {
+      console.error("Email test error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error instanceof Error ? error.message : "Email test failed" 
+      });
+    }
+  });
+
   // Test SMTP configuration endpoint
   app.post("/api/test-smtp", async (req: any, res) => {
     try {
@@ -3575,6 +3709,406 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting gift item:", error);
       res.status(500).json({ message: "Failed to delete gift item" });
+    }
+  });
+
+  // Coupon Management Routes
+  
+  // Get all coupons (Admin only)
+  app.get("/api/admin/coupons", requireAdminAuth, async (req, res) => {
+    try {
+      const coupons = await storage.getCoupons();
+      res.json(coupons);
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      res.status(500).json({ message: "Failed to fetch coupons" });
+    }
+  });
+
+  // Get coupon by ID (Admin only)
+  app.get("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const coupon = await storage.getCouponById(id);
+      if (!coupon) {
+        return res.status(404).json({ message: "Coupon not found" });
+      }
+      res.json(coupon);
+    } catch (error) {
+      console.error("Error fetching coupon:", error);
+      res.status(500).json({ message: "Failed to fetch coupon" });
+    }
+  });
+
+  // Create new coupon (Admin only)
+  app.post("/api/admin/coupons", requireAdminAuth, async (req: any, res) => {
+    try {
+      const adminId = (req.session as any)?.adminId;
+      if (!adminId) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      console.log('Coupon creation request body:', req.body);
+      console.log('Admin ID:', adminId);
+
+      // Convert date strings to Date objects
+      const requestData = {
+        ...req.body,
+        createdBy: adminId,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
+      };
+
+      const couponData = insertCouponSchema.parse(requestData);
+
+      // Check if coupon code already exists
+      const existingCoupon = await storage.getCouponByCode(couponData.code);
+      if (existingCoupon) {
+        return res.status(400).json({ message: "Coupon code already exists" });
+      }
+
+      const coupon = await storage.createCoupon(couponData);
+      res.status(201).json(coupon);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.error("Coupon validation errors:", error.errors);
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating coupon:", error);
+      res.status(500).json({ message: "Failed to create coupon" });
+    }
+  });
+
+  // Update coupon (Admin only)
+  app.put("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = insertCouponSchema.partial().parse(req.body);
+
+      // If updating code, check for duplicates
+      if (updateData.code) {
+        const existingCoupon = await storage.getCouponByCode(updateData.code);
+        if (existingCoupon && existingCoupon.id !== id) {
+          return res.status(400).json({ message: "Coupon code already exists" });
+        }
+      }
+
+      const coupon = await storage.updateCoupon(id, updateData);
+      res.json(coupon);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating coupon:", error);
+      res.status(500).json({ message: "Failed to update coupon" });
+    }
+  });
+
+  // Delete coupon (Admin only)
+  app.delete("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCoupon(id);
+      res.json({ message: "Coupon deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting coupon:", error);
+      res.status(500).json({ message: "Failed to delete coupon" });
+    }
+  });
+
+  // Get coupon usage statistics (Admin only)
+  app.get("/api/admin/coupons/:id/usage", requireAdminAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const usages = await storage.getCouponUsages(id);
+      res.json(usages);
+    } catch (error) {
+      console.error("Error fetching coupon usage:", error);
+      res.status(500).json({ message: "Failed to fetch coupon usage" });
+    }
+  });
+
+  // Validate coupon for customers (Public route)
+  app.post("/api/coupons/validate", async (req, res) => {
+    try {
+      const { code, orderAmount } = req.body;
+
+      if (!code) {
+        return res.status(400).json({ message: "Coupon code is required" });
+      }
+
+      if (!orderAmount || orderAmount <= 0) {
+        return res.status(400).json({ message: "Valid order amount is required" });
+      }
+
+      // Get coupon by code
+      const coupon = await storage.getCouponByCode(code.trim().toUpperCase());
+      if (!coupon) {
+        return res.status(404).json({ message: "Invalid coupon code" });
+      }
+
+      // Check if coupon is active
+      if (!coupon.isActive) {
+        return res.status(400).json({ message: "This coupon is no longer active" });
+      }
+
+      // Check if coupon has expired
+      const now = new Date();
+      if (coupon.endDate && new Date(coupon.endDate) < now) {
+        return res.status(400).json({ message: "This coupon has expired" });
+      }
+
+      // Check if coupon has started
+      if (coupon.startDate && new Date(coupon.startDate) > now) {
+        return res.status(400).json({ message: "This coupon is not yet valid" });
+      }
+
+      // Check minimum order amount
+      if (coupon.minimumOrderAmount && orderAmount < coupon.minimumOrderAmount) {
+        return res.status(400).json({ 
+          message: `Minimum order amount of ${coupon.minimumOrderAmount} required` 
+        });
+      }
+
+      // Check usage limit
+      if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+        return res.status(400).json({ message: "This coupon has reached its usage limit" });
+      }
+
+      // Calculate discount amount
+      let discountAmount = 0;
+      if (coupon.discountType === 'percentage') {
+        discountAmount = (orderAmount * coupon.discountValue) / 100;
+        if (coupon.maximumDiscountAmount) {
+          discountAmount = Math.min(discountAmount, coupon.maximumDiscountAmount);
+        }
+      } else {
+        discountAmount = Math.min(coupon.discountValue, orderAmount);
+      }
+
+      // Return valid coupon with calculated discount
+      res.json({
+        id: coupon.id,
+        code: coupon.code,
+        description: coupon.description,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        maximumDiscountAmount: coupon.maximumDiscountAmount,
+        calculatedDiscount: discountAmount
+      });
+    } catch (error) {
+      console.error("Error validating coupon:", error);
+      res.status(500).json({ message: "Failed to validate coupon" });
+    }
+  });
+
+  // Validate coupon code (Public route for checkout)
+  app.post("/api/coupons/validate", async (req, res) => {
+    try {
+      const { code, customerEmail, orderAmount } = req.body;
+
+      if (!code || !customerEmail || !orderAmount) {
+        return res.status(400).json({ 
+          valid: false, 
+          message: "Code, customer email, and order amount are required" 
+        });
+      }
+
+      const result = await storage.validateCoupon(code, customerEmail, parseFloat(orderAmount));
+      res.json(result);
+    } catch (error) {
+      console.error("Error validating coupon:", error);
+      res.status(500).json({ 
+        valid: false, 
+        message: "Failed to validate coupon" 
+      });
+    }
+  });
+
+  // Book Request routes
+  app.post("/api/book-requests", async (req, res) => {
+    try {
+      const requestData = insertBookRequestSchema.parse(req.body);
+      const bookRequest = await storage.createBookRequest(requestData);
+      
+      // Send notification email to admin (optional)
+      try {
+        await sendEmail({
+          to: "admin@a2zbookshop.com", // Admin email
+          subject: "New Book Request Received",
+          html: `
+            <h2>New Book Request</h2>
+            <p><strong>Customer:</strong> ${bookRequest.customerName}</p>
+            <p><strong>Email:</strong> ${bookRequest.customerEmail}</p>
+            <p><strong>Phone:</strong> ${bookRequest.customerPhone || 'Not provided'}</p>
+            <p><strong>Book Title:</strong> ${bookRequest.bookTitle}</p>
+            <p><strong>Author:</strong> ${bookRequest.author || 'Not provided'}</p>
+            <p><strong>ISBN:</strong> ${bookRequest.isbn || 'Not provided'}</p>
+            <p><strong>Expected Price:</strong> $${bookRequest.expectedPrice || 'Not specified'}</p>
+            <p><strong>Quantity:</strong> ${bookRequest.quantity}</p>
+            <p><strong>Additional Notes:</strong> ${bookRequest.notes || 'None'}</p>
+            <p><strong>Request ID:</strong> #${bookRequest.id}</p>
+            <p><strong>Date:</strong> ${new Date(bookRequest.createdAt!).toLocaleString()}</p>
+          `
+        });
+      } catch (emailError) {
+        console.error("Failed to send book request notification email:", emailError);
+        // Don't fail the request if email fails
+      }
+      
+      res.json(bookRequest);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating book request:", error);
+      res.status(500).json({ message: "Failed to create book request" });
+    }
+  });
+
+  app.get("/api/book-requests", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const options: any = {};
+      if (req.query.status) options.status = req.query.status as string;
+      if (req.query.limit) options.limit = parseInt(req.query.limit as string);
+      if (req.query.offset) options.offset = parseInt(req.query.offset as string);
+
+      const result = await storage.getBookRequests(options);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching book requests:", error);
+      res.status(500).json({ message: "Failed to fetch book requests" });
+    }
+  });
+
+  app.get("/api/book-requests/:id", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const id = parseInt(req.params.id);
+      const bookRequest = await storage.getBookRequestById(id);
+      
+      if (!bookRequest) {
+        return res.status(404).json({ message: "Book request not found" });
+      }
+
+      res.json(bookRequest);
+    } catch (error) {
+      console.error("Error fetching book request:", error);
+      res.status(500).json({ message: "Failed to fetch book request" });
+    }
+  });
+
+  app.put("/api/book-requests/:id", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { status, adminNotes } = req.body;
+
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (adminNotes !== undefined) updates.adminNotes = adminNotes;
+      if (status && !updates.processedBy) {
+        updates.processedBy = adminId;
+        updates.processedAt = new Date();
+      }
+
+      const updatedRequest = await storage.updateBookRequest(id, updates);
+      
+      // Send status update email to customer
+      try {
+        const statusMessages = {
+          pending: "Your book request is under review",
+          in_progress: "We are working on finding your requested book",
+          fulfilled: "Great news! We have found your requested book and it will be added to our inventory soon",
+          rejected: "Unfortunately, we cannot fulfill your book request at this time",
+          cancelled: "Your book request has been cancelled"
+        };
+
+        await sendEmail({
+          to: updatedRequest.customerEmail,
+          subject: `Book Request Update - ${updatedRequest.bookTitle}`,
+          html: `
+            <h2>Book Request Status Update</h2>
+            <p>Dear ${updatedRequest.customerName},</p>
+            <p>${statusMessages[status as keyof typeof statusMessages] || 'Your book request status has been updated'}.</p>
+            <p><strong>Book:</strong> ${updatedRequest.bookTitle}</p>
+            <p><strong>Status:</strong> ${status}</p>
+            ${adminNotes ? `<p><strong>Notes:</strong> ${adminNotes}</p>` : ''}
+            <p><strong>Request ID:</strong> #${updatedRequest.id}</p>
+            <p>Thank you for choosing A2Z BOOKSHOP!</p>
+          `
+        });
+      } catch (emailError) {
+        console.error("Failed to send status update email:", emailError);
+        // Don't fail the update if email fails
+      }
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating book request:", error);
+      res.status(500).json({ message: "Failed to update book request" });
+    }
+  });
+
+  app.delete("/api/book-requests/:id", async (req: any, res) => {
+    try {
+      // Admin authentication required
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      const id = parseInt(req.params.id);
+      await storage.deleteBookRequest(id);
+      
+      res.json({ message: "Book request deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting book request:", error);
+      res.status(500).json({ message: "Failed to delete book request" });
     }
   });
 

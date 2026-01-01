@@ -233,6 +233,61 @@ export const refundTransactions = pgTable("refund_transactions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Coupon system tables
+export const coupons = pgTable("coupons", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).unique().notNull(),
+  description: text("description"),
+  discountType: varchar("discount_type").notNull(), // percentage, fixed_amount
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  minimumOrderAmount: decimal("minimum_order_amount", { precision: 10, scale: 2 }).default("0"),
+  maximumDiscountAmount: decimal("maximum_discount_amount", { precision: 10, scale: 2 }), // For percentage discounts
+  usageLimit: integer("usage_limit"), // null = unlimited
+  usedCount: integer("used_count").default(0),
+  isActive: boolean("is_active").default(true),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  createdBy: integer("created_by").references(() => admins.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Book Requests table - For customers to request books that are not in inventory
+export const bookRequests = pgTable("book_requests", {
+  id: serial("id").primaryKey(),
+  customerName: varchar("customer_name", { length: 200 }).notNull(),
+  customerEmail: varchar("customer_email", { length: 200 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 20 }),
+  bookTitle: varchar("book_title", { length: 500 }).notNull(),
+  author: varchar("author", { length: 300 }),
+  isbn: varchar("isbn", { length: 20 }).notNull(), // Made required
+  binding: varchar("binding", { length: 50 }).notNull(), // New field: softcover, hardcover, spiral, no binding
+  expectedPrice: decimal("expected_price", { precision: 10, scale: 2 }),
+  quantity: integer("quantity").default(1),
+  notes: text("notes"), // Additional details from customer
+  status: varchar("status", { length: 50 }).default("pending"), // pending, in_progress, fulfilled, rejected, cancelled
+  adminNotes: text("admin_notes"), // Internal notes from admin
+  processedBy: integer("processed_by").references(() => admins.id),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Coupon usage tracking table to ensure one-time use per customer
+export const couponUsages = pgTable("coupon_usages", {
+  id: serial("id").primaryKey(),
+  couponId: integer("coupon_id").notNull().references(() => coupons.id),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  userId: varchar("user_id").references(() => users.id),
+  customerEmail: varchar("customer_email").notNull(), // For guest users
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
+  usedAt: timestamp("used_at").defaultNow(),
+}, (table) => {
+  return {
+    uniqueCouponUser: unique().on(table.couponId, table.customerEmail), // Ensure one use per customer email
+  };
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -306,6 +361,29 @@ export const refundTransactionsRelations = relations(refundTransactions, ({ one 
   processedByAdmin: one(admins, {
     fields: [refundTransactions.processedBy],
     references: [admins.id],
+  }),
+}));
+
+export const couponsRelations = relations(coupons, ({ one, many }) => ({
+  createdByAdmin: one(admins, {
+    fields: [coupons.createdBy],
+    references: [admins.id],
+  }),
+  usages: many(couponUsages),
+}));
+
+export const couponUsagesRelations = relations(couponUsages, ({ one }) => ({
+  coupon: one(coupons, {
+    fields: [couponUsages.couponId],
+    references: [coupons.id],
+  }),
+  order: one(orders, {
+    fields: [couponUsages.orderId],
+    references: [orders.id],
+  }),
+  user: one(users, {
+    fields: [couponUsages.userId],
+    references: [users.id],
   }),
 }));
 
@@ -394,6 +472,19 @@ export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
 
 export type RefundTransaction = typeof refundTransactions.$inferSelect;
 
+// Book Request types
+export type BookRequest = typeof bookRequests.$inferSelect;
+export const insertBookRequestSchema = createInsertSchema(bookRequests).omit({
+  id: true,
+  status: true,
+  adminNotes: true,
+  processedBy: true,
+  processedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertBookRequest = z.infer<typeof insertBookRequestSchema>;
+
 // Gift Categories Management
 export const giftCategories = pgTable("gift_categories", {
   id: serial("id").primaryKey(),
@@ -478,3 +569,32 @@ export const insertAdminSchema = createInsertSchema(admins).omit({
   lastLogin: true,
 });
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
+
+// Coupon types and schemas
+export type Coupon = typeof coupons.$inferSelect;
+export const insertCouponSchema = createInsertSchema(coupons).omit({
+  id: true,
+  usedCount: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  discountValue: z.union([z.string(), z.number()]).transform((val) => {
+    return typeof val === 'string' ? val : val.toString();
+  }),
+  minimumOrderAmount: z.union([z.string(), z.number()]).optional().transform((val) => {
+    if (val === undefined || val === null) return "0";
+    return typeof val === 'string' ? val : val.toString();
+  }),
+  maximumDiscountAmount: z.union([z.string(), z.number()]).optional().transform((val) => {
+    if (val === undefined || val === null) return undefined;
+    return typeof val === 'string' ? val : val.toString();
+  }),
+});
+export type InsertCoupon = z.infer<typeof insertCouponSchema>;
+
+export type CouponUsage = typeof couponUsages.$inferSelect;
+export const insertCouponUsageSchema = createInsertSchema(couponUsages).omit({
+  id: true,
+  usedAt: true,
+});
+export type InsertCouponUsage = z.infer<typeof insertCouponUsageSchema>;
