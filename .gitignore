@@ -45,46 +45,16 @@ coverage
 # Temp files
 *.tmp
 *.temp
-*.tar.gz
 vite.config.ts.*
-*.html
-!client/index.html
 
-# Session files
-*.txt
-!BREVO_SETUP_GUIDE.md
-!BREVO_TROUBLESHOOTING.md
-!DEPLOYMENT_INSTRUCTIONS.md
-!DOMAIN_SETUP_STEP_BY_STEP.md
-!DOWNLOAD_INSTRUCTIONS.md
-!EMAIL_DELIVERY_TROUBLESHOOTING.md
-!QUICK_DNS_FIX_STEPS.md
-!WWW_SUBDOMAIN_FIX_GUIDE.md
-!ZOHO_EMAIL_SETUP.md
-!ZOHO_SETUP_GUIDE.md
-
-# Documentation
-*.md
-!BREVO_SETUP_GUIDE.md
-!BREVO_TROUBLESHOOTING.md
-!DEPLOYMENT_INSTRUCTIONS.md
-!DOMAIN_SETUP_STEP_BY_STEP.md
-!DOWNLOAD_INSTRUCTIONS.md
-!EMAIL_DELIVERY_TROUBLESHOOTING.md
-!QUICK_DNS_FIX_STEPS.md
-!WWW_SUBDOMAIN_FIX_GUIDE.md
-!ZOHO_EMAIL_SETUP.md
-!ZOHO_SETUP_GUIDE.md
-!README.md
+# Documentation archive
+docs/archive/
 
 # Uploads (keep directory structure)
 uploads/images/*
 !uploads/images/.gitkeep
 server/uploads/images/*
 !server/uploads/images/.gitkeep
-
-# Assets
-attached_assets/
 
 # Database
 *.db

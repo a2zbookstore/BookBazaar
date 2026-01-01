@@ -252,9 +252,7 @@ export default function CartPage() {
               const isGift = (item as any).isGift;
               const imageUrl = item.book?.imageUrl;
               const title = item.book?.title;
-              const author = isGift ? null : item.book?.author;
-              console.log(item);
-              
+              const author = isGift ? null : item.book?.author;              
 
               return (
                 <Card key={item.id} className="p-4"> 
