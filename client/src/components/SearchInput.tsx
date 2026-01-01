@@ -116,12 +116,12 @@ export default function SearchInput({
               handleSubmit(e as any);
             }
           }}
-          className="w-full pr-12"
+          className="w-full pr-12 rounded-full"
         />
         {showButton && (
           <Button
             type="submit"
-            className="absolute right-1 top-1 h-8 w-8 rounded-lg bg-primary-aqua hover:bg-secondary-aqua p-0"
+            className="absolute right-2 top-1 h-8 w-8 rounded-full bg-primary-aqua hover:bg-secondary-aqua p-0"
           >
             <Search className="h-4 w-4" />
           </Button>

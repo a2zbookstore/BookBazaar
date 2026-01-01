@@ -1,9 +1,16 @@
+import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+    <>
+      <SEO
+        title="Page Not Found - 404"
+        description="The page you're looking for doesn't exist. Return to A2Z BOOKSHOP homepage to continue shopping."
+        keywords="404, page not found, error"
+      />
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
         <CardContent className="pt-6">
           <div className="flex mb-4 gap-2">
@@ -17,5 +24,6 @@ export default function NotFound() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

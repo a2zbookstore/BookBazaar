@@ -9,16 +9,15 @@ import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CreditCard, Smartphone, Globe, CheckCircle, ChevronDown } from "lucide-react";
+import { Globe, CheckCircle } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
 import PayPalCheckoutButton from "@/components/PayPalCheckoutButton";
 
@@ -924,7 +923,14 @@ export default function CheckoutPage() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto py-8 px-4">
+      <SEO
+        title="Checkout"
+        description="Complete your book purchase securely at A2Z BOOKSHOP. Multiple payment options including PayPal, credit cards, and Razorpay."
+        keywords="checkout, secure payment, buy books, online payment, book purchase"
+        url="https://a2zbookshop.com/checkout"
+        type="website"
+      />
+      <div className="max-w-6xl mx-auto py-8 px-4 mt-6">
         <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
         
         <div className="grid lg:grid-cols-3 gap-8">

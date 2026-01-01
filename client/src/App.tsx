@@ -50,7 +50,7 @@ import TermsAndConditionsPage from "@/pages/TermsAndConditionsPage";
 import FAQPage from "@/pages/FAQPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import RequestBookPage from "@/pages/RequestBookPage";
-import NotFound from "@/pages/not-found";
+import NotFound from "@/pages/NotFound";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();

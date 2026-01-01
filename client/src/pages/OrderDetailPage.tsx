@@ -1,6 +1,8 @@
 import { useParams, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -181,7 +183,21 @@ export default function OrderDetailPage() {
 
   return (
     <Layout>
+      <SEO
+        title={`Order #${order.id} - Order Details`}
+        description="View your order details, track shipment, and download invoice from A2Z BOOKSHOP."
+        keywords="order details, order status, invoice, shipment tracking"
+        url={`https://a2zbookshop.com/order/${order.id}`}
+        type="website"
+      />
       <div className="max-w-4xl mx-auto py-8 px-4">
+        <Breadcrumb 
+          items={[
+            { label: "My Orders", href: "/my-orders" },
+            { label: `Order #${order.id}` }
+          ]}
+        />
+        
         <div className="mb-8 flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-base-black mb-2">Order Details</h1>

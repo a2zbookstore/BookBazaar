@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +5,8 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
+import SEO from "@/components/SEO";
 import BookCard from "@/components/BookCard";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
@@ -99,15 +100,15 @@ export default function WishlistPage() {
 
   return (
     <Layout>
+      <SEO
+        title="My Wishlist"
+        description="Save your favorite books to your wishlist. Keep track of books you want to buy later at A2Z BOOKSHOP."
+        keywords="book wishlist, saved books, favorite books, book list"
+        url="https://a2zbookshop.com/wishlist"
+        type="website"
+      />
       <div className="container-custom py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-secondary-black">
-            <Link href="/" className="hover:text-primary-aqua">Home</Link>
-            <span>/</span>
-            <span className="text-base-black">Wishlist</span>
-          </div>
-        </nav>
+        <Breadcrumb items={[{ label: "Wishlist" }]} />
 
         {/* Page Header */}
         <div className="flex items-center gap-3 mb-8">

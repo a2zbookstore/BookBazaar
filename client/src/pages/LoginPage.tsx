@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
+import SEO from "@/components/SEO";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,18 +10,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Eye, EyeOff, Mail, Lock, Phone, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Phone, LogIn, X } from "lucide-react";
 
 export default function LoginPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState("email");
+  const [isOpen, setIsOpen] = useState(true);
   
   // Forgot password states
   const [forgotEmail, setForgotEmail] = useState("");
   const [isForgotDialogOpen, setIsForgotDialogOpen] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
+
+  // Handle closing the modal
+  const handleClose = () => {
+    setIsOpen(false);
+    // Go back to previous page or home
+    window.history.length > 1 ? window.history.back() : setLocation("/");
+  };
+
+  // Ensure modal is open when component mounts
+  useEffect(() => {
+    setIsOpen(true);
+  }, []);
   
   const [emailFormData, setEmailFormData] = useState({
     email: "",
@@ -171,16 +185,33 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg space-y-6">
-        <Card className="shadow-2xl border-0 overflow-hidden">
-          <CardHeader className="space-y-3 text-center text-white rounded-t-lg py-8 px-6" style={{ background: 'linear-gradient(135deg, rgb(41, 128, 185) 0%, rgb(52, 152, 219) 100%)' }}>
-            <CardTitle className="text-3xl font-bold flex items-center justify-center gap-3 text-white">
-              <LogIn className="h-7 w-7 text-white" />
-              Welcome Back
-            </CardTitle>
-            <p className="text-white text-lg font-semibold mt-2">Sign in to your A2Z BOOKSHOP account</p>
-          </CardHeader>
+    <>
+      <SEO
+        title="Login"
+        description="Sign in to your A2Z BOOKSHOP account. Access your orders, wishlist, and personalized recommendations."
+        keywords="login, sign in, customer account, user login"
+        url="https://a2zbookshop.com/login"
+        type="website"
+      />
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 z-50">
+        <div className="w-full max-w-lg space-y-6 relative">
+          <Button
+            onClick={handleClose}
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-8 z-10 h-10 w-10 hover:rounded-full hover:bg-gray-100"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+
+          <Card className="shadow-2xl border-0 overflow-hidden">
+            <CardHeader className="space-y-3 text-center text-white rounded-t-lg py-8 px-6" style={{ background: 'linear-gradient(135deg, rgb(41, 128, 185) 0%, rgb(52, 152, 219) 100%)' }}>
+              <CardTitle className="text-3xl font-bold flex items-center justify-center gap-3 text-white">
+                <LogIn className="h-7 w-7 text-white" />
+                Welcome Back
+              </CardTitle>
+              <p className="text-white text-lg font-semibold mt-2">Sign in to your A2Z BOOKSHOP account</p>
+            </CardHeader>
           <CardContent className="p-6">
             <Tabs value={loginType} onValueChange={setLoginType} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -382,5 +413,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

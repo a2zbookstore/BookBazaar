@@ -10,9 +10,8 @@ import Logo from "@/components/Logo";
 import { useState, useEffect } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
-import { Badge } from "@/components/ui/badge";
 import CountrySelector from "@/components/CountrySelector";
-import { SecretAdminButton, SecretAdminNav } from "@/components/SecretAdminButton";
+import { SecretAdminButton } from "@/components/SecretAdminButton";
 import { SecretAdminAccess } from "@/components/SecretAdminAccess";
 
 interface LayoutProps {
@@ -27,7 +26,6 @@ export default function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { location: userLocation } = useShipping();
-  const { userCurrency, formatAmount, getSupportedCurrencies } = useCurrency(userLocation?.countryCode);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -439,7 +437,6 @@ export default function Layout({ children }: LayoutProps) {
       }`}>
         {children}
       </main>
-
       {/* Footer */}
       <footer className="bg-base-black text-white mt-16">
         <div className="container-custom py-12">
