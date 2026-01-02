@@ -85,6 +85,7 @@ html, body {
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
     max-width: 100% !important;
+    width: 100% !important;
   }
   
   /* Fix header layout */
@@ -214,8 +215,8 @@ html, body {
   }
   
   .container-custom {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 }
 
@@ -291,7 +292,8 @@ button:active, .button:active {
 
 @layer components {
   .container-custom {
-    @apply max-w-[1240px] mx-auto px-4;
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 1536px; /* 2xl breakpoint for very large screens */
   }
   
   .book-card {
@@ -432,6 +434,7 @@ button:active, .button:active {
   .container-custom {
     padding-left: 1rem;
     padding-right: 1rem;
+    max-width: 100%;
   }
   
   /* Make all form inputs more touch-friendly on mobile */

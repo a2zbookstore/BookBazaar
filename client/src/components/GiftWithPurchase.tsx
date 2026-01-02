@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Gift, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,25 +16,23 @@ interface GiftWithPurchaseProps {
 export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWithPurchaseProps) {
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [hoveredImage, setHoveredImage] = useState<{ url: string; name: string } | null>(null);
 
   // Fetch gift categories from database (public endpoint)
   const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
-    refetchInterval: 1000, // Refetch every 1 second
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
   // Fetch gift items from database (public endpoint)
   const { data: giftItems = [], isLoading: itemsLoading } = useQuery<GiftItem[]>({
     queryKey: ["/api/gift-items"],
-    refetchInterval: 1000, // Refetch every 1 second
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
   const isLoading = categoriesLoading || itemsLoading;
@@ -63,27 +61,17 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
     }
   }, []);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Gift Categories Data:', giftCategories);
-    console.log('Gift Items Data:', giftItems);
-  }, [giftCategories, giftItems]);
-
-  useEffect(() => {
-    setIsVisible(hasItemsInCart);
-  }, [hasItemsInCart]);
-
-  // Auto-advance carousel
-  useEffect(() => {
-    if (activeCategories.length > 3 && !isPaused) {
-      const interval = setInterval(() => {
-        setCarouselIndex(prev => 
-          prev < activeCategories.length - 1 ? prev + 1 : 0
-        );
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [activeCategories.length, isPaused]);
+  // // Auto-advance carousel
+  // useEffect(() => {
+  //   if (activeCategories.length > 3 && !isPaused) {
+  //     const interval = setInterval(() => {
+  //       setCarouselIndex(prev =>
+  //         prev < activeCategories.length - 1 ? prev + 1 : 0
+  //       );
+  //     }, 3000);
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [activeCategories.length, isPaused]);
 
   const handleCategorySelect = async (categoryId: number) => {
     if (!hasItemsInCart) return;
@@ -104,14 +92,14 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
       if (response.ok) {
         setSelectedCategory(categoryId);
         localStorage.setItem('selectedGiftCategory', categoryId.toString());
-        
+
         // Find category name for alert
         const category = activeCategories.find(cat => cat.id === categoryId);
         const categoryName = category?.name || 'Gift';
-        
+
         // Show confirmation alert
         alert(`🎁 Great choice! "${categoryName}" has been added to your cart as a free gift!`);
-        
+
         // Notify parent component to refresh cart
         if (onGiftAdded) {
           onGiftAdded();
@@ -132,7 +120,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
 
   const handleGiftSelect = async (giftId: string) => {
     if (selectedGift === giftId) return; // Already selected
-    
+
     // Find the gift item
     const giftItem = activeGiftItems.find(item => item.id.toString() === giftId);
     if (!giftItem) return;
@@ -158,10 +146,10 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
       if (response.ok) {
         setSelectedGift(giftId);
         localStorage.setItem('selectedGift', giftId);
-        
+
         // Show confirmation alert
         alert(`🎁 Great choice! "${giftItem.name}" has been added to your cart as a free gift!`);
-        
+
         // Notify parent component to refresh cart
         if (onGiftAdded) {
           onGiftAdded();
@@ -187,10 +175,10 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
         method: 'DELETE',
         credentials: 'include',
       });
-      
+
       setSelectedGift(null);
       localStorage.removeItem('selectedGift');
-      
+
       // Notify parent component to refresh cart
       if (onGiftAdded) {
         onGiftAdded();
@@ -203,10 +191,10 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { 
+      transition: {
         duration: 0.8,
         staggerChildren: 0.1
       }
@@ -215,8 +203,8 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.6 }
     }
@@ -227,82 +215,22 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
 
   if (isLoading) {
     return (
-      <>
-        {/* Hovered Image Modal */}
-        <AnimatePresence>
-          {hoveredImage && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 pointer-events-none"
-              style={{ zIndex: 9999 }}
-            >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="relative max-w-2xl max-h-[80vh] p-4"
-              >
-                <img
-                  src={hoveredImage.url}
-                  alt={hoveredImage.name}
-                  className="w-full h-full object-contain rounded-lg shadow-2xl"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white p-4 rounded-b-lg">
-                  <h3 className="text-lg font-semibold text-center">{hoveredImage.name}</h3>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <motion.section 
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-          className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 relative overflow-hidden"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
-            <p className="text-gray-600">Loading special gift offers...</p>
-          </div>
-        </motion.section>
-      </>
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 relative overflow-hidden"
+      >
+        <div className="container-custom text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
+          <p className="text-gray-600">Loading special gift offers...</p>
+        </div>
+      </motion.section>
     );
   }
 
   return (
-    <>
-      {/* Hovered Image Modal */}
-      <AnimatePresence>
-        {hoveredImage && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 pointer-events-none"
-            style={{ zIndex: 9999 }}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-2xl max-h-[80vh] p-4"
-            >
-              <img
-                src={hoveredImage.url}
-                alt={hoveredImage.name}
-                className="w-full h-full object-contain rounded-lg shadow-2xl"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white p-4 rounded-b-lg">
-                <h3 className="text-lg font-semibold text-center">{hoveredImage.name}</h3>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    <motion.section 
+    <motion.section
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -315,9 +243,9 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
       </div>
 
       <div className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container-custom">
           {/* Header Section */}
-          <motion.div 
+          <motion.div
             className="text-center mb-12"
             variants={itemVariants}
           >
@@ -327,11 +255,11 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
               transition={{ type: "spring", stiffness: 300 }}
             >
               <motion.div
-                animate={{ 
+                animate={{
                   rotate: [0, 10, -10, 0],
                   scale: [1, 1.1, 1]
                 }}
-                transition={{ 
+                transition={{
                   duration: 2,
                   repeat: Infinity,
                   repeatDelay: 3
@@ -343,15 +271,15 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 🎁 SPECIAL GIFT OFFER! 🎁
               </h2>
             </motion.div>
-            
-            <motion.p 
+
+            <motion.p
               className="text-2xl md:text-2xl sm:text-lg text-base text-gray-700 dark:text-gray-300 mb-6 font-semibold"
               variants={itemVariants}
             >
               Buy any book and get <span className="font-bold text-green-600 text-3xl md:text-3xl sm:text-xl text-lg">1 FREE Gift</span> of your choice!
             </motion.p>
-            
-            {!isVisible && alwaysVisible && (
+
+            {!hasItemsInCart && alwaysVisible && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -360,11 +288,11 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
               >
                 <div className="flex items-center gap-3">
                   <motion.div
-                    animate={{ 
+                    animate={{
                       rotate: [0, 15, -15, 0],
                       scale: [1, 1.2, 1]
                     }}
-                    transition={{ 
+                    transition={{
                       duration: 2,
                       repeat: Infinity,
                       repeatDelay: 3
@@ -379,7 +307,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 </div>
               </motion.div>
             )}
-            
+
             {selectedGift && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -393,7 +321,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
           </motion.div>
 
           {/* Category Horizontal Moving Carousel */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="mb-8"
           >
@@ -412,158 +340,160 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 </Button>
               </Link>
             </div>
-            
-            <div className="relative overflow-hidden">
-              {/* Navigation Arrows */}
+
+            <div className="flex items-center justify-center gap-4">
+              {/* Left Button */}
               {activeCategories.length > 3 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full w-10 h-10 p-0"
-                    onClick={() => {
-                      setCarouselIndex(prev => 
-                        prev > 0 ? prev - 1 : activeCategories.length - 1
-                      );
-                    }}
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full w-10 h-10 p-0"
-                    onClick={() => {
-                      setCarouselIndex(prev => 
-                        prev < activeCategories.length - 1 ? prev + 1 : 0
-                      );
-                    }}
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-shrink-0 bg-white/80 hover:bg-white shadow-lg rounded-full w-10 h-10 p-0"
+                  onClick={() => {
+                    setCarouselIndex(prev =>
+                      prev > 0 ? prev - 1 : activeCategories.length - 1
+                    );
+                  }}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
               )}
 
-              <motion.div 
-                className="flex gap-6 py-4"
-                animate={{ 
-                  x: activeCategories.length > 3 && !isPaused ? 
-                    [carouselIndex * -220, (carouselIndex + 1) * -220] : 
-                    activeCategories.length <= 3 ? [0, 0, 0] : [carouselIndex * -220, carouselIndex * -220]
-                }}
-                transition={{ 
-                  duration: activeCategories.length > 3 && !isPaused ? 15 : 0, 
-                  repeat: activeCategories.length > 3 && !isPaused ? Infinity : 0, 
-                  ease: "linear" 
-                }}
-                style={{ 
-                  width: activeCategories.length > 3 ? `${activeCategories.length * 220 + 400}px` : 'auto',
-                  justifyContent: activeCategories.length <= 3 ? 'center' : 'flex-start'
-                }}
-                onMouseEnter={() => setIsPaused(true)}
-                onMouseLeave={() => setIsPaused(false)}
-              >
-                {/* Show categories with duplication for seamless scroll if needed */}
-                {(activeCategories.length > 3 ? [...activeCategories, ...activeCategories] : activeCategories).map((category, index) => (
-                  <motion.div
-                    key={`${category.id}-${index}`}
-                    onClick={() => hasItemsInCart ? handleCategorySelect(category.id) : null}
-                    className={`
+              {/* Carousel Container */}
+              <div className="flex-1 max-w-9xl overflow-hidden relative">
+                <motion.div
+                  className="flex gap-6 py-4"
+                  animate={{
+                    x: activeCategories.length > 3 && !isPaused ?
+                      [carouselIndex * -220, (carouselIndex + 1) * -220] :
+                      activeCategories.length <= 3 ? [0, 0, 0] : [carouselIndex * -220, carouselIndex * -220]
+                  }}
+                  transition={{
+                    duration: activeCategories.length > 3 && !isPaused ? 15 : 0,
+                    repeat: activeCategories.length > 3 && !isPaused ? Infinity : 0,
+                    ease: "linear"
+                  }}
+                  style={{
+                    width: activeCategories.length > 3 ? `${activeCategories.length * 220 + 400}px` : 'auto',
+                    justifyContent: activeCategories.length <= 3 ? 'center' : 'flex-start'
+                  }}
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setIsPaused(false)}
+                >
+                  {/* Show categories with duplication for seamless scroll if needed */}
+                  {(activeCategories.length > 3 ? [...activeCategories, ...activeCategories] : activeCategories).map((category, index) => (
+                    <motion.div
+                      key={`${category.id}-${index}`}
+                      onClick={() => hasItemsInCart ? handleCategorySelect(category.id) : null}
+                      className={`
                       flex-shrink-0 transition-all duration-300 group relative
-                      ${hasItemsInCart 
-                        ? `cursor-pointer ${selectedCategory === category.id ? 'transform scale-110' : 'hover:scale-105'}`
-                        : 'cursor-not-allowed opacity-75'
-                      }
+                      ${hasItemsInCart
+                          ? `cursor-pointer ${selectedCategory === category.id ? 'transform scale-110' : 'hover:scale-105'}`
+                          : 'cursor-not-allowed opacity-75'
+                        }
                     `}
-                    whileHover={hasItemsInCart ? { y: -5 } : {}}
-                    whileTap={hasItemsInCart ? { scale: 0.95 } : {}}
-                  >
-                    <div className={`
-                      w-52 h-40 rounded-xl overflow-hidden shadow-lg border-4 transition-all duration-300 bg-white
-                      ${selectedCategory === category.id 
-                        ? 'border-green-500 shadow-green-200 ring-2 ring-green-300' 
-                        : hasItemsInCart 
-                          ? 'border-gray-200 group-hover:border-blue-300 group-hover:shadow-blue-200'
-                          : 'border-gray-300'
-                      }
+                      whileHover={hasItemsInCart ? { y: -5 } : {}}
+                      whileTap={hasItemsInCart ? { scale: 0.95 } : {}}
+                    >
+                      <div className={`
+                      w-52 h-64 rounded-xl overflow-hidden shadow-lg border-4 transition-all duration-300 bg-white
+                      ${selectedCategory === category.id
+                          ? 'border-green-500 shadow-green-200 ring-2 ring-green-300'
+                          : hasItemsInCart
+                            ? 'border-gray-200 group-hover:border-blue-300 group-hover:shadow-blue-200'
+                            : 'border-gray-300'
+                        }
                     `}>
-                      {/* Category Image */}
-                      <div className="relative h-28 overflow-hidden">
-                        {category.imageUrl ? (
-                          <img 
-                            src={category.imageUrl}
-                            alt={category.name}
-                            className={`w-full h-full object-cover transition-transform duration-300 ${
-                              hasItemsInCart ? 'group-hover:scale-110' : ''
-                            }`}
-                            onMouseEnter={() => hasItemsInCart && setHoveredImage({ url: category.imageUrl!, name: category.name })}
-                            onMouseLeave={() => setHoveredImage(null)}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                            <span className="text-4xl">
-                              {category.type === 'novel' ? '📖' : '📝'}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {/* Add Books First Overlay */}
-                        {!hasItemsInCart && (
-                          <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-                            <div className="text-center text-white">
-                              <div className="text-lg font-bold mb-1">📚</div>
-                              <div className="text-sm font-semibold">Add Books First</div>
+                        {/* Category Image */}
+                        <div className="relative h-40 overflow-hidden bg-gray-50">
+                          {category.imageUrl ? (
+                            <img
+                              src={category.imageUrl}
+                              alt={category.name}
+                              className={`w-full h-full object-contain transition-transform duration-300 ${hasItemsInCart ? 'group-hover:scale-110' : ''
+                                }`}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                              <span className="text-4xl">
+                                {category.type === 'novel' ? '📖' : '📝'}
+                              </span>
                             </div>
-                          </div>
-                        )}
-                        
-                        {/* Price Badge - Top Left */}
-                        {category.price && Number(category.price) > 0 && hasItemsInCart && (
-                          <div className="absolute top-2 left-2">
-                            <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                              ${Number(category.price).toFixed(2)}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Selection indicator */}
-                        {selectedCategory === category.id && hasItemsInCart && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="absolute top-2 right-2 bg-green-500 rounded-full p-2 shadow-lg"
-                          >
-                            <Check className="w-4 h-4 text-white" />
-                          </motion.div>
-                        )}
-                      </div>
-                      
-                      {/* Category Info */}
-                      <div className="p-3">
-                        <h4 className="font-bold text-gray-800 text-center truncate">
-                          {category.name}
-                        </h4>
-                        <div className="flex items-center justify-center gap-2 mt-1">
-                          {category.price && Number(category.price) > 0 && (
-                            <span className="text-sm font-semibold text-green-600">
-                              ${Number(category.price).toFixed(2)}
-                            </span>
                           )}
-                          <Badge 
-                            variant={category.type === 'novel' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {category.type === 'novel' ? '📖 Novel' : '📝 Notebook'}
-                          </Badge>
+
+                          {/* Add Books First Overlay */}
+                          {!hasItemsInCart && (
+                            <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                              <div className="text-center text-white">
+                                <div className="text-lg font-bold mb-1">📚</div>
+                                <div className="text-sm font-semibold">Add Books First</div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Price Badge - Top Left */}
+                          {category.price && Number(category.price) > 0 && hasItemsInCart && (
+                            <div className="absolute top-2 left-2">
+                              <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                                ${Number(category.price).toFixed(2)}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Selection indicator */}
+                          {selectedCategory === category.id && hasItemsInCart && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute top-2 right-2 bg-green-500 rounded-full p-2 shadow-lg"
+                            >
+                              <Check className="w-4 h-4 text-white" />
+                            </motion.div>
+                          )}
                         </div>
-                        <p className="text-xs text-gray-500 text-center mt-1 truncate">
-                          {category.description || (category.type === 'novel' ? 'Novel Collection' : 'Notebook Collection')}
-                        </p>
+
+                        {/* Category Info */}
+                        <div className="p-3">
+                          <h4 className="font-bold text-gray-800 text-center truncate">
+                            {category.name}
+                          </h4>
+                          <div className="flex items-center justify-center gap-2 mt-1">
+                            {category.price && Number(category.price) > 0 && (
+                              <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                                ${Number(category.price).toFixed(2)}
+                              </span>
+                            )}
+                            <Badge
+                              variant={category.type === 'novel' ? 'default' : 'secondary'}
+                              className="text-xs"
+                            >
+                              {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-500 text-center mt-1 truncate">
+                            {category.description || (category.type === 'novel' ? 'Novel Collection' : 'Notebook Collection')}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+
+              {/* Right Button */}
+              {activeCategories.length > 3 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-shrink-0 bg-white/80 hover:bg-white shadow-lg rounded-full w-10 h-10 p-0"
+                  onClick={() => {
+                    setCarouselIndex(prev =>
+                      prev < activeCategories.length - 1 ? prev + 1 : 0
+                    );
+                  }}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              )}
             </div>
           </motion.div>
 
@@ -575,17 +505,16 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 <motion.div
                   key={gift.id}
                   variants={itemVariants}
-                  whileHover={hasItemsInCart ? { y: -8, scale: 1.02 } : {}}
                   whileTap={{ scale: 0.98 }}
                   className="relative"
                 >
-                  <Card 
+                  <Card
                     className={`
                       relative overflow-hidden transition-all duration-300 group h-full
-                      ${!hasItemsInCart 
-                        ? 'cursor-not-allowed opacity-75 border-gray-300' 
-                        : isSelected 
-                          ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300 cursor-pointer' 
+                      ${!hasItemsInCart
+                        ? 'cursor-not-allowed opacity-75 border-gray-300'
+                        : isSelected
+                          ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300 cursor-pointer'
                           : 'hover:shadow-xl border-gray-200 hover:border-gray-300 cursor-pointer'
                       }
                     `}
@@ -594,19 +523,16 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                     <CardContent className="p-6">
                       {/* Gift Image */}
                       <div className="relative mb-4 overflow-hidden rounded-xl bg-gray-100">
-                        <img 
-                          src={gift.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop'} 
+                        <img
+                          src={gift.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop'}
                           alt={gift.name}
-                          className={`w-full h-48 object-cover transition-transform duration-300 ${
-                            hasItemsInCart ? 'group-hover:scale-110' : ''
-                          }`}
+                          className={`w-full h-48 object-cover transition-transform duration-300 ${hasItemsInCart ? 'group-hover:scale-110' : ''
+                            }`}
                           onError={(e) => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop';
                           }}
-                          onMouseEnter={() => hasItemsInCart && setHoveredImage({ url: gift.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop', name: gift.name })}
-                          onMouseLeave={() => setHoveredImage(null)}
                         />
-                        
+
                         {/* Add Books First Overlay for Gift Items */}
                         {!hasItemsInCart && (
                           <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
@@ -617,9 +543,9 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                             </div>
                           </div>
                         )}
-                        
+
                         {isSelected && hasItemsInCart && (
-                          <motion.div 
+                          <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             className="absolute top-3 right-3 bg-green-500 text-white rounded-full p-2 shadow-lg"
@@ -632,7 +558,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                       {/* Gift Details */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <Badge 
+                          <Badge
                             variant={gift.type === 'novel' ? 'default' : 'secondary'}
                             className="text-xs font-medium"
                           >
@@ -644,13 +570,12 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                             </Badge>
                           )}
                         </div>
-                        
-                        <h3 className={`font-semibold text-lg text-gray-900 dark:text-white transition-colors ${
-                          hasItemsInCart ? 'group-hover:text-green-600' : ''
-                        }`}>
+
+                        <h3 className={`font-semibold text-lg text-gray-900 dark:text-white transition-colors ${hasItemsInCart ? 'group-hover:text-green-600' : ''
+                          }`}>
                           {gift.name}
                         </h3>
-                        
+
                         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                           {gift.description || 'Special gift item'}
                         </p>
@@ -682,6 +607,5 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
         </div>
       </div>
     </motion.section>
-    </>
   );
 }

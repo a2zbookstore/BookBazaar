@@ -144,11 +144,11 @@ export default function BookCard({ book }: BookCardProps) {
       </div>
 
       <Link to={`/books/${book.id}`} className="block">
-        <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative">
+        <div className="aspect-[3/4] overflow-hidden bg-white relative p-4">
           <img 
             src={getImageSrc(book.imageUrl)} 
             alt={book.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
             onError={(e) => {
               e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
             }}
@@ -166,10 +166,10 @@ export default function BookCard({ book }: BookCardProps) {
         </div>
         
         <div className="p-4">
-          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm">
+          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm h-10">
             {book.title}
           </h3>
-          <p className="text-sm text-gray-600 mb-2">{book.author}</p>
+          <p className="text-sm text-gray-600 mb-2 truncate">{book.author}</p>
           
           <div className="flex items-center justify-between mb-2">
             <div className="text-lg font-bold text-secondary-aqua">
@@ -187,7 +187,7 @@ export default function BookCard({ book }: BookCardProps) {
           </div>
 
           {/* Rating */}
-          <div className="flex items-center mb-2">
+          <div className="flex items-center mb-2 h-5">
             <div className="flex">
               {[...Array(5)].map((_, i) => (
                 <Star
