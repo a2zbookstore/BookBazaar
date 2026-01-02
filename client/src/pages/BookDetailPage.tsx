@@ -1,4 +1,3 @@
-import React from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Star, ShoppingCart, Truck, Shield, RotateCcw, ChevronRight } from "lucide-react";
@@ -7,7 +6,6 @@ import Breadcrumb from "@/components/Breadcrumb";
 import SEO, { generateBookStructuredData } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +28,7 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
   return `/uploads/images/${filename}`;
 };
 
-export default function BookDetailPage() {  
+export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -44,14 +42,14 @@ export default function BookDetailPage() {
 
   const handleAddToCart = async () => {
     if (!book) return;
-    
+
     try {
       await addToCart(book.id);
       toast({
         title: "Added to cart",
         description: `${book.title} has been added to your cart. Redirecting to checkout...`,
       });
-      
+
       // Redirect to checkout page after successful add to cart
       setTimeout(() => {
         setLocation("/checkout");
@@ -132,7 +130,7 @@ export default function BookDetailPage() {
         structuredData={generateBookStructuredData(book)}
       />
       <div className="container-custom py-8">
-        <Breadcrumb 
+        <Breadcrumb
           items={[
             { label: "Catalog", href: "/catalog" },
             { label: book.title }
@@ -143,11 +141,11 @@ export default function BookDetailPage() {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Book Image */}
           <div className="space-y-4">
-            <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
+            <div className="aspect-[3/4] overflow-hidden rounded-lg bg-white max-w-md mx-auto p-6">
               <img
                 src={getImageSrc(book.imageUrl)}
                 alt={book.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
@@ -165,7 +163,7 @@ export default function BookDetailPage() {
                 {book.title}
               </h1>
               <p className="text-xl text-secondary-black mb-4">by {book.author}</p>
-              
+
               {/* Rating */}
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex">
@@ -287,7 +285,7 @@ export default function BookDetailPage() {
                 <div>
                   <h3 className="font-semibold text-green-800 mb-2">30-Day Return Policy</h3>
                   <p className="text-sm text-green-700 leading-relaxed">
-                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund. 
+                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund.
                     Books must be in the same condition as when received. Return shipping is free for damaged or incorrectly described items.
                   </p>
                   <Link href="/return-request" className="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium mt-2">

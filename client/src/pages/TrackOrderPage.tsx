@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
+import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,7 +120,13 @@ export default function TrackOrderPage() {
         url="https://a2zbookshop.com/track-order"
         type="website"
       />
-      <div className="max-w-4xl mx-auto py-8 px-4 mt-6">
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        <Breadcrumb 
+          items={[
+            { label: "Track Order" }
+          ]}
+          className="mb-6"
+        />
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-base-black">Track Your Order</h1>
           <p className="text-secondary-black mt-2">
