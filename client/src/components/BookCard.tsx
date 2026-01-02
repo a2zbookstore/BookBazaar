@@ -137,7 +137,7 @@ export default function BookCard({ book }: BookCardProps) {
   };
 
   return (
-    <div className="group relative bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border">
+    <div className="group relative bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px]">
       {/* Wishlist Heart */}
       <div className="absolute top-2 right-2 z-10">
         <WishlistHeart bookId={book.id} />
@@ -232,7 +232,7 @@ export default function BookCard({ book }: BookCardProps) {
       <div className="px-4 pb-4">
         <Button
           onClick={handleAddToCart}
-          className="w-full bg-primary-aqua hover:bg-primary-aqua/90 text-white text-sm py-2"
+          className="w-full bg-primary-aqua hover:bg-primary-aqua/90 text-white text-sm py-2 rounded-full"
           size="sm"
         >
           <ShoppingCart className="h-4 w-4 mr-2" />

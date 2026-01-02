@@ -6,6 +6,7 @@ import { Gift, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink } from 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 import type { GiftItem, GiftCategory } from '@/shared/schema';
 
 interface GiftWithPurchaseProps {
@@ -92,14 +93,17 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
       if (response.ok) {
         setSelectedCategory(categoryId);
         localStorage.setItem('selectedGiftCategory', categoryId.toString());
-
-        // Find category name for alert
+        
+        // Find category name for toast
         const category = activeCategories.find(cat => cat.id === categoryId);
         const categoryName = category?.name || 'Gift';
-
-        // Show confirmation alert
-        alert(`🎁 Great choice! "${categoryName}" has been added to your cart as a free gift!`);
-
+        
+        // Show confirmation toast
+        toast({
+          title: "🎁 Great choice!",
+          description: `"${categoryName}" has been added to your cart as a free gift!`
+        });
+        
         // Notify parent component to refresh cart
         if (onGiftAdded) {
           onGiftAdded();
@@ -107,14 +111,26 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
       } else {
         const error = await response.json();
         if (error.message.includes("must have at least one book")) {
-          alert(`❌ ${error.message}`);
+          toast({
+            title: "❌ Cannot Add Gift",
+            description: error.message,
+            variant: "destructive",
+          });
         } else {
-          alert(`Error adding gift: ${error.message}`);
+          toast({
+            title: "Error",
+            description: `Error adding gift: ${error.message}`,
+            variant: "destructive",
+          });
         }
       }
     } catch (error) {
       console.error('Error adding gift category to cart:', error);
-      alert('Failed to add gift to cart. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to add gift to cart. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -147,8 +163,11 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
         setSelectedGift(giftId);
         localStorage.setItem('selectedGift', giftId);
 
-        // Show confirmation alert
-        alert(`🎁 Great choice! "${giftItem.name}" has been added to your cart as a free gift!`);
+        // Show confirmation toast
+        toast({
+          title: "🎁 Great choice!",
+          description: `"${giftItem.name}" has been added to your cart as a free gift!`,
+        });
 
         // Notify parent component to refresh cart
         if (onGiftAdded) {
@@ -157,14 +176,26 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
       } else {
         const error = await response.json();
         if (error.message.includes("must have at least one book")) {
-          alert(`❌ ${error.message}`);
+          toast({
+            title: "❌ Cannot Add Gift",
+            description: error.message,
+            variant: "destructive",
+          });
         } else {
-          alert(`Error adding gift: ${error.message}`);
+          toast({
+            title: "Error",
+            description: `Error adding gift: ${error.message}`,
+            variant: "destructive",
+          });
         }
       }
     } catch (error) {
       console.error('Error adding gift to cart:', error);
-      alert('Failed to add gift to cart. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to add gift to cart. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
