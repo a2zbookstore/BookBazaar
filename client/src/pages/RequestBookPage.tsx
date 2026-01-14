@@ -87,8 +87,15 @@ const RequestBookPage = () => {
 
   if (isSubmitted) {
     return (
-      <div className="container-custom py-8">
-        <div className="max-w-2xl mx-auto">
+      <Layout>
+        <SEO
+          title="Request Submitted - A2Z BOOKSHOP"
+          description="Your book request has been submitted successfully. We'll get back to you soon."
+          keywords="request book, find book, book search service"
+          url="https://a2zbookshop.com/request-book"
+          type="website"
+        />
+        <div className="container-custom py-8">
           <Card className="text-center">
             <CardHeader>
               <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -122,7 +129,7 @@ const RequestBookPage = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -136,8 +143,7 @@ const RequestBookPage = () => {
         type="website"
       />
       <div className="container-custom py-8 mt-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
+        <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Request a Book</h1>
             <p className="text-gray-600 text-lg">
               Can't find a book you're looking for? Let us know and we'll do our best to find it for you!
@@ -383,10 +389,8 @@ const RequestBookPage = () => {
               </Form>
             </CardContent>
           </Card>
-        </div>
       </div>
     </Layout>
-
   );
 };
 

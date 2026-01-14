@@ -3,16 +3,18 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import BookCard from "@/components/BookCard";
-import GiftWithPurchase from "@/components/GiftWithPurchase";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Book, Category } from "@/types";
-import { Star, TrendingUp, Award, Flame, Package, BookOpen } from "lucide-react";
+import { Star, TrendingUp, Award, Flame, Package, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function HomePage() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [bestsellersSlide, setBestsellersSlide] = useState(0);
+  const [featuredSlide, setFeaturedSlide] = useState(0);
+  const [trendingSlide, setTrendingSlide] = useState(0);
+  const [newArrivalsSlide, setNewArrivalsSlide] = useState(0);
+  const [boxSetSlide, setBoxSetSlide] = useState(0);
   const [hasItemsInCart, setHasItemsInCart] = useState(false);
   
   // Structured data for homepage
@@ -67,15 +69,15 @@ export default function HomePage() {
     setHasItemsInCart(Array.isArray(cartItems) && cartItems.length > 0);
   }, [cartItems]);
 
-  // Auto-scroll for moving sections - pauses when hovering
+  // Auto-scroll for featured books section
   useEffect(() => {
-    if (isPaused) return;
+    if (featuredBooks.length === 0) return;
     
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % Math.max(1, Math.ceil(featuredBooks.length / 4)));
-    }, 4000);
+      setFeaturedSlide((prev) => (prev + 1) % Math.max(1, Math.ceil(featuredBooks.length / 4)));
+    }, 5000);
     return () => clearInterval(interval);
-  }, [featuredBooks.length, isPaused]);
+  }, [featuredBooks.length]);
 
   const categoryImages = [
     "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop",
@@ -134,11 +136,16 @@ export default function HomePage() {
               
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
+                <button
+                  onClick={() => setBestsellersSlide((prev) => Math.max(0, prev - 1))}
+                  disabled={bestsellersSlide === 0}
+                  className="absolute left-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 text-gray-800" />
+                </button>
                 <div 
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
+                  className="flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
+                  style={{ transform: `translateX(-${bestsellersSlide * 25}%)` }}
                 >
                   {bestsellerBooks.map((book) => (
                     <div key={book.id} className="flex-none w-56">
@@ -146,6 +153,13 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+                <button
+                  onClick={() => setBestsellersSlide((prev) => Math.min(Math.ceil(bestsellerBooks.length / 4) - 1, prev + 1))}
+                  disabled={bestsellersSlide >= Math.ceil(bestsellerBooks.length / 4) - 1}
+                  className="absolute right-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 text-gray-800" />
+                </button>
               </div>
             </>
           ) : (
@@ -186,11 +200,16 @@ export default function HomePage() {
               
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
+                <button
+                  onClick={() => setFeaturedSlide((prev) => Math.max(0, prev - 1))}
+                  disabled={featuredSlide === 0}
+                  className="absolute left-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 text-gray-800" />
+                </button>
                 <div 
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${(currentSlide * 25) % 100}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
+                  className="flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
+                  // style={{ transform: `translateX(-${featuredSlide * 25}%)` }}
                 >
                   {featuredBooks.map((book) => (
                     <div key={book.id} className="flex-none w-56">
@@ -198,6 +217,13 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+                <button
+                  onClick={() => setFeaturedSlide((prev) => Math.min(Math.ceil(featuredBooks.length / 4) - 1, prev + 1))}
+                  disabled={featuredSlide >= Math.ceil(featuredBooks.length / 4) - 1}
+                  className="absolute right-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 text-gray-800" />
+                </button>
               </div>
             </>
           ) : (
@@ -243,11 +269,16 @@ export default function HomePage() {
               
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
+                <button
+                  onClick={() => setTrendingSlide((prev) => Math.max(0, prev - 1))}
+                  disabled={trendingSlide === 0}
+                  className="absolute left-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 text-gray-800" />
+                </button>
                 <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
+                  className="flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
+                  style={{ transform: `translateX(-${trendingSlide * 25}%)` }}
                 >
                   {trendingBooks.map((book) => (
                     <div key={book.id} className="flex-none w-56">
@@ -255,6 +286,13 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+                <button
+                  onClick={() => setTrendingSlide((prev) => Math.min(Math.ceil(trendingBooks.length / 4) - 1, prev + 1))}
+                  disabled={trendingSlide >= Math.ceil(trendingBooks.length / 4) - 1}
+                  className="absolute right-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 text-gray-800" />
+                </button>
               </div>
             </>
           ) : (
@@ -300,11 +338,16 @@ export default function HomePage() {
               
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
+                <button
+                  onClick={() => setNewArrivalsSlide((prev) => Math.max(0, prev - 1))}
+                  disabled={newArrivalsSlide === 0}
+                  className="absolute left-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 text-gray-800" />
+                </button>
                 <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
+                  className="flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
+                  style={{ transform: `translateX(-${newArrivalsSlide * 25}%)` }}
                 >
                   {newArrivals.map((book) => (
                     <div key={book.id} className="flex-none w-56">
@@ -312,6 +355,13 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+                <button
+                  onClick={() => setNewArrivalsSlide((prev) => Math.min(Math.ceil(newArrivals.length / 4) - 1, prev + 1))}
+                  disabled={newArrivalsSlide >= Math.ceil(newArrivals.length / 4) - 1}
+                  className="absolute right-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 text-gray-800" />
+                </button>
               </div>
             </>
           ) : (
@@ -357,11 +407,16 @@ export default function HomePage() {
               
               {/* Desktop carousel view */}
               <div className="hidden md:block relative overflow-hidden">
+                <button
+                  onClick={() => setBoxSetSlide((prev) => Math.max(0, prev - 1))}
+                  disabled={boxSetSlide === 0}
+                  className="absolute left-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 text-gray-800" />
+                </button>
                 <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
+                  className="flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
+                  style={{ transform: `translateX(-${boxSetSlide * 25}%)` }}
                 >
                   {boxSetBooks.map((book) => (
                     <div key={book.id} className="flex-none w-56">
@@ -369,6 +424,13 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+                <button
+                  onClick={() => setBoxSetSlide((prev) => Math.min(Math.ceil(boxSetBooks.length / 4) - 1, prev + 1))}
+                  disabled={boxSetSlide >= Math.ceil(boxSetBooks.length / 4) - 1}
+                  className="absolute right-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 text-gray-800" />
+                </button>
               </div>
             </>
           ) : (

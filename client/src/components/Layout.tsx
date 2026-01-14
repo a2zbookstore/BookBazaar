@@ -28,10 +28,25 @@ export default function Layout({ children }: LayoutProps) {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       setIsScrolled(scrollY > 10);
+      
+      // Update header height CSS variable
+      const header = document.querySelector('.fixed-header');
+      if (header) {
+        const height = header.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
     };
 
+    // Initial call
+    handleScroll();
+    
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
   }, []);
 
   const isActive = (path: string) => {

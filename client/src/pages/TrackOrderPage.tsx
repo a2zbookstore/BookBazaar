@@ -107,7 +107,7 @@ export default function TrackOrderPage() {
     });
   };
 
-  const StatusIcon = trackingInfo 
+  const StatusIcon = trackingInfo
     ? statusIcons[trackingInfo.status as keyof typeof statusIcons] || AlertCircle
     : Search;
 
@@ -120,8 +120,8 @@ export default function TrackOrderPage() {
         url="https://a2zbookshop.com/track-order"
         type="website"
       />
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <Breadcrumb 
+      <div className="container-custom py-8">
+        <Breadcrumb
           items={[
             { label: "Track Order" }
           ]}
@@ -168,13 +168,16 @@ export default function TrackOrderPage() {
                   />
                 </div>
               </div>
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={trackOrderMutation.isPending}
-              >
-                {trackOrderMutation.isPending ? "Searching..." : "Track Order"}
-              </Button>
+              <div className="flex items-center w-full justify-center">
+                <Button
+                  type="submit"
+                  // className="w-full"
+                  disabled={trackOrderMutation.isPending}
+                >
+                  {trackOrderMutation.isPending ? "Searching..." : "Track Order"}
+                </Button>
+              </div>
+
             </form>
           </CardContent>
         </Card>
@@ -196,8 +199,8 @@ export default function TrackOrderPage() {
               <CardContent className="space-y-4">
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-blue-800">
-                    {statusDescriptions[trackingInfo.status as keyof typeof statusDescriptions] || 
-                     "Your order status has been updated."}
+                    {statusDescriptions[trackingInfo.status as keyof typeof statusDescriptions] ||
+                      "Your order status has been updated."}
                   </p>
                 </div>
 
@@ -256,43 +259,39 @@ export default function TrackOrderPage() {
                 <div className="space-y-4">
                   {/* Timeline items based on current status */}
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      ['pending', 'confirmed', 'processing', 'shipped', 'delivered'].includes(trackingInfo.status)
+                    <div className={`w-3 h-3 rounded-full ${['pending', 'confirmed', 'processing', 'shipped', 'delivered'].includes(trackingInfo.status)
                         ? 'bg-green-500' : 'bg-gray-300'
-                    }`}></div>
+                      }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Order Received</p>
                       <p className="text-sm text-gray-600">Your order has been placed successfully</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      ['confirmed', 'processing', 'shipped', 'delivered'].includes(trackingInfo.status)
+                    <div className={`w-3 h-3 rounded-full ${['confirmed', 'processing', 'shipped', 'delivered'].includes(trackingInfo.status)
                         ? 'bg-green-500' : 'bg-gray-300'
-                    }`}></div>
+                      }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Order Confirmed</p>
                       <p className="text-sm text-gray-600">Your order has been confirmed and is being prepared</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      ['processing', 'shipped', 'delivered'].includes(trackingInfo.status)
+                    <div className={`w-3 h-3 rounded-full ${['processing', 'shipped', 'delivered'].includes(trackingInfo.status)
                         ? 'bg-green-500' : 'bg-gray-300'
-                    }`}></div>
+                      }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Processing</p>
                       <p className="text-sm text-gray-600">Your order is being processed and packaged</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      ['shipped', 'delivered'].includes(trackingInfo.status)
+                    <div className={`w-3 h-3 rounded-full ${['shipped', 'delivered'].includes(trackingInfo.status)
                         ? 'bg-green-500' : 'bg-gray-300'
-                    }`}></div>
+                      }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Shipped</p>
                       <p className="text-sm text-gray-600">
@@ -301,11 +300,10 @@ export default function TrackOrderPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      trackingInfo.status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
-                    }`}></div>
+                    <div className={`w-3 h-3 rounded-full ${trackingInfo.status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
+                      }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Delivered</p>
                       <p className="text-sm text-gray-600">Your order has been delivered successfully</p>
