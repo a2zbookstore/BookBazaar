@@ -299,7 +299,7 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                 <Gift className="h-12 w-12 text-green-500" />
               </motion.div>
               <h2 className="text-5xl md:text-5xl sm:text-2xl text-lg font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                🎁 SPECIAL GIFT OFFER! 🎁
+                  
               </h2>
             </motion.div>
 

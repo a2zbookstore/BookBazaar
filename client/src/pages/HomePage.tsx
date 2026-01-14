@@ -99,10 +99,10 @@ export default function HomePage() {
       />
       
       {/* Database-driven Gift with Purchase Section */}
-      <GiftWithPurchase 
+      {/* <GiftWithPurchase 
         hasItemsInCart={hasItemsInCart} 
         onGiftAdded={() => refetch()}
-      />
+      /> */}
 
       {/* Bestsellers Section - Moving Carousel */}
       <section className="py-12 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">

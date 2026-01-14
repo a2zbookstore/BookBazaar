@@ -45,7 +45,7 @@ export default function GiftItemsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
-        title: "✅ Selected as your free gift!",
+        title: "Selected as your free gift!",
         description: "Your free gift has been added to cart",
 
       });

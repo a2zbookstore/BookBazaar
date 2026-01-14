@@ -119,13 +119,27 @@ export default function BookCard({ book }: BookCardProps) {
       await addToCart(book.id);
       toast({
         title: "Added to cart",
-        description: `${book.title} has been added to your cart. Redirecting to checkout...`,
+        description: `${book.title} has been added to your cart!`,
+      });
+      
+      // Show gift suggestion toast with action
+      toast({
+        title: "Don't forget your gift!",
+        description: "Please select a gift with your purchase.",
+        action: (
+          <button
+            onClick={() => setLocation("/gift-items")}
+            className="ml-auto inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium hover:bg-green-100 focus:outline-none"
+          >
+            Select Gift
+          </button>
+        ),
       });
       
       // Redirect to checkout page after successful add to cart
-      setTimeout(() => {
-        setLocation("/checkout");
-      }, 500);
+      // setTimeout(() => {
+      //   setLocation("/checkout");
+      // }, 500);
       
     } catch (error) {
       toast({

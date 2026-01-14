@@ -37,9 +37,7 @@ export default function CatalogPage() {
   const itemsPerPage = 12;
 
   // Update filters when URL changes
-  useEffect(() => {
-    console.log("Location changed:", location);
-    
+  useEffect(() => {    
     // Extract search params from current URL properly
     const params = new URLSearchParams(window.location.search);
     setSearchParams(params);
@@ -397,9 +395,8 @@ export default function CatalogPage() {
               </div>
             ) : books.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 book-grid">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 book-grid">
                   {books.map((book) => {
-                    console.log('CatalogPage rendering book:', book.title, 'ImageURL:', book.imageUrl);
                     return <BookCard key={book.id} book={book} />;
                   })}
                 </div>

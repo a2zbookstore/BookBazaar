@@ -51,9 +51,9 @@ export default function BookDetailPage() {
       });
 
       // Redirect to checkout page after successful add to cart
-      setTimeout(() => {
-        setLocation("/checkout");
-      }, 500);
+      // setTimeout(() => {
+      //   setLocation("/checkout");
+      // }, 500);
     } catch (error) {
       toast({
         title: "Error",
