@@ -229,18 +229,24 @@ export default function FiltersSidebar({
               </div>
             </div>
 
-            <div className="space-y-3 pt-4">
+            <div className="space-y-3 pt-4 max-w-xs mx-auto">
               <Button 
                 variant="outline" 
                 onClick={handleClearFilters}
-                className="w-full border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+                className="w-full border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl transition-all duration-200"
               >
                 Clear Filters
               </Button>
               
               <Button 
                 onClick={handleApplyFilters}
-                className="w-full bg-primary-aqua hover:bg-secondary-aqua"
+                disabled={
+                  tempSelectedCategories.length === 0 && 
+                  tempSelectedConditions.length === 0 && 
+                  !tempMinPrice && 
+                  !tempMaxPrice
+                }
+                className="w-full bg-primary-aqua hover:brightness-110 hover:shadow-md active:scale-[0.98] text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 disabled:hover:shadow-none disabled:active:scale-100"
               >
                 Apply Filters
               </Button>

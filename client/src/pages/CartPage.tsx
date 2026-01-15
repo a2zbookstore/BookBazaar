@@ -182,7 +182,7 @@ export default function CartPage() {
 
   const handleUpdateQuantity = async (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    
+
     setIsUpdating(itemId);
     try {
       await updateCartItem(itemId, newQuantity);
@@ -252,10 +252,10 @@ export default function CartPage() {
               const isGift = (item as any).isGift;
               const imageUrl = item.book?.imageUrl;
               const title = item.book?.title;
-              const author = isGift ? null : item.book?.author;              
+              const author = isGift ? null : item.book?.author;
 
               return (
-                <Card key={item.id} className="p-4"> 
+                <Card key={item.id} className="p-4">
                   <div className="flex items-center gap-4">
                     {!isGift && item.book?.id ? (
                       <Link href={`/book/${item.book.id}`} className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
@@ -396,7 +396,7 @@ export default function CartPage() {
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span>
-                    {convertedAmounts.shipping === 0 ? 'Free Delivery' : formatAmount(convertedAmounts.shipping, userCurrency)}
+                    {convertedAmounts.shipping === 0 ? <span className="text-green-600 font-semibold"> FREE Shipping!</span> : formatAmount(convertedAmounts.shipping)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -443,7 +443,7 @@ export default function CartPage() {
 
                 <div className="pt-4">
                   <Link to="/checkout">
-                    <Button className="w-full bg-primary-aqua hover:bg-primary-aqua/90">
+                    <Button className="w-full bg-primary-aqua hover:bg-primary-aqua/90 rounded-xl">
                       Proceed to Checkout
                     </Button>
                   </Link>
@@ -451,7 +451,7 @@ export default function CartPage() {
 
                 <div className="pt-2">
                   <Link to="/catalog">
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full rounded-xl">
                       Continue Shopping
                     </Button>
                   </Link>

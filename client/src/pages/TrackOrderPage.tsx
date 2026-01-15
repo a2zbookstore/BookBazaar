@@ -127,7 +127,7 @@ export default function TrackOrderPage() {
           ]}
           className="mb-6"
         />
-        <div className="text-center mb-8">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-base-black">Track Your Order</h1>
           <p className="text-secondary-black mt-2">
             Enter your order details to check the status of your shipment
@@ -168,10 +168,11 @@ export default function TrackOrderPage() {
                   />
                 </div>
               </div>
-              <div className="flex items-center w-full justify-center">
+              <div className="flex items-center w-full justify-end">
                 <Button
                   type="submit"
-                  // className="w-full"
+                  variant="outline"
+                  className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl"
                   disabled={trackOrderMutation.isPending}
                 >
                   {trackOrderMutation.isPending ? "Searching..." : "Track Order"}

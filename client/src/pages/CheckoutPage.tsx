@@ -14,12 +14,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Globe, CheckCircle } from "lucide-react";
+import { CreditCard, Smartphone, Globe, CheckCircle, ChevronDown } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
-import PayPalCheckoutButton from "@/components/PayPalCheckoutButton";
+// import PayPalCheckoutButton from "@/components/PayPalCheckoutButton";
+import StripeCheckoutForm from "@/components/StripeCheckoutForm";
+
 
 declare global {
   interface Window {
@@ -209,7 +214,7 @@ const countries = [
   "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand", "Nigeria", "Norway", "Pakistan",
   "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Saudi Arabia",
   "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka", "Sweden",
-  "Switzerland", "Thailand", "Tunisia", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom", 
+  "Switzerland", "Thailand", "Tunisia", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom",
   "United States", "Uruguay", "Venezuela", "Vietnam"
 ];
 
@@ -301,7 +306,7 @@ export default function CheckoutPage() {
     country: ""
   });
   const [sameBillingAddress, setSameBillingAddress] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("paypal");
+  const [paymentMethod, setPaymentMethod] = useState("stripe");
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutType, setCheckoutType] = useState<"guest" | "register" | "login">("guest");
   const [registerPassword, setRegisterPassword] = useState("");
@@ -331,7 +336,7 @@ export default function CheckoutPage() {
         code: couponCode.trim(),
         orderAmount: convertedAmounts.subtotal
       });
-      
+
       const data = await response.json();
       setAppliedCoupon(data);
       setCouponCode("");
@@ -340,7 +345,7 @@ export default function CheckoutPage() {
         description: `You saved ${data.discountType === 'percentage' ? data.discountValue + '%' : formatAmount(data.discountValue)}`,
       });
     } catch (error: any) {
-      setCouponError(error.message || "Invalid coupon code");
+      setCouponError("Invalid coupon code");
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -360,7 +365,7 @@ export default function CheckoutPage() {
   // Calculate discount amount
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0;
-    
+
     if (appliedCoupon.discountType === 'percentage') {
       const discountAmount = (convertedAmounts.subtotal * appliedCoupon.discountValue) / 100;
       // Apply maximum discount limit if exists
@@ -412,12 +417,12 @@ export default function CheckoutPage() {
     if ((item as any).isGift) return total;
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
-  
+
   // Priority order for shipping cost:
   // 1. User's detected location shipping rate (from useShipping hook)
   // 2. Selected country in form (if different from detected)
   // 3. Default shipping rate
-  
+
   const getShippingCountryCode = (countryName: string): string => {
     const countryCodeMap: { [key: string]: string } = {
       "United States": "US", "India": "IN", "United Kingdom": "GB", "Canada": "CA",
@@ -455,7 +460,7 @@ export default function CheckoutPage() {
   const convertAmounts = React.useCallback(async () => {
     try {
       console.log('Checkout conversion attempt:', { subtotal, userCurrency, exchangeRates });
-      
+
       const convertedSubtotal = await convertPrice(subtotal);
       const convertedShipping = await convertPrice(checkoutShippingCost);
       const convertedTax = await convertPrice(tax);
@@ -555,12 +560,12 @@ export default function CheckoutPage() {
 
   const handleCountrySearch = (value: string) => {
     setCountryQuery(value);
-    setShippingAddress({...shippingAddress, country: value});
+    setShippingAddress({ ...shippingAddress, country: value });
     setShowCountryDropdown(value.length > 0);
   };
 
   const selectCountry = (country: string) => {
-    setShippingAddress({...shippingAddress, country: country});
+    setShippingAddress({ ...shippingAddress, country: country });
     setCountryQuery(country);
     setShowCountryDropdown(false);
   };
@@ -589,14 +594,14 @@ export default function CheckoutPage() {
 
   const handlePhoneCountryKeyDown = (e: React.KeyboardEvent) => {
     const filtered = phoneCountryQuery ? filteredCountryCodes : countryCodes;
-    
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
         if (!showPhoneCountryDropdown) {
           setShowPhoneCountryDropdown(true);
         }
-        setSelectedCountryIndex(prev => 
+        setSelectedCountryIndex(prev =>
           prev < filtered.length - 1 ? prev + 1 : 0
         );
         break;
@@ -605,7 +610,7 @@ export default function CheckoutPage() {
         if (!showPhoneCountryDropdown) {
           setShowPhoneCountryDropdown(true);
         }
-        setSelectedCountryIndex(prev => 
+        setSelectedCountryIndex(prev =>
           prev > 0 ? prev - 1 : filtered.length - 1
         );
         break;
@@ -747,7 +752,7 @@ export default function CheckoutPage() {
       finalAmount = total;
       currency = "USD";
       paymentDescription = "International Book Order Payment";
-      
+
       // Check minimum amount for USD (usually $0.50)
       if (finalAmount < 0.50) {
         toast({
@@ -758,17 +763,17 @@ export default function CheckoutPage() {
         setIsProcessing(false);
         return;
       }
-      
+
       const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
         amount: finalAmount,
         currency: currency,
         receipt: `order_${Date.now()}`,
         international: isInternational
       });
-      
+
       const orderData = await orderResponse.json();
       console.log("Razorpay order created:", orderData);
-      
+
       const options = {
         key: (razorpayConfig as any).key_id,
         amount: orderData.amount,
@@ -778,7 +783,7 @@ export default function CheckoutPage() {
         order_id: orderData.id,
         handler: async (response: any) => {
           console.log("Razorpay payment response:", response);
-          
+
           try {
             const verifyResult = await apiRequest("POST", "/api/razorpay/verify", {
               razorpay_payment_id: response.razorpay_payment_id,
@@ -807,7 +812,7 @@ export default function CheckoutPage() {
 
             const verifyData = await verifyResult.json();
             console.log("Payment verification result:", verifyData);
-            
+
             if (verifyData.status === "success") {
               setIsProcessing(false);
               clearCart();
@@ -818,7 +823,7 @@ export default function CheckoutPage() {
                 title: "Payment Successful!",
                 description: `Your order #${verifyData.orderId} has been placed successfully.`,
               });
-              
+
               // Navigate to order detail page with email for guest access
               setLocation(`/orders/${verifyData.orderId}?email=${encodeURIComponent(customerEmail)}`);
             } else {
@@ -827,7 +832,7 @@ export default function CheckoutPage() {
             }
           } catch (error) {
             console.error("Payment verification error:", error);
-            
+
             // Check if it's a network error or parsing error
             if (error instanceof TypeError && error.message.includes('fetch')) {
               toast({
@@ -875,30 +880,30 @@ export default function CheckoutPage() {
       razorpay.on('payment.failed', function (response: any) {
         console.error("Payment failed:", response.error);
         setIsProcessing(false);
-        
+
         let errorMessage = "Payment failed. Please try again.";
         let errorTitle = "Payment Failed";
-        
+
         if (response.error?.description) {
           errorMessage = response.error.description;
-          
+
           // Handle business verification errors
-          if (response.error.description.includes("business is not allowed") || 
-              response.error.description.includes("not allowed to accept payments")) {
+          if (response.error.description.includes("business is not allowed") ||
+            response.error.description.includes("not allowed to accept payments")) {
             errorTitle = "Payment Service Issue";
             errorMessage = "Our international payment service is temporarily unavailable. Please use PayPal payment instead.";
           }
         } else if (response.error?.reason) {
           errorMessage = response.error.reason;
         }
-        
+
         toast({
           title: errorTitle,
           description: errorMessage,
           variant: "destructive",
         });
       });
-      
+
       razorpay.open();
     } catch (error) {
       console.error("Razorpay payment error:", error);
@@ -912,7 +917,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const isFormValid = customerName && customerEmail && customerPhone && 
+  const isFormValid = customerName && customerEmail && customerPhone &&
     shippingAddress.street && shippingAddress.city && shippingAddress.country && shippingAddress.zip &&
     validateName(customerName) && validateEmail(customerEmail) && validatePhone(customerPhone) &&
     !nameError && !emailError && !phoneError;
@@ -930,9 +935,9 @@ export default function CheckoutPage() {
         url="https://a2zbookshop.com/checkout"
         type="website"
       />
-      <div className="max-w-6xl mx-auto py-8 px-4 mt-6">
+      <div className="container-custom py-8 mt-6">
         <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
-        
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Forms */}
           <div className="lg:col-span-2 space-y-6">
@@ -1007,7 +1012,7 @@ export default function CheckoutPage() {
                         </button>
                       </div>
                       {showPhoneCountryDropdown && (
-                        <div 
+                        <div
                           className="absolute z-50 w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
                           onMouseLeave={() => {
                             if (!phoneCountryQuery) {
@@ -1023,11 +1028,10 @@ export default function CheckoutPage() {
                           {(phoneCountryQuery ? filteredCountryCodes : countryCodes).map((country, index) => (
                             <div
                               key={index}
-                              className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${
-                                selectedCountryIndex === index 
-                                  ? 'bg-blue-100 text-blue-900' 
-                                  : 'hover:bg-gray-100'
-                              }`}
+                              className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${selectedCountryIndex === index
+                                ? 'bg-blue-100 text-blue-900'
+                                : 'hover:bg-gray-100'
+                                }`}
                               onClick={() => selectPhoneCountry(country.code)}
                               onMouseEnter={() => setSelectedCountryIndex(index)}
                             >
@@ -1069,7 +1073,7 @@ export default function CheckoutPage() {
                   <Input
                     id="street"
                     value={shippingAddress.street}
-                    onChange={(e) => setShippingAddress({...shippingAddress, street: e.target.value})}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
                     placeholder="Enter street address"
                     required
                   />
@@ -1080,7 +1084,7 @@ export default function CheckoutPage() {
                     <Input
                       id="city"
                       value={shippingAddress.city}
-                      onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
                       placeholder="Enter city"
                       required
                     />
@@ -1090,7 +1094,7 @@ export default function CheckoutPage() {
                     <Input
                       id="state"
                       value={shippingAddress.state}
-                      onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
                       placeholder="Enter state/province"
                     />
                   </div>
@@ -1101,7 +1105,7 @@ export default function CheckoutPage() {
                     <Input
                       id="zip"
                       value={shippingAddress.zip}
-                      onChange={(e) => setShippingAddress({...shippingAddress, zip: e.target.value})}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, zip: e.target.value })}
                       placeholder="Enter ZIP/postal code"
                       required
                     />
@@ -1142,7 +1146,20 @@ export default function CheckoutPage() {
               <CardContent>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
+
+                    <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#635BFF]/30 bg-[#635BFF]/5">
+                      <RadioGroupItem value="stripe" id="stripe" />
+                      <div className="flex items-center space-x-2 flex-1">
+                        <CreditCard className="w-5 h-5 text-[#635BFF]" />
+                        <Label htmlFor="stripe" className="flex-1 cursor-pointer">
+                          <span className="font-semibold text-[#635BFF]">Stripe</span> - Credit/Debit Card
+                          <Badge variant="secondary" className="ml-2 bg-[#635BFF]/10 text-[#635BFF]">Recommended</Badge>
+                          <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex, and more</p>
+                        </Label>
+                      </div>
+                    </div>
+
+                    {/* <div className="flex items-center space-x-3 p-4 border rounded-xl">
                       <RadioGroupItem value="paypal" id="paypal" />
                       <div className="flex items-center space-x-2 flex-1">
                         <Globe className="w-5 h-5 text-blue-600" />
@@ -1151,9 +1168,9 @@ export default function CheckoutPage() {
                           <Badge variant="secondary" className="ml-2">International</Badge>
                         </Label>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                    </div> */}
+
+                    <div className="flex items-center space-x-3 p-4 border rounded-xl">
                       <RadioGroupItem value="razorpay-international" id="razorpay-international" />
                       <div className="flex items-center space-x-2 flex-1">
                         <Globe className="w-5 h-5 text-blue-600" />
@@ -1168,7 +1185,49 @@ export default function CheckoutPage() {
                 </RadioGroup>
 
                 <div className="mt-6">
-                  {paymentMethod === "paypal" && (
+                  {paymentMethod === "stripe" && isFormValid && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">
+                        Enter your card details below to complete the payment
+                        securely.
+                      </p>
+                      <StripeCheckoutForm
+                        amount={total}
+                        customerEmail={customerEmail}
+                        customerName={customerName}
+                        customerPhone={customerPhone}
+                        shippingAddress={shippingAddress}
+                        billingAddress={sameBillingAddress ? shippingAddress : billingAddress}
+                        subtotal={subtotal.toFixed(2)}
+                        shipping={shippingCost.toFixed(2)}
+                        tax={tax.toFixed(2)}
+                        total={total.toFixed(2)}
+                        items={cartItems.map((item) => ({
+                          bookId: item.book?.id,
+                          quantity: item.quantity,
+                          price: item.book?.price,
+                          title: item.book?.title,
+                          author: item.book?.author,
+                        }))}
+                        onSuccess={(orderId) => {
+                          clearCart();
+                          queryClient.invalidateQueries({
+                            queryKey: ["/api/orders"],
+                          });
+                          setLocation(
+                            `/orders/${orderId}?email=${encodeURIComponent(
+                              customerEmail
+                            )}`
+                          );
+                        }}
+                        onCancel={() => setPaymentMethod("stripe")}
+                        disabled={isProcessing}
+                      />
+                    </div>
+                  )}
+
+
+                  {/* {paymentMethod === "paypal" && (
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600">
                         You will be redirected to PayPal to complete your payment securely.
@@ -1192,9 +1251,7 @@ export default function CheckoutPage() {
                         }}
                       />
                     </div>
-                  )}
-
-
+                  )} */}
 
                   {paymentMethod === "razorpay-international" && isFormValid && (
                     <div className="space-y-4">
@@ -1204,7 +1261,7 @@ export default function CheckoutPage() {
                       <Button
                         onClick={handleRazorpayInternationalPayment}
                         disabled={isProcessing}
-                        className="w-full bg-blue-600 hover:bg-blue-700 touch-target mobile-button"
+                        className="w-full bg-primary-aqua hover:brightness-110 hover:shadow-md active:scale-[0.98] text-white rounded-xl touch-target mobile-button transition-all duration-200"
                       >
                         {isProcessing ? "Processing..." : "Pay with International Card"}
                       </Button>
@@ -1282,7 +1339,7 @@ export default function CheckoutPage() {
                         size="sm"
                         variant="outline"
                         onClick={removeCoupon}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
+                        className="text-red-600 border-red-200 hover:bg-red-50 rounded-xl"
                       >
                         Remove
                       </Button>
@@ -1303,7 +1360,7 @@ export default function CheckoutPage() {
                         size="sm"
                         onClick={applyCoupon}
                         disabled={isApplyingCoupon || !couponCode.trim()}
-                        className="bg-primary-aqua hover:bg-primary-aqua/90"
+                        className="bg-primary-aqua hover:brightness-110 hover:shadow-md active:scale-[0.98] text-white rounded-xl transition-all duration-200"
                       >
                         {isApplyingCoupon ? "Applying..." : "Apply"}
                       </Button>
@@ -1330,7 +1387,9 @@ export default function CheckoutPage() {
                   )}
                   <div className="flex justify-between">
                     <span>Shipping:</span>
-                    <span>{convertedAmounts.shipping === 0 ? 'Free Delivery' : formatAmount(convertedAmounts.shipping)}</span>
+                    <span>
+                      {convertedAmounts.shipping === 0 ? <span className="text-green-600 font-semibold"> FREE Shipping!</span> : formatAmount(convertedAmounts.shipping)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax (1%):</span>
@@ -1399,10 +1458,10 @@ export default function CheckoutPage() {
 
       {/* Load Razorpay Script */}
       <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-      
+
       {/* Payment Loading Spinner */}
       {isProcessing && (
-        <PaymentSpinner 
+        <PaymentSpinner
           message={paymentMethod === 'paypal' ? 'Redirecting to PayPal...' : 'Processing payment...'}
           paymentMethod={paymentMethod === 'paypal' ? 'paypal' : 'razorpay'}
         />

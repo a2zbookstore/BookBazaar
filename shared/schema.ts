@@ -474,7 +474,14 @@ export type RefundTransaction = typeof refundTransactions.$inferSelect;
 
 // Book Request types
 export type BookRequest = typeof bookRequests.$inferSelect;
-export const insertBookRequestSchema = createInsertSchema(bookRequests).omit({
+export const insertBookRequestSchema = createInsertSchema(bookRequests, {
+  customerName: z.string().min(1, "Full name is required"),
+  customerEmail: z.string().email("Valid email address is required"),
+  bookTitle: z.string().min(1, "Book title is required"),
+  isbn: z.string().min(1, "ISBN is required"),
+  binding: z.string().min(1, "Please select a binding type"),
+  quantity: z.number().min(1, "Quantity must be at least 1").default(1),
+}).omit({
   id: true,
   status: true,
   adminNotes: true,

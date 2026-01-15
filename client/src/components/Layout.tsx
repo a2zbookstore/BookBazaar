@@ -11,6 +11,8 @@ import { useState, useEffect } from "react";
 import CountrySelector from "@/components/CountrySelector";
 import { SecretAdminButton } from "@/components/SecretAdminButton";
 import Footer from "@/components/Footer";
+import { SiWhatsapp } from "react-icons/si";
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -86,7 +88,16 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Desktop Right Actions */}
             <div className="hidden md:flex items-center gap-2">
-              
+               {/* WhatsApp Button */}
+              <a
+                href="https://wa.me/14145956843"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors px-2 py-1 rounded-lg hover:bg-green-50"
+              >
+                <SiWhatsapp className="h-5 w-5" />
+                <span className="text-sm font-medium">WhatsApp</span>
+              </a>
               {isAuthenticated && (
                 <Link
                   href="/wishlist"
@@ -152,13 +163,13 @@ export default function Layout({ children }: LayoutProps) {
                   <Button
                     variant="outline"
                     onClick={() => setLocation('/login')}
-                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl"
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => setLocation('/register')}
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
+                    className="bg-primary-aqua hover:bg-secondary-aqua rounded-xl"
                   >
                     Register
                   </Button>

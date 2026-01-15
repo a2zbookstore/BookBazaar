@@ -10,6 +10,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 import { Book, Category } from "@/types";
 import { Filter } from "lucide-react";
+import BannerCarousel from "@/components/BannerCarousel";
 
 interface BooksResponse {
   books: Book[];
@@ -19,7 +20,7 @@ interface BooksResponse {
 export default function CatalogPage() {
   const [location] = useLocation();
   const [searchParams, setSearchParams] = useState(new URLSearchParams());
-  
+
   // Filter states
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -30,26 +31,26 @@ export default function CatalogPage() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  
+
   const itemsPerPage = 15;
 
   // Update filters when URL changes
-  useEffect(() => {    
+  useEffect(() => {
     // Extract search params from current URL properly
     const params = new URLSearchParams(window.location.search);
     setSearchParams(params);
-    
+
     const searchParam = params.get('search') || '';
     console.log("Extracted search param from URL:", searchParam);
-    
+
     // Only update search state if it's different
     if (searchParam !== search) {
       setSearch(searchParam);
       console.log("Updated search state to:", searchParam);
-      
+
       // Reset to first page when search changes
       setCurrentPage(1);
-      
+
       // Reset other filters when coming from homepage search
       if (searchParam) {
         console.log("Search detected, resetting other filters");
@@ -59,13 +60,13 @@ export default function CatalogPage() {
         setMaxPrice('');
       }
     }
-    
+
     // Handle other URL parameters
     const categoryParam = params.get('category');
     if (categoryParam && !searchParam) {
       setSelectedCategories([categoryParam]);
     }
-    
+
     const featuredParam = params.get('featured');
     const bestsellerParam = params.get('bestseller');
     const trendingParam = params.get('trending');
@@ -95,7 +96,7 @@ export default function CatalogPage() {
   if (selectedConditions.length > 0) queryParams.set('condition', selectedConditions[0]); // For now, just use first condition
   if (minPrice) queryParams.set('minPrice', minPrice);
   if (maxPrice) queryParams.set('maxPrice', maxPrice);
-  
+
   // Check URL params for special filters
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
@@ -103,7 +104,7 @@ export default function CatalogPage() {
   if (urlParams.get('trending') === 'true') queryParams.set('trending', 'true');
   if (urlParams.get('newArrival') === 'true') queryParams.set('newArrival', 'true');
   if (urlParams.get('boxSet') === 'true') queryParams.set('boxSet', 'true');
-  
+
   queryParams.set('sortBy', sortBy);
   queryParams.set('sortOrder', sortOrder);
   queryParams.set('limit', itemsPerPage.toString());
@@ -141,8 +142,8 @@ export default function CatalogPage() {
   const conditions = ["New", "Like New", "Very Good", "Good", "Fair"];
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    setSelectedCategories(prev => 
-      checked 
+    setSelectedCategories(prev =>
+      checked
         ? [...prev, categoryId]
         : prev.filter(id => id !== categoryId)
     );
@@ -150,8 +151,8 @@ export default function CatalogPage() {
   };
 
   const handleConditionChange = (condition: string, checked: boolean) => {
-    setSelectedConditions(prev => 
-      checked 
+    setSelectedConditions(prev =>
+      checked
         ? [...prev, condition]
         : prev.filter(c => c !== condition)
     );
@@ -204,7 +205,7 @@ export default function CatalogPage() {
     if (search) return `Find books matching "${search}". Browse our extensive collection with ${totalBooks} results.`;
     if (selectedCategories.length > 0) {
       const category = categories.find(c => c.id.toString() === selectedCategories[0]);
-      return category 
+      return category
         ? `Explore our ${category.name} collection. ${totalBooks} books available with fast delivery.`
         : 'Browse thousands of books across all categories at A2Z Bookshop.';
     }
@@ -256,6 +257,7 @@ export default function CatalogPage() {
           onApplyFilters={() => setCurrentPage(1)}
         />
 
+
         {/* Main Content - Full Width */}
         <div className="w-full">
           {/* Filter Button & Sort Options */}
@@ -273,7 +275,32 @@ export default function CatalogPage() {
                 </span>
               )}
             </Button>
-            
+
+            {/* <BannerCarousel
+              banners={[{
+                id: 1,
+                image: "/uploads/images/banner/banner-3.png",
+                alt: "Buy 3 Books Offer",
+                link: "/catalog"
+              },
+              {
+                id: 2,
+                image: "/uploads/images/banner/banner-2.png",
+                alt: "Shop for $499",
+                link: "/catalog"
+              },
+              {
+                id: 3,
+                image: "/uploads/images/banner/banner-3.png",
+                alt: "Shop for $999",
+                link: "/catalog"
+              }]}
+              autoPlayInterval={5000}
+              showIndicators={true}
+              showNavigation={true}
+              height="h-48 md:h-64"
+            /> */}
+
             <div className="flex-1 flex justify-end w-full sm:w-auto">
               <SortFilterHeader
                 currentCount={books.length}
@@ -295,98 +322,98 @@ export default function CatalogPage() {
           </p>
 
           {/* Search Results Info */}
-            {search && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  Search results for: <strong>"{search}"</strong> ({totalBooks} {totalBooks === 1 ? 'book' : 'books'} found)
+          {search && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                Search results for: <strong>"{search}"</strong> ({totalBooks} {totalBooks === 1 ? 'book' : 'books'} found)
+              </p>
+            </div>
+          )}
+
+          {/* Books Grid */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 aspect-[3/4] rounded-lg mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="bg-gray-200 h-4 rounded"></div>
+                    <div className="bg-gray-200 h-3 rounded w-2/3"></div>
+                    <div className="bg-gray-200 h-3 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : books.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 book-grid">
+                {books.map((book) => {
+                  return <BookCard key={book.id} book={book} />;
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  <nav className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="rounded-full"
+                    >
+                      Previous
+                    </Button>
+
+                    {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                      const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                      if (pageNum > totalPages) return null;
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`rounded-full ${currentPage === pageNum ? "bg-primary-aqua hover:bg-secondary-aqua" : ""}`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="rounded-full"
+                    >
+                      Next
+                    </Button>
+                  </nav>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="mb-4">
+                <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-4xl">📚</span>
+                </div>
+                <h3 className="text-xl font-bookerly font-semibold text-base-black mb-2">
+                  No books found
+                </h3>
+                <p className="text-secondary-black mb-6">
+                  Try adjusting your search criteria or browse our featured books.
                 </p>
+                <Button
+                  onClick={clearFilters}
+                  className="bg-primary-aqua hover:bg-secondary-aqua"
+                >
+                  Clear Filters
+                </Button>
               </div>
-            )}
-
-            {/* Books Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-gray-200 aspect-[3/4] rounded-lg mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="bg-gray-200 h-4 rounded"></div>
-                      <div className="bg-gray-200 h-3 rounded w-2/3"></div>
-                      <div className="bg-gray-200 h-3 rounded w-1/2"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : books.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 book-grid">
-                  {books.map((book) => {
-                    return <BookCard key={book.id} book={book} />;
-                  })}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center mt-8">
-                    <nav className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="rounded-full"
-                      >
-                        Previous
-                      </Button>
-                      
-                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-                        const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
-                        if (pageNum > totalPages) return null;
-                        
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`rounded-full ${currentPage === pageNum ? "bg-primary-aqua hover:bg-secondary-aqua" : ""}`}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                      
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="rounded-full"
-                      >
-                        Next
-                      </Button>
-                    </nav>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <div className="mb-4">
-                  <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <span className="text-4xl">📚</span>
-                  </div>
-                  <h3 className="text-xl font-bookerly font-semibold text-base-black mb-2">
-                    No books found
-                  </h3>
-                  <p className="text-secondary-black mb-6">
-                    Try adjusting your search criteria or browse our featured books.
-                  </p>
-                  <Button 
-                    onClick={clearFilters}
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
-            )}
+            </div>
+          )}
         </div>
       </div>
     </Layout>

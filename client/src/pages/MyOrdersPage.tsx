@@ -9,6 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatDistanceToNow } from "date-fns";
 import { Package, Eye, FileDown, Home, Calendar, CreditCard, Mail } from "lucide-react";
 import { Link } from "wouter";
@@ -127,25 +133,39 @@ export default function MyOrdersPage() {
                   <p className="text-gray-600">
                     Enter your email address to view your order history
                   </p>
-                    <div className="flex gap-2 max-w-md mx-auto">
-                      <Input
-                        type="email"
-                        placeholder="Enter your email address"
-                        value={guestEmail}
-                        onChange={(e) => setGuestEmail(e.target.value)}
-                        className="flex-1 rounded-lg"
-                      />
-                      <Button
-                        onClick={handleGuestLookup}
-                        disabled={!guestEmail || guestLoading}
-                        className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
-                      >
-                        {guestLoading ? "Searching..." : "View Orders"}
-                      </Button>
-                    </div>
+                  <div className="flex gap-2 max-w-md mx-auto">
+                    <Input
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="flex-1 rounded-lg"
+                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              onClick={handleGuestLookup}
+                              disabled={!guestEmail || guestLoading}
+                              variant="outline"
+                              className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white whitespace-nowrap rounded-xl"
+                            >
+                              {guestLoading ? "Searching..." : "View Orders"}
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!guestEmail && (
+                          <TooltipContent>
+                            <p>Provide Email to View Orders</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
+                </div>
 
-                  {hasSearched && guestOrders.length > 0 && (
+                {hasSearched && guestOrders.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Your Orders</h3>
                     {guestOrders.map((order) => (
@@ -187,7 +207,9 @@ export default function MyOrdersPage() {
                     Have an account? Log in for full order management
                   </p>
                   <Link href="/login">
-                    <Button variant="outline" className="bg-primary-aqua hover:bg-secondary-aqua text-white">
+                    <Button variant="outline"
+                      className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl"
+                    >
                       Go to Login
                     </Button>
                   </Link>
