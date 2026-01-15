@@ -164,7 +164,7 @@ export default function ContactPage() {
                   required
                   value={formData.subject}
                   onChange={(e) => handleInputChange("subject", e.target.value)}
-                  className="mt-1 flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary-aqua"
+                  className="rounded-[4px] mt-1 flex h-10 w-full items-center justify-between border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary-aqua"
                 >
                   <option value="" disabled>Select a subject</option>
                   <option value="general">General Inquiry</option>

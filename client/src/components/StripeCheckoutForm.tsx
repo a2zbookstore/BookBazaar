@@ -150,7 +150,7 @@ function CheckoutForm({
         <Button
           type="submit"
           disabled={!stripe || !elements || isProcessing || disabled}
-          className="flex-1 w-full bg-primary-aqua hover:brightness-110 hover:shadow-md active:scale-[0.98] text-white rounded-xl transition-all duration-200 touch-target mobile-button "
+          className="flex-1 w-full bg-primary-aqua hover:brightness-110 hover:shadow-md active:scale-[0.98] text-white rounded-full transition-all duration-200 touch-target mobile-button "
           data-testid="button-stripe-pay"
         >
           {isProcessing ? (
@@ -167,7 +167,7 @@ function CheckoutForm({
           variant="outline"
           onClick={onCancel}
           disabled={isProcessing}
-          data-testid="button-stripe-cancel border rounded-xl"
+          data-testid="button-stripe-cancel border rounded-full"
         >
           Cancel
         </Button>
@@ -259,7 +259,7 @@ export default function StripeCheckoutForm(props: StripeCheckoutFormProps) {
         <Button
           variant="outline"
           onClick={props.onCancel}
-          className="mt-2 rounded-xl"
+          className="mt-2 rounded-full"
           data-testid="button-stripe-back"
 
         >

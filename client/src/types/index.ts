@@ -34,7 +34,7 @@ export interface Category {
 
 export interface CartItem {
   id: number;
-  userId: string;
+  userId: string | null;
   bookId: number;
   quantity: number;
   createdAt: string;

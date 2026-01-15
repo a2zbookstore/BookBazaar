@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes cart-slide {
+  0% {
+    transform: translateX(-10px);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(10px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-10px);
+    opacity: 0.6;
+  }
+}
+
 :root {
   /* AbeBooks Color Scheme */
   --base-black: hsl(0, 0%, 6.7%);
@@ -282,11 +297,12 @@ button:active, .button:active {
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: Georgia, serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 600;
   }
 }
 
@@ -371,11 +387,11 @@ button:active, .button:active {
 
 @layer utilities {
   .font-bookerly {
-    font-family: Georgia, serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   
   .font-ember {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -598,4 +614,23 @@ button:active, .button:active {
   --x: 12px;
   --y: 12px;
   animation-delay: 0.4s;
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(188, 100%, 29%), hsl(188, 100%, 26%));
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, hsl(188, 100%, 26%), hsl(188, 79%, 38%));
 }

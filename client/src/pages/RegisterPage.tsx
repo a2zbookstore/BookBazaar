@@ -103,7 +103,7 @@ export default function RegisterPage() {
       password: emailFormData.password,
     });
   };
-   const handleClose = () => {
+  const handleClose = () => {
     setIsOpen(false);
     // Go back to previous page or home
     window.history.length > 1 ? window.history.back() : setLocation("/");
@@ -157,88 +157,109 @@ export default function RegisterPage() {
         url="https://a2zbookshop.com/register"
         type="website"
       />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg space-y-6 relative">
+      <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-1/2 -left-1/2 w-96 h-96 bg-primary-aqua/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        <div className="w-full max-w-lg space-y-3 sm:space-y-6 relative z-10 my-4 sm:my-8">
           <Button
             onClick={handleClose}
             variant="ghost"
             size="icon"
-            className="absolute right-2 top-8 z-10 h-10 w-10 hover:rounded-full hover:bg-gray-100"
+            className="absolute right-8 top-12 z-10 h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-gray-700" />
           </Button>
-          <Card className="shadow-2xl border-0 overflow-hidden">
-            <CardHeader className="space-y-3 text-center text-white rounded-t-lg py-8 px-6" style={{ background: 'linear-gradient(135deg, rgb(41, 128, 185) 0%, rgb(52, 152, 219) 100%)' }}>
-              <CardTitle className="text-3xl font-bold flex items-center justify-center gap-3 text-white">
-                <User className="h-7 w-7 text-white" />
-                Create Your Account
-              </CardTitle>
-              <p className="text-white text-lg font-semibold mt-2">Join A2Z BOOKSHOP community today!</p>
+          <Card className="shadow-2xl border-2 border-white/50 overflow-hidden backdrop-blur-xl bg-white/90 rounded-2xl transform transition-all duration-300 hover:shadow-3xl">
+            <CardHeader className="relative space-y-3 text-center text-white rounded-t-2xl py-10 px-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(188, 100%, 29%) 0%, hsl(188, 100%, 26%) 50%, hsl(188, 79%, 38%) 100%)' }}>
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
+
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm mb-4 shadow-lg">
+                  <User className="h-8 w-8 text-white drop-shadow-lg" />
+                </div>
+                <CardTitle className="text-4xl font-extrabold text-white drop-shadow-lg">
+                  Join Us Today!
+                </CardTitle>
+                <p className="text-white/95 text-base font-medium mt-3 drop-shadow-md">
+                  Create your A2Z BOOKSHOP account
+                </p>
+              </div>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-8">
               <Tabs value={registrationType} onValueChange={setRegistrationType} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="email" className="flex items-center gap-2">
+                <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-8 bg-gray-100 p-1 rounded-xl">
+                  <TabsTrigger value="email" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
                     <Mail className="h-4 w-4" />
-                    Email
+                    <span className="font-semibold">Email</span>
                   </TabsTrigger>
-                  <TabsTrigger value="phone" className="flex items-center gap-2">
+                  <TabsTrigger value="phone" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
                     <Phone className="h-4 w-4" />
-                    Phone
+                    <span className="font-semibold">Phone</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="email" className="space-y-4">
-                  <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <TabsContent value="email" className="space-y-4 sm:space-y-5">
+                  <form onSubmit={handleEmailSubmit} className="space-y-4 sm:space-y-5">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="firstName">First Name</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">First Name</Label>
                         <Input
                           id="firstName"
                           type="text"
                           value={emailFormData.firstName}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          placeholder="John"
                           required
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="lastName">Last Name</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700">Last Name</Label>
                         <Input
                           id="lastName"
                           type="text"
                           value={emailFormData.lastName}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          placeholder="Doe"
                           required
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email Address</Label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
                           id="email"
                           type="email"
                           value={emailFormData.email}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, email: e.target.value }))}
-                          className="pl-10"
+                          className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="your.email@example.com"
                           required
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-sm font-semibold text-gray-700">Password</Label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
                           id="password"
                           type={showPassword ? "text" : "password"}
                           value={emailFormData.password}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="pl-10 pr-10"
+                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="At least 6 characters"
                           required
                           minLength={6}
@@ -247,24 +268,24 @@ export default function RegisterPage() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
                         </Button>
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">Confirm Password</Label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
                           id="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
                           value={emailFormData.confirmPassword}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                          className="pl-10 pr-10"
+                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Repeat your password"
                           required
                           minLength={6}
@@ -273,10 +294,10 @@ export default function RegisterPage() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showConfirmPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
                         </Button>
                       </div>
                     </div>
@@ -284,45 +305,57 @@ export default function RegisterPage() {
                     <Button
                       type="submit"
                       disabled={registerMutation.isPending}
-                      className="w-full bg-primary-aqua hover:bg-secondary-aqua"
+                      className="w-full h-12 bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
                     >
-                      {registerMutation.isPending ? "Creating Account..." : "Create Account with Email"}
+                      {registerMutation.isPending ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Creating Account...
+                        </span>
+                      ) : "Create Account with Email"}
                     </Button>
                   </form>
                 </TabsContent>
 
-                <TabsContent value="phone" className="space-y-4">
-                  <form onSubmit={handlePhoneSubmit} className="space-y-4">
+                <TabsContent value="phone" className="space-y-4 sm:space-y-5">
+                  <form onSubmit={handlePhoneSubmit} className="space-y-4 sm:space-y-5">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="phoneFirstName">First Name</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="phoneFirstName" className="text-sm font-semibold text-gray-700">First Name</Label>
                         <Input
                           id="phoneFirstName"
                           type="text"
                           value={phoneFormData.firstName}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          placeholder="John"
                           required
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="phoneLastName">Last Name</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="phoneLastName" className="text-sm font-semibold text-gray-700">Last Name</Label>
                         <Input
                           id="phoneLastName"
                           type="text"
                           value={phoneFormData.lastName}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          placeholder="Doe"
                           required
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone Number</Label>
                       <div className="flex gap-2">
                         <select
                           value={phoneFormData.countryCode}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, countryCode: e.target.value }))}
-                          className="flex h-9 w-32 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex h-12 w-32 rounded-xl border-2 border-gray-200 bg-white px-3 py-1 text-sm font-medium transition-all focus:outline-none focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20"
                         >
                           {countries.map((country) => (
                             <option key={country.code} value={country.code}>
@@ -330,35 +363,35 @@ export default function RegisterPage() {
                             </option>
                           ))}
                         </select>
-                        <div className="relative flex-1">
-                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <div className="relative flex-1 group">
+                          <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                           <Input
                             id="phone"
                             type="tel"
                             value={phoneFormData.phoneNumber}
                             onChange={(e) => setPhoneFormData(prev => ({ ...prev, phoneNumber: e.target.value.replace(/\D/g, '') }))}
-                            className="pl-10"
+                            className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                             placeholder="1234567890"
                             required
                             minLength={10}
                           />
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Full number: {phoneFormData.countryCode}{phoneFormData.phoneNumber}
+                      <p className="text-xs text-gray-500 mt-1 ml-1">
+                        📱 {phoneFormData.countryCode}{phoneFormData.phoneNumber}
                       </p>
                     </div>
 
-                    <div>
-                      <Label htmlFor="phonePassword">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <div className="space-y-2">
+                      <Label htmlFor="phonePassword" className="text-sm font-semibold text-gray-700">Password</Label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
                           id="phonePassword"
                           type={showPassword ? "text" : "password"}
                           value={phoneFormData.password}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="pl-10 pr-10"
+                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="At least 6 characters"
                           required
                           minLength={6}
@@ -367,24 +400,24 @@ export default function RegisterPage() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
                         </Button>
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="phoneConfirmPassword">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneConfirmPassword" className="text-sm font-semibold text-gray-700">Confirm Password</Label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
                           id="phoneConfirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
                           value={phoneFormData.confirmPassword}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                          className="pl-10 pr-10"
+                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Repeat your password"
                           required
                           minLength={6}
@@ -393,10 +426,10 @@ export default function RegisterPage() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showConfirmPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
                         </Button>
                       </div>
                     </div>
@@ -404,28 +437,50 @@ export default function RegisterPage() {
                     <Button
                       type="submit"
                       disabled={registerMutation.isPending}
-                      className="w-full bg-primary-aqua hover:bg-secondary-aqua"
+                      className="w-full h-12 bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
                     >
-                      {registerMutation.isPending ? "Creating Account..." : "Create Account with Phone"}
+                      {registerMutation.isPending ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Creating Account...
+                        </span>
+                      ) : "Create Account with Phone"}
                     </Button>
                   </form>
                 </TabsContent>
               </Tabs>
 
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  Already have an account?{" "}
-                  <Link href="/login" className="text-primary-aqua hover:underline font-medium">
+              <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t-2 border-gray-200"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-3 text-gray-500 font-semibold">Already a member?</span>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <Link href="/login" className="inline-flex items-center gap-1 text-primary-aqua hover:text-secondary-aqua font-bold hover:underline transition-colors">
                     Sign in here
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
                   </Link>
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="text-center">
-            <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-              ← Back to Home
+          <div className="text-center mt-2 sm:mt-4">
+            <Link href="/" className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-white/50 transition-all">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Home
             </Link>
           </div>
         </div>

@@ -5,6 +5,10 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -79,10 +83,25 @@ export default {
             height: "0",
           },
         },
+        "cart-slide": {
+          "0%": {
+            transform: "translateX(-10px)",
+            opacity: "0.6",
+          },
+          "50%": {
+            transform: "translateX(10px)",
+            opacity: "1",
+          },
+          "100%": {
+            transform: "translateX(-10px)",
+            opacity: "0.6",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "cart-slide": "cart-slide 0.8s ease-in-out infinite",
       },
     },
   },

@@ -51,7 +51,7 @@ function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCar
     queryKey: [`/api/books?categoryId=${category.id}&limit=12`],
     enabled: isVisible, // Only fetch when visible
   });
-  
+
   const categoryBooks = categoryBooksResponse?.books || [];
 
   // Don't render if no books after loading
@@ -71,13 +71,13 @@ function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCar
                 {/* {isLoading && <span className="text-sm text-gray-500 ml-3">Loading...</span>} */}
               </h3>
             </div>
-            <Link href={`/catalog?category=${category.slug}`}>
-              <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Link href={`/catalog?categoryId=${category.id}`}>
+              <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
                 View All {category.name}
               </Button>
             </Link>
           </div>
-          
+
           <BookCarousel
             books={categoryBooks}
             currentSlide={currentSlide}
@@ -97,7 +97,7 @@ function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCar
           <BookCarousel
             books={[]}
             currentSlide={0}
-            onSlideChange={() => {}}
+            onSlideChange={() => { }}
             emptyMessage=""
             showEmptyBrowseButton={false}
             isLoading={true}
@@ -118,7 +118,7 @@ export default function HomePage() {
   const [boxSetSlide, setBoxSetSlide] = useState(0);
   const [hasItemsInCart, setHasItemsInCart] = useState(false);
   const [categorySlides, setCategorySlides] = useState<Record<number, number>>({});
-  
+
   // Visibility states for lazy loading
   const [isNfpaVisible, setIsNfpaVisible] = useState(false);
   const [isDsmVisible, setIsDsmVisible] = useState(false);
@@ -127,7 +127,7 @@ export default function HomePage() {
   const [isTrendingVisible, setIsTrendingVisible] = useState(false);
   const [isNewArrivalsVisible, setIsNewArrivalsVisible] = useState(false);
   const [isBoxSetVisible, setIsBoxSetVisible] = useState(false);
-  
+
   // Refs for Intersection Observer
   const nfpaRef = useRef<HTMLDivElement>(null);
   const dsmRef = useRef<HTMLDivElement>(null);
@@ -193,16 +193,16 @@ export default function HomePage() {
     }
   };
 
-  // NFPA Books Query
+  // NFPA Books Query (title only)
   const { data: nfpaBooksResponse, isLoading: nfpaLoading } = useQuery<{ books: Book[]; total: number }>({
-    queryKey: ["/api/books?search=NFPA&limit=12"],
+    queryKey: ["/api/books?search=NFPA&titleOnly=true&limit=12"],
     enabled: isNfpaVisible,
   });
   const nfpaBooks = nfpaBooksResponse?.books || [];
 
-  // DSM Books Query
+  // DSM Books Query (title only)
   const { data: dsmBooksResponse, isLoading: dsmLoading } = useQuery<{ books: Book[]; total: number }>({
-    queryKey: ["/api/books?search=DSM&limit=12"],
+    queryKey: ["/api/books?search=DSM&titleOnly=true&limit=12"],
     enabled: isDsmVisible,
   });
   const dsmBooks = dsmBooksResponse?.books || [];
@@ -296,7 +296,7 @@ export default function HomePage() {
             <h3 className="text-3xl font-bookerly font-bold text-base-black">NFPA Books</h3>
           </div>
           <Link href="/catalog?search=NFPA">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
               View All NFPA Books
             </Button>
           </Link>
@@ -320,7 +320,7 @@ export default function HomePage() {
             <h3 className="text-3xl font-bookerly font-bold text-base-black">DSM Books</h3>
           </div>
           <Link href="/catalog?search=DSM">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
               View All DSM Books
             </Button>
           </Link>
@@ -344,7 +344,7 @@ export default function HomePage() {
             <h3 className="text-3xl font-bookerly font-bold text-base-black">Bestsellers</h3>
           </div>
           <Link href="/catalog?bestseller=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
               View All Bestsellers
             </Button>
           </Link>
@@ -368,7 +368,7 @@ export default function HomePage() {
             <h3 className="text-3xl font-bookerly font-bold text-base-black">Featured Books</h3>
           </div>
           <Link href="/catalog?featured=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
               View All Featured
             </Button>
           </Link>
@@ -390,7 +390,7 @@ export default function HomePage() {
             <h3 className="text-3xl font-bookerly font-bold text-base-black">Trending Now</h3>
           </div>
           <Link href="/catalog?trending=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
               View All Trending
             </Button>
           </Link>
@@ -413,7 +413,7 @@ export default function HomePage() {
             <h3 className="text-3xl font-bookerly font-bold text-base-black">New Arrivals</h3>
           </div>
           <Link href="/catalog?newArrival=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
               View All New Arrivals
             </Button>
           </Link>
@@ -436,7 +436,7 @@ export default function HomePage() {
             <h3 className="text-3xl font-bookerly font-bold text-base-black">Box Set Collections</h3>
           </div>
           <Link href="/catalog?boxSet=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
               View All Box Sets
             </Button>
           </Link>
@@ -453,8 +453,8 @@ export default function HomePage() {
 
       {/* Category-Based Carousels */}
       {categories.length > 0 && categories.map((category) => (
-        <CategoryCarousel 
-          key={category.id} 
+        <CategoryCarousel
+          key={category.id}
           category={category}
           currentSlide={categorySlides[category.id] || 0}
           onSlideChange={(slide) => setCategorySlides(prev => ({ ...prev, [category.id]: slide }))}

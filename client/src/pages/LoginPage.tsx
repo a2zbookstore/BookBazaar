@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState("email");
   const [isOpen, setIsOpen] = useState(true);
-  
+
   // Forgot password states
   const [forgotEmail, setForgotEmail] = useState("");
   const [isForgotDialogOpen, setIsForgotDialogOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function LoginPage() {
   useEffect(() => {
     setIsOpen(true);
   }, []);
-  
+
   const [emailFormData, setEmailFormData] = useState({
     email: "",
     password: ""
@@ -89,7 +89,7 @@ export default function LoginPage() {
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!emailFormData.email || !emailFormData.password) {
       toast({
         title: "Missing Information",
@@ -98,7 +98,7 @@ export default function LoginPage() {
       });
       return;
     }
-    
+
     loginMutation.mutate({
       email: emailFormData.email,
       password: emailFormData.password,
@@ -107,7 +107,7 @@ export default function LoginPage() {
 
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!phoneFormData.phoneNumber || !phoneFormData.password) {
       toast({
         title: "Missing Information",
@@ -125,7 +125,7 @@ export default function LoginPage() {
       });
       return;
     }
-    
+
     const fullPhone = `${phoneFormData.countryCode}${phoneFormData.phoneNumber}`;
     loginMutation.mutate({
       phone: fullPhone,
@@ -135,7 +135,7 @@ export default function LoginPage() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!forgotEmail) {
       toast({
         title: "Error",
@@ -193,226 +193,275 @@ export default function LoginPage() {
         url="https://a2zbookshop.com/login"
         type="website"
       />
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 z-50">
-        <div className="w-full max-w-lg space-y-6 relative">
+      <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-1/2 -left-1/2 w-96 h-96 bg-primary-aqua/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        <div className="w-full max-w-lg space-y-3 sm:space-y-6 relative z-10 my-4 sm:my-8">
           <Button
             onClick={handleClose}
             variant="ghost"
             size="icon"
-            className="absolute right-2 top-8 z-10 h-10 w-10 hover:rounded-full hover:bg-gray-100"
+            className="absolute right-6 top-10 z-10 h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-gray-700" />
           </Button>
 
-          <Card className="shadow-2xl border-0 overflow-hidden">
-            <CardHeader className="space-y-3 text-center text-white rounded-t-lg py-8 px-6" style={{ background: 'linear-gradient(135deg, rgb(41, 128, 185) 0%, rgb(52, 152, 219) 100%)' }}>
-              <CardTitle className="text-3xl font-bold flex items-center justify-center gap-3 text-white">
-                <LogIn className="h-7 w-7 text-white" />
-                Welcome Back
-              </CardTitle>
-              <p className="text-white text-lg font-semibold mt-2">Sign in to your A2Z BOOKSHOP account</p>
+          <Card className="shadow-2xl border-2 border-white/50 overflow-hidden backdrop-blur-xl bg-white/90 rounded-xl sm:rounded-2xl transform transition-all duration-300 hover:shadow-3xl">
+            <CardHeader className="relative space-y-2 sm:space-y-3 text-center text-white rounded-t-xl sm:rounded-t-2xl py-6 sm:py-10 px-4 sm:px-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(188, 100%, 29%) 0%, hsl(188, 100%, 26%) 50%, hsl(188, 79%, 38%) 100%)' }}>
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm mb-2 sm:mb-4 shadow-lg">
+                  <LogIn className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
+                </div>
+                <CardTitle className="text-2xl sm:text-4xl font-extrabold text-white drop-shadow-lg">
+                  Welcome Back!
+                </CardTitle>
+                <p className="text-white/95 text-sm sm:text-base font-medium mt-2 sm:mt-3 drop-shadow-md">
+                  ✨ Sign in to access your bookshelf
+                </p>
+              </div>
             </CardHeader>
-          <CardContent className="p-6">
-            <Tabs value={loginType} onValueChange={setLoginType} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email
-                </TabsTrigger>
-                <TabsTrigger value="phone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Phone
-                </TabsTrigger>
-              </TabsList>
+            <CardContent className="p-4 sm:p-8">
+              <Tabs value={loginType} onValueChange={setLoginType} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-8 bg-gray-100 p-1 rounded-xl">
+                  <TabsTrigger value="email" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+                    <Mail className="h-4 w-4" />
+                    <span className="font-semibold">Email</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="phone" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+                    <Phone className="h-4 w-4" />
+                    <span className="font-semibold">Phone</span>
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="email" className="space-y-4">
-                <form onSubmit={handleEmailSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={emailFormData.email}
-                        onChange={(e) => setEmailFormData(prev => ({ ...prev, email: e.target.value }))}
-                        className="pl-10"
-                        placeholder="your.email@example.com"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        value={emailFormData.password}
-                        onChange={(e) => setEmailFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="pl-10 pr-10"
-                        placeholder="Enter your password"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    disabled={loginMutation.isPending}
-                    className="w-full bg-primary-aqua hover:bg-secondary-aqua"
-                  >
-                    {loginMutation.isPending ? "Signing in..." : "Sign In with Email"}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="phone" className="space-y-4">
-                <form onSubmit={handlePhoneSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="phoneLogin">Phone Number</Label>
-                    <div className="flex gap-2">
-                      <select
-                        value={phoneFormData.countryCode}
-                        onChange={(e) => setPhoneFormData(prev => ({ ...prev, countryCode: e.target.value }))}
-                        className="flex h-9 w-32 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {countries.map((country) => (
-                          <option key={country.code} value={country.code}>
-                            {country.flag} {country.code}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="relative flex-1">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <TabsContent value="email" className="space-y-4 sm:space-y-5">
+                  <form onSubmit={handleEmailSubmit} className="space-y-4 sm:space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email Address</Label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
-                          id="phoneLogin"
-                          type="tel"
-                          value={phoneFormData.phoneNumber}
-                          onChange={(e) => setPhoneFormData(prev => ({ ...prev, phoneNumber: e.target.value.replace(/\D/g, '') }))}
-                          className="pl-10"
-                          placeholder="1234567890"
+                          id="email"
+                          type="email"
+                          value={emailFormData.email}
+                          onChange={(e) => setEmailFormData(prev => ({ ...prev, email: e.target.value }))}
+                          className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          placeholder="your.email@example.com"
                           required
-                          minLength={10}
                         />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {phoneFormData.countryCode}{phoneFormData.phoneNumber}
-                    </p>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="phonePassword">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="phonePassword"
-                        type={showPassword ? "text" : "password"}
-                        value={phoneFormData.password}
-                        onChange={(e) => setPhoneFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="pl-10 pr-10"
-                        placeholder="Enter your password"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-sm font-semibold text-gray-700">Password</Label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          value={emailFormData.password}
+                          onChange={(e) => setEmailFormData(prev => ({ ...prev, password: e.target.value }))}
+                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          placeholder="Enter your password"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={loginMutation.isPending}
-                    className="w-full bg-primary-aqua hover:bg-secondary-aqua"
-                  >
-                    {loginMutation.isPending ? "Signing in..." : "Sign In with Phone"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-
-            <div className="mt-6 text-center space-y-3">
-              <Dialog open={isForgotDialogOpen} onOpenChange={setIsForgotDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="link" className="text-sm text-gray-600 hover:text-gray-900 p-0">
-                    Forgot your password?
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Reset Password</DialogTitle>
-                    <DialogDescription>
-                      Enter your email address and we'll send you a link to reset your password.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleForgotPassword} className="space-y-4">
-                    <div>
-                      <Label htmlFor="forgot-email">Email Address</Label>
-                      <Input
-                        id="forgot-email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsForgotDialogOpen(false)}
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSendingReset}
-                        className="flex-1 bg-primary-aqua hover:bg-secondary-aqua"
-                      >
-                        {isSendingReset ? "Sending..." : "Send Reset Link"}
-                      </Button>
-                    </div>
+                    <Button
+                      type="submit"
+                      disabled={loginMutation.isPending}
+                      className="w-full h-12 bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+                    >
+                      {loginMutation.isPending ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Signing in...
+                        </span>
+                      ) : "Sign In with Email"}
+                    </Button>
                   </form>
-                </DialogContent>
-              </Dialog>
-              
-              <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
-                <Link href="/register" className="text-primary-aqua hover:underline font-medium">
-                  Create one here
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+                </TabsContent>
 
-        <div className="text-center">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-            ← Back to Home
-          </Link>
+                <TabsContent value="phone" className="space-y-4 sm:space-y-5">
+                  <form onSubmit={handlePhoneSubmit} className="space-y-4 sm:space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneLogin" className="text-sm font-semibold text-gray-700">Phone Number</Label>
+                      <div className="flex gap-2">
+                        <select
+                          value={phoneFormData.countryCode}
+                          onChange={(e) => setPhoneFormData(prev => ({ ...prev, countryCode: e.target.value }))}
+                          className="flex h-12 w-32 rounded-xl border-2 border-gray-200 bg-white px-3 py-1 text-sm font-medium transition-all focus:outline-none focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20"
+                        >
+                          {countries.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.flag} {country.code}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="relative flex-1 group">
+                          <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
+                          <Input
+                            id="phoneLogin"
+                            type="tel"
+                            value={phoneFormData.phoneNumber}
+                            onChange={(e) => setPhoneFormData(prev => ({ ...prev, phoneNumber: e.target.value.replace(/\D/g, '') }))}
+                            className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                            placeholder="1234567890"
+                            required
+                            minLength={10}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-1">
+                        📱 {phoneFormData.countryCode}{phoneFormData.phoneNumber}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phonePassword" className="text-sm font-semibold text-gray-700">Password</Label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
+                        <Input
+                          id="phonePassword"
+                          type={showPassword ? "text" : "password"}
+                          value={phoneFormData.password}
+                          onChange={(e) => setPhoneFormData(prev => ({ ...prev, password: e.target.value }))}
+                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          placeholder="Enter your password"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={loginMutation.isPending}
+                      className="w-full h-12 bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+                    >
+                      {loginMutation.isPending ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Signing in...
+                        </span>
+                      ) : "Sign In with Phone"}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+
+              <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t-2 border-gray-200"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-3 text-gray-500 font-semibold">Or</span>
+                  </div>
+                </div>
+
+                <Dialog open={isForgotDialogOpen} onOpenChange={setIsForgotDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full h-11 border-2 border-gray-200 hover:border-primary-aqua hover:bg-primary-aqua/5 rounded-xl transition-all font-semibold text-gray-700 hover:text-primary-aqua">
+                      Forgot your password?
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Reset Password</DialogTitle>
+                      <DialogDescription>
+                        Enter your email address and we'll send you a link to reset your password.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <div>
+                        <Label htmlFor="forgot-email">Email Address</Label>
+                        <Input
+                          id="forgot-email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsForgotDialogOpen(false)}
+                          className="flex-1 rounded-xl"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={isSendingReset}
+                          className="rounded-xl flex-1 bg-primary-aqua hover:bg-secondary-aqua"
+                        >
+                          {isSendingReset ? "Sending..." : "Send Reset Link"}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <div className="pt-2 border-t-2 border-gray-100">
+                  <p className="text-sm text-gray-600 text-center">
+                    Don't have an account?{"    "}
+                    <Link href="/register" className="text-primary-aqua hover:text-secondary-aqua font-bold hover:underline inline-flex items-center gap-1 transition-colors">
+                      Create one here
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </Link>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="text-center mt-2 sm:mt-4">
+            <Link href="/" className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-white/50 transition-all">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Home
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }

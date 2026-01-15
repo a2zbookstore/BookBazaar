@@ -149,7 +149,7 @@ export default function MyOrdersPage() {
                               onClick={handleGuestLookup}
                               disabled={!guestEmail || guestLoading}
                               variant="outline"
-                              className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white whitespace-nowrap rounded-xl"
+                              className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white whitespace-nowrap rounded-full"
                             >
                               {guestLoading ? "Searching..." : "View Orders"}
                             </Button>
@@ -208,7 +208,7 @@ export default function MyOrdersPage() {
                   </p>
                   <Link href="/login">
                     <Button variant="outline"
-                      className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl"
+                      className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
                     >
                       Go to Login
                     </Button>
@@ -621,3 +621,4 @@ export default function MyOrdersPage() {
     </Layout >
   );
 }
+

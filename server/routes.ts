@@ -1242,6 +1242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }> = [];
 
       if (userId) {
+        // For authenticated users, get cart from database
         const userCartItems = await storage.getCartItems(userId);
         cartItems = userCartItems.map(item => ({
           bookId: item.book.id,
@@ -1252,35 +1253,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isGift: item.isGift || false
         }));
       } else {
-        // Get guest cart from session
-        const guestCart = (req.session as any).guestCart || [];
-        console.log("Guest cart from session:", JSON.stringify(guestCart, null, 2));
-        console.log("Session keys:", Object.keys(req.session));
+        // For guest users, use items from request body (from localStorage on client)
+        if (items && Array.isArray(items) && items.length > 0) {
+          cartItems = items.map((item: any) => ({
+            bookId: item.bookId,
+            quantity: item.quantity,
+            price: item.price.toString(),
+            title: item.title,
+            author: item.author,
+            isGift: item.isGift || false
+          }));
+          console.log("Guest cart from request body (localStorage):", cartItems.length, "items");
+        } else {
+          // Fallback: Try to get guest cart from session (legacy support)
+          const guestCart = (req.session as any).guestCart || [];
+          console.log("Guest cart from session (legacy):", JSON.stringify(guestCart, null, 2));
+          console.log("Session keys:", Object.keys(req.session));
 
-        // For guest cart, use existing book data or fetch from database
-        for (const item of guestCart) {
-          try {
-            let book = item.book;
-            if (!book) {
-              book = await storage.getBookById(item.bookId);
-            }
+          // For guest cart, use existing book data or fetch from database
+          for (const item of guestCart) {
+            try {
+              let book = item.book;
+              if (!book) {
+                book = await storage.getBookById(item.bookId);
+              }
 
-            if (book) {
-              cartItems.push({
-                bookId: book.id,
-                quantity: item.quantity,
-                price: book.price.toString(),
-                title: book.title,
-                author: book.author,
-                isGift: item.isGift || false
-              });
+              if (book) {
+                cartItems.push({
+                  bookId: book.id,
+                  quantity: item.quantity,
+                  price: book.price.toString(),
+                  title: book.title,
+                  author: book.author,
+                  isGift: item.isGift || false
+                });
+              }
+            } catch (error) {
+              console.error("Error processing guest cart item:", error);
             }
-          } catch (error) {
-            console.error("Error processing guest cart item:", error);
           }
-        }
 
-        console.log("Final cart items for order:", cartItems.length);
+          console.log("Final cart items from session:", cartItems.length);
+        }
       }
 
       // Include gift item in order if present
@@ -1767,6 +1781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newArrival,
         boxSet,
         search,
+        titleOnly,
         minPrice,
         maxPrice,
         limit,
@@ -1784,6 +1799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newArrival: newArrival === "true" ? true : newArrival === "false" ? false : undefined,
         boxSet: boxSet === "true" ? true : boxSet === "false" ? false : undefined,
         search: search as string,
+        titleOnly: titleOnly === "true" ? true : undefined,
         minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,

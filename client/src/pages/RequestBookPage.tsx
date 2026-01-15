@@ -168,13 +168,13 @@ const RequestBookPage = () => {
                 <Button
                   onClick={() => setIsSubmitted(false)}
                   variant="outline"
-                  className="flex-1 border-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl transition-all duration-300"
+                  className="flex-1 border-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full transition-all duration-300"
                 >
                   Submit Another Request
                 </Button>
                 <Button
                   onClick={() => window.location.href = "/catalog"}
-                  className="flex-1 bg-gradient-to-r from-primary-aqua to-blue-500 hover:from-primary-aqua/90 hover:to-blue-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                  className="flex-1 bg-gradient-to-r from-primary-aqua to-blue-500 hover:from-primary-aqua/90 hover:to-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   Browse Catalog
                 </Button>
@@ -218,10 +218,10 @@ const RequestBookPage = () => {
               {/* Two Column Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - Customer Information */}
-                <Card className="border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
+                <Card className="rounded-xl border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
                   <CardHeader className="bg-gradient-to-r from-primary-aqua/5 to-blue-50 pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <div className="w-8 h-8 rounded-lg bg-primary-aqua/10 flex items-center justify-center">
+                      <div className="rounded-lg bg-primary-aqua/10 flex items-center justify-center">
                         <User className="h-4 w-4 text-primary-aqua" />
                       </div>
                       Your Information
@@ -296,10 +296,10 @@ const RequestBookPage = () => {
                 </Card>
 
                 {/* Right Column - Book Information */}
-                <Card className="border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
+                <Card className="rounded-xl border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
                   <CardHeader className="bg-gradient-to-r from-blue-50 to-primary-aqua/5 pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <div className="w-8 h-8 rounded-lg bg-primary-aqua/10 flex items-center justify-center">
+                      <div className="rounded-lg bg-primary-aqua/10 flex items-center justify-center">
                         <BookOpen className="h-4 w-4 text-primary-aqua" />
                       </div>
                       Book Details
@@ -371,10 +371,10 @@ const RequestBookPage = () => {
               </div>
 
               {/* Additional Details - Full Width */}
-              <Card className="border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
+              <Card className="rounded-xl border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
                 <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <div className="w-8 h-8 rounded-lg bg-primary-aqua/10 flex items-center justify-center">
+                    <div className="rounded-lg bg-primary-aqua/10 flex items-center justify-center">
                       <Package className="h-4 w-4 text-primary-aqua" />
                     </div>
                     Additional Details
@@ -393,7 +393,7 @@ const RequestBookPage = () => {
                               <Book className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
                               <select
                                 {...field}
-                                className="flex h-10 w-full rounded-md border border-gray-200 bg-background pl-10 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary-aqua focus:border-primary-aqua disabled:cursor-not-allowed disabled:opacity-50"
+                                className="flex h-10 w-full rounded-[4px] border border-gray-200 bg-background pl-10 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary-aqua focus:border-primary-aqua disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 <option value="">Select binding</option>
                                 <option value="softcover">Softcover</option>
@@ -502,7 +502,7 @@ const RequestBookPage = () => {
                 <Button
                   type="submit"
                   size="lg"
-                  className="bg-gradient-to-r from-primary-aqua to-blue-500 hover:from-primary-aqua/90 hover:to-blue-600 text-white rounded-xl px-8 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-primary-aqua to-blue-500 hover:from-primary-aqua/90 hover:to-blue-600 text-white rounded-full px-8 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={createBookRequestMutation.isPending}
                 >
                   {createBookRequestMutation.isPending ? (

@@ -136,17 +136,17 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
         <>
           <button
             onClick={goToPrevious}
-            className="absolute h-full left-0 top-1/2 -translate-y-1/2 bg-gray-200/30 hover:bg-gray-400/60 p-3 shadow-lg transition-all z-10"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-primary-aqua/20 hover:border-primary-aqua/50 group"
             aria-label="Previous banner"
           >
-            <ChevronLeft className="h-6 w-6 text-gray-800" />
+            <ChevronLeft className="h-8 w-8 text-primary-aqua mx-auto group-hover:text-secondary-aqua transition-colors" />
           </button>
           <button
             onClick={goToNext}
-            className="absolute h-full right-0 top-1/2 -translate-y-1/2 bg-gray-200/30 hover:bg-gray-400/60 p-3 shadow-lg transition-all z-10"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-primary-aqua/20 hover:border-primary-aqua/50 group"
             aria-label="Next banner"
           >
-            <ChevronRight className="h-6 w-6 text-gray-800" />
+            <ChevronRight className="h-8 w-8 text-primary-aqua mx-auto group-hover:text-secondary-aqua transition-colors" />
           </button>
         </>
       )}

@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { CartItem } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -13,13 +15,33 @@ interface CartContextType {
   isLoading: boolean;
   isCartAnimating: boolean;
   triggerCartAnimation: () => void;
+  refreshGuestCartStock: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const GUEST_CART_KEY = 'guestCart';
+
+// Helper to extract only essential book data for localStorage
+const getEssentialBookData = (book: any) => ({
+  id: book.id,
+  title: book.title,
+  author: book.author,
+  imageUrl: book.imageUrl,
+  price: book.price,
+  stock: book.stock,
+  condition: book.condition,
+  featured: book.featured,
+  bestseller: book.bestseller,
+  createdAt: book.createdAt,
+  updatedAt: book.updatedAt,
+});
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [isCartAnimating, setIsCartAnimating] = useState(false);
+  const [guestCart, setGuestCart] = useState<CartItem[]>([]);
 
   const triggerCartAnimation = useCallback(() => {
     setIsCartAnimating(true);
@@ -28,15 +50,102 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, 600); // Animation lasts for 0.6 seconds
   }, []);
 
-  // Always use server-side cart (supports both guest sessions and authenticated users)
-  const { data: cartItems = [], isLoading } = useQuery({
+  // Manual stock refresh for guest cart
+  const refreshGuestCartStock = useCallback(async () => {
+    if (isAuthenticated || guestCart.length === 0) return;
+
+    try {
+      console.log('Refreshing stock data for', guestCart.length, 'guest cart items');
+
+      const updatedCart = await Promise.all(
+        guestCart.map(async (item) => {
+          try {
+            const response = await apiRequest("GET", `/api/books/${item.bookId}`);
+            const freshBook = await response.json();
+
+            return {
+              ...item,
+              book: getEssentialBookData(freshBook),
+            };
+          } catch (error) {
+            console.error(`Failed to refresh stock for book ${item.bookId}:`, error);
+            return item; // Keep old data if refresh fails
+          }
+        })
+      );
+
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      setGuestCart(updatedCart);
+      console.log('Guest cart stock refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh guest cart stock:', error);
+    }
+  }, [guestCart, isAuthenticated]);
+
+  // Load guest cart from localStorage on mount
+  useEffect(() => {
+    if (!isAuthenticated && !authLoading) {
+      const stored = localStorage.getItem(GUEST_CART_KEY);
+      if (stored) {
+        try {
+          const parsedCart = JSON.parse(stored);
+          console.log('Guest cart loaded from localStorage:', parsedCart.length, 'items');
+          setGuestCart(parsedCart);
+        } catch (error) {
+          console.error('Failed to parse guest cart:', error);
+          localStorage.removeItem(GUEST_CART_KEY);
+        }
+      }
+    }
+  }, [isAuthenticated, authLoading]);
+
+  // Sync guest cart to server when user logs in
+  useEffect(() => {
+    if (isAuthenticated && guestCart.length > 0) {
+      // Migrate guest cart to server
+      const migrateCart = async () => {
+        try {
+          for (const item of guestCart) {
+            await apiRequest("POST", "/api/cart/add", {
+              bookId: item.book.id,
+              quantity: item.quantity
+            });
+          }
+          // Clear guest cart after migration
+          localStorage.removeItem(GUEST_CART_KEY);
+          setGuestCart([]);
+          queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+        } catch (error) {
+          console.error('Failed to migrate guest cart:', error);
+        }
+      };
+      migrateCart();
+    }
+  }, [isAuthenticated, guestCart, queryClient]);
+
+  // Server-side cart for authenticated users
+  const { data: serverCartItems = [], isLoading: serverLoading } = useQuery({
     queryKey: ["/api/cart"],
+    enabled: isAuthenticated,
     retry: false,
     staleTime: 5 * 60 * 1000,
   }) as { data: CartItem[]; isLoading: boolean };
 
+  // Determine which cart to use
+  const cartItems = isAuthenticated ? serverCartItems : guestCart;
+  const isLoading = authLoading || (isAuthenticated && serverLoading);
+
   const cartCount = cartItems.reduce((total: number, item: CartItem) => total + item.quantity, 0);
 
+  // Helper to save guest cart to localStorage
+  const saveGuestCart = (cart: CartItem[]) => {
+    console.log('Saving guest cart to localStorage:', cart.length, 'items');
+    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cart));
+    setGuestCart(cart);
+
+  };
+
+  // Server-side mutations (only for authenticated users)
   const addToCartMutation = useMutation({
     mutationFn: async ({ bookId, quantity }: { bookId: number; quantity: number }) => {
       return await apiRequest("POST", "/api/cart/add", { bookId, quantity });
@@ -73,25 +182,124 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
+  // Add to cart (localStorage for guests, API for authenticated)
   const addToCart = async (bookId: number, quantity: number = 1) => {
-    await addToCartMutation.mutateAsync({ bookId, quantity });
-    triggerCartAnimation(); // Trigger the animation when item is added
+    if (isAuthenticated) {
+      await addToCartMutation.mutateAsync({ bookId, quantity });
+    } else {
+      // For guests, fetch book details and add to localStorage
+      try {
+        const response = await apiRequest("GET", `/api/books/${bookId}`);
+        const book = await response.json();
+
+        // Check stock availability
+        if (book.stock <= 0) {
+          toast({
+            title: "Error",
+            description: "This book is out of stock.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        const existingItem = guestCart.find(item => item.book.id === bookId);
+        const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+        const newTotalQuantity = currentQuantityInCart + quantity;
+
+        // Validate total quantity doesn't exceed stock
+        console.log("newTotalQuantity", newTotalQuantity);
+
+        if (newTotalQuantity > book.stock) {
+          toast({
+            title: "Exceeded Stock",
+            description: `Only ${book.stock} items available in stock. You already have ${currentQuantityInCart} in your cart.`,
+            variant: "destructive"
+          });
+          return
+        }
+
+        let newCart: CartItem[];
+        if (existingItem) {
+          // Update quantity if item already exists
+          newCart = guestCart.map(item =>
+            item.book.id === bookId
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        } else {
+          // Add new item with essential book data only
+          const newItem: CartItem = {
+            id: Date.now(), // Temporary ID for guest cart
+            bookId: book.id,
+            book: getEssentialBookData(book),
+            quantity,
+            userId: null,
+            createdAt: new Date().toISOString(),
+          };
+          newCart = [...guestCart, newItem];
+        }
+        toast({
+          title: "✓ Added to cart",
+          description: `${quantity > 1 ? `${quantity} copies of ` : ''}${book.title.length > 60 ? book.title.substring(0, 60) + '...' : book.title}`,
+        });
+        saveGuestCart(newCart);
+
+      } catch (error) {
+        console.error('Failed to add book to guest cart:', error);
+        throw error;
+      }
+    }
+    triggerCartAnimation();
   };
 
+  // Update cart item (localStorage for guests, API for authenticated)
   const updateCartItem = async (id: number, quantity: number) => {
-    await updateCartMutation.mutateAsync({ id, quantity });
+    if (isAuthenticated) {
+      await updateCartMutation.mutateAsync({ id, quantity });
+    } else {
+      // For guests, validate stock before updating
+      const item = guestCart.find(item => item.id === id);
+      if (!item) {
+        throw new Error('Item not found in cart');
+      }
+
+      const existingItem = guestCart.find(item => item.id === id);
+      const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+      // Check if new quantity exceeds stock
+      if (quantity > item.book.stock) {
+        throw new Error(`Only ${item.book.stock} items available in stock. You already have ${currentQuantityInCart} in your cart.`);
+      }
+
+      const newCart = guestCart.map(item =>
+        item.id === id ? { ...item, quantity } : item
+      );
+      toast({
+        title: "✓ Added to cart",
+        description: `${quantity > 1 ? `${quantity} copies of ` : ''}${item.book.title.length > 60 ? item.book.title.substring(0, 60) + '...' : item.book.title}`,
+      });
+      saveGuestCart(newCart);
+    }
   };
 
+  // Remove from cart (localStorage for guests, API for authenticated)
   const removeFromCart = async (id: number) => {
-    await removeFromCartMutation.mutateAsync(id);
-    
-    // After removing an item, check if gifts should be auto-removed
-    // This will be handled by the server-side logic, but we invalidate to refresh
-    queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    if (isAuthenticated) {
+      await removeFromCartMutation.mutateAsync(id);
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    } else {
+      const newCart = guestCart.filter(item => item.id !== id);
+      saveGuestCart(newCart);
+    }
   };
 
+  // Clear cart (localStorage for guests, API for authenticated)
   const clearCart = async () => {
-    await clearCartMutation.mutateAsync();
+    if (isAuthenticated) {
+      await clearCartMutation.mutateAsync();
+    } else {
+      localStorage.removeItem(GUEST_CART_KEY);
+      setGuestCart([]);
+    }
   };
 
   return (
@@ -106,6 +314,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isCartAnimating,
         triggerCartAnimation,
+        refreshGuestCartStock,
       }}
     >
       {children}

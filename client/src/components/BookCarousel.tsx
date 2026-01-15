@@ -86,16 +86,16 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                     </div>
 
                     {/* Desktop carousel view */}
-                    <div className="hidden md:block relative overflow-hidden">
+                    <div className="hidden md:block relative overflow-hidden ">
                         <button
                             onClick={handlePrevious}
                             disabled={currentSlide === 0}
-                            className="absolute left-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110 border-2 border-primary-aqua/20 hover:border-primary-aqua/50 group"
                         >
-                            <ChevronLeft className="h-6 w-6 text-gray-800" />
+                            <ChevronLeft className="h-8 w-8 text-primary-aqua mx-auto group-hover:text-secondary-aqua transition-colors" />
                         </button>
                         <div
-                            className="flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
+                            className=" flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
                             style={{ transform: `translateX(-${currentSlide * 25}%)` }}
                         >
                             {books.map((book) => (
@@ -107,9 +107,9 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                         <button
                             onClick={handleNext}
                             disabled={currentSlide >= Math.ceil(books.length / 4) - 1}
-                            className="absolute right-0 top-0 h-full z-10 bg-gray-200/30 hover:bg-gray-400/60 px-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110 border-2 border-primary-aqua/20 hover:border-primary-aqua/50 group"
                         >
-                            <ChevronRight className="h-6 w-6 text-gray-800" />
+                            <ChevronRight className="h-8 w-8 text-primary-aqua mx-auto group-hover:text-secondary-aqua transition-colors" />
                         </button>
                     </div>
                 </>

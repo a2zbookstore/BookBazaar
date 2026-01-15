@@ -429,7 +429,7 @@ export default function ReturnRequestPage() {
                   onClick={() => setStep(2)}
                   disabled={!canProceedToStep2}
                   variant="outline"
-                  className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl"
+                  className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
                 >
                   Continue
                 </Button>

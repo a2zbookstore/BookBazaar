@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { Star, ShoppingCart, Truck, Clock, Book as BookIcon, RotateCcw } from "lucide-react";
+import { Star, StarHalf, ShoppingCart, Truck, Clock, Book as BookIcon, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
@@ -44,6 +44,30 @@ export default function BookCard({ book }: BookCardProps) {
   const [displayPrice, setDisplayPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
   const [shippingCost, setShippingCost] = useState<string>('');
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  // Generate consistent rating based on book ID (3.5 to 5 stars)
+  const bookRating = useMemo(() => {
+    const hash = book.id * 2654435761;
+    const normalized = (hash % 100) / 100;
+    return 3.5 + (normalized * 1.5); // Range: 3.5 to 5.0
+  }, [book.id]);
+
+  // Calculate star display accurately
+  const { fullStars, hasHalfStar, emptyStars } = useMemo(() => {
+    const full = Math.floor(bookRating);
+    const decimal = bookRating - full;
+    const half = decimal >= 0.25 && decimal < 0.75; // Show half star for .25 to .74
+    const empty = 5 - full - (half ? 1 : 0);
+    
+    return {
+      fullStars: full,
+      hasHalfStar: half,
+      emptyStars: empty
+    };
+  }, [bookRating]);
+
+  const reviewCount = useMemo(() => Math.floor(50 + (book.id * 7) % 450), [book.id]); // 50-500 reviews
 
   // Convert price and shipping cost to user's currency
   const convertPrices = React.useCallback(async () => {
@@ -115,6 +139,7 @@ export default function BookCard({ book }: BookCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
+    setIsAddingToCart(true);
     try {
       await addToCart(book.id);
       toast({
@@ -141,12 +166,14 @@ export default function BookCard({ book }: BookCardProps) {
       //   setLocation("/checkout");
       // }, 500);
       
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to add item to cart. Please try again.",
+        description: error.message || "Failed to add item to cart. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -200,21 +227,39 @@ export default function BookCard({ book }: BookCardProps) {
             )}
           </div>
 
-          {/* Rating */}
-          <div className="flex items-center mb-2 h-5">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
+          {/* Rating - Enhanced with Half Stars */}
+          <div className="flex items-center mb-2 bg-gradient-to-r from-amber-50 to-orange-50 px-2 py-1.5 rounded-lg border border-amber-100">
+            <div className="flex gap-0.5">
+              {/* Full Stars */}
+              {[...Array(fullStars)].map((_, i) => (
                 <Star
-                  key={i}
-                  className={`h-3 w-3 ${
-                    i < Math.floor(Math.random() * 5 + 3) 
-                      ? 'text-yellow-400 fill-current' 
-                      : 'text-gray-300'
-                  }`}
+                  key={`full-${i}`}
+                  className="h-4 w-4 text-amber-400 fill-amber-400 drop-shadow-sm transition-transform hover:scale-110"
+                />
+              ))}
+              {/* Half Star */}
+              {hasHalfStar && (
+                <div className="relative">
+                  <Star className="h-4 w-4 text-gray-300 fill-gray-300" />
+                  <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+                    <Star className="h-4 w-4 text-amber-400 fill-amber-400 drop-shadow-sm" />
+                  </div>
+                </div>
+              )}
+              {/* Empty Stars */}
+              {[...Array(emptyStars)].map((_, i) => (
+                <Star
+                  key={`empty-${i}`}
+                  className="h-4 w-4 text-gray-300 fill-gray-200"
                 />
               ))}
             </div>
-            <span className="text-xs text-gray-500 ml-1">(4.5)</span>
+            <span className="text-xs font-semibold text-gray-700 ml-2">
+              {bookRating.toFixed(1)}
+            </span>
+            <span className="text-xs text-gray-500 ml-1">
+              ({reviewCount})
+            </span>
           </div>
 
           {/* Shipping and Return Info */}
@@ -246,11 +291,15 @@ export default function BookCard({ book }: BookCardProps) {
       <div className="px-4 pb-4">
         <Button
           onClick={handleAddToCart}
-          className="w-full bg-primary-aqua hover:bg-primary-aqua/90 text-white text-sm py-2 rounded-full"
+          disabled={isAddingToCart}
+          className="py-2 bg-primary-aqua hover:bg-secondary-aqua text-white px-8 rounded-full disabled:opacity-50 disabled:cursor-not-allowed w-full shadow-md hover:shadow-lg transition-shadow"
+          // className="w-full bg-primary-aqua hover:bg-primary-aqua/90 text-white text-sm py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
           size="sm"
         >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Add to Cart
+          <ShoppingCart 
+            className={`h-4 w-4 mr-2 ${isAddingToCart ? 'animate-cart-slide' : ''}`} 
+          />
+          {isAddingToCart ? 'Adding...' : 'Add to Cart'}
         </Button>
       </div>
     </div>

@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
+// import {  } from "lucide-react";
+
 
 // Image helper function
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -65,15 +73,23 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 }
 
 export default function CartPage() {
-  const { cartItems, updateCartItem, removeFromCart, clearCart, isLoading } = useCart();
+  const { cartItems, updateCartItem, removeFromCart, isLoading } = useCart();
   const { toast } = useToast();
-  const { userCurrency, convertPrice, formatCurrency, formatAmount, exchangeRates } = useCurrency();
+  const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
   const { shippingCost, shippingRate } = useShipping();
   const [giftItem, setGiftItem] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
-
-  // Check if cart has any non-gift books
+  const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
+  const updateTimeouts = React.useRef<Record<number, NodeJS.Timeout>>({});
   const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
+
+  useEffect(() => {
+    const quantities: Record<number, number> = {};
+    cartItems.forEach(item => {
+      quantities[item.id] = item.quantity;
+    });
+    setLocalQuantities(quantities);
+  }, [cartItems.length]);
 
   // Load gift item from localStorage and auto-remove if no books
   useEffect(() => {
@@ -103,14 +119,13 @@ export default function CartPage() {
 
   // Calculate cart totals using dynamic shipping rates
   const cartSubtotal = cartItems.reduce((total, item) => {
-    // Skip gift items in subtotal calculation
     if ((item as any).isGift) return total;
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
 
   // Use dynamic shipping rates based on user location
   const cartShipping = shippingCost || 0;
-  const cartTax = cartSubtotal * 0.01; // 1% tax
+  const cartTax = cartSubtotal * 0.01;
   const cartTotal = cartSubtotal + cartShipping + cartTax;
 
   // Convert all amounts to user's currency for display
@@ -124,17 +139,10 @@ export default function CartPage() {
   // Convert amounts function
   const convertAmounts = React.useCallback(async () => {
     try {
-      console.log('Cart conversion attempt:', { cartSubtotal, userCurrency, exchangeRates });
-
       const convertedSubtotal = await convertPrice(cartSubtotal);
       const convertedShipping = await convertPrice(cartShipping);
       const convertedTax = await convertPrice(cartTax);
       const convertedTotal = await convertPrice(cartTotal);
-
-      console.log('Cart conversion results:', {
-        original: { cartSubtotal, cartShipping, cartTax, cartTotal },
-        converted: { convertedSubtotal, convertedShipping, convertedTax, convertedTotal }
-      });
 
       setConvertedAmounts({
         subtotal: convertedSubtotal?.convertedAmount || cartSubtotal,
@@ -143,8 +151,6 @@ export default function CartPage() {
         total: convertedTotal?.convertedAmount || cartTotal
       });
     } catch (error) {
-      console.error('Error converting currencies:', error);
-      // Fallback to original amounts
       setConvertedAmounts({
         subtotal: cartSubtotal,
         shipping: cartShipping,
@@ -180,28 +186,109 @@ export default function CartPage() {
     }
   }, [convertAmounts, exchangeRates, userCurrency]);
 
-  const handleUpdateQuantity = async (itemId: number, newQuantity: number) => {
+  // Debounced update function - waits 800ms after user stops changing quantity
+  const debouncedUpdateQuantity = React.useCallback((itemId: number, newQuantity: number) => {
+    if (updateTimeouts.current[itemId]) {
+      clearTimeout(updateTimeouts.current[itemId]);
+    }
+
+    // Set new timeout
+    updateTimeouts.current[itemId] = setTimeout(async () => {
+      // Check if quantity actually changed from server state
+      const currentItem = cartItems.find(item => item.id === itemId);
+      if (currentItem && currentItem.quantity === newQuantity) {
+        // No change, skip API call
+        return;
+      }
+
+      setIsUpdating(itemId);
+      try {
+        await updateCartItem(itemId, newQuantity);
+      } catch (error) {
+        console.error('Error updating cart item:', error);
+        // Revert to original quantity on error
+        if (currentItem) {
+          setLocalQuantities(prev => ({
+            ...prev,
+            [itemId]: currentItem.quantity
+          }));
+        }
+        toast({
+          title: "Failed to update",
+          description: `${error ? error : 'Failed to update quantity. Please try again.'} `,
+          variant: "destructive",
+        });
+      } finally {
+        setIsUpdating(null);
+      }
+    }, 800); // 800ms debounce delay
+  }, [cartItems, updateCartItem, toast]);
+
+  const handleUpdateQuantity = (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    setIsUpdating(itemId);
-    try {
-      await updateCartItem(itemId, newQuantity);
-      toast({
-        title: "Cart updated",
-        description: "Item quantity has been updated.",
-      });
-    } catch (error) {
-      console.error('Error updating cart item:', error);
-    } finally {
-      setIsUpdating(null);
-    }
+    setLocalQuantities(prev => ({
+      ...prev,
+      [itemId]: newQuantity
+    }));
+    debouncedUpdateQuantity(itemId, newQuantity);
   };
 
+  const handleBlurUpdate = (itemId: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
+    const currentItem = cartItems.find(item => item.id === itemId);
+    if (currentItem && currentItem.quantity === newQuantity) {
+      return;
+    }
+
+    if (updateTimeouts.current[itemId]) {
+      clearTimeout(updateTimeouts.current[itemId]);
+    }
+
+    // Call API immediately on blur
+    setIsUpdating(itemId);
+    updateCartItem(itemId, newQuantity)
+      .catch((error) => {
+        console.error('Error updating cart item:', error);
+        // Revert to original quantity on error
+        if (currentItem) {
+          setLocalQuantities(prev => ({
+            ...prev,
+            [itemId]: currentItem.quantity
+          }));
+        }
+        toast({
+          title: "Failed to update",
+          description: `${error ? error : 'Failed to update quantity. Please try again.'} `,
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsUpdating(null);
+      });
+  };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(updateTimeouts.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, []);
+
   const handleRemoveItem = async (itemId: number) => {
-    await removeFromCart(itemId);
+    // Optimistically remove from UI immediately
+    const itemToRemove = cartItems.find(item => item.id === itemId);
+
+    // Remove from cart immediately (no waiting for API)
+    removeFromCart(itemId);
+
+    // Show toast immediately
     toast({
       title: "Removed from cart",
-      description: "Item has been removed from your cart.",
+      description: itemToRemove?.book?.title ? `${itemToRemove.book.title} removed` : "Item removed from cart",
     });
   };
 
@@ -253,9 +340,10 @@ export default function CartPage() {
               const imageUrl = item.book?.imageUrl;
               const title = item.book?.title;
               const author = isGift ? null : item.book?.author;
+              const displayQuantity = localQuantities[item.id] ?? item.quantity;
 
               return (
-                <Card key={item.id} className="p-4">
+                <Card key={item.id} className="p-4 rounded-xl">
                   <div className="flex items-center gap-4">
                     {!isGift && item.book?.id ? (
                       <Link href={`/book/${item.book.id}`} className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
@@ -308,14 +396,23 @@ export default function CartPage() {
                             </span>
                           )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveItem(item.id)}
+                                className="text-red-500 hover:bg-red-700 hover:text-white hover:rounded-full"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Remove from cart</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
 
                       <div className="flex justify-between items-center">
@@ -323,16 +420,34 @@ export default function CartPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                            disabled={item.quantity <= 1 || isUpdating === item.id}
+                            onClick={() => handleUpdateQuantity(item.id, displayQuantity - 1)}
+                            disabled={displayQuantity <= 1 || isUpdating === item.id}
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={displayQuantity}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value);
+                              if (!isNaN(value) && value >= 1) {
+                                handleUpdateQuantity(item.id, value);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const value = parseInt(e.target.value);
+                              if (!isNaN(value) && value >= 1) {
+                                handleBlurUpdate(item.id, value);
+                              }
+                            }}
+                            className="w-12 text-center border rounded px-1 py-1"
+                            disabled={isUpdating === item.id}
+                          />
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => handleUpdateQuantity(item.id, displayQuantity + 1)}
                             disabled={isUpdating === item.id}
                           >
                             <Plus className="h-4 w-4" />
@@ -343,7 +458,7 @@ export default function CartPage() {
                           {isGift ? (
                             <p className="text-xl font-bold text-green-600">FREE</p>
                           ) : (
-                            <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                            <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={displayQuantity} />
                           )}
                         </div>
                       </div>
@@ -384,47 +499,56 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+            <Card className="sticky top-4 rounded-xl shadow-lg border-2">
+              <CardHeader className="bg-gradient-to-r from-primary-aqua to-secondary-aqua text-white rounded-t-xl">
+                <CardTitle className="text-2xl font-bold text-primary-aqua">Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>{formatAmount(convertedAmounts.subtotal, userCurrency)}</span>
+              <CardContent className="space-y-4 px-6 pb-6">
+                <div className="flex justify-between text-base text-secondary-black">
+                  <span className="font-medium">Subtotal</span>
+                  <span className="font-semibold">{formatAmount(convertedAmounts.subtotal, userCurrency)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>
-                    {convertedAmounts.shipping === 0 ? <span className="text-green-600 font-semibold"> FREE Shipping!</span> : formatAmount(convertedAmounts.shipping)}
+                <div className="flex justify-between text-base text-secondary-black">
+                  <span className="font-medium">Shipping</span>
+                  <span className="font-semibold">
+                    {convertedAmounts.shipping === 0 ? (
+                      <span className="text-green-600 font-bold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        FREE
+                      </span>
+                    ) : formatAmount(convertedAmounts.shipping)}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span>{formatAmount(convertedAmounts.tax, userCurrency)}</span>
+                <div className="flex justify-between text-base text-secondary-black">
+                  <span className="font-medium">Tax (1%)</span>
+                  <span className="font-semibold">{formatAmount(convertedAmounts.tax, userCurrency)}</span>
                 </div>
-                <Separator />
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
-                  <span>{formatAmount(convertedAmounts.total, userCurrency)}</span>
+
+                <Separator className="my-4" />
+
+                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                  <span className="text-lg font-bold text-base-black">Total</span>
+                  <span className="text-2xl font-bold text-primary-aqua">{formatAmount(convertedAmounts.total, userCurrency)}</span>
                 </div>
 
                 {/* Delivery Date */}
-                {shippingRate && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mt-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-shrink-0">
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {shippingRate ? (
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg mt-4 shadow-sm">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-sm text-blue-800">
-                          Expected Delivery
+                        <p className="font-bold text-sm text-blue-900 mb-1">
+                          📦 Expected Delivery
                         </p>
-                        <p className="text-xs text-blue-600">
+                        <p className="text-sm text-blue-700 font-semibold">
                           {(() => {
                             const deliveryEstimate = calculateDeliveryDate(
                               shippingRate.minDeliveryDays,
@@ -433,28 +557,66 @@ export default function CartPage() {
                             return deliveryEstimate.deliveryText;
                           })()}
                         </p>
-                        <p className="text-xs text-blue-500 mt-1">
+                        <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
                           To {shippingRate.countryName}
                         </p>
                       </div>
                     </div>
                   </div>
+                ) : (
+                  <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-lg mt-4 shadow-sm animate-pulse">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-300 rounded w-32"></div>
+                        <div className="h-3 bg-gray-300 rounded w-48"></div>
+                        <div className="h-3 bg-gray-300 rounded w-24"></div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
-                <div className="pt-4">
+                <div className="flex items-center gap-4 flex-col">
                   <Link to="/checkout">
-                    <Button className="w-full bg-primary-aqua hover:bg-primary-aqua/90 rounded-xl">
+                    <Button className="w-full bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white font-semibold py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+                      <ShoppingBag className="h-6 w-6" />
                       Proceed to Checkout
                     </Button>
                   </Link>
+
+                  {/* <Link to="/catalog">
+                    <Button variant="outline" className="w-full border-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white font-medium py-4 rounded-full transition-all duration-200">
+                      ← Continue Shopping
+                    </Button>
+                  </Link> */}
                 </div>
 
-                <div className="pt-2">
-                  <Link to="/catalog">
-                    <Button variant="outline" className="w-full rounded-xl">
-                      Continue Shopping
-                    </Button>
-                  </Link>
+                {/* Trust Badges */}
+                <div className="pt-4 border-t space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <span>Secure checkout</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span>Multiple payment options</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>30-day return policy</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

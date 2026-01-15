@@ -163,13 +163,13 @@ export default function Layout({ children }: LayoutProps) {
                   <Button
                     variant="outline"
                     onClick={() => setLocation('/login')}
-                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-xl"
+                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => setLocation('/register')}
-                    className="bg-primary-aqua hover:bg-secondary-aqua rounded-xl"
+                    className="bg-primary-aqua hover:bg-secondary-aqua rounded-full"
                   >
                     Register
                   </Button>
@@ -377,7 +377,7 @@ export default function Layout({ children }: LayoutProps) {
               >
                 Catalog
               </Link>
-              <Link
+              {/* <Link
                 href="/catalog"
                 className="text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 text-gray-600"
               >
@@ -388,7 +388,7 @@ export default function Layout({ children }: LayoutProps) {
                 className="text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 text-gray-600"
               >
                 Featured Collection
-              </Link>
+              </Link> */}
               <Link
                 href="/my-orders"
                 className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${

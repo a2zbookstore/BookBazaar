@@ -80,6 +80,7 @@ export interface IStorage {
     featured?: boolean;
     bestseller?: boolean;
     search?: string;
+    titleOnly?: boolean;
     minPrice?: number;
     maxPrice?: number;
     limit?: number;
@@ -308,6 +309,7 @@ export class DatabaseStorage implements IStorage {
     newArrival?: boolean;
     boxSet?: boolean;
     search?: string;
+    titleOnly?: boolean;
     minPrice?: number;
     maxPrice?: number;
     limit?: number;
@@ -324,6 +326,7 @@ export class DatabaseStorage implements IStorage {
       newArrival,
       boxSet,
       search,
+      titleOnly,
       minPrice,
       maxPrice,
       limit = 12,
@@ -346,14 +349,25 @@ export class DatabaseStorage implements IStorage {
     if (boxSet !== undefined) conditions.push(eq(books.boxSet, boxSet));
     if (search) {
       const searchTerm = search.toLowerCase();
-      conditions.push(
-        or(
-          sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
-          sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`,
-          sql`LOWER(${books.isbn}) LIKE ${`%${searchTerm}%`}`,
-          sql`LOWER(${books.description}) LIKE ${`%${searchTerm}%`}`
-        )
-      );
+      if (titleOnly) {
+        // Search in title and publisher when titleOnly is true
+        conditions.push(
+          or(
+            sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
+            sql`LOWER(${books.publisher}) LIKE ${`%${searchTerm}%`}`
+          )
+        );
+      } else {
+        // Search across multiple fields
+        conditions.push(
+          or(
+            sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
+            sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`,
+            sql`LOWER(${books.isbn}) LIKE ${`%${searchTerm}%`}`,
+            sql`LOWER(${books.description}) LIKE ${`%${searchTerm}%`}`
+          )
+        );
+      }
     }
     if (minPrice) conditions.push(sql`${books.price} >= ${minPrice}`);
     if (maxPrice) conditions.push(sql`${books.price} <= ${maxPrice}`);
