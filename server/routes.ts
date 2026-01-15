@@ -545,149 +545,212 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/forgot-password', requestPasswordReset);
   app.post('/api/reset-password', resetPassword);
 
-  // Payment routes
-  const { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } = await import("./paypal");
-  const { createRazorpayOrder, verifyRazorpayPayment, getRazorpayConfig } = await import("./razorpay.js");
-
-  // PayPal routes
-  app.get("/api/paypal/setup", async (req, res) => {
-    await loadPaypalDefault(req, res);
-  });
-
-  app.post("/api/paypal/order", async (req, res) => {
-    // Request body should contain: { intent, amount, currency }
-    await createPaypalOrder(req, res);
-  });
-
-  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
+  // Payment routes - conditionally loaded based on environment variables
+  let paypalEnabled = false;
+  let createPaypalOrder: any, capturePaypalOrder: any, loadPaypalDefault: any;
+  
+  if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
     try {
-      const { orderID } = req.params;
-      const { orderData } = req.body;
+      const paypalModule = await import("./paypal");
+      createPaypalOrder = paypalModule.createPaypalOrder;
+      capturePaypalOrder = paypalModule.capturePaypalOrder;
+      loadPaypalDefault = paypalModule.loadPaypalDefault;
+      paypalEnabled = true;
+      console.log('✅ PayPal payment gateway enabled');
+    } catch (error) {
+      console.log('⚠️ PayPal module failed to load:', error);
+    }
+  } else {
+    console.log('⚠️ PayPal credentials not configured - PayPal payments disabled');
+  }
 
-      console.log('PayPal capture request:', orderID, orderData ? 'with order data' : 'no order data');
+  let razorpayEnabled = false;
+  let createRazorpayOrder: any, verifyRazorpayPayment: any, getRazorpayConfig: any;
+  
+  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    try {
+      const razorpayModule = await import("./razorpay.js");
+      createRazorpayOrder = razorpayModule.createRazorpayOrder;
+      verifyRazorpayPayment = razorpayModule.verifyRazorpayPayment;
+      getRazorpayConfig = razorpayModule.getRazorpayConfig;
+      razorpayEnabled = true;
+      console.log('✅ Razorpay payment gateway enabled');
+    } catch (error) {
+      console.log('⚠️ Razorpay module failed to load:', error);
+    }
+  } else {
+    console.log('⚠️ Razorpay credentials not configured - Razorpay payments disabled');
+  }
 
-      // First capture the PayPal payment
-      let captureData: any = null;
-      let captureSuccess = false;
+  // PayPal routes (only if enabled)
+  if (paypalEnabled) {
+    app.get("/api/paypal/setup", async (req, res) => {
+      await loadPaypalDefault(req, res);
+    });
 
+    app.post("/api/paypal/order", async (req, res) => {
+      // Request body should contain: { intent, amount, currency }
+      await createPaypalOrder(req, res);
+    });
+  } else {
+    app.get("/api/paypal/setup", (req, res) => {
+      res.status(503).json({ error: "PayPal is not configured" });
+    });
+    app.post("/api/paypal/order", (req, res) => {
+      res.status(503).json({ error: "PayPal is not configured" });
+    });
+  }
+
+  if (paypalEnabled) {
+    app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
       try {
-        const mockReq = { params: { orderID } };
-        const mockRes = {
-          status: (code: number) => ({
-            json: (data: any) => {
-              if (code === 201 || code === 200) {
-                captureData = data;
-                captureSuccess = true;
-              }
-              return data;
-            }
-          }),
-          json: (data: any) => {
-            captureData = data;
-            captureSuccess = true;
-            return data;
-          }
-        };
+        const { orderID } = req.params;
+        const { orderData } = req.body;
 
-        await capturePaypalOrder(mockReq as any, mockRes as any);
-      } catch (paypalError) {
-        console.error('PayPal capture failed:', paypalError);
-        return res.status(500).json({ error: "PayPal payment capture failed" });
-      }
+        console.log('PayPal capture request:', orderID, orderData ? 'with order data' : 'no order data');
 
-      // If PayPal capture successful and we have order data, create order in our database
-      if (captureSuccess && orderData) {
-        console.log('Creating order after successful PayPal capture...');
+        // First capture the PayPal payment
+        let captureData: any = null;
+        let captureSuccess = false;
 
         try {
-          // Create order in database
-          const orderItems = orderData.items.map((item: any) => ({
-            bookId: item.bookId,
-            quantity: item.quantity,
-            price: parseFloat(item.price),
-            title: item.title,
-            author: item.author
-          }));
+          const mockReq = { params: { orderID } };
+          const mockRes = {
+            status: (code: number) => ({
+              json: (data: any) => {
+                if (code === 201 || code === 200) {
+                  captureData = data;
+                  captureSuccess = true;
+                }
+                return data;
+              }
+            }),
+            json: (data: any) => {
+              captureData = data;
+              captureSuccess = true;
+              return data;
+            }
+          };
 
-          const order = await storage.createOrder({
-            customerName: orderData.customerName,
-            customerEmail: orderData.customerEmail,
-            customerPhone: orderData.customerPhone || null,
-            shippingAddress: JSON.stringify(orderData.shippingAddress),
-            billingAddress: JSON.stringify(orderData.billingAddress || orderData.shippingAddress),
-            subtotal: parseFloat(orderData.subtotal),
-            shipping: parseFloat(orderData.shipping),
-            tax: parseFloat(orderData.tax),
-            total: parseFloat(orderData.total),
-            paymentMethod: 'paypal',
-            paymentId: orderID,
-            transactionId: orderID,
-            status: 'pending',
-            items: orderItems
-          });
-
-          console.log('Order created successfully:', order.id);
-
-          // Return success with order ID
-          res.json({
-            ...captureData,
-            orderId: order.id,
-            success: true
-          });
-        } catch (dbError) {
-          console.error('Database order creation failed:', dbError);
-          res.status(500).json({ error: "Order creation failed after PayPal payment" });
+          await capturePaypalOrder(mockReq as any, mockRes as any);
+        } catch (paypalError) {
+          console.error('PayPal capture failed:', paypalError);
+          return res.status(500).json({ error: "PayPal payment capture failed" });
         }
-      } else if (captureSuccess) {
-        // PayPal capture successful but no order data
-        res.json(captureData);
-      } else {
-        res.status(500).json({ error: "PayPal capture failed" });
+
+        // If PayPal capture successful and we have order data, create order in our database
+        if (captureSuccess && orderData) {
+          console.log('Creating order after successful PayPal capture...');
+
+          try {
+            // Create order in database
+            const orderItems = orderData.items.map((item: any) => ({
+              bookId: item.bookId,
+              quantity: item.quantity,
+              price: parseFloat(item.price),
+              title: item.title,
+              author: item.author
+            }));
+
+            const order = await storage.createOrder({
+              customerName: orderData.customerName,
+              customerEmail: orderData.customerEmail,
+              customerPhone: orderData.customerPhone || null,
+              shippingAddress: JSON.stringify(orderData.shippingAddress),
+              billingAddress: JSON.stringify(orderData.billingAddress || orderData.shippingAddress),
+              subtotal: parseFloat(orderData.subtotal),
+              shipping: parseFloat(orderData.shipping),
+              tax: parseFloat(orderData.tax),
+              total: parseFloat(orderData.total),
+              paymentMethod: 'paypal',
+              paymentId: orderID,
+              transactionId: orderID,
+              status: 'pending',
+              items: orderItems
+            });
+
+            console.log('Order created successfully:', order.id);
+
+            // Return success with order ID
+            res.json({
+              ...captureData,
+              orderId: order.id,
+              success: true
+            });
+          } catch (dbError) {
+            console.error('Database order creation failed:', dbError);
+            res.status(500).json({ error: "Order creation failed after PayPal payment" });
+          }
+        } else if (captureSuccess) {
+          // PayPal capture successful but no order data
+          res.json(captureData);
+        } else {
+          res.status(500).json({ error: "PayPal capture failed" });
+        }
+      } catch (error) {
+        console.error("PayPal capture and order creation error:", error);
+        res.status(500).json({ error: "Failed to complete PayPal payment and create order" });
       }
-    } catch (error) {
-      console.error("PayPal capture and order creation error:", error);
-      res.status(500).json({ error: "Failed to complete PayPal payment and create order" });
-    }
-  });
+    });
 
-  // PayPal success route - handle return from PayPal
-  app.get("/api/paypal/success", async (req, res) => {
-    try {
-      const { token, PayerID } = req.query;
+    // PayPal success route - handle return from PayPal
+    app.get("/api/paypal/success", async (req, res) => {
+      try {
+        const { token, PayerID } = req.query;
 
-      if (!token) {
-        return res.redirect('/checkout?error=missing_token');
+        if (!token) {
+          return res.redirect('/checkout?error=missing_token');
+        }
+
+        // Capture the payment
+        const captureResponse = await capturePaypalOrder(
+          { params: { orderID: token } } as any,
+          {
+            json: (data: any) => data,
+            status: (code: number) => ({ json: (data: any) => data })
+          } as any
+        );
+
+        // Redirect to a success page with order completion
+        res.redirect(`/paypal-complete?token=${token}&PayerID=${PayerID}`);
+      } catch (error) {
+        console.error("PayPal success error:", error);
+        res.redirect('/checkout?error=payment_failed');
       }
+    });
+  } else {
+    app.post("/api/paypal/order/:orderID/capture", (req, res) => {
+      res.status(503).json({ error: "PayPal is not configured" });
+    });
+    app.get("/api/paypal/success", (req, res) => {
+      res.redirect('/checkout?error=paypal_not_configured');
+    });
+  }
 
-      // Capture the payment
-      const captureResponse = await capturePaypalOrder(
-        { params: { orderID: token } } as any,
-        {
-          json: (data: any) => data,
-          status: (code: number) => ({ json: (data: any) => data })
-        } as any
-      );
+  // Razorpay routes (only if enabled)
+  if (razorpayEnabled) {
+    app.get("/api/razorpay/config", async (req, res) => {
+      await getRazorpayConfig(req, res);
+    });
 
-      // Redirect to a success page with order completion
-      res.redirect(`/paypal-complete?token=${token}&PayerID=${PayerID}`);
-    } catch (error) {
-      console.error("PayPal success error:", error);
-      res.redirect('/checkout?error=payment_failed');
-    }
-  });
+    app.post("/api/razorpay/order", async (req, res) => {
+      await createRazorpayOrder(req, res);
+    });
 
-  // Razorpay routes
-  app.get("/api/razorpay/config", async (req, res) => {
-    await getRazorpayConfig(req, res);
-  });
-
-  app.post("/api/razorpay/order", async (req, res) => {
-    await createRazorpayOrder(req, res);
-  });
-
-  app.post("/api/razorpay/verify", async (req, res) => {
-    await verifyRazorpayPayment(req, res);
-  });
+    app.post("/api/razorpay/verify", async (req, res) => {
+      await verifyRazorpayPayment(req, res);
+    });
+  } else {
+    app.get("/api/razorpay/config", (req, res) => {
+      res.status(503).json({ error: "Razorpay is not configured" });
+    });
+    app.post("/api/razorpay/order", (req, res) => {
+      res.status(503).json({ error: "Razorpay is not configured" });
+    });
+    app.post("/api/razorpay/verify", (req, res) => {
+      res.status(503).json({ error: "Razorpay is not configured" });
+    });
+  }
 
   // Stripe routes
   const { getStripePublishableKey, getUncachableStripeClient } = await import("./stripeClient");
