@@ -221,7 +221,7 @@ export default function ReturnRequestPage() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto py-8 px-4 mt-6">
+      <div className="container-custom py-8 mt-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-base-black mb-2">Request Return & Refund</h1>
           <p className="text-secondary-black">
@@ -428,7 +428,8 @@ export default function ReturnRequestPage() {
                 <Button
                   onClick={() => setStep(2)}
                   disabled={!canProceedToStep2}
-                  className="bg-primary-aqua hover:bg-secondary-aqua"
+                  variant="outline"
+                  className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
                 >
                   Continue
                 </Button>

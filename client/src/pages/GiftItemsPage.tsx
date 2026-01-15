@@ -28,7 +28,7 @@ export default function GiftItemsPage() {
   });
 
   // Filter items by selected category
-  const filteredItems = selectedCategory 
+  const filteredItems = selectedCategory
     ? giftItems.filter(item => item.categoryId === selectedCategory)
     : giftItems;
 
@@ -45,8 +45,9 @@ export default function GiftItemsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
-        title: "Gift Added!",
+        title: "Selected as your free gift!",
         description: "Your free gift has been added to cart",
+
       });
     },
     onError: (error: any) => {
@@ -59,6 +60,11 @@ export default function GiftItemsPage() {
   });
 
   const handleGiftSelect = (giftId: string) => {
+    // Prevent multiple clicks while mutation is pending
+    if (addGiftMutation.isPending) {
+      return;
+    }
+
     if (cartCount === 0) {
       toast({
         title: "Add Books First",
@@ -150,7 +156,7 @@ export default function GiftItemsPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <h2 className="text-2xl font-bold text-gray-900">{selectedCategoryData.name}</h2>
                       <Badge className="bg-green-100 text-green-700">
-                        {selectedCategoryData.type === 'novel' ? '📚 Novel' : '📓 Notebook'}
+                        {selectedCategoryData.type.charAt(0).toUpperCase() + selectedCategoryData.type.slice(1)}
                       </Badge>
                     </div>
                     <p className="text-gray-700 mb-3">{selectedCategoryData.description}</p>
@@ -192,128 +198,130 @@ export default function GiftItemsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {giftCategories.map((category) => {
               const isSelected = selectedGift === category.id.toString();
               return (
-                <Card 
-                  key={category.id} 
-                  className={`
-                    group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer
-                    ${isSelected 
-                      ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300' 
-                      : 'hover:shadow-xl border-gray-200 hover:border-gray-300'
-                    }
-                    ${!hasBookInCart ? 'opacity-60 cursor-not-allowed' : ''}
-                  `}
-                  onClick={() => handleGiftSelect(category.id.toString())}
-                >
-                  <CardContent className="p-0">
-                    {/* Item Image */}
-                    <div className="relative aspect-[3/4] overflow-hidden">
-                      {category.imageUrl ? (
-                        <img
-                          src={category.imageUrl}
-                          alt={category.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                          <Gift className="h-16 w-16 text-gray-400" />
-                        </div>
-                      )}
-                      
-                      {/* Category Badge */}
-                      <div className="absolute top-3 left-3">
+                <div key={category.id} className="flex-none w-full">
+                  <Card
+                    className={`
+                      group hover:shadow-lg transition-all duration-300 overflow-hidden h-full
+                      ${isSelected
+                        ? 'ring-4 ring-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50 border-green-300'
+                        : 'hover:shadow-xl border-gray-200 hover:border-gray-300'
+                      }
+                      ${!hasBookInCart || addGiftMutation.isPending ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                    `}
+                    onClick={() => !addGiftMutation.isPending && handleGiftSelect(category.id.toString())}
+                  >
+                    <CardContent className="p-0">
+                      {/* Item Image */}
+                      <div className="relative aspect-[2/3] overflow-hidden bg-white p-6">
+                        {category.imageUrl ? (
+                          <img
+                            src={category.imageUrl}
+                            alt={category.name}
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <Gift className="h-16 w-16 text-gray-400" />
+                          </div>
+                        )}
+
+                        {/* Category Badge */}
+                        {/* <div className="absolute top-3 left-3">
                         <Badge className={`
                           ${category.type === 'novel' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}
                         `}>
-                          {category.type === 'novel' ? '📚 Novel' : '📓 Notebook'}
+                          {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
                         </Badge>
+                      </div> */}
+
+                        {/* FREE Badge */}
+                        <div className="absolute top-3 right-3">
+                          <Badge className="bg-green-500 text-white font-bold">
+                            FREE
+                          </Badge>
+                        </div>
+
+                        {/* Selection Check */}
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                            <div className="bg-green-500 text-white rounded-full p-3 shadow-lg">
+                              <Check className="h-8 w-8" />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Disabled Overlay */}
+                        {!hasBookInCart && (
+                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                            <div className="bg-white rounded-lg p-3 text-center">
+                              <ShoppingCart className="h-6 w-6 mx-auto mb-2 text-gray-600" />
+                              <p className="text-xs text-gray-600 font-medium">Add books first</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* FREE Badge */}
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-green-500 text-white font-bold">
-                          FREE
+                      {/* Item Details */}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-base text-gray-900 mb-1 line-clamp-2 h-12">
+                          {category.name}
+                        </h3>
+                        <Badge className={`
+                          ${category.type === 'novel' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}
+                        `}>
+                          {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
                         </Badge>
-                      </div>
 
-                      {/* Selection Check */}
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                          <div className="bg-green-500 text-white rounded-full p-3 shadow-lg">
-                            <Check className="h-8 w-8" />
+                        {category.description && (
+                          <p className="text-xs text-gray-600 mb-3 line-clamp-2 h-8 mt-2">
+                            {category.description}
+                          </p>
+                        )}
+
+
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex flex-col">
+                            {category.price && parseFloat(category.price) > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500 line-through">
+                                  ${parseFloat(category.price).toFixed(2)}
+                                </span>
+                                <span className="text-base font-bold text-green-600">
+                                  FREE
+                                </span>
+                              </div>
+                            )}
+                            <span className="text-xs text-gray-500">
+                              with any book purchase
+                            </span>
+                          </div>
+
+                          <div className="text-right">
+                            {isSelected ? (
+                              <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                                <Check className="h-4 w-4 text-white" />
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!hasBookInCart || addGiftMutation.isPending}
+                                className="text-xs h-7 px-2"
+                              >
+                                {addGiftMutation.isPending ? "Adding..." : "Select"}
+                              </Button>
+                            )}
                           </div>
                         </div>
-                      )}
 
-                      {/* Disabled Overlay */}
-                      {!hasBookInCart && (
-                        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                          <div className="bg-white rounded-lg p-3 text-center">
-                            <ShoppingCart className="h-6 w-6 mx-auto mb-2 text-gray-600" />
-                            <p className="text-xs text-gray-600 font-medium">Add books first</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Item Details */}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-                        {category.name}
-                      </h3>
-                      
-                      {category.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-3">
-                          {category.description}
-                        </p>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                          {category.price && parseFloat(category.price) > 0 && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-500 line-through">
-                                ${parseFloat(category.price).toFixed(2)}
-                              </span>
-                              <span className="text-lg font-bold text-green-600">
-                                FREE
-                              </span>
-                            </div>
-                          )}
-                          <span className="text-xs text-gray-500">
-                            with any book purchase
-                          </span>
-                        </div>
-                        
-                        <div className="text-right">
-                          {isSelected ? (
-                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                              <Check className="h-4 w-4 text-white" />
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={!hasBookInCart || addGiftMutation.isPending}
-                              className="text-xs"
-                            >
-                              {addGiftMutation.isPending ? "Adding..." : "Select"}
-                            </Button>
-                          )}
-                        </div>
                       </div>
-
-                      {isSelected && (
-                        <div className="mt-3 bg-green-100 text-green-800 p-2 rounded-lg text-sm font-medium text-center">
-                          ✅ Selected as your free gift!
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               );
             })}
           </div>
@@ -343,7 +351,7 @@ export default function GiftItemsPage() {
                   </li>
                 </ol>
               </div>
-              
+
               {hasBookInCart ? (
                 <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6">
                   <div className="flex items-center justify-center gap-2 text-green-700">

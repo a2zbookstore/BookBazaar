@@ -97,7 +97,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         <div className="p-4 border-t border-slate-700 bg-slate-900">
           <Link href="/">
-            <Button variant="ghost" className="w-full justify-start text-slate-200 hover:text-white hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 transition-all duration-300 font-medium px-4 py-3 rounded-xl transform hover:scale-105">
+            <Button variant="ghost" className="w-full justify-start text-slate-200 hover:text-white hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 transition-all duration-300 font-medium px-4 py-3 rounded-full transform hover:scale-105">
               <LogOut className="h-6 w-6 mr-4 text-slate-300 hover:text-white transition-colors duration-300" />
               Back to Store
             </Button>

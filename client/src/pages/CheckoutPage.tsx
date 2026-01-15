@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Globe, CheckCircle } from "lucide-react";
+import { CreditCard, Globe, CheckCircle, ScrollText, MapPinPlusInside, UserPen } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
-import PayPalCheckoutButton from "@/components/PayPalCheckoutButton";
+import StripeCheckoutForm from "@/components/StripeCheckoutForm";
+
 
 declare global {
   interface Window {
@@ -209,7 +209,7 @@ const countries = [
   "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand", "Nigeria", "Norway", "Pakistan",
   "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Saudi Arabia",
   "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka", "Sweden",
-  "Switzerland", "Thailand", "Tunisia", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom", 
+  "Switzerland", "Thailand", "Tunisia", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom",
   "United States", "Uruguay", "Venezuela", "Vietnam"
 ];
 
@@ -301,7 +301,7 @@ export default function CheckoutPage() {
     country: ""
   });
   const [sameBillingAddress, setSameBillingAddress] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("paypal");
+  const [paymentMethod, setPaymentMethod] = useState("stripe");
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutType, setCheckoutType] = useState<"guest" | "register" | "login">("guest");
   const [registerPassword, setRegisterPassword] = useState("");
@@ -331,7 +331,7 @@ export default function CheckoutPage() {
         code: couponCode.trim(),
         orderAmount: convertedAmounts.subtotal
       });
-      
+
       const data = await response.json();
       setAppliedCoupon(data);
       setCouponCode("");
@@ -340,7 +340,7 @@ export default function CheckoutPage() {
         description: `You saved ${data.discountType === 'percentage' ? data.discountValue + '%' : formatAmount(data.discountValue)}`,
       });
     } catch (error: any) {
-      setCouponError(error.message || "Invalid coupon code");
+      setCouponError("Invalid coupon code");
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -360,7 +360,7 @@ export default function CheckoutPage() {
   // Calculate discount amount
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0;
-    
+
     if (appliedCoupon.discountType === 'percentage') {
       const discountAmount = (convertedAmounts.subtotal * appliedCoupon.discountValue) / 100;
       // Apply maximum discount limit if exists
@@ -412,12 +412,12 @@ export default function CheckoutPage() {
     if ((item as any).isGift) return total;
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
-  
+
   // Priority order for shipping cost:
   // 1. User's detected location shipping rate (from useShipping hook)
   // 2. Selected country in form (if different from detected)
   // 3. Default shipping rate
-  
+
   const getShippingCountryCode = (countryName: string): string => {
     const countryCodeMap: { [key: string]: string } = {
       "United States": "US", "India": "IN", "United Kingdom": "GB", "Canada": "CA",
@@ -455,7 +455,7 @@ export default function CheckoutPage() {
   const convertAmounts = React.useCallback(async () => {
     try {
       console.log('Checkout conversion attempt:', { subtotal, userCurrency, exchangeRates });
-      
+
       const convertedSubtotal = await convertPrice(subtotal);
       const convertedShipping = await convertPrice(checkoutShippingCost);
       const convertedTax = await convertPrice(tax);
@@ -555,12 +555,12 @@ export default function CheckoutPage() {
 
   const handleCountrySearch = (value: string) => {
     setCountryQuery(value);
-    setShippingAddress({...shippingAddress, country: value});
+    setShippingAddress({ ...shippingAddress, country: value });
     setShowCountryDropdown(value.length > 0);
   };
 
   const selectCountry = (country: string) => {
-    setShippingAddress({...shippingAddress, country: country});
+    setShippingAddress({ ...shippingAddress, country: country });
     setCountryQuery(country);
     setShowCountryDropdown(false);
   };
@@ -589,14 +589,14 @@ export default function CheckoutPage() {
 
   const handlePhoneCountryKeyDown = (e: React.KeyboardEvent) => {
     const filtered = phoneCountryQuery ? filteredCountryCodes : countryCodes;
-    
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
         if (!showPhoneCountryDropdown) {
           setShowPhoneCountryDropdown(true);
         }
-        setSelectedCountryIndex(prev => 
+        setSelectedCountryIndex(prev =>
           prev < filtered.length - 1 ? prev + 1 : 0
         );
         break;
@@ -605,7 +605,7 @@ export default function CheckoutPage() {
         if (!showPhoneCountryDropdown) {
           setShowPhoneCountryDropdown(true);
         }
-        setSelectedCountryIndex(prev => 
+        setSelectedCountryIndex(prev =>
           prev > 0 ? prev - 1 : filtered.length - 1
         );
         break;
@@ -747,7 +747,7 @@ export default function CheckoutPage() {
       finalAmount = total;
       currency = "USD";
       paymentDescription = "International Book Order Payment";
-      
+
       // Check minimum amount for USD (usually $0.50)
       if (finalAmount < 0.50) {
         toast({
@@ -758,17 +758,17 @@ export default function CheckoutPage() {
         setIsProcessing(false);
         return;
       }
-      
+
       const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
         amount: finalAmount,
         currency: currency,
         receipt: `order_${Date.now()}`,
         international: isInternational
       });
-      
+
       const orderData = await orderResponse.json();
       console.log("Razorpay order created:", orderData);
-      
+
       const options = {
         key: (razorpayConfig as any).key_id,
         amount: orderData.amount,
@@ -778,7 +778,7 @@ export default function CheckoutPage() {
         order_id: orderData.id,
         handler: async (response: any) => {
           console.log("Razorpay payment response:", response);
-          
+
           try {
             const verifyResult = await apiRequest("POST", "/api/razorpay/verify", {
               razorpay_payment_id: response.razorpay_payment_id,
@@ -807,7 +807,7 @@ export default function CheckoutPage() {
 
             const verifyData = await verifyResult.json();
             console.log("Payment verification result:", verifyData);
-            
+
             if (verifyData.status === "success") {
               setIsProcessing(false);
               clearCart();
@@ -818,7 +818,7 @@ export default function CheckoutPage() {
                 title: "Payment Successful!",
                 description: `Your order #${verifyData.orderId} has been placed successfully.`,
               });
-              
+
               // Navigate to order detail page with email for guest access
               setLocation(`/orders/${verifyData.orderId}?email=${encodeURIComponent(customerEmail)}`);
             } else {
@@ -827,7 +827,7 @@ export default function CheckoutPage() {
             }
           } catch (error) {
             console.error("Payment verification error:", error);
-            
+
             // Check if it's a network error or parsing error
             if (error instanceof TypeError && error.message.includes('fetch')) {
               toast({
@@ -875,30 +875,30 @@ export default function CheckoutPage() {
       razorpay.on('payment.failed', function (response: any) {
         console.error("Payment failed:", response.error);
         setIsProcessing(false);
-        
+
         let errorMessage = "Payment failed. Please try again.";
         let errorTitle = "Payment Failed";
-        
+
         if (response.error?.description) {
           errorMessage = response.error.description;
-          
+
           // Handle business verification errors
-          if (response.error.description.includes("business is not allowed") || 
-              response.error.description.includes("not allowed to accept payments")) {
+          if (response.error.description.includes("business is not allowed") ||
+            response.error.description.includes("not allowed to accept payments")) {
             errorTitle = "Payment Service Issue";
             errorMessage = "Our international payment service is temporarily unavailable. Please use PayPal payment instead.";
           }
         } else if (response.error?.reason) {
           errorMessage = response.error.reason;
         }
-        
+
         toast({
           title: errorTitle,
           description: errorMessage,
           variant: "destructive",
         });
       });
-      
+
       razorpay.open();
     } catch (error) {
       console.error("Razorpay payment error:", error);
@@ -912,7 +912,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const isFormValid = customerName && customerEmail && customerPhone && 
+  const isFormValid = customerName && customerEmail && customerPhone &&
     shippingAddress.street && shippingAddress.city && shippingAddress.country && shippingAddress.zip &&
     validateName(customerName) && validateEmail(customerEmail) && validatePhone(customerPhone) &&
     !nameError && !emailError && !phoneError;
@@ -930,18 +930,22 @@ export default function CheckoutPage() {
         url="https://a2zbookshop.com/checkout"
         type="website"
       />
-      <div className="max-w-6xl mx-auto py-8 px-4 mt-6">
+      <div className="container-custom py-8 mt-6">
         <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
-        
-        <div className="grid lg:grid-cols-3 gap-8">
+
+        <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Forms */}
           <div className="lg:col-span-2 space-y-6">
             {/* Customer Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Customer Information</CardTitle>
+            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+              <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
+                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                 <UserPen className="w-6 h-6" />
+                  Customer Information
+                </CardTitle>
+                <p className="text-gray-600 text-sm mt-1 ml-8">Tell us who you are</p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="customerName">Full Name *</Label>
@@ -1007,7 +1011,7 @@ export default function CheckoutPage() {
                         </button>
                       </div>
                       {showPhoneCountryDropdown && (
-                        <div 
+                        <div
                           className="absolute z-50 w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
                           onMouseLeave={() => {
                             if (!phoneCountryQuery) {
@@ -1023,11 +1027,10 @@ export default function CheckoutPage() {
                           {(phoneCountryQuery ? filteredCountryCodes : countryCodes).map((country, index) => (
                             <div
                               key={index}
-                              className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${
-                                selectedCountryIndex === index 
-                                  ? 'bg-blue-100 text-blue-900' 
-                                  : 'hover:bg-gray-100'
-                              }`}
+                              className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${selectedCountryIndex === index
+                                ? 'bg-blue-100 text-blue-900'
+                                : 'hover:bg-gray-100'
+                                }`}
                               onClick={() => selectPhoneCountry(country.code)}
                               onMouseEnter={() => setSelectedCountryIndex(index)}
                             >
@@ -1059,17 +1062,21 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Shipping Address */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Shipping Address</CardTitle>
+            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+              <CardHeader className="px-6 pt-4 pb-2 bg-white border-b-2 border-gray-100">
+                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                 <MapPinPlusInside className="w-5 h-5" />
+                  Shipping Address
+                </CardTitle>
+                <p className="text-gray-600 text-sm mt-1 ml-8">Where should we deliver?</p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="street">Street Address *</Label>
                   <Input
                     id="street"
                     value={shippingAddress.street}
-                    onChange={(e) => setShippingAddress({...shippingAddress, street: e.target.value})}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
                     placeholder="Enter street address"
                     required
                   />
@@ -1080,7 +1087,7 @@ export default function CheckoutPage() {
                     <Input
                       id="city"
                       value={shippingAddress.city}
-                      onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
                       placeholder="Enter city"
                       required
                     />
@@ -1090,7 +1097,7 @@ export default function CheckoutPage() {
                     <Input
                       id="state"
                       value={shippingAddress.state}
-                      onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
                       placeholder="Enter state/province"
                     />
                   </div>
@@ -1101,7 +1108,7 @@ export default function CheckoutPage() {
                     <Input
                       id="zip"
                       value={shippingAddress.zip}
-                      onChange={(e) => setShippingAddress({...shippingAddress, zip: e.target.value})}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, zip: e.target.value })}
                       placeholder="Enter ZIP/postal code"
                       required
                     />
@@ -1135,14 +1142,34 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Payment Method */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Method</CardTitle>
+            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+              <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
+                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                  <svg className="w-6 h-6 text-primary-aqua" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                    <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                  </svg>
+                  Payment Method
+                </CardTitle>
+                <p className="text-gray-600 text-sm mt-1 ml-8">Choose how to pay</p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
+
+                    <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#635BFF]/30 bg-[#635BFF]/5">
+                      <RadioGroupItem value="stripe" id="stripe" />
+                      <div className="flex items-center space-x-2 flex-1">
+                        <CreditCard className="w-5 h-5 text-[#635BFF]" />
+                        <Label htmlFor="stripe" className="flex-1 cursor-pointer">
+                          <span className="font-semibold text-[#635BFF]">Stripe</span> - Credit/Debit Card
+                          <Badge variant="secondary" className="ml-2 bg-[#635BFF]/10 text-[#635BFF]">Recommended</Badge>
+                          <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex, and more</p>
+                        </Label>
+                      </div>
+                    </div>
+
+                    {/* <div className="flex items-center space-x-3 p-4 border rounded-xl">
                       <RadioGroupItem value="paypal" id="paypal" />
                       <div className="flex items-center space-x-2 flex-1">
                         <Globe className="w-5 h-5 text-blue-600" />
@@ -1151,9 +1178,9 @@ export default function CheckoutPage() {
                           <Badge variant="secondary" className="ml-2">International</Badge>
                         </Label>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                    </div> */}
+
+                    <div className="flex items-center space-x-3 p-4 border rounded-xl">
                       <RadioGroupItem value="razorpay-international" id="razorpay-international" />
                       <div className="flex items-center space-x-2 flex-1">
                         <Globe className="w-5 h-5 text-blue-600" />
@@ -1168,33 +1195,46 @@ export default function CheckoutPage() {
                 </RadioGroup>
 
                 <div className="mt-6">
-                  {paymentMethod === "paypal" && (
+                  {paymentMethod === "stripe" && isFormValid && (
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600">
-                        You will be redirected to PayPal to complete your payment securely.
+                        Enter your card details below to complete the payment
+                        securely.
                       </p>
-                      <PayPalCheckoutButton
+                      <StripeCheckoutForm
                         amount={total}
-                        currency={userCurrency}
-                        customerData={{
-                          name: customerName,
-                          email: customerEmail,
-                          phone: customerPhone,
-                          shippingAddress: shippingAddress
-                        }}
-                        cartItems={cartItems}
-                        disabled={!isFormValid}
+                        customerEmail={customerEmail}
+                        customerName={customerName}
+                        customerPhone={customerPhone}
+                        shippingAddress={shippingAddress}
+                        billingAddress={sameBillingAddress ? shippingAddress : billingAddress}
+                        subtotal={subtotal.toFixed(2)}
+                        shipping={shippingCost.toFixed(2)}
+                        tax={tax.toFixed(2)}
+                        total={total.toFixed(2)}
+                        items={cartItems.map((item) => ({
+                          bookId: item.book?.id,
+                          quantity: item.quantity,
+                          price: item.book?.price,
+                          title: item.book?.title,
+                          author: item.book?.author,
+                        }))}
                         onSuccess={(orderId) => {
-                          console.log('PayPal payment success:', orderId);
+                          clearCart();
+                          queryClient.invalidateQueries({
+                            queryKey: ["/api/orders"],
+                          });
+                          setLocation(
+                            `/orders/${orderId}?email=${encodeURIComponent(
+                              customerEmail
+                            )}`
+                          );
                         }}
-                        onError={(error) => {
-                          console.error('PayPal payment error:', error);
-                        }}
+                        onCancel={() => setPaymentMethod("stripe")}
+                        disabled={isProcessing}
                       />
                     </div>
                   )}
-
-
 
                   {paymentMethod === "razorpay-international" && isFormValid && (
                     <div className="space-y-4">
@@ -1204,7 +1244,7 @@ export default function CheckoutPage() {
                       <Button
                         onClick={handleRazorpayInternationalPayment}
                         disabled={isProcessing}
-                        className="w-full bg-blue-600 hover:bg-blue-700 touch-target mobile-button"
+                        className="w-full bg-primary-aqua hover:brightness-110 hover:shadow-md active:scale-[0.98] text-white rounded-full touch-target mobile-button transition-all duration-200"
                       >
                         {isProcessing ? "Processing..." : "Pay with International Card"}
                       </Button>
@@ -1223,66 +1263,101 @@ export default function CheckoutPage() {
 
           {/* Right Column - Order Summary */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+              <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
+                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                  <ScrollText className="w-6 h-6 text-primary-aqua" />
+                  Order Summary
+                </CardTitle>
+                <p className="text-gray-600 text-sm mt-1 ml-9">Review your items before checkout</p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 px-6 pt-2 pb-6">
                 {/* Order Items */}
-                <div className="space-y-3">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start">
-                      <div className="flex-1">
-                        {(item as any).isGift ? (
-                          <>
-                            <h4 className="font-medium text-sm text-green-700">🎁 Free Gift</h4>
-                            <p className="text-xs text-green-600">Complimentary item</p>
-                            <p className="text-xs text-green-500">Qty: {item.quantity}</p>
-                          </>
-                        ) : item.book ? (
-                          <>
-                            <h4 className="font-medium text-sm">{item.book.title}</h4>
-                            <p className="text-xs text-gray-600">by {item.book.author}</p>
-                            <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
-                          </>
-                        ) : (
-                          <>
-                            <h4 className="font-medium text-sm text-gray-600">Unknown Item</h4>
-                            <p className="text-xs text-gray-500">Details unavailable</p>
-                            <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
-                          </>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                    <svg className="w-4 h-4 text-primary-aqua" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                    </svg>
+                    Items ({cartItems.length})
+                  </h3>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100 hover:border-primary-aqua/30 transition-all duration-200">
+                        {item.book?.imageUrl && (
+                          <div className="flex-shrink-0 w-16 h-20 rounded overflow-hidden bg-white shadow-sm">
+                            <img
+                              src={item.book.imageUrl}
+                              alt={item.book.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         )}
-                      </div>
-                      {(item as any).isGift ? (
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-green-600">FREE</p>
-                          <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Gift</span>
+                        <div className="flex-1 min-w-0">
+                          {(item as any).isGift ? (
+                            <>
+                              <div className="flex items-center gap-1 mb-1">
+                                <span className="text-lg">🎁</span>
+                                <h4 className="font-semibold text-sm text-green-700">Free Gift</h4>
+                              </div>
+                              <p className="text-xs text-green-600 mb-1">Complimentary item</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">Qty: {item.quantity}</span>
+                                <p className="text-sm font-bold text-green-600">FREE</p>
+                              </div>
+                            </>
+                          ) : item.book ? (
+                            <>
+                              <h4 className="font-semibold text-sm text-gray-900 line-clamp-1 mb-1">{item.book.title}</h4>
+                              <p className="text-xs text-gray-600 mb-2 line-clamp-1">by {item.book.author}</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full font-medium">Qty: {item.quantity}</span>
+                                <div className="text-right font-semibold text-sm text-gray-900">
+                                  <CheckoutItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <h4 className="font-medium text-sm text-gray-600">Unknown Item</h4>
+                              <p className="text-xs text-gray-500">Details unavailable</p>
+                              <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full">Qty: {item.quantity}</span>
+                            </>
+                          )}
                         </div>
-                      ) : item.book ? (
-                        <CheckoutItemPrice bookPrice={parseFloat(item.book.price)} quantity={item.quantity} />
-                      ) : (
-                        <span className="text-sm text-gray-500">N/A</span>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <Separator />
+                <div className="border-t-2 border-dashed border-gray-200"></div>
 
                 {/* Coupon Code Section */}
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Have a Coupon?</h4>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                    <svg className="w-4 h-4 text-primary-aqua" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
+                      <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
+                    </svg>
+                    Promo Code
+                  </h3>
                   {appliedCoupon ? (
-                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div>
-                        <span className="text-sm font-medium text-green-800">{appliedCoupon.code}</span>
-                        <p className="text-xs text-green-600">{appliedCoupon.description}</p>
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="text-sm font-bold text-green-800 block">{appliedCoupon.code}</span>
+                          <p className="text-xs text-green-600">{appliedCoupon.description}</p>
+                        </div>
                       </div>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         onClick={removeCoupon}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 rounded-full h-8 px-3 font-medium"
                       >
                         Remove
                       </Button>
@@ -1290,105 +1365,153 @@ export default function CheckoutPage() {
                   ) : (
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Enter coupon code"
+                        placeholder="Enter promo code"
                         value={couponCode}
                         onChange={(e) => {
                           setCouponCode(e.target.value);
                           setCouponError("");
                         }}
-                        className="flex-1"
+                        className="flex-1 border-2 border-gray-200 focus:border-primary-aqua rounded-lg"
                         onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
                       />
                       <Button
                         size="sm"
                         onClick={applyCoupon}
                         disabled={isApplyingCoupon || !couponCode.trim()}
-                        className="bg-primary-aqua hover:bg-primary-aqua/90"
+                        className="bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white rounded-lg px-6 font-semibold shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
                       >
                         {isApplyingCoupon ? "Applying..." : "Apply"}
                       </Button>
                     </div>
                   )}
                   {couponError && (
-                    <p className="text-xs text-red-600">{couponError}</p>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Price Breakdown */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>{formatAmount(convertedAmounts.subtotal)}</span>
-                  </div>
-                  {appliedCoupon && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount ({appliedCoupon.code}):</span>
-                      <span>-{formatAmount(calculateDiscount())}</span>
+                    <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-xs text-red-600 font-medium">{couponError}</p>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span>Shipping:</span>
-                    <span>{convertedAmounts.shipping === 0 ? 'Free Delivery' : formatAmount(convertedAmounts.shipping)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax (1%):</span>
-                    <span>{formatAmount(convertedAmounts.tax)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total:</span>
-                    <span className="text-primary-aqua">{formatAmount(calculateFinalTotal())}</span>
-                  </div>
                 </div>
 
-                <Separator />
+                <div className="border-t-2 border-dashed border-gray-200"></div>
+
+                {/* Price Breakdown */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                    <svg className="w-4 h-4 text-primary-aqua" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                    </svg>
+                    Price Details
+                  </h3>
+                  <div className="space-y-2.5 text-sm bg-gray-50 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-semibold text-gray-900">{formatAmount(convertedAmounts.subtotal)}</span>
+                    </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span className="flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          Discount ({appliedCoupon.code})
+                        </span>
+                        <span className="font-bold">-{formatAmount(calculateDiscount())}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Shipping</span>
+                      <span className="font-semibold">
+                        {convertedAmounts.shipping === 0 ?
+                          <span className="text-green-600 font-bold flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                              <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                            </svg>
+                            FREE
+                          </span> :
+                          <span className="text-gray-900">{formatAmount(convertedAmounts.shipping)}</span>
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Tax (1%)</span>
+                      <span className="font-semibold text-gray-900">{formatAmount(convertedAmounts.tax)}</span>
+                    </div>
+                    <div className="border-t-2 border-gray-200 my-2"></div>
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-base font-bold text-gray-900">Total Amount</span>
+                      <span className="text-xl font-bold text-primary-aqua">{formatAmount(calculateFinalTotal())}</span>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Delivery Date */}
                 {shippingRate && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-shrink-0">
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                  <>
+                    <div className="border-t-2 border-dashed border-gray-200"></div>
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-sm text-blue-900 mb-1">
+                            Expected Delivery
+                          </h4>
+                          <p className="text-sm text-blue-700 font-semibold mb-2">
+                            {(() => {
+                              const deliveryEstimate = calculateDeliveryDate(
+                                shippingRate.minDeliveryDays,
+                                shippingRate.maxDeliveryDays
+                              );
+                              return deliveryEstimate.deliveryText;
+                            })()}
+                          </p>
+                          <div className="flex items-center gap-1 text-xs text-blue-600">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                            </svg>
+                            Shipping to {shippingRate.countryName}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm text-blue-800">
-                          Expected Delivery
-                        </p>
-                        <p className="text-xs text-blue-600">
-                          {(() => {
-                            const deliveryEstimate = calculateDeliveryDate(
-                              shippingRate.minDeliveryDays,
-                              shippingRate.maxDeliveryDays
-                            );
-                            return deliveryEstimate.deliveryText;
-                          })()}
-                        </p>
-                        <p className="text-xs text-blue-500 mt-1">
-                          To {shippingRate.countryName}
-                        </p>
-                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </CardContent>
             </Card>
 
             {/* Security Notice */}
-            <Card>
+            <Card className=" rounded-xl border-2 border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 shadow-md">
               <CardContent className="pt-6">
-                <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-sm">Secure Checkout</h4>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Your payment information is encrypted and secure. We never store your payment details.
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                      <CheckCircle className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 ">
+                    <h4 className="font-bold text-base text-green-900 mb-2 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      100% Secure Checkout
+                    </h4>
+                    <p className="text-sm text-green-800 leading-relaxed">
+                      Your payment information is encrypted with industry-standard SSL security. We never store your payment details on our servers.
                     </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="text-xs px-2 py-1 bg-white/70 text-green-800 rounded-full font-medium shadow-sm">🔒 SSL Encrypted</span>
+                      <span className="text-xs px-2 py-1 bg-white/70 text-green-800 rounded-full font-medium shadow-sm">✓ PCI Compliant</span>
+                      <span className="text-xs px-2 py-1 bg-white/70 text-green-800 rounded-full font-medium shadow-sm">🛡️ Secure Payment</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -1399,10 +1522,10 @@ export default function CheckoutPage() {
 
       {/* Load Razorpay Script */}
       <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-      
+
       {/* Payment Loading Spinner */}
       {isProcessing && (
-        <PaymentSpinner 
+        <PaymentSpinner
           message={paymentMethod === 'paypal' ? 'Redirecting to PayPal...' : 'Processing payment...'}
           paymentMethod={paymentMethod === 'paypal' ? 'paypal' : 'razorpay'}
         />

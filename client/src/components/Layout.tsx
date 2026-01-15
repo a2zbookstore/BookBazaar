@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
 import { useState, useEffect } from "react";
-import { useCurrency } from "@/hooks/useCurrency";
-import { useShipping } from "@/hooks/useShipping";
 import CountrySelector from "@/components/CountrySelector";
 import { SecretAdminButton } from "@/components/SecretAdminButton";
-import { SecretAdminAccess } from "@/components/SecretAdminAccess";
+import Footer from "@/components/Footer";
+import { SiWhatsapp } from "react-icons/si";
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,16 +25,30 @@ export default function Layout({ children }: LayoutProps) {
   const { wishlistCount } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { location: userLocation } = useShipping();
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       setIsScrolled(scrollY > 10);
+      
+      // Update header height CSS variable
+      const header = document.querySelector('.fixed-header');
+      if (header) {
+        const height = header.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
     };
 
+    // Initial call
+    handleScroll();
+    
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
   }, []);
 
   const isActive = (path: string) => {
@@ -74,7 +88,16 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Desktop Right Actions */}
             <div className="hidden md:flex items-center gap-2">
-              
+               {/* WhatsApp Button */}
+              <a
+                href="https://wa.me/14145956843"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors px-2 py-1 rounded-lg hover:bg-green-50"
+              >
+                <SiWhatsapp className="h-5 w-5" />
+                <span className="text-sm font-medium">WhatsApp</span>
+              </a>
               {isAuthenticated && (
                 <Link
                   href="/wishlist"
@@ -140,13 +163,13 @@ export default function Layout({ children }: LayoutProps) {
                   <Button
                     variant="outline"
                     onClick={() => setLocation('/login')}
-                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+                    className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => setLocation('/register')}
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
+                    className="bg-primary-aqua hover:bg-secondary-aqua rounded-full"
                   >
                     Register
                   </Button>
@@ -354,7 +377,7 @@ export default function Layout({ children }: LayoutProps) {
               >
                 Catalog
               </Link>
-              <Link
+              {/* <Link
                 href="/catalog"
                 className="text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 text-gray-600"
               >
@@ -365,7 +388,7 @@ export default function Layout({ children }: LayoutProps) {
                 className="text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 text-gray-600"
               >
                 Featured Collection
-              </Link>
+              </Link> */}
               <Link
                 href="/my-orders"
                 className={`text-sm px-3 py-1 rounded hover:bg-primary-aqua hover:text-white transition-colors border border-gray-300 ${
@@ -438,59 +461,7 @@ export default function Layout({ children }: LayoutProps) {
         {children}
       </main>
       {/* Footer */}
-      <footer className="bg-base-black text-white mt-16">
-        <div className="container-custom py-12">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bookerly font-bold footer-logo">
-                  A<span className="red-2">2</span>Z BOOKSHOP
-                </h3>
-                <SecretAdminAccess />
-              </div>
-              <p className="text-gray-400 mb-4">
-                Your trusted partner in discovering rare, collectible, and contemporary books from around the world.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
-                <li><Link href="/catalog" className="text-gray-400 hover:text-white transition-colors">Catalog</Link></li>
-                <li><Link href="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Categories</h4>
-              <ul className="space-y-2">
-                <li><Link href="/catalog?category=fiction" className="text-gray-400 hover:text-white transition-colors">Fiction</Link></li>
-                <li><Link href="/catalog?category=non-fiction" className="text-gray-400 hover:text-white transition-colors">Non-Fiction</Link></li>
-                <li><Link href="/catalog?category=rare" className="text-gray-400 hover:text-white transition-colors">Rare Books</Link></li>
-                <li><Link href="/catalog?category=academic" className="text-gray-400 hover:text-white transition-colors">Academic</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Customer Service</h4>
-              <ul className="space-y-2">
-                <li><Link href="/shipping-info" className="text-gray-400 hover:text-white transition-colors">Shipping Info</Link></li>
-                <li><Link href="/return-policy" className="text-gray-400 hover:text-white transition-colors">Return Policy</Link></li>
-                <li><Link href="/cancellation-policy" className="text-gray-400 hover:text-white transition-colors">Cancellation Policy</Link></li>
-                <li><Link href="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link></li>
-                <li><Link href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link></li>
-                <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
-              </ul>
-            </div>
-          </div>
-          <hr className="border-gray-700 my-8" />
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">© 2025 A<span className="text-red-500">2</span>Z BOOKSHOP. All rights reserved.</p>
-            <p className="text-gray-400 text-sm">Made with ❤️ for book lovers worldwide</p>
-          </div>
-          
-
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

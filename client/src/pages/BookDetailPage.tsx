@@ -1,13 +1,12 @@
-import React from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Star, ShoppingCart, Truck, Shield, RotateCcw, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Star, ShoppingCart, Truck, Shield, RotateCcw, ChevronRight, Minus, Plus } from "lucide-react";
 import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO, { generateBookStructuredData } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -30,12 +29,14 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
   return `/uploads/images/${filename}`;
 };
 
-export default function BookDetailPage() {  
+export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { shippingRate } = useShipping();
   const [, setLocation] = useLocation();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const { data: book, isLoading } = useQuery<Book>({
     queryKey: [`/api/books/${id}`],
@@ -44,24 +45,19 @@ export default function BookDetailPage() {
 
   const handleAddToCart = async () => {
     if (!book) return;
-    
+    setIsAddingToCart(true);
     try {
-      await addToCart(book.id);
-      toast({
-        title: "Added to cart",
-        description: `${book.title} has been added to your cart. Redirecting to checkout...`,
-      });
-      
-      // Redirect to checkout page after successful add to cart
-      setTimeout(() => {
-        setLocation("/checkout");
-      }, 500);
+      await addToCart(book.id, quantity);
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to add to cart",
         variant: "destructive",
       });
+    } finally {
+      setIsAddingToCart(false);
+      setQuantity(1);
+
     }
   };
 
@@ -132,7 +128,7 @@ export default function BookDetailPage() {
         structuredData={generateBookStructuredData(book)}
       />
       <div className="container-custom py-8">
-        <Breadcrumb 
+        <Breadcrumb
           items={[
             { label: "Catalog", href: "/catalog" },
             { label: book.title }
@@ -143,11 +139,11 @@ export default function BookDetailPage() {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Book Image */}
           <div className="space-y-4">
-            <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
+            <div className="aspect-[3/4] overflow-hidden rounded-lg bg-white max-w-md mx-auto p-6">
               <img
                 src={getImageSrc(book.imageUrl)}
                 alt={book.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
@@ -165,7 +161,7 @@ export default function BookDetailPage() {
                 {book.title}
               </h1>
               <p className="text-xl text-secondary-black mb-4">by {book.author}</p>
-              
+
               {/* Rating */}
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex">
@@ -214,13 +210,89 @@ export default function BookDetailPage() {
               {book.stock === 0 ? (
                 <div className="text-abe-red font-medium">Out of Stock</div>
               ) : (
-                <Button
-                  onClick={handleAddToCart}
-                  className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3"
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart
-                </Button>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                  {/* Quantity Selector */}
+                  <div className="flex items-center gap-3">
+                    <label className="font-semibold text-base-black text-sm">Qty:</label>
+                    <div className="flex items-center gap-1 border rounded-lg p-1 bg-white shadow-sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        disabled={quantity <= 1 || isAddingToCart}
+                        className="h-8 w-8 p-0 hover:bg-gray-100 rounded"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <input
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (!value) {
+                            setQuantity(0);
+                            return;
+                          }
+
+                          if (value > book.stock) {
+                            setQuantity(book.stock);
+                            toast({
+                              title: "Stock limit reached",
+                              description: `Only ${book.stock} items available in stock.`,
+                              variant: "default",
+                            });
+                            return;
+                          }
+                          if (!isNaN(value) && value >= 1 && value <= book.stock) {
+                            setQuantity(value);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (value > book.stock) {
+                            setQuantity(book.stock);
+                            toast({
+                              title: "Quantity adjusted",
+                              description: `Only ${book.stock} items available in stock.`,
+                              variant: "default",
+                            });
+                          }
+                        }}
+                        className="w-12 text-center border-0 focus:outline-none text-base font-semibold bg-transparent"
+                        disabled={isAddingToCart}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (quantity < book.stock) {
+                            setQuantity(quantity + 1);
+                          } else {
+                            toast({
+                              title: "Stock limit reached",
+                              description: `Only ${book.stock} items available in stock.`,
+                              variant: "default",
+                            });
+                          }
+                        }}
+                        disabled={quantity >= book.stock || isAddingToCart}
+                        className="h-8 w-8 p-0 hover:bg-gray-100 rounded"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Add to Cart Button */}
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart || quantity < 1}
+                    className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto shadow-md hover:shadow-lg transition-shadow"
+                  >
+                    <ShoppingCart className={`h-4 w-4 mr-2 ${isAddingToCart ? 'animate-cart-slide' : ''}`} />
+                    {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -287,7 +359,7 @@ export default function BookDetailPage() {
                 <div>
                   <h3 className="font-semibold text-green-800 mb-2">30-Day Return Policy</h3>
                   <p className="text-sm text-green-700 leading-relaxed">
-                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund. 
+                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund.
                     Books must be in the same condition as when received. Return shipping is free for damaged or incorrectly described items.
                   </p>
                   <Link href="/return-request" className="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium mt-2">
@@ -375,6 +447,6 @@ export default function BookDetailPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </Layout >
   );
 }

@@ -1,20 +1,184 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
-import BookCard from "@/components/BookCard";
-import GiftWithPurchase from "@/components/GiftWithPurchase";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Book, Category } from "@/types";
-import { Star, TrendingUp, Award, Flame, Package, BookOpen } from "lucide-react";
+import { Star, TrendingUp, Award, Flame, Package, BookOpen, Library } from "lucide-react";
+import BannerCarousel from "@/components/BannerCarousel";
+import BookCarousel from "@/components/BookCarousel";
+
+// Lazy-loaded Category Carousel Component with Intersection Observer
+interface CategoryCarouselProps {
+  category: Category;
+  currentSlide: number;
+  onSlideChange: (slide: number) => void;
+}
+
+function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCarouselProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer to detect when carousel comes into view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            // Once visible, stop observing
+            observer.disconnect();
+          }
+        });
+      },
+      {
+        rootMargin: '200px', // Start loading 200px before the element comes into view
+        threshold: 0.1,
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Only fetch data when carousel is visible
+  const { data: categoryBooksResponse, isLoading } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: [`/api/books?categoryId=${category.id}&limit=12`],
+    enabled: isVisible, // Only fetch when visible
+  });
+
+  const categoryBooks = categoryBooksResponse?.books || [];
+
+  // Don't render if no books after loading
+  if (isVisible && !isLoading && categoryBooks.length === 0) {
+    return null;
+  }
+
+  return (
+    <div ref={containerRef} className="container-custom py-8">
+      {isVisible ? (
+        <>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <Library className="h-8 w-8 text-primary-aqua" />
+              <h3 className="text-3xl font-bookerly font-bold text-base-black">
+                {category.name}
+                {/* {isLoading && <span className="text-sm text-gray-500 ml-3">Loading...</span>} */}
+              </h3>
+            </div>
+            <Link href={`/catalog?categoryId=${category.id}`}>
+              <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+                View All {category.name}
+              </Button>
+            </Link>
+          </div>
+
+          <BookCarousel
+            books={categoryBooks}
+            currentSlide={currentSlide}
+            onSlideChange={onSlideChange}
+            emptyMessage={`No ${category.name} books available at the moment.`}
+            showEmptyBrowseButton={false}
+            isLoading={isLoading}
+          />
+        </>
+      ) : (
+        // Placeholder while waiting to scroll into view - show category name
+        <div className="py-8">
+          <div className="flex items-center gap-3 mb-8 opacity-50">
+            <Library className="h-8 w-8 text-gray-400" />
+            <h3 className="text-3xl font-bookerly font-bold text-gray-400">{category.name}</h3>
+          </div>
+          <BookCarousel
+            books={[]}
+            currentSlide={0}
+            onSlideChange={() => { }}
+            emptyMessage=""
+            showEmptyBrowseButton={false}
+            isLoading={true}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function HomePage() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [nfpaSlide, setNfpaSlide] = useState(0);
+  const [dsmSlide, setDsmSlide] = useState(0);
+  const [bestsellersSlide, setBestsellersSlide] = useState(0);
+  const [featuredSlide, setFeaturedSlide] = useState(0);
+  const [trendingSlide, setTrendingSlide] = useState(0);
+  const [newArrivalsSlide, setNewArrivalsSlide] = useState(0);
+  const [boxSetSlide, setBoxSetSlide] = useState(0);
   const [hasItemsInCart, setHasItemsInCart] = useState(false);
-  
+  const [categorySlides, setCategorySlides] = useState<Record<number, number>>({});
+
+  // Visibility states for lazy loading
+  const [isNfpaVisible, setIsNfpaVisible] = useState(false);
+  const [isDsmVisible, setIsDsmVisible] = useState(false);
+  const [isBestsellersVisible, setIsBestsellersVisible] = useState(false);
+  const [isFeaturedVisible, setIsFeaturedVisible] = useState(false);
+  const [isTrendingVisible, setIsTrendingVisible] = useState(false);
+  const [isNewArrivalsVisible, setIsNewArrivalsVisible] = useState(false);
+  const [isBoxSetVisible, setIsBoxSetVisible] = useState(false);
+
+  // Refs for Intersection Observer
+  const nfpaRef = useRef<HTMLDivElement>(null);
+  const dsmRef = useRef<HTMLDivElement>(null);
+  const bestsellersRef = useRef<HTMLDivElement>(null);
+  const featuredRef = useRef<HTMLDivElement>(null);
+  const trendingRef = useRef<HTMLDivElement>(null);
+  const newArrivalsRef = useRef<HTMLDivElement>(null);
+  const boxSetRef = useRef<HTMLDivElement>(null);
+
+  // Setup Intersection Observers for lazy loading
+  useEffect(() => {
+    const observerOptions = {
+      rootMargin: '200px',
+      threshold: 0.1,
+    };
+
+    const setupObserver = (ref: React.RefObject<HTMLDivElement>, setVisible: (visible: boolean) => void) => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setVisible(true);
+              observer.disconnect();
+            }
+          });
+        },
+        observerOptions
+      );
+
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+
+      return observer;
+    };
+
+    const observers = [
+      setupObserver(nfpaRef, setIsNfpaVisible),
+      setupObserver(dsmRef, setIsDsmVisible),
+      setupObserver(bestsellersRef, setIsBestsellersVisible),
+      setupObserver(featuredRef, setIsFeaturedVisible),
+      setupObserver(trendingRef, setIsTrendingVisible),
+      setupObserver(newArrivalsRef, setIsNewArrivalsVisible),
+      setupObserver(boxSetRef, setIsBoxSetVisible),
+    ];
+
+    return () => {
+      observers.forEach(observer => observer.disconnect());
+    };
+  }, []);
+
   // Structured data for homepage
   const structuredData = {
     "@context": "https://schema.org",
@@ -28,29 +192,48 @@ export default function HomePage() {
       "query-input": "required name=search_term_string"
     }
   };
-  
-  const { data: featuredBooksResponse } = useQuery<{ books: Book[]; total: number }>({
+
+  // NFPA Books Query (title only)
+  const { data: nfpaBooksResponse, isLoading: nfpaLoading } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: ["/api/books?search=NFPA&titleOnly=true&limit=12"],
+    enabled: isNfpaVisible,
+  });
+  const nfpaBooks = nfpaBooksResponse?.books || [];
+
+  // DSM Books Query (title only)
+  const { data: dsmBooksResponse, isLoading: dsmLoading } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: ["/api/books?search=DSM&titleOnly=true&limit=12"],
+    enabled: isDsmVisible,
+  });
+  const dsmBooks = dsmBooksResponse?.books || [];
+
+  const { data: featuredBooksResponse, isLoading: featuredLoading } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
+    enabled: isFeaturedVisible,
   });
   const featuredBooks = featuredBooksResponse?.books || [];
 
-  const { data: bestsellerBooksResponse } = useQuery<{ books: Book[]; total: number }>({
+  const { data: bestsellerBooksResponse, isLoading: bestsellerLoading } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?bestseller=true&limit=12"],
+    enabled: isBestsellersVisible,
   });
   const bestsellerBooks = bestsellerBooksResponse?.books || [];
 
-  const { data: trendingBooksResponse } = useQuery<{ books: Book[]; total: number }>({
+  const { data: trendingBooksResponse, isLoading: trendingLoading } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?trending=true&limit=12"],
+    enabled: isTrendingVisible,
   });
   const trendingBooks = trendingBooksResponse?.books || [];
 
-  const { data: newArrivalsResponse } = useQuery<{ books: Book[]; total: number }>({
+  const { data: newArrivalsResponse, isLoading: newArrivalsLoading } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?newArrival=true&limit=12"],
+    enabled: isNewArrivalsVisible,
   });
   const newArrivals = newArrivalsResponse?.books || [];
 
-  const { data: boxSetBooksResponse } = useQuery<{ books: Book[]; total: number }>({
+  const { data: boxSetBooksResponse, isLoading: boxSetLoading } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?boxSet=true&limit=12"],
+    enabled: isBoxSetVisible,
   });
   const boxSetBooks = boxSetBooksResponse?.books || [];
 
@@ -62,29 +245,9 @@ export default function HomePage() {
     queryKey: ["/api/cart"],
   });
 
-  // Check if cart has items for gift offer
   useEffect(() => {
     setHasItemsInCart(Array.isArray(cartItems) && cartItems.length > 0);
   }, [cartItems]);
-
-  // Auto-scroll for moving sections - pauses when hovering
-  useEffect(() => {
-    if (isPaused) return;
-    
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % Math.max(1, Math.ceil(featuredBooks.length / 4)));
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [featuredBooks.length, isPaused]);
-
-  const categoryImages = [
-    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1495640452828-3df6795cf69b?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=300&fit=crop",
-  ];
 
   return (
     <Layout>
@@ -97,417 +260,206 @@ export default function HomePage() {
         type="website"
         structuredData={structuredData}
       />
-      
-      {/* Database-driven Gift with Purchase Section */}
-      <GiftWithPurchase 
-        hasItemsInCart={hasItemsInCart} 
-        onGiftAdded={() => refetch()}
-      />
+
+      <div className="container-custom py-8 mt-4">
+        <BannerCarousel
+          banners={[{
+            id: 1,
+            image: "/uploads/images/banner/banner-1.png",
+            alt: "Buy 3 Books Offer",
+            link: "/catalog"
+          },
+          {
+            id: 2,
+            image: "/uploads/images/banner/banner-2.png",
+            alt: "Shop for $499",
+            link: "/catalog"
+          },
+          {
+            id: 3,
+            image: "/uploads/images/banner/banner-3.png",
+            alt: "Shop for $999",
+            link: "/catalog"
+          }]}
+          autoPlayInterval={5000}
+          showIndicators={true}
+          showNavigation={true}
+          height="h-48 md:h-64"
+        />
+      </div>
+
+      {/* NFPA Books Section - Moving Carousel */}
+      <div ref={nfpaRef} className="container-custom py-4">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-8 w-8 text-red-600" />
+            <h3 className="text-3xl font-bookerly font-bold text-base-black">NFPA Books</h3>
+          </div>
+          <Link href="/catalog?search=NFPA">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+              View All NFPA Books
+            </Button>
+          </Link>
+        </div>
+        <BookCarousel
+          books={nfpaBooks}
+          currentSlide={nfpaSlide}
+          onSlideChange={setNfpaSlide}
+          bgGradient="bg-gradient-to-r from-red-50 via-orange-50 to-amber-50"
+          emptyMessage="No NFPA books available at the moment."
+          showEmptyBrowseButton={false}
+          isLoading={nfpaLoading || !isNfpaVisible}
+        />
+      </div>
+
+      {/* DSM Books Section - Moving Carousel */}
+      <div ref={dsmRef} className="container-custom py-4">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Award className="h-8 w-8 text-purple-600" />
+            <h3 className="text-3xl font-bookerly font-bold text-base-black">DSM Books</h3>
+          </div>
+          <Link href="/catalog?search=DSM">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+              View All DSM Books
+            </Button>
+          </Link>
+        </div>
+        <BookCarousel
+          books={dsmBooks}
+          currentSlide={dsmSlide}
+          onSlideChange={setDsmSlide}
+          bgGradient="bg-gradient-to-r from-purple-50 via-violet-50 to-fuchsia-50"
+          emptyMessage="No DSM books available at the moment."
+          showEmptyBrowseButton={false}
+          isLoading={dsmLoading || !isDsmVisible}
+        />
+      </div>
 
       {/* Bestsellers Section - Moving Carousel */}
-      <section className="py-12 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-8 w-8 text-primary-aqua" />
-              <h3 className="text-3xl font-bookerly font-bold text-base-black">Bestsellers</h3>
-            </div>
-            <Link href="/catalog?bestseller=true">
-              <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white">
-                View All Bestsellers
-              </Button>
-            </Link>
+      <div ref={bestsellersRef} className="container-custom py-4">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <TrendingUp className={`h-8 w-8 text-primary-aqua`} />
+            <h3 className="text-3xl font-bookerly font-bold text-base-black">Bestsellers</h3>
           </div>
-          
-          {bestsellerBooks.length > 0 ? (
-            <>
-              {/* Mobile horizontal scroll view */}
-              <div className="md:hidden overflow-x-auto">
-                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
-                  {bestsellerBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Desktop carousel view */}
-              <div className="hidden md:block relative overflow-hidden">
-                <div 
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
-                >
-                  {bestsellerBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-56">
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-secondary-black text-lg">Loading bestsellers...</p>
-            </div>
-          )}
+          <Link href="/catalog?bestseller=true">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+              View All Bestsellers
+            </Button>
+          </Link>
         </div>
-      </section>
+        <BookCarousel
+          books={bestsellerBooks}
+          currentSlide={bestsellersSlide}
+          onSlideChange={setBestsellersSlide}
+          bgGradient="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50"
+          emptyMessage="Loading bestsellers..."
+          showEmptyBrowseButton={false}
+          isLoading={bestsellerLoading || !isBestsellersVisible}
+        />
+      </div>
 
       {/* Featured Books Section - Moving Carousel */}
-      <section className="py-12">
-        <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <Star className="h-8 w-8 text-yellow-500" />
-              <h3 className="text-3xl font-bookerly font-bold text-base-black">Featured Books</h3>
-            </div>
-            <Link href="/catalog?featured=true">
-              <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white">
-                View All Featured
-              </Button>
-            </Link>
+      <div ref={featuredRef} className="container-custom py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Star className={`h-8 w-8 text-yellow-500`} />
+            <h3 className="text-3xl font-bookerly font-bold text-base-black">Featured Books</h3>
           </div>
-          
-          {featuredBooks.length > 0 ? (
-            <>
-              {/* Mobile horizontal scroll view */}
-              <div className="md:hidden overflow-x-auto">
-                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
-                  {featuredBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Desktop carousel view */}
-              <div className="hidden md:block relative overflow-hidden">
-                <div 
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${(currentSlide * 25) % 100}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
-                >
-                  {featuredBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-56">
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-secondary-black text-lg">No featured books available at the moment.</p>
-              <Link href="/catalog">
-                <Button className="mt-4 bg-primary-aqua hover:bg-secondary-aqua">
-                  Browse All Books
-                </Button>
-              </Link>
-            </div>
-          )}
+          <Link href="/catalog?featured=true">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+              View All Featured
+            </Button>
+          </Link>
         </div>
-      </section>
+        <BookCarousel
+          books={featuredBooks}
+          currentSlide={featuredSlide}
+          onSlideChange={setFeaturedSlide}
+          emptyMessage="No featured books available at the moment."
+          isLoading={featuredLoading || !isFeaturedVisible}
+        />
+      </div>
 
       {/* Trending Items Section - Moving Carousel */}
-      <section className="py-12 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <Flame className="h-8 w-8 text-red-500" />
-              <h3 className="text-3xl font-bookerly font-bold text-base-black">Trending Now</h3>
-            </div>
-            <Link href="/catalog?trending=true">
-              <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
-                View All Trending
-              </Button>
-            </Link>
+      <div ref={trendingRef} className="container-custom py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Flame className={`h-8 w-8 text-red-500`} />
+            <h3 className="text-3xl font-bookerly font-bold text-base-black">Trending Now</h3>
           </div>
-          
-          {trendingBooks.length > 0 ? (
-            <>
-              {/* Mobile horizontal scroll view */}
-              <div className="md:hidden overflow-x-auto">
-                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
-                  {trendingBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Desktop carousel view */}
-              <div className="hidden md:block relative overflow-hidden">
-                <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
-                >
-                  {trendingBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-56">
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-secondary-black text-lg">No trending books available at the moment.</p>
-              <Link href="/catalog">
-                <Button className="mt-4 bg-red-500 hover:bg-red-600 text-white">
-                  Browse All Books
-                </Button>
-              </Link>
-            </div>
-          )}
+          <Link href="/catalog?trending=true">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+              View All Trending
+            </Button>
+          </Link>
         </div>
-      </section>
+        <BookCarousel
+          books={trendingBooks}
+          currentSlide={trendingSlide}
+          onSlideChange={setTrendingSlide}
+          bgGradient="bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50"
+          emptyMessage="No trending books available at the moment."
+          isLoading={trendingLoading || !isTrendingVisible}
+        />
+      </div>
 
       {/* New Arrivals Section - Moving Carousel */}
-      <section className="py-12 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <Package className="h-8 w-8 text-green-600" />
-              <h3 className="text-3xl font-bookerly font-bold text-base-black">New Arrivals</h3>
-            </div>
-            <Link href="/catalog?newArrival=true">
-              <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white">
-                View All New Arrivals
-              </Button>
-            </Link>
+      <div ref={newArrivalsRef} className="container-custom py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Package className={`h-8 w-8 text-green-600`} />
+            <h3 className="text-3xl font-bookerly font-bold text-base-black">New Arrivals</h3>
           </div>
-          
-          {newArrivals.length > 0 ? (
-            <>
-              {/* Mobile horizontal scroll view */}
-              <div className="md:hidden overflow-x-auto">
-                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
-                  {newArrivals.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Desktop carousel view */}
-              <div className="hidden md:block relative overflow-hidden">
-                <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
-                >
-                  {newArrivals.map((book) => (
-                    <div key={book.id} className="flex-none w-56">
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-secondary-black text-lg">No new arrivals available at the moment.</p>
-              <Link href="/catalog">
-                <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white">
-                  Browse All Books
-                </Button>
-              </Link>
-            </div>
-          )}
+          <Link href="/catalog?newArrival=true">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+              View All New Arrivals
+            </Button>
+          </Link>
         </div>
-      </section>
+        <BookCarousel
+          books={newArrivals}
+          currentSlide={newArrivalsSlide}
+          onSlideChange={setNewArrivalsSlide}
+          bgGradient="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50"
+          emptyMessage="No new arrivals available at the moment."
+          isLoading={newArrivalsLoading || !isNewArrivalsVisible}
+        />
+      </div>
 
       {/* Box Set Items Section - Moving Carousel */}
-      <section className="py-12 bg-gradient-to-r from-purple-50 via-violet-50 to-indigo-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <BookOpen className="h-8 w-8 text-purple-600" />
-              <h3 className="text-3xl font-bookerly font-bold text-base-black">Box Set Collections</h3>
-            </div>
-            <Link href="/catalog?boxSet=true">
-              <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white">
-                View All Box Sets
-              </Button>
-            </Link>
+      <div ref={boxSetRef} className="container-custom py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <BookOpen className={`h-8 w-8 text-purple-600`} />
+            <h3 className="text-3xl font-bookerly font-bold text-base-black">Box Set Collections</h3>
           </div>
-          
-          {boxSetBooks.length > 0 ? (
-            <>
-              {/* Mobile horizontal scroll view */}
-              <div className="md:hidden overflow-x-auto">
-                <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
-                  {boxSetBooks.map((book) => (
-                    <div key={book.id} className="flex-none" style={{ width: '200px' }}>
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Desktop carousel view */}
-              <div className="hidden md:block relative overflow-hidden">
-                <div
-                  className="flex transition-transform duration-1000 ease-in-out gap-3 sm:gap-4"
-                  style={{ transform: `translateX(-${currentSlide * 25}%)` }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
-                >
-                  {boxSetBooks.map((book) => (
-                    <div key={book.id} className="flex-none w-56">
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-secondary-black text-lg">No box set collections available at the moment.</p>
-              <Link href="/catalog">
-                <Button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
-                  Browse All Books
-                </Button>
-              </Link>
-            </div>
-          )}
+          <Link href="/catalog?boxSet=true">
+            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
+              View All Box Sets
+            </Button>
+          </Link>
         </div>
-      </section>
+        <BookCarousel
+          books={boxSetBooks}
+          currentSlide={boxSetSlide}
+          onSlideChange={setBoxSetSlide}
+          bgGradient="bg-gradient-to-r from-purple-50 via-violet-50 to-indigo-50"
+          emptyMessage="No box set collections available at the moment."
+          isLoading={boxSetLoading || !isBoxSetVisible}
+        />
+      </div>
 
-      {/* Categories */}
-      <section className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-16">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Award className="h-8 w-8 text-primary-aqua" />
-              <h3 className="text-3xl font-bookerly font-bold text-base-black">
-                Browse by Category
-              </h3>
-            </div>
-            <p className="text-lg text-secondary-black max-w-2xl mx-auto">
-              Discover your next favorite book from our carefully curated categories
-            </p>
-          </div>
-          
-          {categories.length > 0 ? (
-            <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {categories.slice(0, 6).map((category, index) => (
-                <Link key={category.id} href={`/catalog?category=${category.slug}`}>
-                  <Card className="group cursor-pointer hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary-aqua">
-                    <CardContent className="p-4 text-center">
-                      <div className="aspect-square mb-4 overflow-hidden rounded-xl">
-                        <img
-                          src={categoryImages[index % categoryImages.length]}
-                          alt={category.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      </div>
-                      <h4 className="font-bookerly font-semibold text-base-black group-hover:text-primary-aqua transition-colors">
-                        {category.name}
-                      </h4>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-secondary-black">Categories will be displayed here once they are added.</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section className="py-20 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50">
-        <div className="container-custom">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="order-2 lg:order-1">
-              <div className="grid grid-cols-2 gap-4">
-                <img
-                  src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&h=600&fit=crop"
-                  alt="A2Z Bookshop collection"
-                  className="rounded-2xl shadow-lg w-full h-80 object-cover"
-                />
-                <div className="flex flex-col gap-4">
-                  <img
-                    src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=500&h=300&fit=crop"
-                    alt="A2Z Bookshop books"
-                    className="rounded-2xl shadow-lg w-full h-36 object-cover"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=500&h=320&fit=crop"
-                    alt="A2Z Bookshop library"
-                    className="rounded-2xl shadow-lg w-full h-40 object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <h3 className="text-4xl font-bookerly font-bold text-base-black mb-6">
-                Why Choose A<span className="text-red-500">2</span>Z BOOKSHOP?
-              </h3>
-              <p className="text-lg text-secondary-black mb-8 leading-relaxed">
-                We're passionate about connecting readers with extraordinary books. Our carefully 
-                curated collection spans from rare first editions to contemporary bestsellers, 
-                ensuring every book lover finds their perfect literary companion.
-              </p>
-              <div className="grid grid-cols-1 gap-6 mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-primary-aqua rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">1K+</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-base-black">Books Available</p>
-                    <p className="text-secondary-black text-sm">Curated collection of quality books</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">4.8</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-base-black">Customer Rating</p>
-                    <p className="text-secondary-black text-sm">Trusted by thousands of readers</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">50+</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-base-black">Countries Served</p>
-                    <p className="text-secondary-black text-sm">Worldwide shipping available</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <Link href="/about">
-                  <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white px-8 py-3 rounded-full">
-                    Learn More About Us
-                  </Button>
-                </Link>
-                <Link href="/contact">
-                  <Button className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3 rounded-full">
-                    Contact Us
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* Category-Based Carousels */}
+      {categories.length > 0 && categories.map((category) => (
+        <CategoryCarousel
+          key={category.id}
+          category={category}
+          currentSlide={categorySlides[category.id] || 0}
+          onSlideChange={(slide) => setCategorySlides(prev => ({ ...prev, [category.id]: slide }))}
+        />
+      ))}
     </Layout>
   );
 }

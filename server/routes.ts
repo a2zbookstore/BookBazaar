@@ -14,9 +14,9 @@ import { generateSitemap, generateRobotsTxt } from "./seo";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
-import { 
-  insertBookSchema, 
-  insertCategorySchema, 
+import {
+  insertBookSchema,
+  insertCategorySchema,
   insertContactMessageSchema,
   insertCartItemSchema,
   insertGiftCategorySchema,
@@ -138,10 +138,10 @@ async function sendRefundConfirmationEmail(data: {
               
               <div class="contact-info">
                   <h3>What happens next?</h3>
-                  ${data.refundStatus === 'completed' ? 
-                    `<p>Your refund has been processed and will appear in your original payment method within ${data.estimatedProcessingTime}.</p>` :
-                    `<p>Your refund is being processed and will be completed within ${data.estimatedProcessingTime}.</p>`
-                  }
+                  ${data.refundStatus === 'completed' ?
+        `<p>Your refund has been processed and will appear in your original payment method within ${data.estimatedProcessingTime}.</p>` :
+        `<p>Your refund is being processed and will be completed within ${data.estimatedProcessingTime}.</p>`
+      }
                   <p>You'll receive the refund in the same payment method you used for the original purchase.</p>
               </div>
               
@@ -216,14 +216,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for email-based authentication first
       const userId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
-      
+
       if (userId && isCustomerAuth) {
         const user = await storage.getUser(userId);
         if (user) {
           return res.json(user);
         }
       }
-      
+
       // Check for Replit authentication
       if (req.isAuthenticated && req.isAuthenticated()) {
         const replitUserId = req.user.claims.sub;
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json(user);
         }
       }
-      
+
       res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -244,10 +244,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { firstName, lastName, email } = req.body;
-      
+
       // Get current user data to preserve existing fields
       const currentUser = await storage.getUser(userId);
-      
+
       const updatedUser = await storage.upsertUser({
         id: userId,
         firstName,
@@ -256,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileImageUrl: currentUser?.profileImageUrl, // Preserve existing profile image
         role: currentUser?.role, // Preserve existing role
       });
-      
+
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user profile:", error);
@@ -271,14 +271,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { email } = req.query;
-      
+
       let order;
       let isAuthorized = false;
-      
+
       // Check for admin session authentication FIRST
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         // Admin can access any order
         const admin = await storage.getAdminById(adminId);
@@ -289,12 +289,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       // If not authorized as admin, check for session-based customer authentication
       if (!isAuthorized) {
         const sessionUserId = (req.session as any).userId;
         const isCustomerAuth = (req.session as any).isCustomerAuth;
-        
+
         if (sessionUserId && isCustomerAuth) {
           order = await storage.getOrderById(parseInt(id));
           if (order && order.userId === sessionUserId) {
@@ -302,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       // If still not authorized, check for Replit authentication
       if (!isAuthorized && req.isAuthenticated && req.isAuthenticated()) {
         const userId = (req.user as any).claims.sub;
@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isAuthorized = true;
         }
       }
-      
+
       // If still not authorized, try guest access with email
       if (!isAuthorized && email) {
         order = await storage.getOrderByIdAndEmail(parseInt(id), email as string);
@@ -319,20 +319,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isAuthorized = true;
         }
       }
-      
+
       // If still not authorized after all checks, require email for guest access
       if (!isAuthorized) {
         return res.status(401).json({ message: "Email required for guest access" });
       }
-      
+
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
+
       if (!isAuthorized) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       res.json(order);
     } catch (error) {
       console.error("Error fetching order:", error);
@@ -345,16 +345,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { email } = req.query;
-      
+
       console.log(`Invoice access attempt - Order ID: ${id}, Email: ${email}`);
-      
+
       let order;
       let isAuthorized = false;
-      
+
       // Check for admin session authentication FIRST
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         // Admin can access any order invoice
         const admin = await storage.getAdminById(adminId);
@@ -365,33 +365,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       // Check for session-based customer authentication
       if (!isAuthorized) {
         const sessionUserId = (req.session as any).userId;
         const isCustomerAuth = (req.session as any).isCustomerAuth;
         const sessionCustomerEmail = (req.session as any).customerEmail;
-        
+
         if (sessionUserId && isCustomerAuth) {
           order = await storage.getOrderById(parseInt(id));
-          if (order && (order.userId === sessionUserId || 
-                       (sessionCustomerEmail && order.customerEmail?.toLowerCase() === sessionCustomerEmail.toLowerCase()))) {
+          if (order && (order.userId === sessionUserId ||
+            (sessionCustomerEmail && order.customerEmail?.toLowerCase() === sessionCustomerEmail.toLowerCase()))) {
             isAuthorized = true;
           }
         }
       }
-      
+
       // Check for Replit authentication
       if (!isAuthorized && req.isAuthenticated && req.isAuthenticated()) {
         const userId = (req.user as any).claims.sub;
         const userEmail = (req.user as any).email;
         order = await storage.getOrderById(parseInt(id));
-        if (order && (order.userId === userId || 
-                     (userEmail && order.customerEmail?.toLowerCase() === userEmail.toLowerCase()))) {
+        if (order && (order.userId === userId ||
+          (userEmail && order.customerEmail?.toLowerCase() === userEmail.toLowerCase()))) {
           isAuthorized = true;
         }
       }
-      
+
       // Check for guest access with email verification
       if (!isAuthorized && email) {
         console.log(`Guest invoice access attempt - Order ID: ${id}, Email: ${email}`);
@@ -403,15 +403,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Guest invoice access denied - no order found with ID ${id} and email ${email}`);
         }
       }
-      
+
       if (!isAuthorized) {
         return res.status(401).json({ message: "Access denied" });
       }
-      
+
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
+
       // Generate HTML invoice that can be printed as PDF
       const invoiceHtml = `<!DOCTYPE html>
 <html>
@@ -490,11 +490,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   </div>
 </body>
 </html>`;
-      
+
       // Set proper headers for HTML content that can be printed as PDF
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Content-Disposition', `inline; filename="invoice-${order.id}.html"`);
-      
+
       res.send(invoiceHtml);
     } catch (error) {
       console.error("Error generating invoice:", error);
@@ -506,17 +506,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/track-order', async (req, res) => {
     try {
       const { orderId, email } = req.body;
-      
+
       if (!orderId || !email) {
         return res.status(400).json({ message: "Order ID and email are required" });
       }
-      
+
       const order = await storage.getOrderByIdAndEmail(parseInt(orderId), email);
-      
+
       if (!order) {
         return res.status(404).json({ message: "Order not found or email doesn't match" });
       }
-      
+
       // Return limited order info for tracking
       const trackingInfo = {
         id: order.id,
@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           price: item.price
         }))
       };
-      
+
       res.json(trackingInfo);
     } catch (error) {
       console.error("Error tracking order:", error);
@@ -563,17 +563,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { orderID } = req.params;
       const { orderData } = req.body;
-      
+
       console.log('PayPal capture request:', orderID, orderData ? 'with order data' : 'no order data');
-      
+
       // First capture the PayPal payment
       let captureData: any = null;
       let captureSuccess = false;
-      
+
       try {
         const mockReq = { params: { orderID } };
         const mockRes = {
-          status: (code: number) => ({ 
+          status: (code: number) => ({
             json: (data: any) => {
               if (code === 201 || code === 200) {
                 captureData = data;
@@ -588,17 +588,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return data;
           }
         };
-        
+
         await capturePaypalOrder(mockReq as any, mockRes as any);
       } catch (paypalError) {
         console.error('PayPal capture failed:', paypalError);
         return res.status(500).json({ error: "PayPal payment capture failed" });
       }
-      
+
       // If PayPal capture successful and we have order data, create order in our database
       if (captureSuccess && orderData) {
         console.log('Creating order after successful PayPal capture...');
-        
+
         try {
           // Create order in database
           const orderItems = orderData.items.map((item: any) => ({
@@ -627,7 +627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           console.log('Order created successfully:', order.id);
-          
+
           // Return success with order ID
           res.json({
             ...captureData,
@@ -654,7 +654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/paypal/success", async (req, res) => {
     try {
       const { token, PayerID } = req.query;
-      
+
       if (!token) {
         return res.redirect('/checkout?error=missing_token');
       }
@@ -689,11 +689,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await verifyRazorpayPayment(req, res);
   });
 
+  // Stripe routes
+  const { getStripePublishableKey, getUncachableStripeClient } = await import("./stripeClient");
+
+  // Get Stripe publishable key for frontend
+  app.get("/api/stripe/config", async (req, res) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error) {
+      console.error("Error getting Stripe config:", error);
+      res.status(500).json({ error: "Failed to get Stripe configuration" });
+    }
+  });
+
+  // Create Stripe Payment Intent for checkout
+  app.post("/api/stripe/create-payment-intent", async (req, res) => {
+    try {
+      const { amount, currency = "usd", customerEmail, customerName, orderId } = req.body;
+
+      // Validate amount
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > 999999) {
+        return res.status(400).json({ error: "Valid amount is required (must be positive and less than $999,999)" });
+      }
+
+      // Validate currency (only allow common currencies)
+      const allowedCurrencies = ["usd", "eur", "gbp", "cad", "aud", "inr"];
+      const normalizedCurrency = (currency || "usd").toLowerCase();
+      if (!allowedCurrencies.includes(normalizedCurrency)) {
+        return res.status(400).json({ error: "Invalid currency" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+
+      // Convert amount to cents (Stripe requires smallest currency unit)
+      const amountInCents = Math.round(parsedAmount * 100);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: normalizedCurrency,
+        payment_method_types: ["card"],
+        metadata: {
+          customerEmail: customerEmail || "",
+          customerName: customerName || "",
+          orderId: orderId || "",
+        },
+        receipt_email: customerEmail,
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ error: error.message || "Failed to create payment intent" });
+    }
+  });
+
+  // Get Stripe payment intent status (for redirect payments)
+  app.get("/api/stripe/payment-intent/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const stripe = await getUncachableStripeClient();
+      const paymentIntent = await stripe.paymentIntents.retrieve(id);
+
+      res.json({
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+      });
+    } catch (error: any) {
+      console.error("Error retrieving payment intent:", error);
+      res.status(500).json({ error: error.message || "Failed to retrieve payment status" });
+    }
+  });
+
+  // Confirm Stripe payment and create order
+  app.post("/api/stripe/confirm-order", async (req, res) => {
+    try {
+      const { paymentIntentId, orderData } = req.body;
+
+      if (!paymentIntentId || !orderData) {
+        return res.status(400).json({ error: "Payment intent ID and order data required" });
+      }
+
+      // Validate required order fields
+      if (!orderData.customerName || !orderData.customerEmail || !orderData.items || !Array.isArray(orderData.items)) {
+        return res.status(400).json({ error: "Invalid order data: missing required fields" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+
+      // Verify payment intent status
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      // Allow both succeeded and processing status (processing is common for BNPL methods)
+      if (paymentIntent.status !== "succeeded" && paymentIntent.status !== "processing") {
+        return res.status(400).json({
+          error: `Payment not completed. Status: ${paymentIntent.status}`
+        });
+      }
+
+      // Set payment status based on intent status
+      const paymentStatus = paymentIntent.status === "succeeded" ? "paid" : "pending";
+
+      // Normalize items to ensure proper format
+      const normalizedItems = orderData.items.map((item: any) => ({
+        bookId: item.bookId,
+        quantity: parseInt(item.quantity) || 1,
+        price: String(item.price || "0"),
+        title: item.title || "Unknown Item",
+        author: item.author || "Unknown Author"
+      }));
+
+      // Create order in database
+      const order = await storage.createOrder({
+        customerName: orderData.customerName,
+        customerEmail: orderData.customerEmail,
+        customerPhone: orderData.customerPhone || "",
+        shippingAddress: orderData.shippingAddress,
+        billingAddress: orderData.billingAddress,
+        subtotal: String(orderData.subtotal),
+        shipping: String(orderData.shipping),
+        tax: String(orderData.tax),
+        total: String(orderData.total),
+        paymentMethod: "stripe",
+        paymentId: paymentIntentId,
+        paymentStatus: paymentStatus,
+        userId: orderData.userId || null,
+      }, normalizedItems);
+
+      // Send order confirmation email
+      try {
+        await sendOrderConfirmationEmail({
+          orderId: order.id,
+          customerEmail: orderData.customerEmail,
+          customerName: orderData.customerName,
+          items: orderData.items,
+          subtotal: orderData.subtotal,
+          shipping: orderData.shipping,
+          tax: orderData.tax,
+          total: orderData.total,
+          shippingAddress: orderData.shippingAddress,
+        });
+      } catch (emailError) {
+        console.error("Failed to send order confirmation email:", emailError);
+      }
+
+      res.json({
+        success: true,
+        orderId: order.id,
+        message: "Order created successfully",
+      });
+    } catch (error: any) {
+      console.error("Error confirming Stripe order:", error);
+      res.status(500).json({ error: error.message || "Failed to confirm order" });
+    }
+  });
+
   // Customer authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { firstName, lastName, email, phone, password } = req.body;
-      
+
       if (!firstName || !lastName || (!email && !phone) || !password) {
         return res.status(400).json({ message: "All fields are required" });
       }
@@ -745,8 +906,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail registration if email fails
       }
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "Account created successfully",
         user: {
           id: user.id,
@@ -765,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, phone, password } = req.body;
-      
+
       if ((!email && !phone) || !password) {
         return res.status(400).json({ message: "Email/phone and password are required" });
       }
@@ -777,7 +938,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (phone) {
         user = await storage.getUserByPhone(phone);
       }
-      
+
       if (!user || (user.authProvider !== "email" && user.authProvider !== "phone")) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -819,8 +980,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Session save error:", err);
           return res.status(500).json({ message: "Login failed" });
         }
-        
-        res.json({ 
+
+        res.json({
           success: true,
           user: {
             id: user.id,
@@ -854,7 +1015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/login", async (req, res) => {
     try {
       const { username, password } = req.body;
-      
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password required" });
       }
@@ -866,7 +1027,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Simple password hash check (SHA256)
       const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-      
+
       if (admin.passwordHash !== passwordHash) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -884,15 +1045,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Session save error:", err);
           return res.status(500).json({ message: "Session save failed" });
         }
-        
-        res.json({ 
-          success: true, 
-          admin: { 
-            id: admin.id, 
-            username: admin.username, 
-            name: admin.name, 
-            email: admin.email 
-          } 
+
+        res.json({
+          success: true,
+          admin: {
+            id: admin.id,
+            username: admin.username,
+            name: admin.name,
+            email: admin.email
+          }
         });
       });
     } catch (error) {
@@ -920,7 +1081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { currentPassword, newPassword } = req.body;
-      
+
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Current and new password required" });
       }
@@ -932,7 +1093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verify current password
       const currentPasswordHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
-      
+
       if (admin.passwordHash !== currentPasswordHash) {
         return res.status(401).json({ message: "Current password is incorrect" });
       }
@@ -966,7 +1127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -976,11 +1137,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Admin account inactive" });
       }
 
-      res.json({ 
-        id: admin.id, 
-        username: admin.username, 
-        name: admin.name, 
-        email: admin.email 
+      res.json({
+        id: admin.id,
+        username: admin.username,
+        name: admin.name,
+        email: admin.email
       });
     } catch (error) {
       console.error("Admin session check error:", error);
@@ -993,11 +1154,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let userId = null;
       let user = null;
-      
+
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
         user = await storage.getUser(userId);
@@ -1033,17 +1194,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const passwordHash = crypto.createHash('sha256').update(registerPassword).digest('hex');
             const [firstName, ...lastNameParts] = customerName.split(' ');
             const lastName = lastNameParts.join(' ') || '';
-            
+
             const newUser = await storage.createEmailUser({
               email: customerEmail,
               firstName,
               lastName,
               passwordHash
             });
-            
+
             userId = newUser.id;
             user = newUser;
-            
+
             // Send welcome email
             try {
               await sendWelcomeEmail({
@@ -1059,7 +1220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error("Failed to send welcome email during checkout:", emailError);
               // Don't fail checkout if email fails
             }
-            
+
             // Set user session
             (req.session as any).userId = newUser.id;
             (req.session as any).isCustomerAuth = true;
@@ -1079,8 +1240,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         author: string;
         isGift?: boolean;
       }> = [];
-      
+
       if (userId) {
+        // For authenticated users, get cart from database
         const userCartItems = await storage.getCartItems(userId);
         cartItems = userCartItems.map(item => ({
           bookId: item.book.id,
@@ -1091,35 +1253,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isGift: item.isGift || false
         }));
       } else {
-        // Get guest cart from session
-        const guestCart = (req.session as any).guestCart || [];
-        console.log("Guest cart from session:", JSON.stringify(guestCart, null, 2));
-        console.log("Session keys:", Object.keys(req.session));
-        
-        // For guest cart, use existing book data or fetch from database
-        for (const item of guestCart) {
-          try {
-            let book = item.book;
-            if (!book) {
-              book = await storage.getBookById(item.bookId);
+        // For guest users, use items from request body (from localStorage on client)
+        if (items && Array.isArray(items) && items.length > 0) {
+          cartItems = items.map((item: any) => ({
+            bookId: item.bookId,
+            quantity: item.quantity,
+            price: item.price.toString(),
+            title: item.title,
+            author: item.author,
+            isGift: item.isGift || false
+          }));
+          console.log("Guest cart from request body (localStorage):", cartItems.length, "items");
+        } else {
+          // Fallback: Try to get guest cart from session (legacy support)
+          const guestCart = (req.session as any).guestCart || [];
+          console.log("Guest cart from session (legacy):", JSON.stringify(guestCart, null, 2));
+          console.log("Session keys:", Object.keys(req.session));
+
+          // For guest cart, use existing book data or fetch from database
+          for (const item of guestCart) {
+            try {
+              let book = item.book;
+              if (!book) {
+                book = await storage.getBookById(item.bookId);
+              }
+
+              if (book) {
+                cartItems.push({
+                  bookId: book.id,
+                  quantity: item.quantity,
+                  price: book.price.toString(),
+                  title: book.title,
+                  author: book.author,
+                  isGift: item.isGift || false
+                });
+              }
+            } catch (error) {
+              console.error("Error processing guest cart item:", error);
             }
-            
-            if (book) {
-              cartItems.push({
-                bookId: book.id,
-                quantity: item.quantity,
-                price: book.price.toString(),
-                title: book.title,
-                author: book.author,
-                isGift: item.isGift || false
-              });
-            }
-          } catch (error) {
-            console.error("Error processing guest cart item:", error);
           }
+
+          console.log("Final cart items from session:", cartItems.length);
         }
-        
-        console.log("Final cart items for order:", cartItems.length);
       }
 
       // Include gift item in order if present
@@ -1174,7 +1349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Attempting to send order confirmation email for order #${order.id}`);
         const orderWithItems = await storage.getOrderById(order.id);
         console.log("Order retrieved for email:", orderWithItems ? "Found" : "Not Found");
-        
+
         if (orderWithItems) {
           console.log("Order items count:", orderWithItems.items?.length || 0);
           const emailResult = await sendOrderConfirmationEmail({
@@ -1287,7 +1462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           storeAddress: "123 Book Street\nLiterary District\nBooktown, BT 12345\nEurope"
         });
       }
-      
+
       // Return only public information
       res.json({
         storeName: settings.storeName,
@@ -1306,7 +1481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -1328,7 +1503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -1339,7 +1514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { storeName, storeEmail, storeDescription, storePhone, currency, storeAddress } = req.body;
-      
+
       const updatedSettings = await storage.upsertStoreSettings({
         storeName,
         storeEmail,
@@ -1348,7 +1523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currency,
         storeAddress,
       });
-      
+
       res.json(updatedSettings);
     } catch (error) {
       console.error("Error updating store settings:", error);
@@ -1361,7 +1536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -1383,13 +1558,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { countryCode } = req.params;
       const rate = await storage.getShippingRateByCountry(countryCode);
-      
+
       if (!rate) {
         // Return default rate if specific country rate not found
         const defaultRate = await storage.getDefaultShippingRate();
         return res.json(defaultRate);
       }
-      
+
       res.json(rate);
     } catch (error) {
       console.error("Error fetching shipping rate for country:", error);
@@ -1401,7 +1576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -1412,7 +1587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { countryCode, countryName, shippingCost, minDeliveryDays, maxDeliveryDays, isDefault, isActive } = req.body;
-      
+
       const newRate = await storage.createShippingRate({
         countryCode: countryCode.toUpperCase(),
         countryName,
@@ -1422,7 +1597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isDefault: isDefault || false,
         isActive: isActive !== false,
       });
-      
+
       res.json(newRate);
     } catch (error) {
       console.error("Error creating shipping rate:", error);
@@ -1434,7 +1609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -1446,7 +1621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { id } = req.params;
       const { countryCode, countryName, shippingCost, minDeliveryDays, maxDeliveryDays, isDefault, isActive } = req.body;
-      
+
       const updatedRate = await storage.updateShippingRate(parseInt(id), {
         countryCode: countryCode?.toUpperCase(),
         countryName,
@@ -1456,7 +1631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isDefault,
         isActive,
       });
-      
+
       res.json(updatedRate);
     } catch (error) {
       console.error("Error updating shipping rate:", error);
@@ -1468,7 +1643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -1491,7 +1666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -1514,24 +1689,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/shipping-rates/country/:countryCode', async (req, res) => {
     try {
       const { countryCode } = req.params;
-      
+
       // First try to find specific country rate
       let shippingRate = await storage.getShippingRateByCountry(countryCode.toUpperCase());
-      
+
       // If no specific rate found, try to get REST_OF_WORLD default rate
       if (!shippingRate) {
         shippingRate = await storage.getShippingRateByCountry('REST_OF_WORLD');
       }
-      
+
       // If still no rate found, get any default rate
       if (!shippingRate) {
         shippingRate = await storage.getDefaultShippingRate();
       }
-      
+
       if (!shippingRate) {
         return res.status(404).json({ message: "No shipping rate found" });
       }
-      
+
       res.json(shippingRate);
     } catch (error) {
       console.error("Error fetching shipping rate for country:", error);
@@ -1559,29 +1734,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const categoryData = insertCategorySchema.parse(req.body);
-      
+
       // Generate unique slug
       let baseSlug = categoryData.name.toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .trim();
-      
+
       let slug = baseSlug;
       let counter = 1;
-      
+
       // Check for existing slug and create unique one if needed
       while (true) {
         const existingCategories = await storage.getCategories();
         const slugExists = existingCategories.some(cat => cat.slug === slug);
-        
+
         if (!slugExists) {
           break;
         }
-        
+
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
-      
+
       const categoryWithSlug = { ...categoryData, slug };
       const category = await storage.createCategory(categoryWithSlug);
       res.json(category);
@@ -1606,6 +1781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newArrival,
         boxSet,
         search,
+        titleOnly,
         minPrice,
         maxPrice,
         limit,
@@ -1623,6 +1799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newArrival: newArrival === "true" ? true : newArrival === "false" ? false : undefined,
         boxSet: boxSet === "true" ? true : boxSet === "false" ? false : undefined,
         search: search as string,
+        titleOnly: titleOnly === "true" ? true : undefined,
         minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,
@@ -1638,11 +1815,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const result = await storage.getBooks(options);
-      
+
       if (search) {
         console.log("Search results count:", result.books.length, "out of total:", result.total);
       }
-      
+
       res.json(result);
     } catch (error) {
       console.error("Error fetching books:", error);
@@ -1685,7 +1862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check admin session first
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         const admin = await storage.getAdminById(adminId);
         if (!admin || !admin.isActive) {
@@ -1719,7 +1896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check admin session first
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         const admin = await storage.getAdminById(adminId);
         if (!admin || !admin.isActive) {
@@ -1754,7 +1931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check admin session first
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         const admin = await storage.getAdminById(adminId);
         if (!admin || !admin.isActive) {
@@ -1780,12 +1957,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Book deleted successfully" });
     } catch (error) {
       console.error("Error deleting book:", error);
-      
+
       // Send specific error message to user
       if (error instanceof Error) {
         return res.status(400).json({ message: error.message });
       }
-      
+
       res.status(500).json({ message: "Failed to delete book" });
     }
   });
@@ -1796,7 +1973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check admin session first
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         const admin = await storage.getAdminById(adminId);
         if (!admin || !admin.isActive) {
@@ -1831,7 +2008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           size: uploadResult.bytes
         });
 
-        res.json({ 
+        res.json({
           message: "Image uploaded successfully to cloud storage",
           imageUrl: uploadResult.secure_url,
           public_id: uploadResult.public_id,
@@ -1841,29 +2018,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (cloudinaryError) {
         // Fallback to local storage with warning
         console.warn("Cloudinary upload failed, falling back to local storage:", cloudinaryError);
-        
+
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(req.file.originalname) || '.jpg';
         const filename = `book-${uniqueSuffix}${ext}`;
         const uploadDir = path.join(process.cwd(), 'uploads', 'images');
-        
+
         // Ensure directory exists
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
         }
-        
+
         const filepath = path.join(uploadDir, filename);
         fs.writeFileSync(filepath, req.file.buffer);
-        
+
         const imageUrl = `/uploads/images/${filename}`;
-        
+
         console.log("Image saved locally (TEMPORARY):", {
           filename: filename,
           imageUrl: imageUrl,
           warning: "This image will be lost on server restart"
         });
 
-        res.json({ 
+        res.json({
           message: "Image uploaded successfully (TEMPORARY - fix Cloudinary for permanent storage)",
           imageUrl: imageUrl,
           filename: filename,
@@ -1898,28 +2075,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Set JSON content type explicitly
       res.setHeader('Content-Type', 'application/json');
-      
+
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
-      
+
       console.log("Cart - userId:", userId, "sessionUserId:", sessionUserId, "isCustomerAuth:", isCustomerAuth);
-      
+
       if (userId) {
         const cartItems = await storage.getCartItems(userId);
-        
+
         // Auto-remove gifts if no books remain
         await autoRemoveGiftsIfNoBooks(req, cartItems);
-        
+
         const giftItem = (req.session as any).giftItem;
-        
+
         // Add gift item to cart if present and there are books
         const fullCart = [...cartItems];
         if (giftItem && hasNonGiftBooks(cartItems)) {
@@ -1936,19 +2113,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isGift: true
           });
         }
-        
+
         console.log("Returning authenticated user cart:", fullCart.length, "items");
         return res.json(fullCart);
       } else {
         // Guest user - return session-based cart with book details
         const guestCart = (req.session as any).guestCart || [];
         console.log("Guest cart from session:", guestCart.length, "items");
-        
+
         // Auto-remove gifts if no books remain
         await autoRemoveGiftsIfNoBooks(req, guestCart);
-        
+
         const giftItem = (req.session as any).giftItem;
-        
+
         // Ensure each cart item has complete book data
         const cartWithBooks = [];
         for (const item of guestCart) {
@@ -1965,7 +2142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error("Error processing cart item:", error);
           }
         }
-        
+
         // Add gift item to cart if present and there are books
         if (giftItem && hasNonGiftBooks(cartWithBooks)) {
           cartWithBooks.push({
@@ -1981,7 +2158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isGift: true
           });
         }
-        
+
         console.log("Returning guest cart:", cartWithBooks.length, "items");
         return res.json(cartWithBooks);
       }
@@ -1995,20 +2172,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Cart ADD request received:", req.body);
     try {
       res.setHeader('Content-Type', 'application/json');
-      
+
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
-      
+
       console.log("Cart ADD - userId:", userId, "sessionUserId:", sessionUserId);
-      
+
       if (userId) {
         // Authenticated user - save to database
         const cartData = insertCartItemSchema.parse({ ...req.body, userId });
@@ -2018,18 +2195,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Guest user - save to session
         const { bookId, quantity } = req.body;
         const book = await storage.getBookById(parseInt(bookId));
-        
+
         if (!book) {
           return res.status(404).json({ message: "Book not found" });
         }
-        
+
         if (!(req.session as any).guestCart) {
           (req.session as any).guestCart = [];
         }
-        
+
         const guestCart = (req.session as any).guestCart;
         const existingItemIndex = guestCart.findIndex((item: any) => item.bookId === parseInt(bookId));
-        
+
         if (existingItemIndex >= 0) {
           guestCart[existingItemIndex].quantity += parseInt(quantity);
         } else {
@@ -2040,9 +2217,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             book: book
           });
         }
-        
+
         console.log("Guest cart after add:", guestCart.length, "items");
-        
+
         req.session.save((err) => {
           if (err) {
             console.error("Session save error:", err);
@@ -2064,18 +2241,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = req.params.id;
       const { quantity } = req.body;
-      
+
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
-      
+
       if (userId) {
         // Authenticated user - update database cart
         const cartItem = await storage.updateCartItem(parseInt(id), quantity);
@@ -2084,7 +2261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Guest user - update session cart
         const guestCart = (req.session as any).guestCart || [];
         const itemIndex = guestCart.findIndex((item: any) => item.id.toString() === id);
-        
+
         if (itemIndex >= 0) {
           guestCart[itemIndex].quantity = parseInt(quantity);
           req.session.save(() => {
@@ -2103,36 +2280,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart/:id", async (req: any, res) => {
     try {
       const id = req.params.id;
-      
+
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
-      
+
       if (userId) {
         // Authenticated user - remove from database cart
         await storage.removeFromCart(parseInt(id));
-        
+
         // Check remaining cart items and auto-remove gifts if no books remain
         const remainingCartItems = await storage.getCartItems(userId);
         await autoRemoveGiftsIfNoBooks(req, remainingCartItems);
-        
+
         res.json({ message: "Item removed from cart" });
       } else {
         // Guest user - remove from session cart
         const guestCart = (req.session as any).guestCart || [];
         const filteredCart = guestCart.filter((item: any) => item.id.toString() !== id);
         (req.session as any).guestCart = filteredCart;
-        
+
         // Auto-remove gifts if no books remain
         await autoRemoveGiftsIfNoBooks(req, filteredCart);
-        
+
         req.session.save(() => {
           res.json({ message: "Item removed from cart" });
         });
@@ -2149,13 +2326,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
-      
+
       if (userId) {
         await storage.clearCart(userId);
         // Auto-remove gifts since cart is now empty
@@ -2165,7 +2342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (req.session as any).guestCart = [];
         (req.session as any).giftItem = null;
       }
-      
+
       res.json({ message: "Cart cleared" });
     } catch (error) {
       console.error("Error clearing cart:", error);
@@ -2177,24 +2354,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/cart/gift", async (req: any, res) => {
     try {
       const { giftId, name, type, imageUrl, price, quantity, giftCategoryId } = req.body;
-      
+
       console.log("Gift cart request received:", {
         giftId, name, type, giftCategoryId,
         hasGiftId: !!giftId,
         hasGiftCategoryId: !!giftCategoryId
       });
-      
+
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
-      
+
       // Check if user has any books in cart before allowing gift
       let hasBooks = false;
       if (userId) {
@@ -2204,27 +2381,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const guestCart = (req.session as any).guestCart || [];
         hasBooks = hasNonGiftBooks(guestCart);
       }
-      
+
       if (!hasBooks) {
         return res.status(400).json({ message: "You must have at least one book in your cart to select a gift" });
       }
-      
+
       let giftItem;
-      
+
       // Handle gift category selection
       if (giftCategoryId) {
         console.log("Processing gift category selection:", giftCategoryId);
-        
+
         // Debug: Check if method exists
         console.log("Storage methods available:", Object.getOwnPropertyNames(storage));
         console.log("getGiftCategoryById exists:", typeof storage.getGiftCategoryById);
-        
+
         // Get the gift category details
         const giftCategory = await storage.getGiftCategoryById(giftCategoryId);
         if (!giftCategory) {
           return res.status(404).json({ message: "Gift category not found" });
         }
-        
+
         giftItem = {
           giftId: giftCategory.id,
           name: giftCategory.name,
@@ -2246,9 +2423,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isGift: true
         };
       }
-      
+
       console.log("Gift item created:", giftItem);
-      
+
       if (userId) {
         // For authenticated users, store in database session or custom field
         // For now, use session storage
@@ -2257,7 +2434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // For guest users, store in session
         (req.session as any).giftItem = giftItem;
       }
-      
+
       res.json({ message: "Gift added to cart", gift: giftItem });
     } catch (error) {
       console.error("Error adding gift to cart:", error);
@@ -2271,13 +2448,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
-      
+
       if (userId) {
         // Remove gift from authenticated user's session
         (req.session as any).giftItem = null;
@@ -2285,7 +2462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Remove gift from guest session
         (req.session as any).giftItem = null;
       }
-      
+
       res.json({ message: "Gift removed from cart" });
     } catch (error) {
       console.error("Error removing gift from cart:", error);
@@ -2299,7 +2476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for admin session authentication first
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         // Admin can see all orders
         const admin = await storage.getAdminById(adminId);
@@ -2316,7 +2493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const result = await storage.getOrders(options);
         return res.json(result);
       }
-      
+
       // Check for regular user authentication
       if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2324,9 +2501,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       const options: any = { userId }; // Regular users can only see their own orders
-      
+
       // Add query parameters
       if (req.query.status) options.status = req.query.status as string;
       if (req.query.limit) options.limit = parseInt(req.query.limit as string);
@@ -2351,7 +2528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for admin session authentication
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         // Admin can access any order
         const admin = await storage.getAdminById(adminId);
@@ -2367,7 +2544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
-      
+
       // Check if user can access this order
       if (order.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
@@ -2385,7 +2562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use exact same authentication pattern as GET /api/orders
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (adminId && isAdmin) {
         const admin = await storage.getAdminById(adminId);
         if (!admin || !admin.isActive) {
@@ -2394,7 +2571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const id = parseInt(req.params.id);
         const { status, trackingNumber, shippingCarrier, notes } = req.body;
-        
+
         const updatedOrder = await storage.updateOrderStatus(id, status, {
           trackingNumber,
           shippingCarrier,
@@ -2418,10 +2595,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Failed to send status update email:", emailError);
           // Don't fail the status update if email fails
         }
-        
+
         return res.json(updatedOrder);
       }
-      
+
       // If not admin, deny access
       return res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
@@ -2439,9 +2616,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionCustomerEmail = (req.session as any).customerEmail;
       let userId = null;
       let userEmail = null;
-      
+
       console.log("My Orders - sessionUserId:", sessionUserId, "isCustomerAuth:", isCustomerAuth, "sessionCustomerEmail:", sessionCustomerEmail);
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
         userEmail = sessionCustomerEmail;
@@ -2449,7 +2626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId = req.user.claims.sub;
         userEmail = req.user.email;
       }
-      
+
       if (!userId && !userEmail) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -2458,25 +2635,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get orders for the authenticated user - search by both userId and email
       let orders = [];
-      
+
       // First, always search by email if we have it (covers both guest orders and email auth)
       if (userEmail) {
         const result = await storage.getOrders({});
         const allOrders = result.orders || [];
         // Filter orders by customer email
-        orders = allOrders.filter(order => 
+        orders = allOrders.filter(order =>
           order.customerEmail && order.customerEmail.toLowerCase() === userEmail.toLowerCase()
         );
       }
-      
+
       // If no orders found by email and we have userId, search by userId
       if (orders.length === 0 && userId) {
         const result = await storage.getOrders({ userId });
         orders = result.orders || [];
       }
-      
+
       console.log("Found orders:", orders.length);
-      
+
       // Return the orders array
       res.json(orders);
     } catch (error) {
@@ -2489,7 +2666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/guest-orders", async (req, res) => {
     try {
       const { email } = req.query;
-      
+
       if (!email || typeof email !== 'string') {
         return res.status(400).json({ message: "Email is required" });
       }
@@ -2499,14 +2676,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all orders and filter by customer email
       const result = await storage.getOrders({});
       const allOrders = result.orders || [];
-      
+
       // Filter orders by customer email (case-insensitive)
-      const orders = allOrders.filter(order => 
+      const orders = allOrders.filter(order =>
         order.customerEmail && order.customerEmail.toLowerCase() === email.toLowerCase()
       );
-      
+
       console.log("Found guest orders:", orders.length);
-      
+
       // Return the orders array
       res.json(orders);
     } catch (error) {
@@ -2534,7 +2711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -2556,7 +2733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -2568,7 +2745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const id = parseInt(req.params.id);
       const { status } = req.body;
-      
+
       if (!status || !['unread', 'read', 'replied'].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }
@@ -2657,9 +2834,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
-        
+
         const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-        
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename="inventory.xlsx"');
         res.send(buffer);
@@ -2764,7 +2941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check admin authentication
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
@@ -2804,17 +2981,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/migrate-images", requireAdminAuth, async (req, res) => {
     try {
       console.log('Starting enhanced image migration to Cloudinary...');
-      
+
       const books = await storage.getBooks({ limit: 1000 });
       let migratedCount = 0;
       let defaultImageCount = 0;
       let errors: string[] = [];
-      
+
       // Create a simple default book cover SVG
       const createDefaultBookCover = (title: string, author: string) => {
         const shortTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
         const shortAuthor = author.length > 25 ? author.substring(0, 25) + '...' : author;
-        
+
         return `<svg width="400" height="600" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="600" fill="#1a365d"/>
           <rect x="20" y="20" width="360" height="560" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
@@ -2829,44 +3006,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <text x="200" y="520" text-anchor="middle" fill="#a0aec0" font-family="Arial, sans-serif" font-size="12">A2Z BOOKSHOP</text>
         </svg>`;
       };
-      
+
       for (const book of books.books) {
         if (book.imageUrl && book.imageUrl.startsWith('/uploads/images/')) {
           try {
             const localPath = path.join(process.cwd(), book.imageUrl);
             let uploadResult;
-            
+
             // Check if local file exists
             if (fs.existsSync(localPath)) {
               const buffer = fs.readFileSync(localPath);
-              
+
               // Upload existing local image to Cloudinary
               uploadResult = await CloudinaryService.uploadImage(
                 buffer,
                 'a2z-bookshop/books',
                 `book-${book.id}-${Date.now()}`
               );
-              
+
               console.log(`Migrated existing image for book ${book.id}: ${book.title}`);
               migratedCount++;
             } else {
               // Create and upload default book cover
               const defaultCoverSvg = createDefaultBookCover(book.title, book.author);
               const svgBuffer = Buffer.from(defaultCoverSvg, 'utf-8');
-              
+
               uploadResult = await CloudinaryService.uploadImage(
                 svgBuffer,
                 'a2z-bookshop/books',
                 `book-${book.id}-default-${Date.now()}`
               );
-              
+
               console.log(`Created default cover for book ${book.id}: ${book.title}`);
               defaultImageCount++;
             }
-            
+
             // Update book with new Cloudinary URL
             await storage.updateBook(book.id, { imageUrl: uploadResult.secure_url });
-            
+
           } catch (error) {
             const errorMsg = `Failed to process image for book ${book.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
             console.error(errorMsg);
@@ -2874,13 +3051,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       const totalProcessed = migratedCount + defaultImageCount;
       console.log(`Enhanced migration completed. Migrated: ${migratedCount}, Default covers: ${defaultImageCount}, Errors: ${errors.length}`);
-      
+
       // Check if no images needed migration
       const booksWithLocalUrls = books.books.filter(book => book.imageUrl && book.imageUrl.startsWith('/uploads/images/')).length;
-      
+
       if (booksWithLocalUrls === 0) {
         res.json({
           success: true,
@@ -2918,16 +3095,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/complete-migration", async (req, res) => {
     try {
       console.log('Starting final migration for remaining 3 books...');
-      
+
       const books = await storage.getBooks({ limit: 1000 });
       let processedCount = 0;
       let errors: string[] = [];
-      
+
       // Create a simple default book cover SVG
       const createDefaultBookCover = (title: string, author: string) => {
         const shortTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
         const shortAuthor = author.length > 25 ? author.substring(0, 25) + '...' : author;
-        
+
         return `<svg width="400" height="600" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="600" fill="#1a365d"/>
           <rect x="20" y="20" width="360" height="560" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
@@ -2942,7 +3119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <text x="200" y="520" text-anchor="middle" fill="#a0aec0" font-family="Arial, sans-serif" font-size="12">A2Z BOOKSHOP</text>
         </svg>`;
       };
-      
+
       // Process only books with local URLs
       for (const book of books.books) {
         if (book.imageUrl && book.imageUrl.startsWith('/uploads/images/')) {
@@ -2950,19 +3127,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create and upload default book cover (since most local files are missing)
             const defaultCoverSvg = createDefaultBookCover(book.title, book.author);
             const svgBuffer = Buffer.from(defaultCoverSvg, 'utf-8');
-            
+
             const uploadResult = await CloudinaryService.uploadImage(
               svgBuffer,
               'a2z-bookshop/books',
               `book-${book.id}-final-${Date.now()}`
             );
-            
+
             // Update book with new Cloudinary URL
             await storage.updateBook(book.id, { imageUrl: uploadResult.secure_url });
-            
+
             console.log(`Final migration: Created cover for book ${book.id}: ${book.title}`);
             processedCount++;
-            
+
           } catch (error) {
             const errorMsg = `Failed to process book ${book.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
             console.error(errorMsg);
@@ -2970,9 +3147,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       console.log(`Final migration completed. Processed: ${processedCount}, Errors: ${errors.length}`);
-      
+
       res.json({
         success: true,
         message: `Final migration completed - processed ${processedCount} remaining books`,
@@ -3027,9 +3204,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
-        
+
         const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-        
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename="inventory.xlsx"');
         res.send(buffer);
@@ -3049,7 +3226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const format = req.query.format || 'xlsx';
-      
+
       // Template data with example and empty rows
       const templateData = [
         {
@@ -3103,9 +3280,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const worksheet = XLSX.utils.json_to_sheet(templateData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Import Template');
-        
+
         const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-        
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename="import_template.xlsx"');
         res.send(buffer);
@@ -3117,7 +3294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Return and Refund Management Routes
-  
+
   // Customer routes - Get eligible orders for return
   app.get("/api/returns/eligible-orders", async (req: any, res) => {
     try {
@@ -3127,7 +3304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionCustomerEmail = (req.session as any).customerEmail;
       let userId = null;
       let email = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
         // Also check by email for orders placed before authentication
@@ -3154,7 +3331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/returns/request", async (req: any, res) => {
     try {
       const { orderId, returnReason, returnDescription, itemsToReturn, customerName, customerEmail } = req.body;
-      
+
       if (!orderId || !returnReason || !returnDescription || !itemsToReturn || !customerName || !customerEmail) {
         return res.status(400).json({ message: "All fields are required" });
       }
@@ -3194,7 +3371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
@@ -3227,7 +3404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-      
+
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
@@ -3253,7 +3430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If authenticated user, get their email
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
-      
+
       if (sessionUserId && isCustomerAuth) {
         const user = await storage.getUser(sessionUserId);
         if (user?.email) {
@@ -3282,7 +3459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -3309,7 +3486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -3339,7 +3516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -3385,34 +3562,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Process actual refund based on original payment method
         const refundAmount = parseFloat(returnRequest.totalRefundAmount);
-        
+
         if (refundMethod === "paypal") {
           // Process PayPal refund
           console.log(`Processing PayPal refund of $${refundAmount} for order ${order.id}`);
-          
+
           // Create refund transaction ID
           refundTransactionId = `PAL_REF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           refundStatus = "completed";
-          
+
           console.log(`PayPal refund processed successfully: ${refundTransactionId}`);
-          
+
         } else if (refundMethod === "razorpay") {
           // Process Razorpay refund
           console.log(`Processing Razorpay refund of $${refundAmount} for order ${order.id}`);
-          
+
           // Create refund transaction ID
           refundTransactionId = `RZP_REF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           refundStatus = "completed";
-          
+
           console.log(`Razorpay refund processed successfully: ${refundTransactionId}`);
-          
+
         } else if (refundMethod === "bank_transfer") {
           // Bank transfer refund (manual process)
           console.log(`Bank transfer refund of $${refundAmount} marked for manual processing`);
-          
+
           refundTransactionId = `BANK_REF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           refundStatus = "pending"; // Bank transfers require manual processing
-          
+
           console.log(`Bank transfer refund created: ${refundTransactionId}`);
         }
 
@@ -3440,15 +3617,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             refundStatus,
             estimatedProcessingTime: getRefundProcessingTime(refundMethod)
           });
-          
+
           console.log(`Refund confirmation email sent to ${returnRequest.customerEmail}`);
-          
+
         } catch (emailError) {
           console.error("Failed to send refund confirmation email:", emailError);
           // Don't fail the refund if email fails
         }
 
-        res.json({ 
+        res.json({
           message: "Refund processed successfully",
           refundTransaction: {
             ...refundTransaction,
@@ -3463,7 +3640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       } catch (refundError) {
         console.error("Error processing refund:", refundError);
-        
+
         // Update transaction as failed
         await storage.updateRefundTransaction(refundTransaction.id, {
           refundStatus: "failed",
@@ -3471,9 +3648,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           notes: `Refund failed: ${refundError.message}`
         });
 
-        res.status(500).json({ 
+        res.status(500).json({
           message: "Refund processing failed",
-          error: refundError.message 
+          error: refundError.message
         });
       }
 
@@ -3484,28 +3661,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
-  
+
   // Quick email test endpoint (for initial setup verification)
   app.get("/api/email-test", async (req, res) => {
     try {
       const result = await testEmailConfiguration();
       if (result) {
-        res.json({ 
-          success: true, 
+        res.json({
+          success: true,
           message: "Google Workspace email is working! Test email sent.",
           timestamp: new Date().toISOString()
         });
       } else {
-        res.status(500).json({ 
-          success: false, 
-          message: "Email test failed - check server logs" 
+        res.status(500).json({
+          success: false,
+          message: "Email test failed - check server logs"
         });
       }
     } catch (error) {
       console.error("Email test error:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: error instanceof Error ? error.message : "Email test failed" 
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : "Email test failed"
       });
     }
   });
@@ -3515,7 +3692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin login required" });
       }
@@ -3555,29 +3732,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             customerEmail: "test@example.com",
             customerName: "Test Customer"
           };
-          
+
           await sendOrderConfirmationEmail(testOrderData);
           console.log("Test order confirmation email sent to customer and admin");
         } catch (emailError) {
           console.error("Error sending test order confirmation email:", emailError);
         }
-        
-        res.json({ 
-          success: true, 
+
+        res.json({
+          success: true,
           message: "SMTP configuration verified and test email sent successfully. Order confirmation test also sent to customer and admin (a2zbookshopglobal@gmail.com)",
           timestamp: new Date().toISOString()
         });
       } else {
-        res.status(500).json({ 
-          success: false, 
-          message: "SMTP configuration test failed - check server logs for details" 
+        res.status(500).json({
+          success: false,
+          message: "SMTP configuration test failed - check server logs for details"
         });
       }
     } catch (error) {
       console.error("SMTP Test Error:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Email service error - check SMTP credentials and connection" 
+      res.status(500).json({
+        success: false,
+        message: "Email service error - check SMTP credentials and connection"
       });
     }
   });
@@ -3627,13 +3804,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         imageUrl: req.body.imageUrl ? req.body.imageUrl.substring(0, 50) + '...' : req.body.imageUrl
       });
-      
+
       const categoryData = insertGiftCategorySchema.partial().parse(req.body);
       console.log("Parsed category data:", {
         ...categoryData,
         imageUrl: categoryData.imageUrl ? categoryData.imageUrl.substring(0, 50) + '...' : categoryData.imageUrl
       });
-      
+
       const category = await storage.updateGiftCategory(id, categoryData);
       console.log("Updated category successfully:", category);
       res.json(category);
@@ -3713,7 +3890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Coupon Management Routes
-  
+
   // Get all coupons (Admin only)
   app.get("/api/admin/coupons", requireAdminAuth, async (req, res) => {
     try {
@@ -3865,8 +4042,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check minimum order amount
       if (coupon.minimumOrderAmount && orderAmount < coupon.minimumOrderAmount) {
-        return res.status(400).json({ 
-          message: `Minimum order amount of ${coupon.minimumOrderAmount} required` 
+        return res.status(400).json({
+          message: `Minimum order amount of ${coupon.minimumOrderAmount} required`
         });
       }
 
@@ -3908,9 +4085,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { code, customerEmail, orderAmount } = req.body;
 
       if (!code || !customerEmail || !orderAmount) {
-        return res.status(400).json({ 
-          valid: false, 
-          message: "Code, customer email, and order amount are required" 
+        return res.status(400).json({
+          valid: false,
+          message: "Code, customer email, and order amount are required"
         });
       }
 
@@ -3918,9 +4095,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error("Error validating coupon:", error);
-      res.status(500).json({ 
-        valid: false, 
-        message: "Failed to validate coupon" 
+      res.status(500).json({
+        valid: false,
+        message: "Failed to validate coupon"
       });
     }
   });
@@ -3930,7 +4107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const requestData = insertBookRequestSchema.parse(req.body);
       const bookRequest = await storage.createBookRequest(requestData);
-      
+
       // Send notification email to admin (optional)
       try {
         await sendEmail({
@@ -3955,7 +4132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Failed to send book request notification email:", emailError);
         // Don't fail the request if email fails
       }
-      
+
       res.json(bookRequest);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -3971,7 +4148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admin authentication required
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
@@ -3999,7 +4176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admin authentication required
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
@@ -4011,7 +4188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const id = parseInt(req.params.id);
       const bookRequest = await storage.getBookRequestById(id);
-      
+
       if (!bookRequest) {
         return res.status(404).json({ message: "Book request not found" });
       }
@@ -4028,7 +4205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admin authentication required
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
@@ -4050,7 +4227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedRequest = await storage.updateBookRequest(id, updates);
-      
+
       // Send status update email to customer
       try {
         const statusMessages = {
@@ -4092,7 +4269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admin authentication required
       const adminId = (req.session as any).adminId;
       const isAdmin = (req.session as any).isAdmin;
-      
+
       if (!adminId || !isAdmin) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
@@ -4104,7 +4281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const id = parseInt(req.params.id);
       await storage.deleteBookRequest(id);
-      
+
       res.json({ message: "Book request deleted successfully" });
     } catch (error) {
       console.error("Error deleting book request:", error);

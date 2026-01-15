@@ -21,6 +21,8 @@ const RequestBookPage = () => {
 
   const form = useForm<InsertBookRequest>({
     resolver: zodResolver(insertBookRequestSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
       customerName: "",
       customerEmail: "",
@@ -28,7 +30,7 @@ const RequestBookPage = () => {
       bookTitle: "",
       author: "",
       isbn: "",
-      binding: "softcover",
+      binding: "",
       expectedPrice: "",
       quantity: 1,
       notes: "",
@@ -69,7 +71,33 @@ const RequestBookPage = () => {
     },
   });
 
-  const onSubmit = (data: InsertBookRequest) => {
+  const onSubmit = async (data: InsertBookRequest) => {
+    // Manually trigger validation on all fields
+    const isValid = await form.trigger();
+
+    if (!isValid) {
+      // Get the first error field and focus on it
+      const errors = form.formState.errors;
+      const firstErrorField = Object.keys(errors)[0] as keyof InsertBookRequest;
+
+      if (firstErrorField) {
+        // Focus on the first invalid field
+        const element = document.getElementsByName(firstErrorField)[0] as HTMLElement;
+        if (element) {
+          element.focus();
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields correctly.",
+          variant: "destructive",
+        });
+      }
+
+      return; // Don't submit if invalid
+    }
+
     console.log("Form data before submission:", data);
 
     // Clean up data for submission - isbn and binding are now required
@@ -87,42 +115,74 @@ const RequestBookPage = () => {
 
   if (isSubmitted) {
     return (
-      <div className="container-custom py-8">
-        <div className="max-w-2xl mx-auto">
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <BookOpen className="h-8 w-8 text-green-600" />
+      <Layout>
+        <SEO
+          title="Request Submitted - A2Z BOOKSHOP"
+          description="Your book request has been submitted successfully. We'll get back to you soon."
+          keywords="request book, find book, book search service"
+          url="https://a2zbookshop.com/request-book"
+          type="website"
+        />
+        <div className="container-custom py-12">
+          <Card className="border-2 border-green-200 shadow-xl">
+            <CardHeader className="text-center pb-6">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <BookOpen className="h-10 w-10 text-white" />
               </div>
-              <CardTitle className="text-2xl text-green-600">Request Submitted!</CardTitle>
-              <CardDescription className="text-lg">
-                Thank you for your book request. We'll review it and get back to you soon.
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                Request Submitted Successfully!
+              </CardTitle>
+              <CardDescription className="text-base mt-2">
+                Thank you for your request. We're on it!
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-6">
-                Our team will search for your requested book and notify you via email once we have an update.
-                This typically takes 1-3 business days.
-              </p>
-              <div className="space-y-2">
+            <CardContent className="space-y-6">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+                <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  What's Next?
+                </h3>
+                <ul className="space-y-2 text-sm text-green-800">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">→</span>
+                    <span>Our team will search our supplier network for your book</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">→</span>
+                    <span>You'll receive an email update within 1-3 business days</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">→</span>
+                    <span>Once found, we'll notify you with pricing and availability</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">→</span>
+                    <span>No payment required until you decide to purchase</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button
                   onClick={() => setIsSubmitted(false)}
                   variant="outline"
-                  className="mr-4"
+                  className="flex-1 border-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full transition-all duration-300"
                 >
                   Submit Another Request
                 </Button>
                 <Button
                   onClick={() => window.location.href = "/catalog"}
-                  className="bg-primary-aqua hover:bg-primary-aqua/90"
+                  className="flex-1 bg-gradient-to-r from-primary-aqua to-blue-500 hover:from-primary-aqua/90 hover:to-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-300"
                 >
-                  Browse Our Catalog
+                  Browse Catalog
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -136,42 +196,53 @@ const RequestBookPage = () => {
         type="website"
       />
       <div className="container-custom py-8 mt-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Request a Book</h1>
-            <p className="text-gray-600 text-lg">
-              Can't find a book you're looking for? Let us know and we'll do our best to find it for you!
-            </p>
+        {/* Header with gradient background */}
+        <div className="mb-8 ">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-aqua to-blue-500 rounded-full mb-4 shadow-lg">
+              <BookOpen className="h-8 w-8 text-primary-aqua" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-3">
+              Request a Book
+            </h1>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Book Request Form
-              </CardTitle>
-              <CardDescription>
-                Fill out the form below with as much detail as possible. We'll search for your book and get back to you with availability and pricing.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Customer Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Your Information</h3>
+          <p className="text-gray-600 text-base">
+            Can't find what you're looking for? Share your book details and we'll source it for you!
+          </p>
+        </div>
 
+        <div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column - Customer Information */}
+                <Card className="rounded-xl border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
+                  <CardHeader className="bg-gradient-to-r from-primary-aqua/5 to-blue-50 pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <div className="rounded-lg bg-primary-aqua/10 flex items-center justify-center">
+                        <User className="h-4 w-4 text-primary-aqua" />
+                      </div>
+                      Your Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-4">
                     <FormField
                       control={form.control}
                       name="customerName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            Full Name *
-                          </FormLabel>
+                          <FormLabel className="text-sm font-medium">Full Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter your full name" {...field} />
+                            <div className="relative">
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                placeholder="John Doe"
+                                className="pl-10 border-gray-200 focus:border-primary-aqua"
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -183,12 +254,17 @@ const RequestBookPage = () => {
                       name="customerEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            Email Address *
-                          </FormLabel>
+                          <FormLabel className="text-sm font-medium">Email Address *</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="Enter your email address" {...field} />
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                type="email"
+                                placeholder="john@example.com"
+                                className="pl-10 border-gray-200 focus:border-primary-aqua"
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -200,34 +276,51 @@ const RequestBookPage = () => {
                       name="customerPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            Phone Number
-                          </FormLabel>
+                          <FormLabel className="text-sm font-medium">Phone Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter your phone number" {...field} value={field.value || ""} />
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                placeholder="+1 (555) 000-0000"
+                                className="pl-10 border-gray-200 focus:border-primary-aqua"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Book Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Book Details</h3>
-
+                {/* Right Column - Book Information */}
+                <Card className="rounded-xl border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-primary-aqua/5 pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <div className="rounded-lg bg-primary-aqua/10 flex items-center justify-center">
+                        <BookOpen className="h-4 w-4 text-primary-aqua" />
+                      </div>
+                      Book Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-4">
                     <FormField
                       control={form.control}
                       name="bookTitle"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <BookOpen className="h-4 w-4" />
-                            Book Title *
-                          </FormLabel>
+                          <FormLabel className="text-sm font-medium">Book Title *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter the book title" {...field} />
+                            <div className="relative">
+                              <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                placeholder="The Great Gatsby"
+                                className="pl-10 border-gray-200 focus:border-primary-aqua"
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -239,9 +332,14 @@ const RequestBookPage = () => {
                       name="author"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Author Name</FormLabel>
+                          <FormLabel className="text-sm font-medium">Author Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter the author's name" {...field} value={field.value || ""} />
+                            <Input
+                              placeholder="F. Scott Fitzgerald"
+                              className="border-gray-200 focus:border-primary-aqua"
+                              {...field}
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -253,108 +351,108 @@ const RequestBookPage = () => {
                       name="isbn"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <Hash className="h-4 w-4" />
-                            ISBN *
-                          </FormLabel>
+                          <FormLabel className="text-sm font-medium">ISBN *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter ISBN number" {...field} />
+                            <div className="relative">
+                              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                placeholder="978-0-123456-78-9"
+                                className="pl-10 border-gray-200 focus:border-primary-aqua"
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
+              </div>
 
+              {/* Additional Details - Full Width */}
+              <Card className="rounded-xl border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <div className="rounded-lg bg-primary-aqua/10 flex items-center justify-center">
+                      <Package className="h-4 w-4 text-primary-aqua" />
+                    </div>
+                    Additional Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="binding"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <Book className="h-4 w-4" />
-                            Binding *
-                          </FormLabel>
+                          <FormLabel className="text-sm font-medium">Binding Type *</FormLabel>
                           <FormControl>
-                            <select
-                              {...field}
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              <option value="">Select binding type</option>
-                              <option value="softcover">Softcover</option>
-                              <option value="hardcover">Hardcover</option>
-                              <option value="spiral">Spiral</option>
-                              <option value="no_binding">No Binding</option>
-                            </select>
+                            <div className="relative">
+                              <Book className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+                              <select
+                                {...field}
+                                className="flex h-10 w-full rounded-[4px] border border-gray-200 bg-background pl-10 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary-aqua focus:border-primary-aqua disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                <option value="">Select binding</option>
+                                <option value="softcover">Softcover</option>
+                                <option value="hardcover">Hardcover</option>
+                                <option value="spiral">Spiral</option>
+                                <option value="no_binding">No Binding</option>
+                              </select>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="quantity"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <Package className="h-4 w-4" />
-                              Quantity
-                            </FormLabel>
-                            <FormControl>
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Quantity</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Package className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <Input
                                 type="number"
                                 min="1"
                                 placeholder="1"
+                                className="pl-10 border-gray-200 focus:border-primary-aqua"
                                 {...field}
                                 value={field.value || 1}
                                 onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                               />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                      <FormField
-                        control={form.control}
-                        name="expectedPrice"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4" />
-                              Expected Price ($)
-                            </FormLabel>
-                            <FormControl>
+                    <FormField
+                      control={form.control}
+                      name="expectedPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Expected Price ($)</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <Input
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 placeholder="Optional"
+                                className="pl-10 border-gray-200 focus:border-primary-aqua"
                                 {...field}
                                 value={field.value || ""}
                                 onChange={(e) => field.onChange(e.target.value ? e.target.value : "")}
                               />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Additional Notes</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Any additional details about the book, edition preferences, condition requirements, etc."
-                              className="min-h-[100px]"
-                              {...field}
-                              value={field.value || ""}
-                            />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -362,31 +460,69 @@ const RequestBookPage = () => {
                     />
                   </div>
 
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• We'll search our network of suppliers for your requested book</li>
-                      <li>• You'll receive an email update within 1-3 business days</li>
-                      <li>• If we find the book, we'll add it to our inventory and notify you</li>
-                      <li>• No payment required until you decide to purchase</li>
-                    </ul>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Additional Notes</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Edition preferences, condition requirements, or any other specific details..."
+                            className="min-h-[80px] resize-none border-gray-200 focus:border-primary-aqua"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
-                  <Button
-                    type="submit"
-                    className="w-full bg-primary-aqua hover:bg-primary-aqua/90"
-                    disabled={createBookRequestMutation.isPending}
-                  >
-                    {createBookRequestMutation.isPending ? "Submitting..." : "Submit Book Request"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+              {/* Info Box & Submit */}
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="flex-1 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-xl border border-blue-100">
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <BookOpen className="h-5 w-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-blue-900 text-sm mb-1">What happens next?</h4>
+                      <p className="text-xs text-blue-700">
+                        We'll search our network • Email update in 1-3 days • No payment until purchase
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="bg-gradient-to-r from-primary-aqua to-blue-500 hover:from-primary-aqua/90 hover:to-blue-600 text-white rounded-full px-8 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={createBookRequestMutation.isPending}
+                >
+                  {createBookRequestMutation.isPending ? (
+                    <>
+                      <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Request
+                      <BookOpen className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </div>
       </div>
     </Layout>
-
   );
 };
 
