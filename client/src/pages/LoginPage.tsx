@@ -193,22 +193,23 @@ export default function LoginPage() {
         url="https://a2zbookshop.com/login"
         type="website"
       />
-      <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-1/2 -left-1/2 w-96 h-96 bg-primary-aqua/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        </div>
+      <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md z-50 overflow-y-auto">
+        <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6">
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-1/2 -left-1/2 w-96 h-96 bg-primary-aqua/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+          </div>
 
-        <div className="w-full max-w-lg space-y-3 sm:space-y-6 relative z-10 my-4 sm:my-8">
+          <div className="w-full max-w-lg space-y-3 sm:space-y-6 relative z-10 my-4 sm:my-8">
           <Button
             onClick={handleClose}
             variant="ghost"
             size="icon"
-            className="absolute right-6 top-10 z-10 h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
+            className="absolute right-2 top-4 sm:right-4 sm:top-4 z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
           >
-            <X className="h-5 w-5 text-gray-700" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
           </Button>
 
           <Card className="shadow-2xl border-2 border-white/50 overflow-hidden backdrop-blur-xl bg-white/90 rounded-xl sm:rounded-2xl transform transition-all duration-300 hover:shadow-3xl">
@@ -252,7 +253,7 @@ export default function LoginPage() {
                           type="email"
                           value={emailFormData.email}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, email: e.target.value }))}
-                          className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="your.email@example.com"
                           required
                         />
@@ -268,7 +269,7 @@ export default function LoginPage() {
                           type={showPassword ? "text" : "password"}
                           value={emailFormData.password}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Enter your password"
                           required
                         />
@@ -310,7 +311,7 @@ export default function LoginPage() {
                         <select
                           value={phoneFormData.countryCode}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, countryCode: e.target.value }))}
-                          className="flex h-12 w-32 rounded-xl border-2 border-gray-200 bg-white px-3 py-1 text-sm font-medium transition-all focus:outline-none focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20"
+                            className="flex h-10 sm:h-12 w-28 sm:w-32 rounded-xl border-2 border-gray-200 bg-white px-2 sm:px-3 py-1 text-sm font-medium transition-all focus:outline-none focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20"
                         >
                           {countries.map((country) => (
                             <option key={country.code} value={country.code}>
@@ -346,7 +347,7 @@ export default function LoginPage() {
                           type={showPassword ? "text" : "password"}
                           value={phoneFormData.password}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Enter your password"
                           required
                         />
@@ -393,7 +394,7 @@ export default function LoginPage() {
 
                 <Dialog open={isForgotDialogOpen} onOpenChange={setIsForgotDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full h-11 border-2 border-gray-200 hover:border-primary-aqua hover:bg-primary-aqua/5 rounded-xl transition-all font-semibold text-gray-700 hover:text-primary-aqua">
+                    <Button variant="outline" className="w-full h-10 sm:h-11 border-2 border-gray-200 hover:border-primary-aqua hover:bg-primary-aqua/5 rounded-xl transition-all font-semibold text-gray-700 hover:text-primary-aqua">
                       Forgot your password?
                     </Button>
                   </DialogTrigger>
@@ -460,6 +461,7 @@ export default function LoginPage() {
               Back to Home
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </>

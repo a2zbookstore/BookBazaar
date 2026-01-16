@@ -10,19 +10,65 @@ interface SearchInputProps {
   className?: string;
   onSearch?: (query: string) => void;
   showButton?: boolean;
+  enableTypingAnimation?: boolean;
+  staticKeyword?: string;
 }
 
-export default function SearchInput({ 
-  placeholder = "Search books, authors, ISBN...", 
+export default function SearchInput({
+  placeholder = "Search books, authors, ISBN...",
   className = "",
   onSearch,
-  showButton = true 
+  showButton = true,
+  enableTypingAnimation = false,
+  staticKeyword = ""
 }: SearchInputProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [, setLocation] = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Typing animation for placeholder
+  const [typedPlaceholder, setTypedPlaceholder] = useState("");
+
+  useEffect(() => {
+    if (!enableTypingAnimation || searchQuery) {
+      setTypedPlaceholder(placeholder);
+      return;
+    }
+
+    // Split placeholder: "Search " is static, rest is typed
+    const staticPart = staticKeyword ;
+    const dynamicPart = placeholder.startsWith(staticPart) 
+      ? placeholder.slice(staticPart.length) 
+      : placeholder;
+
+    let currentIndex = 0;
+    const typingSpeed = 100; // milliseconds per character
+    const pauseBeforeRestart = 2000; // pause at end before restarting
+
+    const typeNextChar = () => {
+      if (currentIndex < dynamicPart.length) {
+        setTypedPlaceholder(staticPart + dynamicPart.slice(0, currentIndex + 1));
+        currentIndex++;
+        setTimeout(typeNextChar, typingSpeed);
+      } else {
+        // Pause at end, then restart
+        setTimeout(() => {
+          currentIndex = 0;
+          setTypedPlaceholder(staticPart);
+          typeNextChar();
+        }, pauseBeforeRestart);
+      }
+    };
+    
+    setTypedPlaceholder(staticPart);
+    typeNextChar();
+    
+    return () => {
+      setTypedPlaceholder("");
+    };
+  }, [placeholder, enableTypingAnimation, searchQuery]);
 
   // Fetch search suggestions
   const { data: suggestions = [] } = useQuery<string[]>({
@@ -86,7 +132,7 @@ export default function SearchInput({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        inputRef.current && 
+        inputRef.current &&
         !inputRef.current.contains(event.target as Node) &&
         suggestionsRef.current &&
         !suggestionsRef.current.contains(event.target as Node)
@@ -105,7 +151,7 @@ export default function SearchInput({
         <Input
           ref={inputRef}
           type="text"
-          placeholder={placeholder}
+          placeholder={typedPlaceholder}
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleInputFocus}

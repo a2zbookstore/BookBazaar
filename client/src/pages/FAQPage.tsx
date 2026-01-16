@@ -1,10 +1,8 @@
 import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, HelpCircle, Book, ShoppingCart, Truck, CreditCard } from "lucide-react";
+import { ChevronDown, HelpCircle, Book, ShoppingCart, Truck, CreditCard, Mail, Phone, MessageCircle } from "lucide-react";
 import { useState } from "react";
-import { Link } from "wouter";
 
 export default function FAQPage() {
   const [openItems, setOpenItems] = useState<string[]>([]);
@@ -21,6 +19,7 @@ export default function FAQPage() {
     {
       title: "Ordering & Payment",
       icon: <ShoppingCart className="h-5 w-5" />,
+      gradient: "from-blue-500 to-cyan-500",
       items: [
         {
           id: "payment-methods",
@@ -47,6 +46,7 @@ export default function FAQPage() {
     {
       title: "Books & Inventory",
       icon: <Book className="h-5 w-5" />,
+      gradient: "from-purple-500 to-pink-500",
       items: [
         {
           id: "book-condition",
@@ -73,6 +73,7 @@ export default function FAQPage() {
     {
       title: "Shipping & Delivery",
       icon: <Truck className="h-5 w-5" />,
+      gradient: "from-primary-aqua to-cyan-500",
       items: [
         {
           id: "shipping-times",
@@ -99,6 +100,7 @@ export default function FAQPage() {
     {
       title: "Returns & Exchanges",
       icon: <CreditCard className="h-5 w-5" />,
+      gradient: "from-green-500 to-emerald-500",
       items: [
         {
           id: "return-policy",
@@ -125,6 +127,7 @@ export default function FAQPage() {
     {
       title: "Account & Technical",
       icon: <HelpCircle className="h-5 w-5" />,
+      gradient: "from-orange-500 to-red-500",
       items: [
         {
           id: "create-account",
@@ -159,116 +162,113 @@ export default function FAQPage() {
         url="https://a2zbookshop.com/faq"
         type="website"
       />
-      <div className="container-custom py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
-            <p className="text-lg text-gray-600">
-              Find answers to common questions about A2Z BOOKSHOP
-            </p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
+        <div className="container-custom py-12">
+          <div className="max-w-5xl mx-auto">
+            {/* Hero Section */}
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary-aqua to-cyan-500 mb-6 shadow-lg shadow-cyan-500/30">
+                <HelpCircle className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4">
+                Frequently Asked Questions
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Find answers to common questions about A2Z BOOKSHOP
+              </p>
+            </div>
 
-          <div className="mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Contact</h2>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <h3 className="font-medium text-gray-900">Email Support</h3>
-                    <p className="text-sm text-gray-600">help@a2zbookshop.com</p>
-                    <p className="text-xs text-gray-500">Response within 24 hours</p>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-medium text-gray-900">Phone Support</h3>
-                    <p className="text-sm text-gray-600">1-800-BOOKS-24</p>
-                    <p className="text-xs text-gray-500">Mon-Fri 9 AM - 6 PM EST</p>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-medium text-gray-900">Live Chat</h3>
-                    <p className="text-sm text-gray-600">Available on website</p>
-                    <p className="text-xs text-gray-500">Mon-Fri 9 AM - 6 PM EST</p>
-                  </div>
+            {/* Quick Contact Cards */}
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              <a href="mailto:support@a2zbookshop.com" className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-aqua to-cyan-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/30">
+                  <Mail className="h-6 w-6 text-white" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <h3 className="font-bold text-gray-900 mb-1">Email Us</h3>
+                <p className="text-sm text-gray-600">support@a2zbookshop.com</p>
+              </a>
 
-          <div className="space-y-6">
-            {faqCategories.map((category) => (
-              <Card key={category.title}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {category.icon}
-                    {category.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
+              <a href="tel:1-800-BOOKS-24" className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/30">
+                  <Phone className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Call Us</h3>
+                <p className="text-sm text-gray-600">1-800-BOOKS-24</p>
+              </a>
+
+              <div className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/30">
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Live Chat</h3>
+                <p className="text-sm text-gray-600">Available 24/7</p>
+              </div>
+            </div>
+
+            {/* FAQ Categories */}
+            <div className="space-y-6">
+              {faqCategories.map((category, idx) => (
+                <div key={idx} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-cyan-500/5 transition-all duration-300">
+                  <div className="p-6 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${category.gradient} flex items-center justify-center text-white`}>
+                        {category.icon}
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-900">{category.title}</h2>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-gray-100">
                     {category.items.map((item) => (
-                      <Collapsible key={item.id}>
-                        <CollapsibleTrigger
-                          className="flex items-center justify-between w-full p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                          onClick={() => toggleItem(item.id)}
-                        >
-                          <span className="font-medium text-gray-900">{item.question}</span>
-                          <ChevronDown
-                            className={`h-4 w-4 text-gray-500 transition-transform ${openItems.includes(item.id) ? 'rotate-180' : ''
+                      <Collapsible
+                        key={item.id}
+                        open={openItems.includes(item.id)}
+                        onOpenChange={() => toggleItem(item.id)}
+                      >
+                        <CollapsibleTrigger className="w-full text-left p-6 hover:bg-gray-50/50 transition-colors group">
+                          <div className="flex items-center justify-between gap-4">
+                            <h3 className="font-semibold text-gray-900 group-hover:text-primary-aqua transition-colors">
+                              {item.question}
+                            </h3>
+                            <ChevronDown 
+                              className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform duration-300 ${
+                                openItems.includes(item.id) ? 'rotate-180 text-primary-aqua' : ''
                               }`}
-                          />
+                            />
+                          </div>
                         </CollapsibleTrigger>
-                        <CollapsibleContent className="px-4 py-3 text-gray-600 bg-white border-l-4 border-primary-aqua">
-                          {item.answer}
+                        <CollapsibleContent className="px-6 pb-6">
+                          <p className="text-gray-700 leading-relaxed pt-2">
+                            {item.answer}
+                          </p>
                         </CollapsibleContent>
                       </Collapsible>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Still Have Questions?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
+            {/* Still Have Questions CTA */}
+            <div className="mt-12 relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-aqua to-cyan-500 p-8 text-white shadow-xl shadow-cyan-500/30">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
+              <div className="relative">
+                <h3 className="text-2xl font-bold mb-2">Still Have Questions?</h3>
+                <p className="text-cyan-50 mb-4">
                   Can't find the answer you're looking for? Our customer service team is here to help!
                 </p>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Contact Options</h4>
-                    <ul className="text-gray-600 space-y-1">
-                      <li>📧 Email: <a href="mailto:help@a2zbookshop.com" className="text-primary-aqua hover:underline">help@a2zbookshop.com</a></li>
-                      <li>📞 Phone: 1-800-BOOKS-24 (1-800-266-5724)</li>
-                      <li>💬 <Link href="/contact" className="text-primary-aqua hover:underline">Contact Form</Link></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Business Hours</h4>
-                    <ul className="text-gray-600 space-y-1">
-                      <li>Monday - Friday: 9:00 AM - 6:00 PM EST</li>
-                      <li>Saturday: 10:00 AM - 4:00 PM EST</li>
-                      <li>Sunday: Closed</li>
-                      <li>Email support available 24/7</li>
-                    </ul>
-                  </div>
+                <div className="flex flex-wrap gap-4">
+                  <a href="mailto:support@a2zbookshop.com" className="inline-flex items-center px-6 py-3 bg-white text-primary-aqua rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                    Email Support
+                  </a>
+                  <a href="tel:1-800-BOOKS-24" className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold hover:bg-white/20 transition-colors border border-white/30">
+                    Call Now
+                  </a>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-semibold text-blue-900 mb-2">📚 Book Lover's Tip</h3>
-            <p className="text-blue-800">
-              Join our email newsletter for exclusive deals, new arrivals, and book recommendations tailored to your interests.
-              Plus, get 10% off your first order when you sign up!
-            </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </Layout>
-
   );
 }
