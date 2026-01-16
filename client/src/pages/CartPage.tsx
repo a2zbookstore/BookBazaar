@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles } from "lucide-react";
 import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
@@ -493,6 +493,38 @@ export default function CartPage() {
                     </span>
                   </div>
                 </div>
+              </Card>
+            )}
+
+            {/* Gift Reminder Banner - Show only if user has books but no gift selected */}
+            {hasNonGiftBooks && !giftItem && (
+              <Card className= "rounded-xl bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 border-2 border-purple-300 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full p-3 shadow-lg animate-bounce">
+                        <Gift className="h-6 w-6" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            Don't forget your FREE gift! 🎁
+                          </h3>
+                          <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
+                        </div>
+                        <p className="text-gray-700 text-sm">
+                          You qualify for a complimentary gift with your purchase. Pick your favorite now!
+                        </p>
+                      </div>
+                    </div>
+                    <Link href="/gift-items">
+                      <Button className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        <Gift className="h-4 w-4 mr-2" />
+                        Choose Gift
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
               </Card>
             )}
           </div>

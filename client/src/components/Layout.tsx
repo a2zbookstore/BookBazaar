@@ -66,7 +66,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="container-custom px-3 md:px-6">
           {/* Top Row - Logo, Search, Right Actions */}
           <div className={`flex items-center justify-between w-full transition-all duration-300 ${
-            isScrolled ? 'h-12 md:h-18' : 'h-16 md:h-22'
+            isScrolled ? 'h-14 md:h-18' : 'h-16 md:h-22'
           }`}>
             {/* Logo */}
             <Link href="/" className="flex items-center flex-shrink-0">
@@ -81,8 +81,10 @@ export default function Layout({ children }: LayoutProps) {
             {/* Search Bar - Hidden on mobile, shown on desktop - Made Bigger Horizontally and Narrower Vertically */}
             <div className="hidden md:flex flex-1 max-w-6xl mx-8">
               <SearchInput 
-                placeholder="Search books, authors, ISBN..."
+                placeholder="Search Books, Authors, Publisher, Category, ISBN..."
                 className="w-full h-8"
+                enableTypingAnimation={true}
+                staticKeyword="Search "
               />
             </div>
 

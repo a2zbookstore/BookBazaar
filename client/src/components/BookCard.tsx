@@ -15,27 +15,30 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
   if (!imageUrl || imageUrl.trim() === '') {
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
   }
-  
+
   // If it's already a full external URL, return as-is
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-  
-  // If it's already a correct path, return as-is
-  if (imageUrl.startsWith('/uploads/images/')) {
-    return imageUrl;
-  }
-  
-  // If it's just a filename, prepend the uploads path
-  const filename = imageUrl.split('/').pop() || imageUrl;
-  return `/uploads/images/${filename}`;
+  // if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+  //   return imageUrl;
+  // }
+
+  // // If it's already a correct path, return as-is
+  // if (imageUrl.startsWith('/uploads/images/')) {
+  //   return imageUrl;
+  // }
+
+  // // If it's just a filename, prepend the uploads path
+  // const filename = imageUrl.split('/').pop() || imageUrl;
+  // return `/uploads/images/${filename}`;
+
+  return imageUrl;
 };
 
 interface BookCardProps {
   book: Book;
+  isGift?: boolean;
 }
 
-export default function BookCard({ book }: BookCardProps) {
+export default function BookCard({ book, isGift = false }: BookCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
@@ -59,7 +62,7 @@ export default function BookCard({ book }: BookCardProps) {
     const decimal = bookRating - full;
     const half = decimal >= 0.25 && decimal < 0.75; // Show half star for .25 to .74
     const empty = 5 - full - (half ? 1 : 0);
-    
+
     return {
       fullStars: full,
       hasHalfStar: half,
@@ -80,7 +83,7 @@ export default function BookCard({ book }: BookCardProps) {
         } else {
           setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
         }
-        
+
         // Convert shipping cost if available from location-based shipping
         if (shipCost !== undefined) {
           if (shipCost === 0) {
@@ -138,7 +141,7 @@ export default function BookCard({ book }: BookCardProps) {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setIsAddingToCart(true);
     try {
       await addToCart(book.id);
@@ -146,7 +149,7 @@ export default function BookCard({ book }: BookCardProps) {
         title: "Added to cart",
         description: `${book.title} has been added to your cart!`,
       });
-      
+
       // Show gift suggestion toast with action
       toast({
         title: "Don't forget your gift!",
@@ -160,12 +163,12 @@ export default function BookCard({ book }: BookCardProps) {
           </button>
         ),
       });
-      
+
       // Redirect to checkout page after successful add to cart
       // setTimeout(() => {
       //   setLocation("/checkout");
       // }, 500);
-      
+
     } catch (error: any) {
       toast({
         title: "Error",
@@ -186,8 +189,8 @@ export default function BookCard({ book }: BookCardProps) {
 
       <Link to={`/books/${book.id}`} className="block">
         <div className="aspect-[3/4] overflow-hidden bg-white relative p-4">
-          <img 
-            src={getImageSrc(book.imageUrl)} 
+          <img
+            src={getImageSrc(book.imageUrl)}
             alt={book.title}
             className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
             onError={(e) => {
@@ -205,19 +208,28 @@ export default function BookCard({ book }: BookCardProps) {
             </Badge>
           )}
         </div>
-        
+
         <div className="p-4">
           <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm h-10">
             {book.title}
           </h3>
           <p className="text-sm text-gray-600 mb-2 truncate">{book.author}</p>
-          
+
           <div className="flex items-center justify-between mb-2">
             <div className="text-lg font-bold text-secondary-aqua">
-              {isConverting ? (
-                <span className="text-sm">Converting...</span>
+              {isGift ? (
+                <span>
+                  <span className="text-xs text-gray-400 line-through mr-2">
+                    {displayPrice || formatAmount(parseFloat(book.price), 'USD')}
+                  </span>
+                  <Badge className="bg-green-500 text-white font-bold">FREE</Badge>
+                </span>
               ) : (
-                displayPrice || formatAmount(parseFloat(book.price), 'USD')
+                isConverting ? (
+                  <span className="text-sm">Converting...</span>
+                ) : (
+                  displayPrice || formatAmount(parseFloat(book.price), 'USD')
+                )
               )}
             </div>
             {book.condition && (
@@ -273,8 +285,8 @@ export default function BookCard({ book }: BookCardProps) {
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 text-blue-600" />
               <span className="text-secondary-black">
-                {shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ? 
-                  `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days delivery` : 
+                {shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
+                  `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days delivery` :
                   '5-7 days delivery'
                 }
               </span>
@@ -286,7 +298,7 @@ export default function BookCard({ book }: BookCardProps) {
           </div>
         </div>
       </Link>
-      
+
       {/* Add to Cart Button */}
       <div className="px-4 pb-4">
         <Button
@@ -296,8 +308,8 @@ export default function BookCard({ book }: BookCardProps) {
           // className="w-full bg-primary-aqua hover:bg-primary-aqua/90 text-white text-sm py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
           size="sm"
         >
-          <ShoppingCart 
-            className={`h-4 w-4 mr-2 ${isAddingToCart ? 'animate-cart-slide' : ''}`} 
+          <ShoppingCart
+            className={`h-4 w-4 mr-2 ${isAddingToCart ? 'animate-cart-slide' : ''}`}
           />
           {isAddingToCart ? 'Adding...' : 'Add to Cart'}
         </Button>

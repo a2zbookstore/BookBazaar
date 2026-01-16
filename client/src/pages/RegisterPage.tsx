@@ -157,37 +157,38 @@ export default function RegisterPage() {
         url="https://a2zbookshop.com/register"
         type="website"
       />
-      <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-1/2 -left-1/2 w-96 h-96 bg-primary-aqua/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        </div>
+      <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md z-50 overflow-y-auto">
+        <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6">
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-1/2 -left-1/2 w-96 h-96 bg-primary-aqua/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+          </div>
 
-        <div className="w-full max-w-lg space-y-3 sm:space-y-6 relative z-10 my-4 sm:my-8">
+          <div className="w-full max-w-lg space-y-3 sm:space-y-6 relative z-10 my-4 sm:my-8">
           <Button
             onClick={handleClose}
             variant="ghost"
             size="icon"
-            className="absolute right-8 top-12 z-10 h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
+            className="absolute right-4 top-6 sm:right-4 sm:top-4 z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
           >
-            <X className="h-5 w-5 text-gray-700" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
           </Button>
-          <Card className="shadow-2xl border-2 border-white/50 overflow-hidden backdrop-blur-xl bg-white/90 rounded-2xl transform transition-all duration-300 hover:shadow-3xl">
-            <CardHeader className="relative space-y-3 text-center text-white rounded-t-2xl py-10 px-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(188, 100%, 29%) 0%, hsl(188, 100%, 26%) 50%, hsl(188, 79%, 38%) 100%)' }}>
+          <Card className="shadow-2xl border-2 border-white/50 overflow-hidden backdrop-blur-xl bg-white/90 rounded-xl sm:rounded-2xl transform transition-all duration-300 hover:shadow-3xl">
+            <CardHeader className="relative space-y-2 sm:space-y-3 text-center text-white rounded-t-xl sm:rounded-t-2xl py-6 sm:py-10 px-4 sm:px-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(188, 100%, 29%) 0%, hsl(188, 100%, 26%) 50%, hsl(188, 79%, 38%) 100%)' }}>
               {/* Decorative elements */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
 
               <div className="relative">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm mb-4 shadow-lg">
-                  <User className="h-8 w-8 text-white drop-shadow-lg" />
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm mb-2 sm:mb-4 shadow-lg">
+                  <User className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
                 </div>
-                <CardTitle className="text-4xl font-extrabold text-white drop-shadow-lg">
+                <CardTitle className="text-2xl sm:text-4xl font-extrabold text-white drop-shadow-lg">
                   Join Us Today!
                 </CardTitle>
-                <p className="text-white/95 text-base font-medium mt-3 drop-shadow-md">
+                <p className="text-white/95 text-sm sm:text-base font-medium mt-2 sm:mt-3 drop-shadow-md">
                   Create your A2Z BOOKSHOP account
                 </p>
               </div>
@@ -215,7 +216,7 @@ export default function RegisterPage() {
                           type="text"
                           value={emailFormData.firstName}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="John"
                           required
                         />
@@ -227,7 +228,7 @@ export default function RegisterPage() {
                           type="text"
                           value={emailFormData.lastName}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Doe"
                           required
                         />
@@ -243,7 +244,7 @@ export default function RegisterPage() {
                           type="email"
                           value={emailFormData.email}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, email: e.target.value }))}
-                          className="pl-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="your.email@example.com"
                           required
                         />
@@ -259,7 +260,7 @@ export default function RegisterPage() {
                           type={showPassword ? "text" : "password"}
                           value={emailFormData.password}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="At least 6 characters"
                           required
                           minLength={6}
@@ -285,7 +286,7 @@ export default function RegisterPage() {
                           type={showConfirmPassword ? "text" : "password"}
                           value={emailFormData.confirmPassword}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Repeat your password"
                           required
                           minLength={6}
@@ -330,7 +331,7 @@ export default function RegisterPage() {
                           type="text"
                           value={phoneFormData.firstName}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="John"
                           required
                         />
@@ -342,7 +343,7 @@ export default function RegisterPage() {
                           type="text"
                           value={phoneFormData.lastName}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                          className="h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Doe"
                           required
                         />
@@ -355,7 +356,7 @@ export default function RegisterPage() {
                         <select
                           value={phoneFormData.countryCode}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, countryCode: e.target.value }))}
-                          className="flex h-12 w-32 rounded-xl border-2 border-gray-200 bg-white px-3 py-1 text-sm font-medium transition-all focus:outline-none focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20"
+                            className="flex h-10 sm:h-12 w-28 sm:w-32 rounded-xl border-2 border-gray-200 bg-white px-2 sm:px-3 py-1 text-sm font-medium transition-all focus:outline-none focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20"
                         >
                           {countries.map((country) => (
                             <option key={country.code} value={country.code}>
@@ -391,7 +392,7 @@ export default function RegisterPage() {
                           type={showPassword ? "text" : "password"}
                           value={phoneFormData.password}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, password: e.target.value }))}
-                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="At least 6 characters"
                           required
                           minLength={6}
@@ -417,7 +418,7 @@ export default function RegisterPage() {
                           type={showConfirmPassword ? "text" : "password"}
                           value={phoneFormData.confirmPassword}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                          className="pl-12 pr-12 h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
+                          className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
                           placeholder="Repeat your password"
                           required
                           minLength={6}
@@ -483,6 +484,7 @@ export default function RegisterPage() {
               Back to Home
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </>
