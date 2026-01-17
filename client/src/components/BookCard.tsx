@@ -3,12 +3,13 @@ import { Link, useLocation } from "wouter";
 import { Star, StarHalf, ShoppingCart, Truck, Clock, Book as BookIcon, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCart } from "@/contexts/CartContext";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import WishlistHeart from "@/components/WishlistHeart";
 import { Book } from "@/types";
+import { useUserLocation } from "@/contexts/userLocationContext";
 
 // Image helper functions
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -39,15 +40,18 @@ interface BookCardProps {
 }
 
 export default function BookCard({ book, isGift = false }: BookCardProps) {
-  const { addToCart } = useCart();
+  const { addToCart } = useGlobalContext();
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
-  const { shippingRate, shippingCost: shipCost } = useShipping();
+  const { shippingRate, shippingCost: shipCost, isLoading: isShippingLoading } = useShipping();
   const [, setLocation] = useLocation();
   const [displayPrice, setDisplayPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
   const [shippingCost, setShippingCost] = useState<string>('');
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const {
+    location,
+  } = useUserLocation();
 
   // Generate consistent rating based on book ID (3.5 to 5 stars)
   const bookRating = useMemo(() => {
@@ -118,25 +122,28 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           setShippingCost(formatAmount(shipCost, 'USD'));
         }
       }
+      setIsConverting(false);
+
     }
-  }, [book.price, userCurrency, convertPrice, formatAmount, shipCost]);
+  }, [book.price, userCurrency, convertPrice, formatAmount, shipCost, location]);
 
   // Listen for currency changes to force re-conversion
-  useEffect(() => {
-    const handleCurrencyChange = (event: CustomEvent) => {
-      // Force re-conversion when currency changes
-      setIsConverting(true);
-      convertPrices();
-    };
+  // useEffect(() => {
+  //   const handleCurrencyChange = (event: CustomEvent) => {
+  //     // Force re-conversion when currency changes
+  //     setIsConverting(true);
+  //     convertPrices();
+  //   };
 
-    window.addEventListener('currencyChanged', handleCurrencyChange as EventListener);
-    return () => window.removeEventListener('currencyChanged', handleCurrencyChange as EventListener);
-  }, [convertPrices]);
+  //   window.addEventListener('currencyChanged', handleCurrencyChange as EventListener);
+  //   return () => window.removeEventListener('currencyChanged', handleCurrencyChange as EventListener);
+  // }, [convertPrices]);
 
   // Convert prices when dependencies change
   useEffect(() => {
+    setIsConverting(true);
     convertPrices();
-  }, [convertPrices]);
+  }, [convertPrices, location]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -163,11 +170,6 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           </button>
         ),
       });
-
-      // Redirect to checkout page after successful add to cart
-      // setTimeout(() => {
-      //   setLocation("/checkout");
-      // }, 500);
 
     } catch (error: any) {
       toast({
@@ -226,8 +228,9 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
                 </span>
               ) : (
                 isConverting ? (
-                  <span className="text-sm">Converting...</span>
-                ) : (
+                  <span className="text-sm">
+                    <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
+                  </span>) : (
                   displayPrice || formatAmount(parseFloat(book.price), 'USD')
                 )
               )}
@@ -279,16 +282,21 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
             <div className="flex items-center gap-1">
               <Truck className="h-3 w-3 text-green-600" />
               <span className="text-secondary-black font-medium">
-                {shippingCost || 'Calculating shipping...'}
+                {isShippingLoading ? (
+                  <span className="inline-block h-[1em] w-24 align-middle rounded bg-gray-300 animate-pulse" />
+                ) : shippingCost}
               </span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 text-blue-600" />
               <span className="text-secondary-black">
-                {shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
-                  `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days delivery` :
-                  '5-7 days delivery'
-                }
+                {isShippingLoading ? (
+                  <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
+                ) : (
+                  shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
+                    `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days delivery` :
+                    '5-7 days delivery'
+                )}
               </span>
             </div>
             <div className="flex items-center gap-1">

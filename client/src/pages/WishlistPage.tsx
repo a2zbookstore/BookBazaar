@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useWishlist } from "@/contexts/WishlistContext";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
@@ -13,7 +13,7 @@ import { Heart, ShoppingBag, Trash2 } from "lucide-react";
 
 export default function WishlistPage() {
   const { isAuthenticated } = useAuth();
-  const { refreshWishlistCount } = useWishlist();
+  const { refreshWishlistCount } = useGlobalContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

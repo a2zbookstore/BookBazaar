@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useCart } from "@/contexts/CartContext";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
@@ -11,7 +11,7 @@ import { CheckCircle, Loader2 } from "lucide-react";
 
 export default function PayPalCompletePage() {
   const [, setLocation] = useLocation();
-  const { clearCart } = useCart();
+  const { clearCart } = useGlobalContext();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);

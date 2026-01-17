@@ -76,7 +76,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
                   <img
                     src={banner.image}
                     alt={banner.alt || banner.title || "Banner"}
-                    className="w-full h-full object-fill"
+                    className="w-full h-full object-cover max-h-48 md:max-h-64 lg:max-h-80 xl:max-h-96"
                   />
                   {(banner.title || banner.subtitle) && (
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex flex-col justify-end p-8">
@@ -104,7 +104,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
                 <img
                   src={banner.image}
                   alt={banner.alt || banner.title || "Banner"}
-                  className="w-full h-full object-fill"
+                  className="w-full h-full object-cover max-h-48 md:max-h-64 lg:max-h-80 xl:max-h-96"
                 />
                 {(banner.title || banner.subtitle) && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex flex-col justify-end p-8">

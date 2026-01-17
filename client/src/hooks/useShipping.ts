@@ -1,5 +1,5 @@
+import { useUserLocation } from '@/contexts/userLocationContext';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation } from './useLocation';
 
 interface ShippingRate {
   id: number;
@@ -25,9 +25,7 @@ interface ShippingHook {
 }
 
 export const useShipping = (): ShippingHook => {
-  const { location, isLoading: locationLoading } = useLocation();
-
-
+  const { location } = useUserLocation();
 
   const {
     data: shippingRate,
@@ -38,7 +36,7 @@ export const useShipping = (): ShippingHook => {
     queryFn: () => 
       fetch(`/api/shipping-rates/country/${location?.countryCode}`)
         .then(res => res.json()),
-    enabled: !!location?.countryCode && !locationLoading,
+    enabled: !!location?.countryCode
   });
 
   const shippingCost = shippingRate ? parseFloat(shippingRate.shippingCost) : 0;
@@ -51,7 +49,7 @@ export const useShipping = (): ShippingHook => {
 
   return {
     shippingRate: shippingRate ?? null,
-    isLoading: locationLoading || shippingLoading,
+    isLoading: shippingLoading,
     error: error instanceof Error ? error.message : null,
     shippingCost,
     deliveryTime,

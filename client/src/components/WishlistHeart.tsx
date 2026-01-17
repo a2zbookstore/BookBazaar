@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useWishlist } from "@/contexts/WishlistContext";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 
 interface WishlistHeartProps {
   bookId: number;
@@ -15,7 +15,7 @@ interface WishlistHeartProps {
 export default function WishlistHeart({ bookId, className = "", size = 20 }: WishlistHeartProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { refreshWishlistCount } = useWishlist();
+  const { refreshWishlistCount } = useGlobalContext();
   const queryClient = useQueryClient();
   const [isAnimating, setIsAnimating] = useState(false);
 

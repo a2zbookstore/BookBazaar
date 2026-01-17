@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import { Book } from "@/types";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 
 // Image helper function
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -31,7 +32,7 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
 
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { addToCart } = useCart();
+  const { addToCart } = useGlobalContext();
   const { toast } = useToast();
   const { shippingRate } = useShipping();
   const [, setLocation] = useLocation();

@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useCart } from "@/contexts/CartContext";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
@@ -73,23 +73,27 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 }
 
 export default function CartPage() {
-  const { cartItems, updateCartItem, removeFromCart, isLoading } = useCart();
+  const { cartItems, updateCartItem, removeFromCart, isLoading } = useGlobalContext();
+  const [optimisticCartItems, setOptimisticCartItems] = useState<CartItem[] | null>(null);
+  const [optimisticallyRemovedId, setOptimisticallyRemovedId] = useState<number | null>(null);
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
-  const { shippingCost, shippingRate } = useShipping();
+  const { shippingCost, shippingRate, isLoading: isShippingLoading } = useShipping();
   const [giftItem, setGiftItem] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
+  const [removingItemId, setRemovingItemId] = useState<number | null>(null);
   const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
   const updateTimeouts = React.useRef<Record<number, NodeJS.Timeout>>({});
   const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
 
   useEffect(() => {
+    const currentItems = optimisticCartItems !== null ? optimisticCartItems : cartItems;
     const quantities: Record<number, number> = {};
-    cartItems.forEach(item => {
+    currentItems.forEach(item => {
       quantities[item.id] = item.quantity;
     });
     setLocalQuantities(quantities);
-  }, [cartItems.length]);
+  }, [cartItems.length, optimisticCartItems]);
 
   // Load gift item from localStorage and auto-remove if no books
   useEffect(() => {
@@ -279,18 +283,34 @@ export default function CartPage() {
   }, []);
 
   const handleRemoveItem = async (itemId: number) => {
-    // Optimistically remove from UI immediately
-    const itemToRemove = cartItems.find(item => item.id === itemId);
-
-    // Remove from cart immediately (no waiting for API)
-    removeFromCart(itemId);
-
-    // Show toast immediately
+    if (removingItemId !== null) return; // Prevent double click
+    setRemovingItemId(itemId);
+    const currentItems = optimisticCartItems !== null ? optimisticCartItems : cartItems;
+    const itemToRemove = currentItems.find(item => item.id === itemId);
+    // Optimistically remove from UI
+    setOptimisticCartItems(currentItems.filter(item => item.id !== itemId));
+    setOptimisticallyRemovedId(itemId);
     toast({
       title: "Removed from cart",
       description: itemToRemove?.book?.title ? `${itemToRemove.book.title} removed` : "Item removed from cart",
     });
+    try {
+      await removeFromCart(itemId);
+    } finally {
+      setRemovingItemId(null);
+    }
   };
+
+  useEffect(() => {
+    if (
+      optimisticCartItems !== null &&
+      optimisticallyRemovedId !== null &&
+      !cartItems.some(item => item.id === optimisticallyRemovedId)
+    ) {
+      setOptimisticCartItems(null);
+      setOptimisticallyRemovedId(null);
+    }
+  }, [cartItems, optimisticCartItems, optimisticallyRemovedId]);
 
   if (isLoading) {
     return (
@@ -302,16 +322,26 @@ export default function CartPage() {
     );
   }
 
-  if (cartItems.length === 0) {
+  const isCartEmpty = (optimisticCartItems !== null ? optimisticCartItems.length === 0 : cartItems.length === 0);
+  if (isCartEmpty) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 mt-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
             <p className="text-gray-600 mb-8">Add some books to get started!</p>
-            <Link to="/catalog">
-              <Button>Browse Books</Button>
-            </Link>
+            <div className="flex flex-row gap-4 items-center justify-center">
+              <Link to="/">
+                <Button variant="outline" className="rounded-full ">
+                  ← Back to Home
+                </Button>
+              </Link>
+              <Link to="/catalog">
+                <Button className="rounded-full">Browse Books</Button>
+              </Link>
+
+            </div>
+
           </div>
         </div>
       </Layout>
@@ -335,7 +365,7 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
 
-            {cartItems.map((item) => {
+            {(optimisticCartItems !== null ? optimisticCartItems : cartItems).map((item) => {
               const isGift = (item as any).isGift;
               const imageUrl = item.book?.imageUrl;
               const title = item.book?.title;
@@ -404,6 +434,7 @@ export default function CartPage() {
                                 size="sm"
                                 onClick={() => handleRemoveItem(item.id)}
                                 className="text-red-500 hover:bg-red-700 hover:text-white hover:rounded-full"
+                                disabled={removingItemId === item.id}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -498,7 +529,7 @@ export default function CartPage() {
 
             {/* Gift Reminder Banner - Show only if user has books but no gift selected */}
             {hasNonGiftBooks && !giftItem && (
-              <Card className= "rounded-xl bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 border-2 border-purple-300 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <Card className="rounded-xl bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 border-2 border-purple-300 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-4">
@@ -542,16 +573,20 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between text-base text-secondary-black">
                   <span className="font-medium">Shipping</span>
-                  <span className="font-semibold">
-                    {convertedAmounts.shipping === 0 ? (
-                      <span className="text-green-600 font-bold flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        FREE
-                      </span>
-                    ) : formatAmount(convertedAmounts.shipping)}
-                  </span>
+                  {!isShippingLoading ? (
+                    <span className="font-semibold">
+                      {convertedAmounts.shipping === 0 ? (
+                        <span className="text-green-600 font-bold flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          FREE
+                        </span>
+                      ) : formatAmount(convertedAmounts.shipping)}
+                    </span>
+                  ) : (
+                    <span className="inline-block h-[1em] w-24 align-middle rounded bg-gray-300 animate-pulse" />
+                  )}
                 </div>
                 <div className="flex justify-between text-base text-secondary-black">
                   <span className="font-medium">Tax (1%)</span>
@@ -615,12 +650,19 @@ export default function CartPage() {
                 )}
 
                 <div className="flex items-center gap-4 flex-col">
-                  <Link to="/checkout">
-                    <Button className="w-full bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white font-semibold py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+
+                  <Button
+                    disabled={isShippingLoading}
+                    className="w-full bg-gradient-to-r from-primary-aqua to-secondary-aqua 
+                    hover:from-secondary-aqua hover:to-primary-aqua text-white font-semibold 
+                    py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 
+                    transform hover:scale-[1.02]">
+                    <Link to="/checkout" className="flex items-center gap-2 justify-center w-full">
                       <ShoppingBag className="h-6 w-6" />
                       Proceed to Checkout
-                    </Button>
-                  </Link>
+                    </Link>
+
+                  </Button>
 
                   {/* <Link to="/catalog">
                     <Button variant="outline" className="w-full border-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white font-medium py-4 rounded-full transition-all duration-200">
@@ -655,6 +697,6 @@ export default function CartPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </Layout >
   );
 }

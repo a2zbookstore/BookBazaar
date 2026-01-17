@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/contexts/CartContext";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
@@ -268,7 +268,7 @@ function CheckoutItemPrice({ bookPrice, quantity }: { bookPrice: number; quantit
 export default function CheckoutPage() {
   const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const { cartItems, cartCount, clearCart } = useCart();
+  const { cartItems, cartCount, clearCart } = useGlobalContext();
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
   const { shippingCost, shippingRate } = useShipping();
   const { toast } = useToast();
@@ -303,10 +303,6 @@ export default function CheckoutPage() {
   const [sameBillingAddress, setSameBillingAddress] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState("stripe");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [checkoutType, setCheckoutType] = useState<"guest" | "register" | "login">("guest");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
   const [giftItem, setGiftItem] = useState<any>(null);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
@@ -940,7 +936,7 @@ export default function CheckoutPage() {
             <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
               <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
                 <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
-                 <UserPen className="w-6 h-6" />
+                  <UserPen className="w-6 h-6" />
                   Customer Information
                 </CardTitle>
                 <p className="text-gray-600 text-sm mt-1 ml-8">Tell us who you are</p>
@@ -1065,7 +1061,7 @@ export default function CheckoutPage() {
             <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
               <CardHeader className="px-6 pt-4 pb-2 bg-white border-b-2 border-gray-100">
                 <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
-                 <MapPinPlusInside className="w-5 h-5" />
+                  <MapPinPlusInside className="w-5 h-5" />
                   Shipping Address
                 </CardTitle>
                 <p className="text-gray-600 text-sm mt-1 ml-8">Where should we deliver?</p>

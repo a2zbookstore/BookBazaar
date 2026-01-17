@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  convertCurrency, 
-  getPreferredCurrency, 
+import {
+  convertCurrency,
+  getPreferredCurrency,
   getCurrencyForCountry,
   formatPrice,
   getCachedExchangeRates,
@@ -9,8 +9,9 @@ import {
   getExchangeRates,
   type ConvertedPrice,
   type CurrencyInfo,
-  SUPPORTED_CURRENCIES 
+  SUPPORTED_CURRENCIES
 } from '@/lib/currencyUtils';
+import { useUserLocation } from '@/contexts/userLocationContext';
 
 export interface UseCurrencyReturn {
   userCurrency: string;
@@ -26,58 +27,43 @@ export interface UseCurrencyReturn {
 }
 
 export function useCurrency(countryCode?: string): UseCurrencyReturn {
-  const [userCurrency, setUserCurrency] = useState<string>('USD');
+  const { location } = useUserLocation();
+
+  // Always derive currency from location.countryCode
+  const derivedCurrency = location?.countryCode ? getCurrencyForCountry(location.countryCode) : 'USD';
+  const [userCurrency, setUserCurrency] = useState<string>(derivedCurrency);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Update userCurrency when location.countryCode changes
+  useEffect(() => {
+    const newCurrency = location?.countryCode ? getCurrencyForCountry(location.countryCode) : 'USD';
+    setUserCurrency(newCurrency);
+  }, [location?.countryCode]);
+
   // Initialize user currency based on location or preference
   const initializeCurrency = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      
-      // Check if user has a saved currency preference
-      const savedCurrency = localStorage.getItem('user_preferred_currency');
-      if (savedCurrency && SUPPORTED_CURRENCIES.find(c => c.code === savedCurrency)) {
-        setUserCurrency(savedCurrency);
-        return savedCurrency;
-      }
-
-      // Otherwise, determine currency from country code or location
-      let detectedCurrency = 'USD';
-      if (countryCode) {
-        detectedCurrency = getCurrencyForCountry(countryCode);
-      } else {
-        detectedCurrency = await getPreferredCurrency();
-      }
-      
-      setUserCurrency(detectedCurrency);
-      
-      // Save preference
-      localStorage.setItem('user_preferred_currency', detectedCurrency);
-      
-      return detectedCurrency;
-    } catch (err) {
-      console.error('Error initializing currency:', err);
-      setUserCurrency('USD');
-      return 'USD';
-    }
-  }, [countryCode]);
+    setIsLoading(true);
+    setUserCurrency(location?.countryCode ? getCurrencyForCountry(location.countryCode) : 'USD');
+    setIsLoading(false);
+  }, [location?.countryCode]);
 
   // Load exchange rates
   const loadExchangeRates = useCallback(async (baseCurrency: string = 'USD') => {
     try {
       setError(null);
-      
       // Try to get cached rates first
       const cachedRates = getCachedExchangeRates(baseCurrency);
       if (cachedRates) {
+        console.log("geting cashed");
+        
         setExchangeRates(cachedRates);
         setIsLoading(false);
         return;
       }
-      
-      // Fetch fresh rates
+
+      // Fetch fresh rates      
       const rates = await getExchangeRates(baseCurrency);
       if (rates) {
         setExchangeRates(rates);
@@ -95,7 +81,7 @@ export function useCurrency(countryCode?: string): UseCurrencyReturn {
 
   // Convert price to user's currency
   const convertPrice = useCallback(async (
-    amount: number, 
+    amount: number,
     fromCurrency: string = 'USD'
   ): Promise<ConvertedPrice | null> => {
     try {
@@ -116,22 +102,30 @@ export function useCurrency(countryCode?: string): UseCurrencyReturn {
   const setCurrency = useCallback((currencyCode: string) => {
     if (SUPPORTED_CURRENCIES.find(c => c.code === currencyCode)) {
       setUserCurrency(currencyCode);
-      localStorage.setItem('user_preferred_currency', currencyCode);
-      
-      // Force re-render of all components using currency
-      window.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency: currencyCode } }));
-      
       // Reload exchange rates if needed
       if (currencyCode !== 'USD') {
         loadExchangeRates('USD');
       }
     }
-  }, [loadExchangeRates]);
+  }, [loadExchangeRates, location]);
 
   // Get list of supported currencies
   const getSupportedCurrencies = useCallback((): CurrencyInfo[] => {
     return SUPPORTED_CURRENCIES;
   }, []);
+
+  // Only load exchange rates once per currency, not per component
+  useEffect(() => {
+    // Only fetch if exchangeRates is null or userCurrency changed
+    if (!exchangeRates || exchangeRates[userCurrency] === undefined) {
+      loadExchangeRates(userCurrency);
+    }
+  }, [userCurrency]);
+
+  // Remove loadExchangeRates from initialize and mount effect
+  const initialize = async () => {
+    await initializeCurrency();
+  };
 
   // Refresh exchange rates
   const refreshRates = useCallback(async (): Promise<void> => {
@@ -142,13 +136,8 @@ export function useCurrency(countryCode?: string): UseCurrencyReturn {
 
   // Initialize on mount
   useEffect(() => {
-    const initialize = async () => {
-      await initializeCurrency();
-      await loadExchangeRates('USD');
-    };
-    
     initialize();
-  }, [initializeCurrency, loadExchangeRates]);
+  }, [initializeCurrency]);
 
   // Update currency when country code changes
   useEffect(() => {

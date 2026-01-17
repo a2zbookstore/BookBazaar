@@ -59,41 +59,41 @@ export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
   'HK': 'HKD', 'NO': 'NOK', 'SE': 'SEK', 'DK': 'DKK', 'PL': 'PLN',
   'CZ': 'CZK', 'HU': 'HUF', 'RU': 'RUB', 'BR': 'BRL', 'MX': 'MXN',
   'ZA': 'ZAR', 'TR': 'TRY', 'AE': 'AED', 'SA': 'SAR',
-  
+
   // EU countries using EUR
   'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR', 'NL': 'EUR',
   'BE': 'EUR', 'AT': 'EUR', 'PT': 'EUR', 'IE': 'EUR', 'FI': 'EUR',
   'GR': 'EUR', 'LU': 'EUR', 'MT': 'EUR', 'CY': 'EUR', 'SK': 'EUR',
   'SI': 'EUR', 'EE': 'EUR', 'LV': 'EUR', 'LT': 'EUR',
-  
+
   // Additional Asian countries
   'TH': 'USD', 'VN': 'USD', 'MY': 'USD', 'ID': 'USD', 'PH': 'USD',
   'BD': 'USD', 'PK': 'USD', 'LK': 'USD', 'NP': 'USD', 'MM': 'USD',
-  
+
   // Additional Middle East countries
   'QA': 'USD', 'KW': 'USD', 'BH': 'USD', 'OM': 'USD', 'JO': 'USD',
   'LB': 'USD', 'IL': 'USD', 'IQ': 'USD', 'IR': 'USD', 'SY': 'USD',
-  
+
   // African countries
   'EG': 'USD', 'NG': 'USD', 'KE': 'USD', 'GH': 'USD', 'UG': 'USD',
   'TZ': 'USD', 'ZW': 'USD', 'ZM': 'USD', 'BW': 'USD', 'NA': 'USD',
   'MU': 'USD', 'MG': 'USD', 'SN': 'USD', 'CI': 'USD', 'MA': 'USD',
   'TN': 'USD', 'DZ': 'USD', 'LY': 'USD', 'SD': 'USD', 'ET': 'USD',
-  
+
   // Latin American countries
   'AR': 'USD', 'CL': 'USD', 'CO': 'USD', 'PE': 'USD', 'VE': 'USD',
   'EC': 'USD', 'BO': 'USD', 'PY': 'USD', 'UY': 'USD', 'CR': 'USD',
   'PA': 'USD', 'GT': 'USD', 'HN': 'USD', 'NI': 'USD', 'SV': 'USD',
   'DO': 'USD', 'CU': 'USD', 'JM': 'USD', 'TT': 'USD', 'BB': 'USD',
-  
+
   // Oceania
   'NZ': 'USD', 'FJ': 'USD', 'PG': 'USD', 'NC': 'EUR', 'PF': 'EUR',
-  
+
   // Eastern Europe
   'UA': 'USD', 'BY': 'USD', 'MD': 'USD', 'GE': 'USD', 'AM': 'USD',
   'AZ': 'USD', 'KZ': 'USD', 'UZ': 'USD', 'TM': 'USD', 'KG': 'USD',
   'TJ': 'USD', 'MN': 'USD', 'AF': 'USD',
-  
+
   // Other regions - default to USD for easier currency conversion
 };
 
@@ -104,19 +104,19 @@ export async function getExchangeRates(baseCurrency: string = 'USD'): Promise<Re
   try {
     // Using exchangerate-api.com free tier (1,500 requests/month)
     const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${baseCurrency}`);
-    
+
     if (response.ok) {
       const data = await response.json();
       return data.rates;
     }
-    
+
     // Fallback to fixer.io if first API fails
     const fallbackResponse = await fetch(`https://api.fixer.io/latest?base=${baseCurrency}&access_key=free`);
     if (fallbackResponse.ok) {
       const fallbackData = await fallbackResponse.json();
       return fallbackData.rates;
     }
-    
+
     return null;
   } catch (error) {
     console.error('Error fetching exchange rates:', error);
@@ -128,32 +128,34 @@ export async function getExchangeRates(baseCurrency: string = 'USD'): Promise<Re
  * Convert price from USD to target currency
  */
 export async function convertCurrency(
-  amount: number, 
-  fromCurrency: string = 'USD', 
+  amount: number,
+  fromCurrency: string = 'USD',
   toCurrency: string
 ): Promise<ConvertedPrice | null> {
   try {
+    // Use cached rates if available
+    const cachedRates = getCachedExchangeRates(fromCurrency);
+    let rates = cachedRates;
+    if (!rates) {
+      rates = await getExchangeRates(fromCurrency);
+      if (rates) cacheExchangeRates(rates, fromCurrency);
+    }
+    if (!rates) return null;
     if (fromCurrency === toCurrency) {
       const currencyInfo = SUPPORTED_CURRENCIES.find(c => c.code === toCurrency);
       return {
         originalAmount: amount,
         originalCurrency: fromCurrency,
         convertedAmount: amount,
-        convertedCurrency: toCurrency,
+        convertedCurrency: toCurrency, 
         exchangeRate: 1,
         symbol: currencyInfo?.symbol || '$'
       };
     }
-
-    const rates = await getExchangeRates(fromCurrency);
-    if (!rates || !rates[toCurrency]) {
-      return null;
-    }
-
+    if (!rates[toCurrency]) return null;
     const exchangeRate = rates[toCurrency];
     const convertedAmount = amount * exchangeRate;
     const currencyInfo = SUPPORTED_CURRENCIES.find(c => c.code === toCurrency);
-
     return {
       originalAmount: amount,
       originalCurrency: fromCurrency,
@@ -181,10 +183,10 @@ export function getCurrencyForCountry(countryCode: string): string {
 export function formatPrice(amount: number, currencyCode: string): string {
   // Ensure amount is a number
   const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-  
+
   const currency = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode);
   const symbol = currency?.symbol || currencyCode;
-  
+
   // Handle special formatting for different currencies
   switch (currencyCode) {
     case 'JPY':
@@ -208,7 +210,7 @@ export async function getPreferredCurrency(countryCode?: string): Promise<string
     if (countryCode) {
       return getCurrencyForCountry(countryCode);
     }
-    
+
     // Try to detect from browser locale
     const locale = navigator.language || navigator.languages?.[0];
     if (locale) {
@@ -217,7 +219,7 @@ export async function getPreferredCurrency(countryCode?: string): Promise<string
         return getCurrencyForCountry(countryFromLocale);
       }
     }
-    
+
     // Default to USD
     return 'USD';
   } catch (error) {
@@ -250,14 +252,14 @@ export function getCachedExchangeRates(baseCurrency: string): Record<string, num
   try {
     const cached = localStorage.getItem('exchange_rates_cache');
     if (!cached) return null;
-    
+
     const cacheData = JSON.parse(cached);
-    
-    // Check if cache is still valid and for correct base currency
+
+    // Check if cache is still valid and for correct base currency  
     if (cacheData.baseCurrency === baseCurrency && Date.now() < cacheData.expiry) {
       return cacheData.rates;
     }
-    
+
     // Clear expired cache
     localStorage.removeItem('exchange_rates_cache');
     return null;
