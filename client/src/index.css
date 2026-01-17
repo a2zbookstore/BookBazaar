@@ -634,3 +634,5 @@ button:active, .button:active {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, hsl(188, 100%, 26%), hsl(188, 79%, 38%));
 }
+
+

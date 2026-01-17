@@ -8,6 +8,8 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
+import { GlobalProvider } from "@/contexts/GlobalContext";
+import { LocationProvider } from "@/contexts/userLocationContext";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -206,12 +208,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CartProvider>
-          <WishlistProvider>
+        <LocationProvider>
+          <GlobalProvider>
             <Toaster />
             <AppRouter />
-          </WishlistProvider>
-        </CartProvider>
+          </GlobalProvider>
+        </LocationProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

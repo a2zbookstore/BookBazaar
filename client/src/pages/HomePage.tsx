@@ -4,13 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Book, Category } from "@/types";
 import { Star, TrendingUp, Award, Flame, Package, BookOpen, Library } from "lucide-react";
 import BannerCarousel from "@/components/BannerCarousel";
 import BookCarousel from "@/components/BookCarousel";
+import { useUserLocation } from "@/contexts/userLocationContext";
 
-// Lazy-loaded Category Carousel Component with Intersection Observer
 interface CategoryCarouselProps {
   category: Category;
   currentSlide: number;
@@ -21,20 +20,18 @@ function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCar
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Intersection Observer to detect when carousel comes into view
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsVisible(true);
-            // Once visible, stop observing
             observer.disconnect();
           }
         });
       },
       {
-        rootMargin: '200px', // Start loading 200px before the element comes into view
+        rootMargin: '200px',
         threshold: 0.1,
       }
     );
@@ -192,6 +189,8 @@ export default function HomePage() {
       "query-input": "required name=search_term_string"
     }
   };
+  const {
+    location } = useUserLocation();
 
   // NFPA Books Query (title only)
   const { data: nfpaBooksResponse, isLoading: nfpaLoading } = useQuery<{ books: Book[]; total: number }>({
@@ -249,6 +248,17 @@ export default function HomePage() {
     setHasItemsInCart(Array.isArray(cartItems) && cartItems.length > 0);
   }, [cartItems]);
 
+  useEffect(() => {
+    if (!location) return;
+
+    console.log("Location updated:", location);
+
+    // Example: fetch store data based on country
+    // fetchStores(location.countryCode);
+
+  }, [location]);
+
+
   return (
     <Layout>
       <SEO
@@ -265,19 +275,19 @@ export default function HomePage() {
         <BannerCarousel
           banners={[{
             id: 1,
-            image: "/uploads/images/banner/banner-1.png",
+            image: "/src/temp/banner/Banner-1.png",
             alt: "Buy 3 Books Offer",
             link: "/catalog"
           },
           {
             id: 2,
-            image: "/uploads/images/banner/banner-2.png",
+            image: "/src/temp/banner/banner-2.png",
             alt: "Shop for $499",
             link: "/catalog"
           },
           {
             id: 3,
-            image: "/uploads/images/banner/banner-3.png",
+            image: "/src/temp/banner/banner-3.png",
             alt: "Shop for $999",
             link: "/catalog"
           }]}

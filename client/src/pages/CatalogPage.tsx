@@ -41,19 +41,14 @@ export default function CatalogPage() {
     setSearchParams(params);
 
     const searchParam = params.get('search') || '';
-    console.log("Extracted search param from URL:", searchParam);
-
     // Only update search state if it's different
     if (searchParam !== search) {
       setSearch(searchParam);
-      console.log("Updated search state to:", searchParam);
-
       // Reset to first page when search changes
       setCurrentPage(1);
 
       // Reset other filters when coming from homepage search
       if (searchParam) {
-        console.log("Search detected, resetting other filters");
         setSelectedCategories([]);
         setSelectedConditions([]);
         setMinPrice('');
@@ -111,19 +106,13 @@ export default function CatalogPage() {
   queryParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
 
   const apiUrl = `/api/books?${queryParams.toString()}`;
-  console.log("Final API URL:", apiUrl);
-  console.log("Current search state:", search);
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
     queryKey: ['/api/books', search, selectedCategories, selectedConditions, minPrice, maxPrice, sortBy, sortOrder, currentPage],
     queryFn: async () => {
-      console.log("Fetching books with API URL:", apiUrl);
-      console.log("Search parameter in queryFn:", search);
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch books');
       const data = await response.json();
-      console.log("API response data:", data);
-      console.log("Number of books returned:", data.books?.length || 0);
       return data;
     },
     staleTime: 0,
@@ -133,12 +122,9 @@ export default function CatalogPage() {
     queryKey: ["/api/categories"],
   });
 
-  console.log("booksResponse received:", booksResponse);
   const books = booksResponse?.books || [];
   const totalBooks = booksResponse?.total || 0;
   const totalPages = Math.ceil(totalBooks / itemsPerPage);
-  console.log("Books to display:", books.length, "Total books:", totalBooks);
-
   const conditions = ["New", "Like New", "Very Good", "Good", "Fair"];
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {

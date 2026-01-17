@@ -5,13 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, GripVertical, Gift, Settings, Eye, Upload, X } from "lucide-react";
+import { Plus, Edit, Trash2, GripVertical, Gift, Settings, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { GiftItem, HomepageContent, GiftCategory } from "@/shared/schema";
@@ -57,20 +57,20 @@ export default function GiftManagementPage() {
 
   // Image upload handlers
   const handleImageUpload = async (file: File, imageField: 'imageUrl' | 'imageUrl2' | 'imageUrl3') => {
-    const setUploading = imageField === 'imageUrl' ? setIsImageUploading : 
-                        imageField === 'imageUrl2' ? setIsImageUploading2 : setIsImageUploading3;
-    
+    const setUploading = imageField === 'imageUrl' ? setIsImageUploading :
+      imageField === 'imageUrl2' ? setIsImageUploading2 : setIsImageUploading3;
+
     setUploading(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('image', file);
-      
+
       const response = await apiRequest('/api/upload-image', {
         method: 'POST',
         body: formData,
       });
-      
+
       if (response.success) {
         setGiftForm(prev => ({ ...prev, [imageField]: response.imageUrl }));
         toast({
@@ -397,7 +397,7 @@ export default function GiftManagementPage() {
                       rows={3}
                     />
                   </div>
-                  
+
                   {/* Image Upload Sections */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Image 1 */}
@@ -429,9 +429,9 @@ export default function GiftManagementPage() {
                         />
                         {giftForm.imageUrl && (
                           <div className="relative">
-                            <img 
-                              src={giftForm.imageUrl} 
-                              alt="Preview 1" 
+                            <img
+                              src={giftForm.imageUrl}
+                              alt="Preview 1"
                               className="w-full h-32 object-cover rounded border"
                             />
                             <Button
@@ -477,9 +477,9 @@ export default function GiftManagementPage() {
                         />
                         {giftForm.imageUrl2 && (
                           <div className="relative">
-                            <img 
-                              src={giftForm.imageUrl2} 
-                              alt="Preview 2" 
+                            <img
+                              src={giftForm.imageUrl2}
+                              alt="Preview 2"
                               className="w-full h-32 object-cover rounded border"
                             />
                             <Button
@@ -525,9 +525,9 @@ export default function GiftManagementPage() {
                         />
                         {giftForm.imageUrl3 && (
                           <div className="relative">
-                            <img 
-                              src={giftForm.imageUrl3} 
-                              alt="Preview 3" 
+                            <img
+                              src={giftForm.imageUrl3}
+                              alt="Preview 3"
                               className="w-full h-32 object-cover rounded border"
                             />
                             <Button
@@ -568,7 +568,7 @@ export default function GiftManagementPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="sortOrder">Sort Order</Label>
@@ -663,22 +663,22 @@ export default function GiftManagementPage() {
                             </Badge>
                             <div className="flex gap-1 flex-wrap">
                               {gift.imageUrl && (
-                                <img 
-                                  src={gift.imageUrl} 
+                                <img
+                                  src={gift.imageUrl}
                                   alt={`${gift.name} - Image 1`}
                                   className="w-8 h-8 object-cover rounded border"
                                 />
                               )}
                               {gift.imageUrl2 && (
-                                <img 
-                                  src={gift.imageUrl2} 
+                                <img
+                                  src={gift.imageUrl2}
                                   alt={`${gift.name} - Image 2`}
                                   className="w-8 h-8 object-cover rounded border"
                                 />
                               )}
                               {gift.imageUrl3 && (
-                                <img 
-                                  src={gift.imageUrl3} 
+                                <img
+                                  src={gift.imageUrl3}
                                   alt={`${gift.name} - Image 3`}
                                   className="w-8 h-8 object-cover rounded border"
                                 />

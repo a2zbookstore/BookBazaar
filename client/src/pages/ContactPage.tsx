@@ -284,9 +284,8 @@ export default function ContactPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-base-black mb-1">Address</h3>
-                          <p className="text-secondary-black ">
-                            {storeInfo?.storeAddress || "Address not available"}
-                          </p>
+                          <p className="text-secondary-black whitespace-pre-line">
+                            {(storeInfo?.storeAddress || "Address not available").replace(/,\s*/g, ",\n")}                          </p>
                           <p className="text-xs text-tertiary-black">Click to view on map</p>
                         </div>
                       </div>

@@ -9,14 +9,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Gift, BookOpen, PartyPopper, ArrowLeft, Check, ShoppingCart, ShoppingBag } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useCart } from "@/contexts/CartContext";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { apiRequest } from "@/lib/queryClient";
 import { GiftItem, GiftCategory } from "@/shared/schema";
 
 export default function GiftItemsPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
-  const { cartCount } = useCart();
+  const { cartCount } = useGlobalContext();
   const queryClient = useQueryClient();
 
   const { data: giftCategories = [], isLoading: isCategoriesLoading } = useQuery<GiftCategory[]>({
