@@ -11,14 +11,10 @@ interface BooksResponse {
 }
 
 export default function InventoryPageSimple() {
-  console.log('Simple inventory page loading...');
-
   const { data: booksResponse, isLoading, error } = useQuery<BooksResponse>({
     queryKey: ["/api/books"],
     retry: false,
   });
-
-  console.log('Query result:', { isLoading, error, booksResponse });
 
   const books = booksResponse?.books || [];
   const totalBooks = booksResponse?.total || 0;

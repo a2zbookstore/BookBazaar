@@ -82,12 +82,9 @@ export default function ReturnRequestPage() {
         params.append("email", guestEmail);
       }
       const url = `/api/returns/eligible-orders${params.toString() ? '?' + params.toString() : ''}`;
-      console.log("Fetching eligible orders from:", url);
       const response = await fetch(url);
-      console.log("Eligible orders response status:", response.status);
       if (!response.ok) throw new Error("Failed to fetch eligible orders");
       const data = await response.json();
-      console.log("Eligible orders data:", data);
       return data;
     },
     enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0 && guestEmail.includes('@')),
@@ -102,12 +99,9 @@ export default function ReturnRequestPage() {
         params.append("email", guestEmail);
       }
       const url = `/api/returns/my-returns${params.toString() ? '?' + params.toString() : ''}`;
-      console.log("Fetching return history from:", url);
       const response = await fetch(url);
-      console.log("Return history response status:", response.status);
       if (!response.ok) throw new Error("Failed to fetch return history");
       const data = await response.json();
-      console.log("Return history data:", data);
       return data;
     },
     enabled: isAuthenticated || (!isAuthenticated && guestEmail.length > 0 && guestEmail.includes('@')),

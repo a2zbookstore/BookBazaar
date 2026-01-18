@@ -55,9 +55,7 @@ export function useCurrency(countryCode?: string): UseCurrencyReturn {
       setError(null);
       // Try to get cached rates first
       const cachedRates = getCachedExchangeRates(baseCurrency);
-      if (cachedRates) {
-        console.log("geting cashed");
-        
+      if (cachedRates) {        
         setExchangeRates(cachedRates);
         setIsLoading(false);
         return;

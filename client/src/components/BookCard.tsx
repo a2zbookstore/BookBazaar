@@ -211,7 +211,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           )}
         </div>
 
-        <div className="p-4">
+        <div className="px-4 pb-4">
           <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm h-10">
             {book.title}
           </h3>

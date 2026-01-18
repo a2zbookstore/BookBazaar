@@ -318,7 +318,7 @@ export default function CatalogPage() {
 
           {/* Books Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
               {[...Array(10)].map((_, i) => (
                 <div key={i} className="animate-pulse">
                   <div className="bg-gray-200 aspect-[3/4] rounded-lg mb-4"></div>
@@ -332,7 +332,7 @@ export default function CatalogPage() {
             </div>
           ) : books.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 book-grid">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                 {books.map((book) => {
                   return <BookCard key={book.id} book={book} />;
                 })}
