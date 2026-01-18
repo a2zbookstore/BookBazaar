@@ -63,12 +63,9 @@ export default function TrackOrderPage() {
 
   const trackOrderMutation = useMutation({
     mutationFn: async (data: { orderId: string; email: string }): Promise<TrackingInfo> => {
-      console.log("Tracking order with data:", data);
       try {
         const response = await apiRequest("POST", "/api/track-order", data);
-        console.log("API response status:", response.status);
         const result = await response.json();
-        console.log("API response data:", result);
         return result;
       } catch (error) {
         console.error("Track order error:", error);
@@ -76,7 +73,6 @@ export default function TrackOrderPage() {
       }
     },
     onSuccess: (data: TrackingInfo) => {
-      console.log("Track order success:", data);
       setTrackingInfo(data);
     },
     onError: (error: any) => {
@@ -261,7 +257,7 @@ export default function TrackOrderPage() {
                   {/* Timeline items based on current status */}
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${['pending', 'confirmed', 'processing', 'shipped', 'delivered'].includes(trackingInfo.status)
-                        ? 'bg-green-500' : 'bg-gray-300'
+                      ? 'bg-green-500' : 'bg-gray-300'
                       }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Order Received</p>
@@ -271,7 +267,7 @@ export default function TrackOrderPage() {
 
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${['confirmed', 'processing', 'shipped', 'delivered'].includes(trackingInfo.status)
-                        ? 'bg-green-500' : 'bg-gray-300'
+                      ? 'bg-green-500' : 'bg-gray-300'
                       }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Order Confirmed</p>
@@ -281,7 +277,7 @@ export default function TrackOrderPage() {
 
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${['processing', 'shipped', 'delivered'].includes(trackingInfo.status)
-                        ? 'bg-green-500' : 'bg-gray-300'
+                      ? 'bg-green-500' : 'bg-gray-300'
                       }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Processing</p>
@@ -291,7 +287,7 @@ export default function TrackOrderPage() {
 
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${['shipped', 'delivered'].includes(trackingInfo.status)
-                        ? 'bg-green-500' : 'bg-gray-300'
+                      ? 'bg-green-500' : 'bg-gray-300'
                       }`}></div>
                     <div className="flex-1">
                       <p className="font-medium">Shipped</p>

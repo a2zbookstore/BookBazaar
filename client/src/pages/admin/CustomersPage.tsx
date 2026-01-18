@@ -27,8 +27,6 @@ export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  console.log("CustomersPage component rendering");
-
   const { data: customers = [], isLoading, error, refetch } = useQuery({
     queryKey: ["/api/admin/customers"],
     retry: 3,

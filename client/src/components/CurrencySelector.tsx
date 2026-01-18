@@ -18,7 +18,6 @@ export default function CurrencySelector({
   const currencies = getSupportedCurrencies();
 
   const handleCurrencyChange = (currencyCode: string) => {
-    console.log("set up form here");
     setCurrency(currencyCode);
   };
 

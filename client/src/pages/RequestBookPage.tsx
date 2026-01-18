@@ -39,9 +39,7 @@ const RequestBookPage = () => {
 
   const createBookRequestMutation = useMutation({
     mutationFn: async (data: InsertBookRequest) => {
-      console.log("About to call apiRequest with:", { method: "POST", url: "/api/book-requests", data });
       const response = await apiRequest("POST", "/api/book-requests", data);
-      console.log("API request successful:", response);
       return response;
     },
     onSuccess: () => {
@@ -53,8 +51,7 @@ const RequestBookPage = () => {
       form.reset();
     },
     onError: (error: any) => {
-      console.error("Error submitting book request:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      // ...removed console.error...
 
       let errorMessage = "Failed to submit book request. Please try again.";
       if (error?.response?.data?.message) {
@@ -98,7 +95,7 @@ const RequestBookPage = () => {
       return; // Don't submit if invalid
     }
 
-    console.log("Form data before submission:", data);
+    // ...removed console.log...
 
     // Clean up data for submission - isbn and binding are now required
     const cleanedData = {
@@ -109,7 +106,7 @@ const RequestBookPage = () => {
       notes: data.notes || null,
     };
 
-    console.log("Cleaned data for submission:", cleanedData);
+    // ...removed console.log...
     createBookRequestMutation.mutate(cleanedData);
   };
 

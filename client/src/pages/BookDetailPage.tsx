@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation } from "wouter";
+import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Star, ShoppingCart, Truck, Shield, RotateCcw, ChevronRight, Minus, Plus } from "lucide-react";
@@ -8,7 +8,6 @@ import SEO, { generateBookStructuredData } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
@@ -35,7 +34,6 @@ export default function BookDetailPage() {
   const { addToCart } = useGlobalContext();
   const { toast } = useToast();
   const { shippingRate } = useShipping();
-  const [, setLocation] = useLocation();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
@@ -83,14 +81,93 @@ export default function BookDetailPage() {
     return (
       <Layout>
         <div className="container-custom py-8">
+           <Breadcrumb
+          items={[
+            { label: "Catalog", href: "/catalog" },
+            { label: "Loading...." }
+          ]}
+          className="mt-6"
+        />
           <div className="animate-pulse">
             <div className="grid lg:grid-cols-2 gap-12">
               <div className="aspect-[3/4] bg-gray-200 rounded-lg"></div>
-              <div className="space-y-4">
-                <div className="bg-gray-200 h-8 rounded"></div>
-                <div className="bg-gray-200 h-6 rounded w-2/3"></div>
-                <div className="bg-gray-200 h-4 rounded w-1/2"></div>
-                <div className="bg-gray-200 h-20 rounded"></div>
+              {/* Book Details Skeleton */}
+              <div className="space-y-6">
+                {/* Title */}
+                <div className="bg-gray-200 h-8 rounded w-3/4 mb-2"></div>
+                {/* Author */}
+                <div className="bg-gray-200 h-6 rounded w-1/2 mb-4"></div>
+                {/* Rating */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="bg-gray-200 h-4 w-4 rounded"></div>
+                    ))}
+                  </div>
+                  <div className="bg-gray-200 h-4 w-16 rounded"></div>
+                </div>
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="bg-gray-200 h-6 w-20 rounded"></div>
+                  ))}
+                </div>
+                {/* Price and Stock */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-gray-200 h-8 w-24 rounded"></div>
+                    <div className="bg-gray-200 h-4 w-32 rounded"></div>
+                  </div>
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-2">
+                    {/* Quantity Selector */}
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gray-200 h-4 w-8 rounded"></div>
+                      <div className="flex items-center gap-1 border rounded-lg p-1 bg-gray-100 shadow-sm">
+                        <div className="bg-gray-200 h-8 w-8 rounded"></div>
+                        <div className="bg-gray-200 h-8 w-12 rounded"></div>
+                        <div className="bg-gray-200 h-8 w-8 rounded"></div>
+                      </div>
+                    </div>
+                    {/* Add to Cart Button */}
+                    <div className="bg-gray-200 h-12 w-40 rounded-full"></div>
+                  </div>
+                </div>
+                {/* Separator */}
+                <div className="bg-gray-200 h-1 w-full rounded my-4"></div>
+                {/* Book Info Rows */}
+                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i}>
+                      <div className="bg-gray-200 h-4 w-20 rounded mb-1"></div>
+                      <div className="bg-gray-200 h-4 w-32 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+                {/* Separator */}
+                <div className="bg-gray-200 h-1 w-full rounded my-4"></div>
+                {/* Return Policy */}
+                <div className="bg-green-100 h-16 w-full rounded-lg mb-4"></div>
+                {/* Delivery Info */}
+                <div className="bg-blue-100 h-16 w-full rounded-lg mb-4"></div>
+                {/* Description */}
+                <div className="bg-gray-200 h-20 w-full rounded mb-4"></div>
+                {/* Trust Badges */}
+                <div className="grid grid-cols-2 gap-4 pt-6 border-t">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-100 h-10 w-10 rounded-full"></div>
+                    <div>
+                      <div className="bg-gray-200 h-4 w-24 rounded mb-1"></div>
+                      <div className="bg-gray-200 h-3 w-20 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 h-10 w-10 rounded-full"></div>
+                    <div>
+                      <div className="bg-gray-200 h-4 w-24 rounded mb-1"></div>
+                      <div className="bg-gray-200 h-3 w-20 rounded"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

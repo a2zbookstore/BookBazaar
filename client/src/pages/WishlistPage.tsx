@@ -17,7 +17,7 @@ export default function WishlistPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: wishlistItems = [], isLoading } = useQuery({
+  const { data: wishlistItems = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/wishlist'],
     enabled: isAuthenticated,
   });
@@ -112,26 +112,26 @@ export default function WishlistPage() {
 
         {/* Page Header */}
         <div className="flex items-center gap-3 mb-8">
-          <Heart className="h-8 w-8 text-red-500" />
-          <h1 className="text-3xl font-bookerly font-bold text-base-black">
+          <Heart className="h-8 w-8 text-primary-aqua" />
+          <h1 className="text-4xl font-extrabold text-primary-aqua tracking-tight drop-shadow-lg">
             My Wishlist
           </h1>
-          <span className="text-secondary-black">({wishlistItems.length} books)</span>
+          <span className="text-gray-500">({wishlistItems.length} books)</span>
         </div>
 
         {wishlistItems.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Heart className="w-12 h-12 text-gray-400" />
+          <div className="text-center py-16">
+            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-white rounded-full flex items-center justify-center mb-4">
+              <Heart className="w-12 h-12 text-primary-aqua" />
             </div>
-            <h3 className="text-xl font-bookerly font-semibold text-base-black mb-2">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
               Your wishlist is empty
             </h3>
-            <p className="text-secondary-black mb-6">
+            <p className="text-gray-500 mb-6">
               Start adding books you love by clicking the heart icon on any book.
             </p>
             <Link href="/catalog">
-              <Button className="bg-primary-aqua hover:bg-secondary-aqua">
+              <Button className="bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white rounded-full px-8 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200">
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 Browse Books
               </Button>
@@ -140,11 +140,10 @@ export default function WishlistPage() {
         ) : (
           <>
             {/* Wishlist Items */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 book-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 book-grid">
               {wishlistItems.map((item: any) => (
                 <div key={item.id} className="relative">
                   <BookCard book={item.book} />
-                  
                   {/* Remove Button */}
                   <div className="absolute top-2 left-2 z-20">
                     <Button

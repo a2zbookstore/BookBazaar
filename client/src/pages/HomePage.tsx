@@ -248,16 +248,6 @@ export default function HomePage() {
     setHasItemsInCart(Array.isArray(cartItems) && cartItems.length > 0);
   }, [cartItems]);
 
-  useEffect(() => {
-    if (!location) return;
-
-    console.log("Location updated:", location);
-
-    // Example: fetch store data based on country
-    // fetchStores(location.countryCode);
-
-  }, [location]);
-
 
   return (
     <Layout>

@@ -38,9 +38,9 @@ export default function SearchInput({
     }
 
     // Split placeholder: "Search " is static, rest is typed
-    const staticPart = staticKeyword ;
-    const dynamicPart = placeholder.startsWith(staticPart) 
-      ? placeholder.slice(staticPart.length) 
+    const staticPart = staticKeyword;
+    const dynamicPart = placeholder.startsWith(staticPart)
+      ? placeholder.slice(staticPart.length)
       : placeholder;
 
     let currentIndex = 0;
@@ -61,10 +61,8 @@ export default function SearchInput({
         }, pauseBeforeRestart);
       }
     };
-    
     setTypedPlaceholder(staticPart);
     typeNextChar();
-    
     return () => {
       setTypedPlaceholder("");
     };

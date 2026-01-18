@@ -46,13 +46,6 @@ export default function PayPalCheckoutButton({
       return;
     }
 
-    console.log('🔴 PayPal payment initiated');
-    console.log('🔵 Payment data:', {
-      amount,
-      currency,
-      customerData,
-      cartItemsCount: cartItems.length
-    });
 
     setIsProcessing(true);
 
@@ -75,7 +68,6 @@ export default function PayPalCheckoutButton({
         throw new Error("Cart is empty");
       }
 
-      console.log('🟢 All validations passed');
 
       // Prepare PayPal order data
       const paypalOrderData = {
@@ -104,9 +96,6 @@ export default function PayPalCheckoutButton({
           }))
         }
       };
-
-      console.log('🔵 Sending PayPal order request:', paypalOrderData);
-
       const response = await fetch("/api/paypal/order", {
         method: "POST",
         headers: {
@@ -115,18 +104,12 @@ export default function PayPalCheckoutButton({
         body: JSON.stringify(paypalOrderData),
       });
 
-      console.log('🔵 PayPal response status:', response.status);
-      console.log('🔵 PayPal response headers:', response.headers);
-      console.log('🔵 PayPal response ok:', response.ok);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('🔴 PayPal error:', errorText);
         throw new Error(`PayPal order failed: ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('🟢 PayPal order created:', data);
 
       // Find approval URL
       const approvalUrl = data.links?.find((link: any) => link.rel === 'approve')?.href;
@@ -147,9 +130,9 @@ export default function PayPalCheckoutButton({
 
       try {
         sessionStorage.setItem('pendingPayPalOrder', JSON.stringify(orderDataForStorage));
-        console.log('🟢 Order data stored in session');
+          // ...removed console.log...
       } catch (storageError) {
-        console.error('🔴 Storage error:', storageError);
+        // ...removed console.error...
         // Continue anyway - payment can still work without storage
       }
 
@@ -158,7 +141,7 @@ export default function PayPalCheckoutButton({
         description: "Please complete your payment on PayPal's secure website",
       });
 
-      console.log('🔵 Redirecting to PayPal:', approvalUrl);
+        // ...removed console.log...
 
       // Redirect to PayPal after short delay
       setTimeout(() => {
@@ -171,7 +154,7 @@ export default function PayPalCheckoutButton({
       }
 
     } catch (error) {
-      console.error('🔴 PayPal payment error:', error);
+      // ...removed console.error...
       
       const errorMessage = error instanceof Error ? error.message : "Failed to create PayPal order";
       
