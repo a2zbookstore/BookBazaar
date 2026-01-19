@@ -14,25 +14,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Book, Category } from "@/types";
-import BannerUploadPage from "./BannerUploadPage";
-import CategoriesManagement from "@/components/admin/CategoriesManagement";
 
 // Image helper function (same as BookCard)
 const getImageSrc = (imageUrl: string | null | undefined): string => {
   if (!imageUrl || imageUrl.trim() === '') {
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
   }
-
+  
   // If it's already a full external URL, return as-is
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     return imageUrl;
   }
-
+  
   // If it's already a correct path, return as-is
   if (imageUrl.startsWith('/uploads/images/')) {
     return imageUrl;
   }
-
+  
   // If it's just a filename, prepend the uploads path
   const filename = imageUrl.split('/').pop() || imageUrl;
   return `/uploads/images/${filename}`;
@@ -79,7 +77,6 @@ export default function InventoryPageNew() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedCondition, setSelectedCondition] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,9 +89,6 @@ export default function InventoryPageNew() {
   const [isImageUploading3, setIsImageUploading3] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [importResults, setImportResults] = useState<any>(null);
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
 
   const [bookForm, setBookForm] = useState<BookForm>({
     title: "",
@@ -167,7 +161,7 @@ export default function InventoryPageNew() {
   const createBookMutation = useMutation({
     mutationFn: async (data: BookForm) => {
       console.log("Form data being submitted:", data);
-
+      
       const bookData = {
         title: data.title,
         author: data.author,
@@ -191,7 +185,7 @@ export default function InventoryPageNew() {
         newArrival: data.newArrival || false,
         boxSet: data.boxSet || false,
       };
-
+      
       console.log("Processed book data:", bookData);
       return apiRequest('POST', '/api/books', bookData);
     },
@@ -338,7 +332,7 @@ export default function InventoryPageNew() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     // Validate required fields
     if (!bookForm.title.trim()) {
       toast({
@@ -348,16 +342,16 @@ export default function InventoryPageNew() {
       });
       return;
     }
-
+    
     if (!bookForm.author.trim()) {
       toast({
-        title: "Validation Error",
+        title: "Validation Error", 
         description: "Author is required",
         variant: "destructive",
       });
       return;
     }
-
+    
     // Price validation - allow empty price (will default to 0)
     if (bookForm.price && bookForm.price.trim() !== "" && (parseFloat(bookForm.price) < 0 || isNaN(parseFloat(bookForm.price)))) {
       toast({
@@ -367,7 +361,7 @@ export default function InventoryPageNew() {
       });
       return;
     }
-
+    
     if (editingBook) {
       updateBookMutation.mutate(bookForm);
     } else {
@@ -399,9 +393,9 @@ export default function InventoryPageNew() {
       return;
     }
 
-    const setUploading = imageField === 'imageUrl' ? setIsImageUploading :
-      imageField === 'imageUrl2' ? setIsImageUploading2 :
-        setIsImageUploading3;
+    const setUploading = imageField === 'imageUrl' ? setIsImageUploading : 
+                        imageField === 'imageUrl2' ? setIsImageUploading2 : 
+                        setIsImageUploading3;
 
     setUploading(true);
     const formData = new FormData();
@@ -419,10 +413,10 @@ export default function InventoryPageNew() {
       }
 
       const result = await response.json();
-
+      
       // Update the form with the uploaded image URL
       setBookForm(prev => ({ ...prev, [imageField]: result.imageUrl }));
-
+      
       toast({
         title: "Image Uploaded",
         description: `Book image ${imageField === 'imageUrl' ? '1' : imageField === 'imageUrl2' ? '2' : '3'} uploaded successfully`,
@@ -459,7 +453,7 @@ export default function InventoryPageNew() {
 
       const results = await response.json();
       setImportResults(results);
-
+      
       toast({
         title: "Import Complete",
         description: `Successfully imported ${results.success} books`,
@@ -493,7 +487,7 @@ export default function InventoryPageNew() {
       const response = await fetch('/api/admin/books/export', {
         credentials: 'include',
       });
-
+      
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
@@ -521,7 +515,7 @@ export default function InventoryPageNew() {
 
   const migrateImages = async () => {
     setIsMigrating(true);
-
+    
     try {
       const response = await fetch('/api/admin/migrate-images', {
         method: 'POST',
@@ -533,7 +527,7 @@ export default function InventoryPageNew() {
       }
 
       const result = await response.json();
-
+      
       toast({
         title: "Migration Complete",
         description: `Successfully migrated ${result.migratedCount} images to cloud storage. ${result.errorCount} errors.`,
@@ -541,7 +535,7 @@ export default function InventoryPageNew() {
 
       // Refresh the books list to show updated image URLs
       queryClient.invalidateQueries({ queryKey: ["/api/books"] });
-
+      
     } catch (error) {
       toast({
         title: "Migration Failed",
@@ -571,760 +565,730 @@ export default function InventoryPageNew() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bookerly font-bold text-base-black">
-          Inventory Management
-        </h1>
-
-        <div className="flex gap-2">
-          {/* Import/Export Buttons */}
-          <Button
-            onClick={downloadTemplate}
-            variant="outline"
-            className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Template
-          </Button>
-
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-            disabled={isUploading}
-            className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            {isUploading ? "Importing..." : "Import"}
-          </Button>
-
-          <Button
-            onClick={exportBooks}
-            variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-
-          <Button
-            onClick={migrateImages}
-            variant="outline"
-            disabled={isMigrating}
-            className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
-          >
-            <CloudUpload className="h-4 w-4 mr-2" />
-            {isMigrating ? "Migrating..." : "Migrate Images"}
-          </Button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm} className="bg-primary-aqua hover:bg-secondary-aqua">
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Book
-              </Button>
-            </DialogTrigger>
-            <Button variant="outline" className="bg-green-600 hover:bg-green-200" onClick={() => setIsBannerDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Banners
-            </Button>
-            <Dialog open={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={e => e.preventDefault()}>
-                <BannerUploadPage />
-              </DialogContent>
-            </Dialog>
-            <DialogContent
-              className="max-w-2xl max-h-[90vh] overflow-y-auto"
-              onInteractOutside={e => e.preventDefault()}
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bookerly font-bold text-base-black">
+            Inventory Management
+          </h1>
+          
+          <div className="flex gap-2">
+            {/* Import/Export Buttons */}
+            <Button
+              onClick={downloadTemplate}
+              variant="outline"
+              className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
             >
-              <DialogHeader>
-                <DialogTitle>
-                  {editingBook ? "Edit Book" : "Add New Book"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="title">Title *</Label>
-                    <Input
-                      id="title"
-                      value={bookForm.title}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, title: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="author">Author *</Label>
-                    <Input
-                      id="author"
-                      value={bookForm.author}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, author: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
+              <FileText className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              disabled={isUploading}
+              className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {isUploading ? "Importing..." : "Import"}
+            </Button>
+            
+            <Button
+              onClick={exportBooks}
+              variant="outline"
+              className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="isbn">ISBN</Label>
-                    <Input
-                      id="isbn"
-                      value={bookForm.isbn}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, isbn: e.target.value }))}
-                    />
+            <Button
+              onClick={migrateImages}
+              variant="outline"
+              disabled={isMigrating}
+              className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
+            >
+              <CloudUpload className="h-4 w-4 mr-2" />
+              {isMigrating ? "Migrating..." : "Migrate Images"}
+            </Button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm} className="bg-primary-aqua hover:bg-secondary-aqua">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Book
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingBook ? "Edit Book" : "Add New Book"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Title *</Label>
+                      <Input
+                        id="title"
+                        value={bookForm.title}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, title: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="author">Author *</Label>
+                      <Input
+                        id="author"
+                        value={bookForm.author}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, author: e.target.value }))}
+                        required
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <div className="flex gap-2 items-center">
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="isbn">ISBN</Label>
+                      <Input
+                        id="isbn"
+                        value={bookForm.isbn}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, isbn: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="category">Category</Label>
                       <select
                         id="category"
                         value={bookForm.categoryId?.toString() || ""}
-                        onChange={(e) => {
-                          setBookForm(prev => ({
-                            ...prev,
-                            categoryId: e.target.value ? parseInt(e.target.value) : null
-                          }));
-                        }}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                        onChange={(e) => setBookForm(prev => ({ 
+                          ...prev, 
+                          categoryId: e.target.value ? parseInt(e.target.value) : null 
+                        }))}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="">Select category</option>
-                        {categories.map(category => (
+                        {categories.map((category) => (
                           <option key={category.id} value={category.id.toString()}>
                             {category.name}
                           </option>
                         ))}
                       </select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="whitespace-nowrap"
-                        onClick={() => setIsCategoryDialogOpen(true)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={bookForm.description}
+                      onChange={(e) => setBookForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="condition">Condition *</Label>
+                      <select
+                        id="condition"
+                        value={bookForm.condition}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, condition: e.target.value }))}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        required
                       >
-                        Add Category
-                      </Button>
+                        <option value="">Select condition</option>
+                        <option value="New">New</option>
+                        <option value="Like New">Like New</option>
+                        <option value="Very Good">Very Good</option>
+                        <option value="Good">Good</option>
+                        <option value="Acceptable">Acceptable</option>
+                      </select>
                     </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={bookForm.description}
-                    onChange={(e) => setBookForm(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="condition">Condition *</Label>
-                    <select
-                      id="condition"
-                      value={bookForm.condition}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, condition: e.target.value }))}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      required
-                    >
-                      <option value="">Select condition</option>
-                      <option value="New">New</option>
-                      <option value="Like New">Like New</option>
-                      <option value="Very Good">Very Good</option>
-                      <option value="Good">Good</option>
-                      <option value="Acceptable">Acceptable</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="binding">Binding</Label>
-                    <select
-                      id="binding"
-                      value={bookForm.binding}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, binding: e.target.value }))}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">Select binding</option>
-                      <option value="Hardcover">Hardcover</option>
-                      <option value="Softcover">Softcover</option>
-                      <option value="No Binding">No Binding</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="price">Price ($) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={bookForm.price}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, price: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="stock">Stock *</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      min="0"
-                      value={bookForm.stock}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="publishedYear">Published Year</Label>
-                    <Input
-                      id="publishedYear"
-                      type="number"
-                      min="1000"
-                      max={new Date().getFullYear()}
-                      value={bookForm.publishedYear || ""}
-                      onChange={(e) => setBookForm(prev => ({
-                        ...prev,
-                        publishedYear: e.target.value ? parseInt(e.target.value) : null
-                      }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="publisher">Publisher</Label>
-                    <Input
-                      id="publisher"
-                      value={bookForm.publisher}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, publisher: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold">Book Images (1-3 images)</Label>
-                  <div className="space-y-4">
-                    {/* Image 1 */}
-                    <div className="border rounded-lg p-4 bg-gray-50">
-                      <Label htmlFor="imageUrl" className="text-sm font-medium">Primary Image</Label>
-                      <div className="space-y-2 mt-2">
-                        <div className="flex gap-2">
-                          <Input
-                            id="imageUrl"
-                            type="text"
-                            value={bookForm.imageUrl}
-                            onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                            placeholder="https://res.cloudinary.com/... or upload below"
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => imageInputRef.current?.click()}
-                            disabled={isImageUploading}
-                            className="whitespace-nowrap"
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {isImageUploading ? "Uploading..." : "Upload"}
-                          </Button>
-                        </div>
-                        {bookForm.imageUrl && (
-                          <div className="w-20 h-28 border rounded overflow-hidden">
-                            <img
-                              src={getImageSrc(bookForm.imageUrl)}
-                              alt="Primary image preview"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
-                                  target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                                }
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
+                    <div>
+                      <Label htmlFor="binding">Binding</Label>
+                      <select
+                        id="binding"
+                        value={bookForm.binding}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, binding: e.target.value }))}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Select binding</option>
+                        <option value="Hardcover">Hardcover</option>
+                        <option value="Softcover">Softcover</option>
+                        <option value="No Binding">No Binding</option>
+                      </select>
                     </div>
-
-                    {/* Image 2 */}
-                    <div className="border rounded-lg p-4 bg-gray-50">
-                      <Label htmlFor="imageUrl2" className="text-sm font-medium">Secondary Image (optional)</Label>
-                      <div className="space-y-2 mt-2">
-                        <div className="flex gap-2">
-                          <Input
-                            id="imageUrl2"
-                            type="text"
-                            value={bookForm.imageUrl2}
-                            onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl2: e.target.value }))}
-                            placeholder="https://res.cloudinary.com/... or upload below"
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => imageInputRef2.current?.click()}
-                            disabled={isImageUploading2}
-                            className="whitespace-nowrap"
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {isImageUploading2 ? "Uploading..." : "Upload"}
-                          </Button>
-                        </div>
-                        {bookForm.imageUrl2 && (
-                          <div className="w-20 h-28 border rounded overflow-hidden">
-                            <img
-                              src={getImageSrc(bookForm.imageUrl2)}
-                              alt="Secondary image preview"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
-                                  target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                                }
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Image 3 */}
-                    <div className="border rounded-lg p-4 bg-gray-50">
-                      <Label htmlFor="imageUrl3" className="text-sm font-medium">Third Image (optional)</Label>
-                      <div className="space-y-2 mt-2">
-                        <div className="flex gap-2">
-                          <Input
-                            id="imageUrl3"
-                            type="text"
-                            value={bookForm.imageUrl3}
-                            onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl3: e.target.value }))}
-                            placeholder="https://res.cloudinary.com/... or upload below"
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => imageInputRef3.current?.click()}
-                            disabled={isImageUploading3}
-                            className="whitespace-nowrap"
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {isImageUploading3 ? "Uploading..." : "Upload"}
-                          </Button>
-                        </div>
-                        {bookForm.imageUrl3 && (
-                          <div className="w-20 h-28 border rounded overflow-hidden">
-                            <img
-                              src={getImageSrc(bookForm.imageUrl3)}
-                              alt="Third image preview"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
-                                  target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                                }
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-gray-500">
-                      You can add up to 3 images. Each image can be a URL or uploaded file (max 5MB each)
-                    </p>
-                  </div>
-
-                  {/* Hidden file inputs */}
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'imageUrl')}
-                    className="hidden"
-                  />
-                  <input
-                    ref={imageInputRef2}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'imageUrl2')}
-                    className="hidden"
-                  />
-                  <input
-                    ref={imageInputRef3}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'imageUrl3')}
-                    className="hidden"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="pages">Pages</Label>
-                    <Input
-                      id="pages"
-                      type="number"
-                      value={bookForm.pages || ""}
-                      onChange={(e) => setBookForm(prev => ({
-                        ...prev,
-                        pages: e.target.value ? parseInt(e.target.value) : null
-                      }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="language">Language</Label>
-                    <Input
-                      id="language"
-                      value={bookForm.language}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, language: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edition">Edition</Label>
-                    <Input
-                      id="edition"
-                      value={bookForm.edition}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, edition: e.target.value }))}
-                      placeholder="1st Edition"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="weight">Weight (lbs)</Label>
-                    <Input
-                      id="weight"
-                      value={bookForm.weight}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, weight: e.target.value }))}
-                      placeholder="1.2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="dimensions">Dimensions (inches)</Label>
-                    <Input
-                      id="dimensions"
-                      value={bookForm.dimensions}
-                      onChange={(e) => setBookForm(prev => ({ ...prev, dimensions: e.target.value }))}
-                      placeholder="8x5x1"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-5 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="featured"
-                      checked={bookForm.featured}
-                      onCheckedChange={(checked) => setBookForm(prev => ({
-                        ...prev,
-                        featured: checked as boolean
-                      }))}
-                    />
-                    <Label htmlFor="featured">Featured</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="bestseller"
-                      checked={bookForm.bestseller}
-                      onCheckedChange={(checked) => setBookForm(prev => ({
-                        ...prev,
-                        bestseller: checked as boolean
-                      }))}
-                    />
-                    <Label htmlFor="bestseller">Bestseller</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="trending"
-                      checked={bookForm.trending}
-                      onCheckedChange={(checked) => setBookForm(prev => ({
-                        ...prev,
-                        trending: checked as boolean
-                      }))}
-                    />
-                    <Label htmlFor="trending">Trending</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="newArrival"
-                      checked={bookForm.newArrival}
-                      onCheckedChange={(checked) => setBookForm(prev => ({
-                        ...prev,
-                        newArrival: checked as boolean
-                      }))}
-                    />
-                    <Label htmlFor="newArrival">New Arrival</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="boxSet"
-                      checked={bookForm.boxSet}
-                      onCheckedChange={(checked) => setBookForm(prev => ({
-                        ...prev,
-                        boxSet: checked as boolean
-                      }))}
-                    />
-                    <Label htmlFor="boxSet">Box Set</Label>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={createBookMutation.isPending || updateBookMutation.isPending}
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
-                  >
-                    {editingBook ? "Update" : "Create"} Book
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-            <DialogContent className="max-w-lg">
-              <CategoriesManagement />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search books by title, author, or ISBN..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={selectedCategory || undefined} onValueChange={(value) => {
-              setSelectedCategory(value === "all" ? "" : value);
-              setCurrentPage(1);
-            }}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedCondition || undefined} onValueChange={(value) => {
-              setSelectedCondition(value === "all" ? "" : value);
-              setCurrentPage(1);
-            }}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Conditions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Conditions</SelectItem>
-                <SelectItem value="New">New</SelectItem>
-                <SelectItem value="Like New">Like New</SelectItem>
-                <SelectItem value="Very Good">Very Good</SelectItem>
-                <SelectItem value="Good">Good</SelectItem>
-                <SelectItem value="Acceptable">Acceptable</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Books List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Books ({totalBooks})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="text-center py-8">
-              <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Books</h3>
-              <p className="text-gray-600 mb-4">
-                {error instanceof Error ? error.message : 'Failed to load books'}
-              </p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="bg-primary-aqua hover:bg-secondary-aqua"
-              >
-                Reload Page
-              </Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse flex gap-4 p-4 border rounded">
-                  <div className="w-12 h-16 bg-gray-200 rounded"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : books.length > 0 ? (
-            <div className="space-y-4">
-              {books.map((book) => (
-                <div key={book.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:border-primary-aqua/50 transition-colors">
-                  {/* Book Image */}
-                  <div className="w-12 h-16 flex-shrink-0">
-                    {book.imageUrl ? (
-                      <img
-                        src={getImageSrc(book.imageUrl)}
-                        alt={book.title}
-                        className="w-full h-full object-cover rounded"
-                        onLoad={() => {
-                          console.log("Admin Image loaded successfully:", book.title, getImageSrc(book.imageUrl));
-                        }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          console.log("Admin Image failed to load:", book.title, target.src);
-                          if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
-                            target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                          }
-                        }}
+                    <div>
+                      <Label htmlFor="price">Price ($) *</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={bookForm.price}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, price: e.target.value }))}
+                        required
                       />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
-                        <Package className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
+                    </div>
                   </div>
 
-                  {/* Book Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-base-black truncate">{book.title}</h3>
-                        <p className="text-secondary-black text-sm">{book.author}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={`text-xs ${getConditionColor(book.condition)}`}>
-                            {book.condition}
-                          </Badge>
-                          {book.binding && (
-                            <Badge variant="outline" className="text-xs">
-                              {book.binding}
-                            </Badge>
-                          )}
-                          <Badge variant="secondary" className="text-xs">
-                            ${book.price}
-                          </Badge>
-                          <Badge variant={book.stock <= 5 ? "destructive" : "default"} className="text-xs">
-                            Stock: {book.stock}
-                          </Badge>
-                          {book.featured && (
-                            <Badge className="text-xs bg-yellow-100 text-yellow-800">
-                              Featured
-                            </Badge>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="stock">Stock *</Label>
+                      <Input
+                        id="stock"
+                        type="number"
+                        min="0"
+                        value={bookForm.stock}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="publishedYear">Published Year</Label>
+                      <Input
+                        id="publishedYear"
+                        type="number"
+                        min="1000"
+                        max={new Date().getFullYear()}
+                        value={bookForm.publishedYear || ""}
+                        onChange={(e) => setBookForm(prev => ({ 
+                          ...prev, 
+                          publishedYear: e.target.value ? parseInt(e.target.value) : null 
+                        }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="publisher">Publisher</Label>
+                      <Input
+                        id="publisher"
+                        value={bookForm.publisher}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, publisher: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-base font-semibold">Book Images (1-3 images)</Label>
+                    <div className="space-y-4">
+                      {/* Image 1 */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <Label htmlFor="imageUrl" className="text-sm font-medium">Primary Image</Label>
+                        <div className="space-y-2 mt-2">
+                          <div className="flex gap-2">
+                            <Input
+                              id="imageUrl"
+                              type="text"
+                              value={bookForm.imageUrl}
+                              onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                              placeholder="https://res.cloudinary.com/... or upload below"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => imageInputRef.current?.click()}
+                              disabled={isImageUploading}
+                              className="whitespace-nowrap"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isImageUploading ? "Uploading..." : "Upload"}
+                            </Button>
+                          </div>
+                          {bookForm.imageUrl && (
+                            <div className="w-20 h-28 border rounded overflow-hidden">
+                              <img
+                                src={getImageSrc(bookForm.imageUrl)}
+                                alt="Primary image preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                                  }
+                                }}
+                              />
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(book)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteBookMutation.mutate(book.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+
+                      {/* Image 2 */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <Label htmlFor="imageUrl2" className="text-sm font-medium">Secondary Image (optional)</Label>
+                        <div className="space-y-2 mt-2">
+                          <div className="flex gap-2">
+                            <Input
+                              id="imageUrl2"
+                              type="text"
+                              value={bookForm.imageUrl2}
+                              onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl2: e.target.value }))}
+                              placeholder="https://res.cloudinary.com/... or upload below"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => imageInputRef2.current?.click()}
+                              disabled={isImageUploading2}
+                              className="whitespace-nowrap"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isImageUploading2 ? "Uploading..." : "Upload"}
+                            </Button>
+                          </div>
+                          {bookForm.imageUrl2 && (
+                            <div className="w-20 h-28 border rounded overflow-hidden">
+                              <img
+                                src={getImageSrc(bookForm.imageUrl2)}
+                                alt="Secondary image preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Image 3 */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <Label htmlFor="imageUrl3" className="text-sm font-medium">Third Image (optional)</Label>
+                        <div className="space-y-2 mt-2">
+                          <div className="flex gap-2">
+                            <Input
+                              id="imageUrl3"
+                              type="text"
+                              value={bookForm.imageUrl3}
+                              onChange={(e) => setBookForm(prev => ({ ...prev, imageUrl3: e.target.value }))}
+                              placeholder="https://res.cloudinary.com/... or upload below"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => imageInputRef3.current?.click()}
+                              disabled={isImageUploading3}
+                              className="whitespace-nowrap"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isImageUploading3 ? "Uploading..." : "Upload"}
+                            </Button>
+                          </div>
+                          {bookForm.imageUrl3 && (
+                            <div className="w-20 h-28 border rounded overflow-hidden">
+                              <img
+                                src={getImageSrc(bookForm.imageUrl3)}
+                                alt="Third image preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                                    target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-gray-500">
+                        You can add up to 3 images. Each image can be a URL or uploaded file (max 5MB each)
+                      </p>
+                    </div>
+                    
+                    {/* Hidden file inputs */}
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'imageUrl')}
+                      className="hidden"
+                    />
+                    <input
+                      ref={imageInputRef2}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'imageUrl2')}
+                      className="hidden"
+                    />
+                    <input
+                      ref={imageInputRef3}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'imageUrl3')}
+                      className="hidden"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="pages">Pages</Label>
+                      <Input
+                        id="pages"
+                        type="number"
+                        value={bookForm.pages || ""}
+                        onChange={(e) => setBookForm(prev => ({ 
+                          ...prev, 
+                          pages: e.target.value ? parseInt(e.target.value) : null 
+                        }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="language">Language</Label>
+                      <Input
+                        id="language"
+                        value={bookForm.language}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, language: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edition">Edition</Label>
+                      <Input
+                        id="edition"
+                        value={bookForm.edition}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, edition: e.target.value }))}
+                        placeholder="1st Edition"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="weight">Weight (lbs)</Label>
+                      <Input
+                        id="weight"
+                        value={bookForm.weight}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, weight: e.target.value }))}
+                        placeholder="1.2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dimensions">Dimensions (inches)</Label>
+                      <Input
+                        id="dimensions"
+                        value={bookForm.dimensions}
+                        onChange={(e) => setBookForm(prev => ({ ...prev, dimensions: e.target.value }))}
+                        placeholder="8x5x1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-5 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="featured"
+                        checked={bookForm.featured}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          featured: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="featured">Featured</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="bestseller"
+                        checked={bookForm.bestseller}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          bestseller: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="bestseller">Bestseller</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="trending"
+                        checked={bookForm.trending}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          trending: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="trending">Trending</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="newArrival"
+                        checked={bookForm.newArrival}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          newArrival: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="newArrival">New Arrival</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="boxSet"
+                        checked={bookForm.boxSet}
+                        onCheckedChange={(checked) => setBookForm(prev => ({ 
+                          ...prev, 
+                          boxSet: checked as boolean 
+                        }))}
+                      />
+                      <Label htmlFor="boxSet">Box Set</Label>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={createBookMutation.isPending || updateBookMutation.isPending}
+                      className="bg-primary-aqua hover:bg-secondary-aqua"
+                    >
+                      {editingBook ? "Update" : "Create"} Book
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search books by title, author, or ISBN..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={selectedCategory || undefined} onValueChange={(value) => {
+                setSelectedCategory(value === "all" ? "" : value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedCondition || undefined} onValueChange={(value) => {
+                setSelectedCondition(value === "all" ? "" : value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All Conditions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Conditions</SelectItem>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="Like New">Like New</SelectItem>
+                  <SelectItem value="Very Good">Very Good</SelectItem>
+                  <SelectItem value="Good">Good</SelectItem>
+                  <SelectItem value="Acceptable">Acceptable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Books List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Books ({totalBooks})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {error ? (
+              <div className="text-center py-8">
+                <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Books</h3>
+                <p className="text-gray-600 mb-4">
+                  {error instanceof Error ? error.message : 'Failed to load books'}
+                </p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-primary-aqua hover:bg-secondary-aqua"
+                >
+                  Reload Page
+                </Button>
+              </div>
+            ) : isLoading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="animate-pulse flex gap-4 p-4 border rounded">
+                    <div className="w-12 h-16 bg-gray-200 rounded"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : books.length > 0 ? (
+              <div className="space-y-4">
+                {books.map((book) => (
+                  <div key={book.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:border-primary-aqua/50 transition-colors">
+                    {/* Book Image */}
+                    <div className="w-12 h-16 flex-shrink-0">
+                      {book.imageUrl ? (
+                        <img
+                          src={getImageSrc(book.imageUrl)}
+                          alt={book.title}
+                          className="w-full h-full object-cover rounded"
+                          onLoad={() => {
+                            console.log("Admin Image loaded successfully:", book.title, getImageSrc(book.imageUrl));
+                          }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            console.log("Admin Image failed to load:", book.title, target.src);
+                            if (target.src !== 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image') {
+                              target.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                          <Package className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Book Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-base-black truncate">{book.title}</h3>
+                          <p className="text-secondary-black text-sm">{book.author}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge className={`text-xs ${getConditionColor(book.condition)}`}>
+                              {book.condition}
+                            </Badge>
+                            {book.binding && (
+                              <Badge variant="outline" className="text-xs">
+                                {book.binding}
+                              </Badge>
+                            )}
+                            <Badge variant="secondary" className="text-xs">
+                              ${book.price}
+                            </Badge>
+                            <Badge variant={book.stock <= 5 ? "destructive" : "default"} className="text-xs">
+                              Stock: {book.stock}
+                            </Badge>
+                            {book.featured && (
+                              <Badge className="text-xs bg-yellow-100 text-yellow-800">
+                                Featured
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(book)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteBookMutation.mutate(book.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No books found</h3>
-              <p className="text-gray-600 mb-4">
-                {search || selectedCategory || selectedCondition
-                  ? "No books match your current filters."
-                  : "Get started by adding your first book to the inventory."
-                }
-              </p>
-              <Button
-                onClick={() => setIsDialogOpen(true)}
-                className="bg-primary-aqua hover:bg-secondary-aqua"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Book
-              </Button>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <nav className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No books found</h3>
+                <p className="text-gray-600 mb-4">
+                  {search || selectedCategory || selectedCondition
+                    ? "No books match your current filters."
+                    : "Get started by adding your first book to the inventory."
+                  }
+                </p>
+                <Button 
+                  onClick={() => setIsDialogOpen(true)}
+                  className="bg-primary-aqua hover:bg-secondary-aqua"
                 >
-                  Previous
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Book
                 </Button>
+              </div>
+            )}
 
-                {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-                  const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
-                  if (pageNum > totalPages) return null;
-
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      onClick={() => setCurrentPage(pageNum)}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </nav>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <nav className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  
+                  {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                    const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                    if (pageNum > totalPages) return null;
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </nav>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }

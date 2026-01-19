@@ -55,9 +55,6 @@ import {
   type InsertCouponUsage,
   type BookRequest,
   type InsertBookRequest,
-  Banner,
-  InsertBanner,
-  banners,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -171,7 +168,7 @@ export interface IStorage {
   updateReturnRequestStatus(id: number, status: string, adminNotes?: string): Promise<ReturnRequest>;
   getEligibleOrdersForReturn(userId?: string, email?: string): Promise<Order[]>;
   getReturnRequestsByEmail(email: string): Promise<(ReturnRequest & { order: Order & { items: OrderItem[] } })[]>;
-
+  
   // Refund operations
   createRefundTransaction(refund: InsertRefundTransaction): Promise<RefundTransaction>;
   updateRefundTransaction(id: number, updates: Partial<RefundTransaction>): Promise<RefundTransaction>;
@@ -229,43 +226,6 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-
-
-  async getCustomersPaginated(limit: number = 50, offset: number = 0): Promise<{ customers: any[]; total: number }> {
-    try {
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(users)
-        .where(eq(users.role, "customer"));
-
-      const customers = await db
-        .select()
-        .from(users)
-        .where(eq(users.role, "customer"))
-        .orderBy(desc(users.createdAt))
-        .limit(limit)
-        .offset(offset);
-
-      const customersWithStats = customers.map(customer => ({
-        id: customer.id,
-        email: customer.email,
-        phone: customer.phone,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        authProvider: customer.authProvider,
-        createdAt: customer.createdAt,
-        isEmailVerified: customer.isEmailVerified,
-        totalOrders: 0,
-        totalSpent: "0",
-        lastOrderDate: null
-      }));
-
-      return { customers: customersWithStats, total };
-    } catch (error) {
-      console.error("Error in getCustomersPaginated:", error);
-      return { customers: [], total: 0 };
-    }
-  }
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -468,10 +428,10 @@ export class DatabaseStorage implements IStorage {
       
       // First, delete all cart items related to this book
       await db.delete(cartItems).where(eq(cartItems.bookId, id));
-
+      
       // Then delete the book
       const result = await db.delete(books).where(eq(books.id, id));
-
+      
       if (result.rowCount === 0) {
         throw new Error("Book not found");
       }
@@ -493,26 +453,26 @@ export class DatabaseStorage implements IStorage {
 
   async getSearchSuggestions(query: string): Promise<string[]> {
     const searchTerm = query.toLowerCase();
-
+    
     // Get unique suggestions from titles and authors
     const titleSuggestions = await db
       .selectDistinct({ value: books.title })
       .from(books)
       .where(sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`)
       .limit(5);
-
+    
     const authorSuggestions = await db
       .selectDistinct({ value: books.author })
       .from(books)
       .where(sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`)
       .limit(5);
-
+    
     // Combine and deduplicate suggestions
     const allSuggestions = [
       ...titleSuggestions.map(s => s.value),
       ...authorSuggestions.map(s => s.value)
     ];
-
+    
     // Remove duplicates and return top 8 suggestions
     const uniqueSuggestions: string[] = [];
     for (const suggestion of allSuggestions) {
@@ -614,7 +574,7 @@ export class DatabaseStorage implements IStorage {
   async createOrder(order: InsertOrder, items: Omit<InsertOrderItem, 'orderId'>[]): Promise<Order> {
     try {
       console.log("Creating order without transaction...");
-
+      
       // Insert order first
       const [newOrder] = await db.insert(orders).values(order).returning();
       console.log("Order created with ID:", newOrder.id);
@@ -648,7 +608,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrderStatus(id: number, status: string, trackingInfo?: { trackingNumber?: string; shippingCarrier?: string; notes?: string }): Promise<Order> {
     const updateData: any = { status, updatedAt: new Date() };
-
+    
     if (trackingInfo?.trackingNumber) {
       updateData.trackingNumber = trackingInfo.trackingNumber;
     }
@@ -807,7 +767,7 @@ export class DatabaseStorage implements IStorage {
   async upsertStoreSettings(settingsData: InsertStoreSettings): Promise<StoreSettings> {
     // Check if settings exist
     const existingSettings = await this.getStoreSettings();
-
+    
     if (existingSettings) {
       // Update existing settings
       const [updatedSettings] = await db
@@ -888,7 +848,7 @@ export class DatabaseStorage implements IStorage {
       .update(shippingRates)
       .set({ isDefault: false })
       .where(eq(shippingRates.isDefault, true));
-
+    
     // Then set the new default
     await db
       .update(shippingRates)
@@ -934,7 +894,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
-
+      
       const result = await db
         .select({
           date: sql<string>`DATE(${orders.createdAt})`,
@@ -997,7 +957,7 @@ export class DatabaseStorage implements IStorage {
     offset?: number;
   } = {}): Promise<{ returnRequests: (ReturnRequest & { order: Order & { items: OrderItem[] } })[], total: number }> {
     const { status, userId, orderId, limit = 50, offset = 0 } = options;
-
+    
     const conditions = [];
     if (status) conditions.push(eq(returnRequests.status, status));
     if (userId) conditions.push(eq(returnRequests.userId, userId));
@@ -1013,7 +973,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(returnRequests.createdAt))
       .$dynamic();
 
-    const finalQuery = conditions.length > 0
+    const finalQuery = conditions.length > 0 
       ? baseQuery.where(and(...conditions))
       : baseQuery;
 
@@ -1295,7 +1255,7 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(users.createdAt));
 
       console.log(`Retrieved ${customers.length} customers for admin panel`);
-
+      
       // Add basic stats as 0 for now
       const customersWithStats = customers.map(customer => ({
         id: customer.id,
@@ -1417,7 +1377,7 @@ export class DatabaseStorage implements IStorage {
     if (couponData.code) {
       updateData.code = couponData.code.toUpperCase();
     }
-
+    
     const [coupon] = await db.update(coupons)
       .set(updateData)
       .where(eq(coupons.id, id))
@@ -1439,7 +1399,7 @@ export class DatabaseStorage implements IStorage {
     message?: string;
   }> {
     const coupon = await this.getCouponByCode(code);
-
+    
     if (!coupon) {
       return { valid: false, message: "Invalid coupon code" };
     }
@@ -1455,9 +1415,9 @@ export class DatabaseStorage implements IStorage {
 
     // Check if order meets minimum amount requirement
     if (orderAmount < parseFloat(coupon.minimumOrderAmount)) {
-      return {
-        valid: false,
-        message: `Minimum order amount of $${coupon.minimumOrderAmount} required`
+      return { 
+        valid: false, 
+        message: `Minimum order amount of $${coupon.minimumOrderAmount} required` 
       };
     }
 
@@ -1483,7 +1443,7 @@ export class DatabaseStorage implements IStorage {
     let discountAmount: number;
     if (coupon.discountType === 'percentage') {
       discountAmount = (orderAmount * parseFloat(coupon.discountValue)) / 100;
-
+      
       // Apply maximum discount limit if set
       if (coupon.maximumDiscountAmount) {
         discountAmount = Math.min(discountAmount, parseFloat(coupon.maximumDiscountAmount));
@@ -1501,10 +1461,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async applyCoupon(
-    couponId: number,
-    orderId: number,
-    userId: string | null,
-    customerEmail: string,
+    couponId: number, 
+    orderId: number, 
+    userId: string | null, 
+    customerEmail: string, 
     discountAmount: number
   ): Promise<CouponUsage> {
     const [usage] = await db.insert(couponUsages).values({
@@ -1520,7 +1480,7 @@ export class DatabaseStorage implements IStorage {
 
   async incrementCouponUsage(couponId: number): Promise<void> {
     await db.update(coupons)
-      .set({
+      .set({ 
         usedCount: sql`${coupons.usedCount} + 1`,
         updatedAt: new Date()
       })
@@ -1533,7 +1493,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(couponUsages.couponId, couponId))
         .orderBy(desc(couponUsages.usedAt));
     }
-
+    
     return await db.select().from(couponUsages)
       .orderBy(desc(couponUsages.usedAt));
   }
@@ -1597,35 +1557,6 @@ export class DatabaseStorage implements IStorage {
   async deleteBookRequest(id: number): Promise<void> {
     await db.delete(bookRequests).where(eq(bookRequests.id, id));
   }
-
-  // Banner storage
-  async createBanner(data: InsertBanner): Promise<Banner> {
-    // Use Drizzle ORM for insert
-    const [banner] = await db.insert(banners).values({
-      image_urls: data.image_urls,
-      page_type: data.page_type,
-      is_active: data.is_active ?? true,
-    }).returning();
-    return banner;
-  }
-
-  async getBanners(): Promise<Banner[]> {
-    // Use Drizzle ORM for select
-    return await db.select().from(banners).orderBy(desc(banners.created_at));
-  }
-
-  async getBannersByPageType(pageType: string): Promise<Banner[]> {
-    return await db.select().from(banners)
-      .where(eq(banners.page_type, pageType))
-      .orderBy(desc(banners.created_at));
-  }
-
-  async getAllBannerPageTypes(): Promise<string[]> {
-    const rows = await db.select({ page_type: banners.page_type }).from(banners);
-    const uniqueTypes = Array.from(new Set(rows.map(r => r.page_type)));
-    return uniqueTypes;
-  }
-
 }
 
 export const storage = new DatabaseStorage();

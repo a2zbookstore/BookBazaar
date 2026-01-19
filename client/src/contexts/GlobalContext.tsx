@@ -184,60 +184,16 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = async (bookId: number, quantity: number = 1) => {
     if (isAuthenticated) {
-      const response = await apiRequest("GET", `/api/books/${bookId}`);
-      const book = await response.json();
-
-      if (book.stock <= 0) {
-        toast({
-          title: "Error",
-          description: "This book is out of stock.",
-          variant: "destructive"
-        });
-        return;
-      }
-      console.log(cartItems);
-      if(cartItems.length > 0) {
-        const existingItem = cartItems.find(item => item.book.id === bookId);
-        const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
-        const newTotalQuantity = currentQuantityInCart + quantity;
-        if (newTotalQuantity > book.stock) {
-          toast({
-            title: "Exceeded Stock",
-            description: `Only ${book.stock} items available in stock. You already have ${currentQuantityInCart} in your cart.`,
-            variant: "destructive"
-          });
-          return
-        };
-      }
-      
       await addToCartMutation.mutateAsync({ bookId, quantity });
-      toast({
-        title: "✓ Added to cart",
-        description: `${quantity > 1 ? `${quantity} copies of ` : ''}${book.title.length > 60 ? book.title.substring(0, 60) + '...' : book.title}`,
-      });
     } else {
       try {
         const response = await apiRequest("GET", `/api/books/${bookId}`);
         const book = await response.json();
-        if (book.stock <= 0) {
-          toast({
-            title: "Error",
-            description: "This book is out of stock.",
-            variant: "destructive"
-          });
-          return;
-        };
+        if (book.stock <= 0) return;
         const existingItem = guestCart.find(item => item.book.id === bookId);
         const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
         const newTotalQuantity = currentQuantityInCart + quantity;
-        if (newTotalQuantity > book.stock) {
-          toast({
-            title: "Exceeded Stock",
-            description: `Only ${book.stock} items available in stock. You already have ${currentQuantityInCart} in your cart.`,
-            variant: "destructive"
-          });
-          return
-        };
+        if (newTotalQuantity > book.stock) return;
         let newCart: CartItem[];
         if (existingItem) {
           newCart = guestCart.map(item =>
@@ -256,10 +212,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
           };
           newCart = [...guestCart, newItem];
         }
-        toast({
-          title: "✓ Added to cart",
-          description: `${quantity > 1 ? `${quantity} copies of ` : ''}${book.title.length > 60 ? book.title.substring(0, 60) + '...' : book.title}`,
-        });
         saveGuestCart(newCart);
       } catch (error) {
         throw error;
@@ -285,7 +237,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const removeFromCart = async (id: number) => {
     if (isAuthenticated) {
       await removeFromCartMutation.mutateAsync(id);
-      //   queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    //   queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
     } else {
       const newCart = guestCart.filter(item => item.id !== id);
       saveGuestCart(newCart);

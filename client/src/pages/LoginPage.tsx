@@ -15,8 +15,7 @@ import { Eye, EyeOff, Mail, Lock, Phone, LogIn, X } from "lucide-react";
 export default function LoginPage() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const [showEmailPassword, setShowEmailPassword] = useState(false);
-  const [showPhonePassword, setShowPhonePassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState("email");
   const [isOpen, setIsOpen] = useState(true);
 
@@ -267,7 +266,7 @@ export default function LoginPage() {
                         <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
                           id="password"
-                          type={showEmailPassword ? "text" : "password"}
+                          type={showPassword ? "text" : "password"}
                           value={emailFormData.password}
                           onChange={(e) => setEmailFormData(prev => ({ ...prev, password: e.target.value }))}
                           className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
@@ -279,9 +278,9 @@ export default function LoginPage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
-                          onClick={() => setShowEmailPassword(!showEmailPassword)}
+                          onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showEmailPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+                          {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
                         </Button>
                       </div>
                     </div>
@@ -345,7 +344,7 @@ export default function LoginPage() {
                         <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-aqua transition-colors" />
                         <Input
                           id="phonePassword"
-                          type={showPhonePassword ? "text" : "password"}
+                          type={showPassword ? "text" : "password"}
                           value={phoneFormData.password}
                           onChange={(e) => setPhoneFormData(prev => ({ ...prev, password: e.target.value }))}
                           className="pl-12 pr-12 h-10 sm:h-12 border-2 border-gray-200 rounded-xl focus:border-primary-aqua focus:ring-2 focus:ring-primary-aqua/20 transition-all"
@@ -357,9 +356,9 @@ export default function LoginPage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
-                          onClick={() => setShowPhonePassword(!showPhonePassword)}
+                          onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPhonePassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+                          {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
                         </Button>
                       </div>
                     </div>

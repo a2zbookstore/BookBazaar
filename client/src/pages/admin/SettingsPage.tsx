@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Settings, User, Store, Mail, Plus, Edit, Trash2, Send, CheckCircle, AlertCircle } from "lucide-react";
-import CategoriesManagement from "@/components/admin/CategoriesManagement";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,7 +115,7 @@ export default function SettingsPage() {
 
   const createCategoryMutation = useMutation({
     mutationFn: async (data: CategoryForm) => {
-      await apiRequest("POST", "/api/createCategory", data);
+      await apiRequest("POST", "/api/categories", data);
     },
     onSuccess: () => {
       toast({
@@ -421,7 +420,120 @@ export default function SettingsPage() {
 
           {/* Categories Management */}
           <TabsContent value="categories">
-            <CategoriesManagement />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Book Categories
+                  </span>
+                  <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={resetCategoryForm} className="bg-primary-aqua hover:bg-secondary-aqua">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Category
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Category</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleCategorySubmit} className="space-y-4">
+                        <div>
+                          <Label htmlFor="categoryName">Category Name *</Label>
+                          <Input
+                            id="categoryName"
+                            value={categoryForm.name}
+                            onChange={(e) => handleNameChange(e.target.value)}
+                            required
+                            placeholder="e.g., Science Fiction"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="categorySlug">URL Slug *</Label>
+                          <Input
+                            id="categorySlug"
+                            value={categoryForm.slug}
+                            onChange={(e) => setCategoryForm(prev => ({ ...prev, slug: e.target.value }))}
+                            required
+                            placeholder="e.g., science-fiction"
+                          />
+                          <p className="text-xs text-secondary-black mt-1">
+                            Used in URLs. Auto-generated from name if left empty.
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="categoryDescription">Description</Label>
+                          <Textarea
+                            id="categoryDescription"
+                            value={categoryForm.description}
+                            onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                            rows={3}
+                            placeholder="Optional description for the category"
+                          />
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setIsCategoryDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={createCategoryMutation.isPending}
+                            className="bg-primary-aqua hover:bg-secondary-aqua"
+                          >
+                            Create Category
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {categories.length > 0 ? (
+                  <div className="space-y-4">
+                    {categories.map((category) => (
+                      <div key={category.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                        <div>
+                          <h3 className="font-semibold text-base-black">{category.name}</h3>
+                          <p className="text-sm text-secondary-black">Slug: {category.slug}</p>
+                          {category.description && (
+                            <p className="text-sm text-tertiary-black mt-1">{category.description}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-abe-red hover:bg-red-50">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-base-black mb-2">No categories yet</h3>
+                    <p className="text-secondary-black mb-4">
+                      Create your first book category to organize your inventory.
+                    </p>
+                    <Button 
+                      onClick={() => setIsCategoryDialogOpen(true)}
+                      className="bg-primary-aqua hover:bg-secondary-aqua"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Your First Category
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Contact Messages */}
