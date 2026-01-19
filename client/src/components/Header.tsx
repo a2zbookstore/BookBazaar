@@ -49,10 +49,10 @@ export default function Header() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center flex-shrink-0">
                         <div className="md:hidden">
-                            <Logo size="xl" variant="default" showText={true} />
+                            <Logo size="sm" variant="default" showText={true} />
                         </div>
                         <div className="hidden md:block">
-                            <Logo size="2xl" variant="default" showText={true} />
+                            <Logo size="md" variant="default" showText={true} />
                         </div>
                     </Link>
                     {/* Search Bar */}
