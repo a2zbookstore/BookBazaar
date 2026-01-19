@@ -263,24 +263,7 @@ export default function HomePage() {
 
       <div className="container-custom py-8 mt-4">
         <BannerCarousel
-          banners={[{
-            id: 1,
-            image: "/src/temp/banner/Banner-1.png",
-            alt: "Buy 3 Books Offer",
-            link: "/catalog"
-          },
-          {
-            id: 2,
-            image: "/src/temp/banner/banner-2.png",
-            alt: "Shop for $499",
-            link: "/catalog"
-          },
-          {
-            id: 3,
-            image: "/src/temp/banner/banner-3.png",
-            alt: "Shop for $999",
-            link: "/catalog"
-          }]}
+          pageName="home"
           autoPlayInterval={5000}
           showIndicators={true}
           showNavigation={true}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+
 export interface BannerItem {
   id: string | number;
   image: string;
@@ -12,8 +13,9 @@ export interface BannerItem {
   buttonText?: string;
 }
 
+
 interface BannerCarouselProps {
-  banners: BannerItem[];
+  pageName: string;
   autoPlayInterval?: number;
   showIndicators?: boolean;
   showNavigation?: boolean;
@@ -21,17 +23,39 @@ interface BannerCarouselProps {
   className?: string;
 }
 
+
 const BannerCarousel: React.FC<BannerCarouselProps> = ({
-  banners,
+  pageName,
   autoPlayInterval = 5000,
-  showIndicators = true,
+  showIndicators = true, 
   showNavigation = true,
-  height = "h-56 sm:h-72 md:h-96", // Responsive height
+  height = "h-56 sm:h-72 md:h-96",
   className = "",
 }) => {
+  const [banners, setBanners] = useState<BannerItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Fetch banners from API
+  useEffect(() => {
+    fetch(`/api/bannersbyName?page_type=${encodeURIComponent(pageName)}`)
+      .then(res => res.json())
+      .then((data) => {
+        // Map API response to BannerItem[]
+        if (Array.isArray(data) && data.length > 0) {
+          const items: BannerItem[] = data[0].image_urls.map((img: string, idx: number) => ({
+            id: `${data[0].id}_${idx}`,
+            image: img,
+            alt: data[0].page_type,
+          }));
+          setBanners(items);
+        } else {
+          setBanners([]);
+        }
+      })
+      .catch(() => setBanners([]));
+  }, [pageName]);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
