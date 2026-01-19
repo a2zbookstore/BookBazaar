@@ -605,3 +605,18 @@ export const insertCouponUsageSchema = createInsertSchema(couponUsages).omit({
   usedAt: true,
 });
 export type InsertCouponUsage = z.infer<typeof insertCouponUsageSchema>;
+
+export const banners = pgTable("banners", {
+  id: serial("id").primaryKey(),
+  image_urls: text("image_urls").array().notNull(),
+  page_type: varchar("page_type", { length: 50 }).notNull(),
+  is_active: boolean("is_active").default(true),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertBannerSchemaDrizzle = createInsertSchema(banners).omit({
+  id: true,
+  created_at: true,
+});
+export type InsertBanner = typeof banners.$inferInsert;
+export type Banner = typeof banners.$inferSelect;
