@@ -29,14 +29,14 @@ export default function Logo({ size = 'md', showText = true }: LogoProps) {
       )}
       {/* Favicon Image with innovation */}
       <div
-        className={`relative ${sizes[size]} flex items-center justify-center transition-transform duration-300 hover:scale-110 bg-white`}
+        className={`relative ${sizes[size]} flex items-center justify-center`}
         aria-label="A2Z Bookshop Logo"
         tabIndex={0}
       >
         <img
           src={favicon}
           alt="A2Z Bookshop Logo"
-          className={`object-contain w-full h-full rounded-full`}
+          className={`object-contain `}
         />
       </div>
       {/* Store Name */}

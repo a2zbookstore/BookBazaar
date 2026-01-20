@@ -33,16 +33,17 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   className = "",
 }) => {
   const [banners, setBanners] = useState<BannerItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   // Fetch banners from API
   useEffect(() => {
+    setIsLoading(true);
     fetch(`/api/bannersbyName?page_type=${encodeURIComponent(pageName)}`)
       .then(res => res.json())
       .then((data) => {
-        // Map API response to BannerItem[]
         if (Array.isArray(data) && data.length > 0) {
           const items: BannerItem[] = data[0].image_urls.map((img: string, idx: number) => ({
             id: `${data[0].id}_${idx}`,
@@ -53,8 +54,12 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
         } else {
           setBanners([]);
         }
+        setIsLoading(false);
       })
-      .catch(() => setBanners([]));
+      .catch(() => {
+        setBanners([]);
+        setIsLoading(false);
+      });
   }, [pageName]);
 
   // Minimum swipe distance (in px)
@@ -96,6 +101,19 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
     if (isRightSwipe) goToPrevious();
   };
 
+  if (isLoading) {
+    return (
+      <div className={`relative ${height} overflow-hidden rounded-lg shadow-md ${className}`}>
+        <div className="flex h-full animate-pulse">
+          {[1,2,3].map((i) => (
+            <div key={i} className="min-w-full h-full flex-shrink-0 relative">
+              <div className="h-full w-full bg-gray-200" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (banners.length === 0) return null;
 
   return (
