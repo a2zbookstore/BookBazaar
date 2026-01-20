@@ -22,7 +22,8 @@ import {
   insertGiftCategorySchema,
   insertGiftItemSchema,
   insertCouponSchema,
-  insertBookRequestSchema
+  insertBookRequestSchema,
+  insertBannerSchemaDrizzle
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -548,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payment routes - conditionally loaded based on environment variables
   let paypalEnabled = false;
   let createPaypalOrder: any, capturePaypalOrder: any, loadPaypalDefault: any;
-  
+
   if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
     try {
       const paypalModule = await import("./paypal");
@@ -566,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   let razorpayEnabled = false;
   let createRazorpayOrder: any, verifyRazorpayPayment: any, getRazorpayConfig: any;
-  
+
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
     try {
       const razorpayModule = await import("./razorpay.js");
@@ -1176,9 +1177,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/customers", requireAdminAuth, async (req, res) => {
     try {
       console.log("Admin customers API called");
-      const customers = await storage.getAllCustomers();
-      console.log(`Found ${customers.length} customers`);
-      res.json(customers);
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const { customers, total } = await storage.getCustomersPaginated(limit, offset);
+      console.log(`Found ${customers.length} customers (total: ${total})`);
+      res.json({ customers, total });
     } catch (error) {
       console.error("Error fetching customers:", error);
       res.status(500).json({ message: "Failed to fetch customers" });
@@ -1788,14 +1791,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", isAuthenticated, async (req: any, res) => {
+  app.post("/api/createCategory", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+
       const user = await storage.getUser(userId);
       if (user?.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
       }
-
       const categoryData = insertCategorySchema.parse(req.body);
 
       // Generate unique slug
@@ -1805,19 +1816,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .trim();
 
       let slug = baseSlug;
-      let counter = 1;
-
-      // Check for existing slug and create unique one if needed
-      while (true) {
-        const existingCategories = await storage.getCategories();
-        const slugExists = existingCategories.some(cat => cat.slug === slug);
-
-        if (!slugExists) {
-          break;
-        }
-
-        slug = `${baseSlug}-${counter}`;
-        counter++;
+      const existingCategories = await storage.getCategories();
+      const slugExists = existingCategories.some(cat => cat.slug === slug);
+      if (slugExists) {
+        return res.status(400).json({ message: "Slug already exists" });
       }
 
       const categoryWithSlug = { ...categoryData, slug };
@@ -1829,6 +1831,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+
+  app.post("/api/updateCategory", async (req: any, res) => {
+    try {
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.body;
+      if (!id) {
+        return res.status(400).json({ message: "Category id is required" });
+      }
+
+      const categoryData = insertCategorySchema.parse(req.body);
+
+      // Generate unique slug
+      let baseSlug = categoryData.name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .trim();
+
+      let slug = baseSlug;
+      const existingCategories = await storage.getCategories();
+      const slugExists = existingCategories.some(cat => cat.slug === slug && cat.id !== id);
+      if (slugExists) {
+        return res.status(400).json({ message: "Slug already exists" });
+      }
+
+      const updatedCategory = await storage.updateCategory(id, { ...categoryData, slug });
+      res.json(updatedCategory);
+    } catch (error) {
+      console.log("error", error);
+
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating category:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.post("/api/deleteCategory", async (req: any, res) => {
+    try {
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.body;
+      if (!id) {
+        return res.status(400).json({ message: "Category id is required" });
+      }
+
+      const booksWithCategory = await storage.getBooks({ categoryId: id });
+      if (booksWithCategory && booksWithCategory.books && booksWithCategory.books.length > 0) {
+        return res.status(400).json({ message: "Cannot delete category: It is associated with one or more books." });
+      }
+
+      await storage.deleteCategory(id);
+      res.json({ success: true, message: "Category deleted successfully" });
+    } catch (error) {
+      console.log("error", error);
+      res.status(500).json({ message: "Failed to delete category" });
     }
   });
 
@@ -2114,6 +2202,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading image:", error);
       res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+
+  // Banner image upload route
+  app.post("/api/banners/upload", imageUpload.single('image'), async (req: any, res) => {
+    try {
+      // Check admin session first
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+
+      if (adminId && isAdmin) {
+        const admin = await storage.getAdminById(adminId);
+        if (!admin || !admin.isActive) {
+          return res.status(401).json({ message: "Admin account inactive" });
+        }
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        // Fallback to Replit auth
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user?.role !== "admin") {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+      } else {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      try {
+        // Try uploading to Cloudinary for permanent storage
+        const uploadResult = await CloudinaryService.uploadImage(
+          req.file.buffer,
+          'a2z-bookshop/banners',
+          `banner-${Date.now()}-${Math.round(Math.random() * 1E9)}`
+        );
+
+        res.json({
+          message: "Image uploaded successfully to cloud storage",
+          imageUrl: uploadResult.secure_url,
+          public_id: uploadResult.public_id,
+          size: uploadResult.bytes,
+          storage: "cloudinary"
+        });
+      } catch (cloudinaryError) {
+        // Fallback to local storage with warning
+        console.warn("Cloudinary upload failed, falling back to local storage:", cloudinaryError);
+
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(req.file.originalname) || '.jpg';
+        const filename = `banner-${uniqueSuffix}${ext}`;
+        const uploadDir = path.join(process.cwd(), 'uploads', 'images');
+
+        // Ensure directory exists
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        const filepath = path.join(uploadDir, filename);
+        fs.writeFileSync(filepath, req.file.buffer);
+
+        const imageUrl = `/uploads/images/${filename}`;
+
+        res.json({
+          message: "Image uploaded successfully (TEMPORARY - fix Cloudinary for permanent storage)",
+          imageUrl: imageUrl,
+          filename: filename,
+          storage: "local",
+          warning: "Image stored locally - will disappear on server restart"
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading banner image:", error);
+      res.status(500).json({ message: "Failed to upload banner image" });
     }
   });
 
@@ -2642,22 +2806,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Send status update email to customer
-        try {
-          // Email already imported at top of file
-          await sendStatusUpdateEmail({
-            order: updatedOrder,
-            customerEmail: updatedOrder.customerEmail,
-            customerName: updatedOrder.customerName,
-            newStatus: status,
-            trackingNumber,
-            shippingCarrier,
-            notes
-          });
-          console.log(`Status update email sent for order #${id}, new status: ${status}`);
-        } catch (emailError) {
-          console.error("Failed to send status update email:", emailError);
-          // Don't fail the status update if email fails
-        }
+        // try {
+        //   // Email already imported at top of file
+        //   await sendStatusUpdateEmail({
+        //     order: updatedOrder,
+        //     customerEmail: updatedOrder.customerEmail,
+        //     customerName: updatedOrder.customerName,
+        //     newStatus: status,
+        //     trackingNumber,
+        //     shippingCarrier,
+        //     notes
+        //   });
+        //   console.log(`Status update email sent for order #${id}, new status: ${status}`);
+        // } catch (emailError) {
+        //   console.error("Failed to send status update email:", emailError);
+        //   // Don't fail the status update if email fails
+        // }
 
         return res.json(updatedOrder);
       }
@@ -4349,6 +4513,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting book request:", error);
       res.status(500).json({ message: "Failed to delete book request" });
+    }
+  });
+
+  // Insert banner API
+  app.post("/api/banners", async (req: any, res) => {
+    try {
+      // Admin check
+      const adminId = (req.session as any).adminId;
+      const isAdmin = (req.session as any).isAdmin;
+      if (!adminId || !isAdmin) {
+        return res.status(401).json({ message: "Admin login required" });
+      }
+      const admin = await storage.getAdminById(adminId);
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin account inactive" });
+      }
+
+      if (!Array.isArray(req.body.image_urls) || req.body.image_urls.length === 0) {
+        return res.status(400).json({ message: "image_urls must be a non-empty array" });
+      }
+      const bannerData = insertBannerSchemaDrizzle.parse(req.body);
+      const banner = await storage.createBanner(bannerData);
+      res.json(banner);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error inserting banner:", error);
+      res.status(500).json({ message: "Failed to insert banner" });
+    }
+  });
+
+  // Get all unique banner page types
+  app.get("/api/banner-page-types", async (req: any, res) => {
+    try {
+      const pageTypes = await storage.getAllBannerPageTypes();
+      res.json(pageTypes);
+    } catch (error) {
+      console.error("Error fetching banner page types:", error);
+      res.status(500).json({ message: "Failed to fetch banner page types" });
+    }
+  });
+
+  app.get("/api/bannersbyName", async (req: any, res) => {
+    try {
+      const pageType = req.query.page_type;
+      if (!pageType) {
+        return res.status(400).json({ message: "page_type query parameter is required" });
+      }
+      const banners = await storage.getBannersByPageType(pageType);
+      res.json(banners);
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
     }
   });
 

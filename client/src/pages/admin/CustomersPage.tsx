@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,16 +26,38 @@ interface Customer {
 export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
-  const { data: customers = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["/api/admin/customers"],
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["/api/admin/customers", currentPage, itemsPerPage],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/customers?limit=${itemsPerPage}&offset=${(currentPage - 1) * itemsPerPage}`);
+      if (!response.ok) throw new Error("Failed to fetch customers");
+      return response.json();
+    },
     retry: 3,
     refetchOnWindowFocus: false,
   });
 
+  const customers = data?.customers || [];
+  const totalCustomers = data?.total || 0;
+  const totalPages = Math.ceil(totalCustomers / itemsPerPage);
 
 
-  if (isLoading) {
+
+  useEffect(() => {
+    console.log(isLoading, data);
+  }, [isLoading]);
+
+
+  if (isLoading || isFetching) {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
@@ -193,7 +215,12 @@ export default function CustomersPage() {
       {/* Customers Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Customers</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>All Customers</CardTitle>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -274,8 +301,8 @@ export default function CustomersPage() {
                       <TableCell>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               onClick={() => setSelectedCustomer(customer)}
                             >
@@ -371,6 +398,40 @@ export default function CustomersPage() {
               </TableBody>
             </Table>
           </div>
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <nav className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                  const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                  if (pageNum > totalPages) return null;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </nav>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
