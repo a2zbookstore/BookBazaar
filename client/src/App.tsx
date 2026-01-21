@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -56,7 +56,7 @@ import NotFound from "@/pages/NotFound";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
-  
+
   // Auto scroll to top on page navigation
   useScrollToTop();
 
@@ -83,7 +83,7 @@ function AppRouter() {
       <Route path="/track-order" component={TrackOrderPage} />
       <Route path="/my-orders" component={MyOrdersPage} />
       <Route path="/cart" component={CartPage} />
-      <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/checkout/:mode/:bookId" component={CheckoutPage} />
       <Route path="/paypal-complete" component={PayPalCompletePage} />
       <Route path="/orders/:id" component={OrderDetailPage} />
       <Route path="/returns" component={ReturnRequestPage} />
@@ -99,7 +99,7 @@ function AppRouter() {
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
-      
+
       {/* Admin routes - protected by separate admin authentication */}
       <Route path="/admin">
         <AdminProtectedRoute>
@@ -197,7 +197,7 @@ function AppRouter() {
           <AdminAccountPage />
         </AdminProtectedRoute>
       </Route>
-      
+
       {/* Fallback */}
       <Route component={NotFound} />
     </Switch>
@@ -211,7 +211,9 @@ function App() {
         <LocationProvider>
           <GlobalProvider>
             <Toaster />
-            <AppRouter />
+            <Router>
+              <AppRouter />
+            </Router>
           </GlobalProvider>
         </LocationProvider>
       </TooltipProvider>
