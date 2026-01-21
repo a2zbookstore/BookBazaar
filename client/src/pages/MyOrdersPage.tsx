@@ -117,7 +117,7 @@ export default function MyOrdersPage() {
           url="https://a2zbookshop.com/my-orders"
           type="website"
         />
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-gray-50">
           <div className="container-custom">
             <Breadcrumb items={[{ label: "My Orders" }]} />
 

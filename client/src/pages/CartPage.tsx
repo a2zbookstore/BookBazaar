@@ -326,7 +326,7 @@ export default function CartPage() {
   if (isCartEmpty) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 mt-6">
+        <div className="container mx-auto px-4 mt-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
             <p className="text-gray-600 mb-8">Add some books to get started!</p>
@@ -357,7 +357,7 @@ export default function CartPage() {
         url="https://a2zbookshop.com/cart"
         type="website"
       />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4">
         <Breadcrumb items={[{ label: "Cart" }]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

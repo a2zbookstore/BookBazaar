@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { BookOpen, Mail, Phone, User, DollarSign, Hash, Package, Book } from "lucide-react";
+import Breadcrumb from "@/components/Breadcrumb";
 
 const RequestBookPage = () => {
   const { toast } = useToast();
@@ -192,8 +193,8 @@ const RequestBookPage = () => {
         url="https://a2zbookshop.com/request-book"
         type="website"
       />
-      <div className="container-custom py-8 mt-6">
-        {/* Header with gradient background */}
+      <div className="container-custom">
+        <Breadcrumb items={[{ label: "Request a Book" }]} />
         <div className="mb-8 ">
           <div className="flex items-center gap-4">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-aqua to-blue-500 rounded-full mb-4 shadow-lg">

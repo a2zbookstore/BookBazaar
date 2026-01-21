@@ -2,28 +2,29 @@ import { useState, useEffect, useRef } from "react";
 import { Globe, ChevronDown, Search, X } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useUserLocation } from "@/contexts/userLocationContext";
+import 'flag-icons/css/flag-icons.min.css';
 
 const POPULAR_COUNTRIES = [
-  { code: 'US', name: 'United States', flag: '🇺🇸', currency: 'USD' },
-  { code: 'CA', name: 'Canada', flag: '🇨🇦', currency: 'CAD' },
-  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP' },
-  { code: 'AU', name: 'Australia', flag: '🇦🇺', currency: 'AUD' },
-  { code: 'DE', name: 'Germany', flag: '🇩🇪', currency: 'EUR' },
-  { code: 'FR', name: 'France', flag: '🇫🇷', currency: 'EUR' },
-  { code: 'IN', name: 'India', flag: '🇮🇳', currency: 'INR' },
-  { code: 'JP', name: 'Japan', flag: '🇯🇵', currency: 'JPY' },
-  { code: 'CN', name: 'China', flag: '🇨🇳', currency: 'CNY' },
-  { code: 'BR', name: 'Brazil', flag: '🇧🇷', currency: 'BRL' },
-  { code: 'MX', name: 'Mexico', flag: '🇲🇽', currency: 'MXN' },
-  { code: 'IT', name: 'Italy', flag: '🇮🇹', currency: 'EUR' },
-  { code: 'ES', name: 'Spain', flag: '🇪🇸', currency: 'EUR' },
-  { code: 'NL', name: 'Netherlands', flag: '🇳🇱', currency: 'EUR' },
-  { code: 'SE', name: 'Sweden', flag: '🇸🇪', currency: 'SEK' },
-  { code: 'NO', name: 'Norway', flag: '🇳🇴', currency: 'NOK' },
-  { code: 'DK', name: 'Denmark', flag: '🇩🇰', currency: 'DKK' },
-  { code: 'CH', name: 'Switzerland', flag: '🇨🇭', currency: 'CHF' },
-  { code: 'SG', name: 'Singapore', flag: '🇸🇬', currency: 'SGD' },
-  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿', currency: 'NZD' },
+  { code: 'US', name: 'United States', countryCode: 'us', currency: 'USD' },
+  { code: 'CA', name: 'Canada', countryCode: 'ca', currency: 'CAD' },
+  { code: 'GB', name: 'United Kingdom', countryCode: 'gb', currency: 'GBP' },
+  { code: 'AU', name: 'Australia', countryCode: 'au', currency: 'AUD' },
+  { code: 'DE', name: 'Germany', countryCode: 'de', currency: 'EUR' },
+  { code: 'FR', name: 'France', countryCode: 'fr', currency: 'EUR' },
+  { code: 'IN', name: 'India', countryCode: 'in', currency: 'INR' },
+  { code: 'JP', name: 'Japan', countryCode: 'jp', currency: 'JPY' },
+  { code: 'CN', name: 'China', countryCode: 'cn', currency: 'CNY' },
+  { code: 'BR', name: 'Brazil', countryCode: 'br', currency: 'BRL' },
+  { code: 'MX', name: 'Mexico', countryCode: 'mx', currency: 'MXN' },
+  { code: 'IT', name: 'Italy', countryCode: 'it', currency: 'EUR' },
+  { code: 'ES', name: 'Spain', countryCode: 'es', currency: 'EUR' },
+  { code: 'NL', name: 'Netherlands', countryCode: 'nl', currency: 'EUR' },
+  { code: 'SE', name: 'Sweden', countryCode: 'se', currency: 'SEK' },
+  { code: 'NO', name: 'Norway', countryCode: 'no', currency: 'NOK' },
+  { code: 'DK', name: 'Denmark', countryCode: 'dk', currency: 'DKK' },
+  { code: 'CH', name: 'Switzerland', countryCode: 'ch', currency: 'CHF' },
+  { code: 'SG', name: 'Singapore', countryCode: 'sg', currency: 'SGD' },
+  { code: 'NZ', name: 'New Zealand', countryCode: 'nz', currency: 'NZD' },
 ];
 
 interface CountrySelectorProps {
@@ -122,7 +123,7 @@ export default function CountrySelector({
         onClick={() => setIsOpen(!isOpen)}
         className={`text-xs px-2 py-2 rounded-xl border bg-white flex items-center gap-1.5 w-[90px] ${className}`}
       >
-        <span className="text-base">{currentCountry.flag}</span>
+        <span className={`fi fi-${currentCountry.countryCode} h-4 w-6`}></span>
         <span className="font-medium">{currentCountry.code}</span>
         <ChevronDown
           className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""
@@ -149,13 +150,14 @@ export default function CountrySelector({
               <div
                 key={country.code}
                 onClick={() => handleCountrySelect(country)}
-                className={`px-4 py-3 cursor-pointer flex justify-between ${currentCountry.code === country.code
+                className={`px-4 py-3 cursor-pointer flex justify-between items-center ${currentCountry.code === country.code
                   ? "bg-primary-aqua/10"
                   : "hover:bg-gray-50"
                   }`}
               >
-                <div>
-                  {country.flag} {country.name}
+                <div className="flex items-center gap-2">
+                  <span className={`fi fi-${country.countryCode} h-5 w-7`}></span>
+                  {country.name}
                 </div>
                 {currentCountry.code === country.code && "✓"}
               </div>

@@ -99,7 +99,7 @@ export default function ContactPage() {
         url="https://a2zbookshop.com/contact"
         type="website"
       />
-      <div className="container-custom py-8">
+      <div className="container-custom">
         <Breadcrumb items={[{ label: "Contact" }]} />
 
         <div className="grid lg:grid-cols-3 gap-12">

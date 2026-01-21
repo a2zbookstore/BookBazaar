@@ -8,6 +8,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
+import { COUNTRY_CODES, COUNTRIES } from "@/lib/countryData";
 import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -16,14 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CreditCard, Globe, CheckCircle, ScrollText, MapPinPlusInside, UserPen } from "lucide-react";
+import { CreditCard, Globe, CheckCircle, ScrollText, MapPinPlusInside, UserPen, ChevronDown } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
 import StripeCheckoutForm from "@/components/StripeCheckoutForm";
 import { Book } from "@/types";
-import { useSearchParams } from "react-router-dom";
-import { use } from "passport";
-import { is } from "drizzle-orm";
 import { Skeleton } from "@/components/ui/skeleton";
+
 
 
 declare global {
@@ -31,190 +30,6 @@ declare global {
     Razorpay: any;
   }
 }
-
-// Country codes and phone validation data
-const countryCodes = [
-  { code: "+1", country: "US", name: "United States" },
-  { code: "+1", country: "CA", name: "Canada" },
-  { code: "+44", country: "GB", name: "United Kingdom" },
-  { code: "+91", country: "IN", name: "India" },
-  { code: "+86", country: "CN", name: "China" },
-  { code: "+81", country: "JP", name: "Japan" },
-  { code: "+49", country: "DE", name: "Germany" },
-  { code: "+33", country: "FR", name: "France" },
-  { code: "+39", country: "IT", name: "Italy" },
-  { code: "+34", country: "ES", name: "Spain" },
-  { code: "+61", country: "AU", name: "Australia" },
-  { code: "+55", country: "BR", name: "Brazil" },
-  { code: "+52", country: "MX", name: "Mexico" },
-  { code: "+7", country: "RU", name: "Russia" },
-  { code: "+82", country: "KR", name: "South Korea" },
-  { code: "+31", country: "NL", name: "Netherlands" },
-  { code: "+46", country: "SE", name: "Sweden" },
-  { code: "+47", country: "NO", name: "Norway" },
-  { code: "+45", country: "DK", name: "Denmark" },
-  { code: "+41", country: "CH", name: "Switzerland" },
-  { code: "+43", country: "AT", name: "Austria" },
-  { code: "+32", country: "BE", name: "Belgium" },
-  { code: "+351", country: "PT", name: "Portugal" },
-  { code: "+353", country: "IE", name: "Ireland" },
-  { code: "+358", country: "FI", name: "Finland" },
-  { code: "+48", country: "PL", name: "Poland" },
-  { code: "+420", country: "CZ", name: "Czech Republic" },
-  { code: "+36", country: "HU", name: "Hungary" },
-  { code: "+30", country: "GR", name: "Greece" },
-  { code: "+90", country: "TR", name: "Turkey" },
-  { code: "+972", country: "IL", name: "Israel" },
-  { code: "+971", country: "AE", name: "UAE" },
-  { code: "+966", country: "SA", name: "Saudi Arabia" },
-  { code: "+20", country: "EG", name: "Egypt" },
-  { code: "+27", country: "ZA", name: "South Africa" },
-  { code: "+234", country: "NG", name: "Nigeria" },
-  { code: "+254", country: "KE", name: "Kenya" },
-  { code: "+65", country: "SG", name: "Singapore" },
-  { code: "+60", country: "MY", name: "Malaysia" },
-  { code: "+66", country: "TH", name: "Thailand" },
-  { code: "+84", country: "VN", name: "Vietnam" },
-  { code: "+63", country: "PH", name: "Philippines" },
-  { code: "+62", country: "ID", name: "Indonesia" },
-  { code: "+92", country: "PK", name: "Pakistan" },
-  { code: "+880", country: "BD", name: "Bangladesh" },
-  { code: "+94", country: "LK", name: "Sri Lanka" },
-  { code: "+977", country: "NP", name: "Nepal" },
-  { code: "+98", country: "IR", name: "Iran" },
-  { code: "+964", country: "IQ", name: "Iraq" },
-  { code: "+213", country: "DZ", name: "Algeria" },
-  { code: "+212", country: "MA", name: "Morocco" },
-  { code: "+216", country: "TN", name: "Tunisia" },
-  { code: "+93", country: "AF", name: "Afghanistan" },
-  { code: "+355", country: "AL", name: "Albania" },
-  { code: "+376", country: "AD", name: "Andorra" },
-  { code: "+244", country: "AO", name: "Angola" },
-  { code: "+54", country: "AR", name: "Argentina" },
-  { code: "+374", country: "AM", name: "Armenia" },
-  { code: "+994", country: "AZ", name: "Azerbaijan" },
-  { code: "+973", country: "BH", name: "Bahrain" },
-  { code: "+375", country: "BY", name: "Belarus" },
-  { code: "+501", country: "BZ", name: "Belize" },
-  { code: "+229", country: "BJ", name: "Benin" },
-  { code: "+975", country: "BT", name: "Bhutan" },
-  { code: "+591", country: "BO", name: "Bolivia" },
-  { code: "+387", country: "BA", name: "Bosnia and Herzegovina" },
-  { code: "+267", country: "BW", name: "Botswana" },
-  { code: "+673", country: "BN", name: "Brunei" },
-  { code: "+359", country: "BG", name: "Bulgaria" },
-  { code: "+226", country: "BF", name: "Burkina Faso" },
-  { code: "+257", country: "BI", name: "Burundi" },
-  { code: "+855", country: "KH", name: "Cambodia" },
-  { code: "+237", country: "CM", name: "Cameroon" },
-  { code: "+238", country: "CV", name: "Cape Verde" },
-  { code: "+235", country: "TD", name: "Chad" },
-  { code: "+56", country: "CL", name: "Chile" },
-  { code: "+57", country: "CO", name: "Colombia" },
-  { code: "+269", country: "KM", name: "Comoros" },
-  { code: "+242", country: "CG", name: "Congo" },
-  { code: "+506", country: "CR", name: "Costa Rica" },
-  { code: "+385", country: "HR", name: "Croatia" },
-  { code: "+53", country: "CU", name: "Cuba" },
-  { code: "+357", country: "CY", name: "Cyprus" },
-  { code: "+253", country: "DJ", name: "Djibouti" },
-  { code: "+1809", country: "DO", name: "Dominican Republic" },
-  { code: "+593", country: "EC", name: "Ecuador" },
-  { code: "+503", country: "SV", name: "El Salvador" },
-  { code: "+240", country: "GQ", name: "Equatorial Guinea" },
-  { code: "+291", country: "ER", name: "Eritrea" },
-  { code: "+372", country: "EE", name: "Estonia" },
-  { code: "+251", country: "ET", name: "Ethiopia" },
-  { code: "+679", country: "FJ", name: "Fiji" },
-  { code: "+241", country: "GA", name: "Gabon" },
-  { code: "+220", country: "GM", name: "Gambia" },
-  { code: "+995", country: "GE", name: "Georgia" },
-  { code: "+233", country: "GH", name: "Ghana" },
-  { code: "+502", country: "GT", name: "Guatemala" },
-  { code: "+224", country: "GN", name: "Guinea" },
-  { code: "+245", country: "GW", name: "Guinea-Bissau" },
-  { code: "+592", country: "GY", name: "Guyana" },
-  { code: "+509", country: "HT", name: "Haiti" },
-  { code: "+504", country: "HN", name: "Honduras" },
-  { code: "+852", country: "HK", name: "Hong Kong" },
-  { code: "+354", country: "IS", name: "Iceland" },
-  { code: "+7", country: "KZ", name: "Kazakhstan" },
-  { code: "+965", country: "KW", name: "Kuwait" },
-  { code: "+996", country: "KG", name: "Kyrgyzstan" },
-  { code: "+856", country: "LA", name: "Laos" },
-  { code: "+371", country: "LV", name: "Latvia" },
-  { code: "+961", country: "LB", name: "Lebanon" },
-  { code: "+266", country: "LS", name: "Lesotho" },
-  { code: "+231", country: "LR", name: "Liberia" },
-  { code: "+218", country: "LY", name: "Libya" },
-  { code: "+370", country: "LT", name: "Lithuania" },
-  { code: "+352", country: "LU", name: "Luxembourg" },
-  { code: "+261", country: "MG", name: "Madagascar" },
-  { code: "+265", country: "MW", name: "Malawi" },
-  { code: "+960", country: "MV", name: "Maldives" },
-  { code: "+223", country: "ML", name: "Mali" },
-  { code: "+356", country: "MT", name: "Malta" },
-  { code: "+222", country: "MR", name: "Mauritania" },
-  { code: "+230", country: "MU", name: "Mauritius" },
-  { code: "+373", country: "MD", name: "Moldova" },
-  { code: "+377", country: "MC", name: "Monaco" },
-  { code: "+976", country: "MN", name: "Mongolia" },
-  { code: "+382", country: "ME", name: "Montenegro" },
-  { code: "+258", country: "MZ", name: "Mozambique" },
-  { code: "+95", country: "MM", name: "Myanmar" },
-  { code: "+264", country: "NA", name: "Namibia" },
-  { code: "+64", country: "NZ", name: "New Zealand" },
-  { code: "+505", country: "NI", name: "Nicaragua" },
-  { code: "+227", country: "NE", name: "Niger" },
-  { code: "+850", country: "KP", name: "North Korea" },
-  { code: "+968", country: "OM", name: "Oman" },
-  { code: "+970", country: "PS", name: "Palestine" },
-  { code: "+507", country: "PA", name: "Panama" },
-  { code: "+675", country: "PG", name: "Papua New Guinea" },
-  { code: "+595", country: "PY", name: "Paraguay" },
-  { code: "+51", country: "PE", name: "Peru" },
-  { code: "+974", country: "QA", name: "Qatar" },
-  { code: "+40", country: "RO", name: "Romania" },
-  { code: "+250", country: "RW", name: "Rwanda" },
-  { code: "+221", country: "SN", name: "Senegal" },
-  { code: "+381", country: "RS", name: "Serbia" },
-  { code: "+248", country: "SC", name: "Seychelles" },
-  { code: "+232", country: "SL", name: "Sierra Leone" },
-  { code: "+421", country: "SK", name: "Slovakia" },
-  { code: "+386", country: "SI", name: "Slovenia" },
-  { code: "+252", country: "SO", name: "Somalia" },
-  { code: "+211", country: "SS", name: "South Sudan" },
-  { code: "+249", country: "SD", name: "Sudan" },
-  { code: "+597", country: "SR", name: "Suriname" },
-  { code: "+963", country: "SY", name: "Syria" },
-  { code: "+886", country: "TW", name: "Taiwan" },
-  { code: "+992", country: "TJ", name: "Tajikistan" },
-  { code: "+255", country: "TZ", name: "Tanzania" },
-  { code: "+228", country: "TG", name: "Togo" },
-  { code: "+993", country: "TM", name: "Turkmenistan" },
-  { code: "+256", country: "UG", name: "Uganda" },
-  { code: "+380", country: "UA", name: "Ukraine" },
-  { code: "+598", country: "UY", name: "Uruguay" },
-  { code: "+998", country: "UZ", name: "Uzbekistan" },
-  { code: "+58", country: "VE", name: "Venezuela" },
-  { code: "+967", country: "YE", name: "Yemen" },
-  { code: "+260", country: "ZM", name: "Zambia" },
-  { code: "+263", country: "ZW", name: "Zimbabwe" }
-];
-
-const countries = [
-  "Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
-  "Bahrain", "Bangladesh", "Belarus", "Belgium", "Bolivia", "Bosnia and Herzegovina", "Brazil", "Bulgaria",
-  "Cambodia", "Canada", "Chile", "China", "Colombia", "Croatia", "Czech Republic", "Denmark",
-  "Ecuador", "Egypt", "Estonia", "Finland", "France", "Georgia", "Germany", "Ghana", "Greece",
-  "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
-  "Japan", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Latvia", "Lebanon", "Lithuania", "Luxembourg",
-  "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand", "Nigeria", "Norway", "Pakistan",
-  "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Saudi Arabia",
-  "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka", "Sweden",
-  "Switzerland", "Thailand", "Tunisia", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom",
-  "United States", "Uruguay", "Venezuela", "Vietnam"
-];
 
 // Validation functions
 const validateEmail = (email: string): boolean => {
@@ -567,11 +382,11 @@ export default function CheckoutPage() {
     setShowCountryDropdown(false);
   };
 
-  const filteredCountries = countries.filter(country =>
+  const filteredCountries = COUNTRIES.filter(country =>
     country.toLowerCase().includes(countryQuery.toLowerCase())
   ).slice(0, 10);
 
-  const filteredCountryCodes = countryCodes.filter(country =>
+  const filteredCountryCodes = COUNTRY_CODES.filter(country =>
     country.name.toLowerCase().includes(phoneCountryQuery.toLowerCase()) ||
     country.code.includes(phoneCountryQuery)
   ).slice(0, 10);
@@ -889,7 +704,7 @@ export default function CheckoutPage() {
   if ((mode === "cart" && isCartLoading) || (mode === "buyNow" && isBookLoading)) {
     return (
       <Layout>
-        <div className="container-custom py-8 mt-6">
+        <div className="container-custom mt-6">
           <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Left Column - Forms */}
@@ -918,7 +733,7 @@ export default function CheckoutPage() {
         url="https://a2zbookshop.com/checkout"
         type="website"
       />
-      <div className="container-custom py-8 mt-6">
+      <div className="container-custom mt-6">
         <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -963,9 +778,9 @@ export default function CheckoutPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="customerPhone">Phone Number *</Label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="relative phone-country-dropdown-container w-full sm:w-auto">
-                      <div className="flex">
+                  <div className="flex flex-row gap-2 w-full">
+                    <div className="relative phone-country-dropdown-container w-32">
+                      <div className="flex flex-col sm:flex-row">
                         <Input
                           value={phoneCountryQuery || phoneCountryCode}
                           onChange={(e) => {
@@ -986,16 +801,14 @@ export default function CheckoutPage() {
                           onFocus={() => setShowPhoneCountryDropdown(true)}
                           onKeyDown={handlePhoneCountryKeyDown}
                           placeholder="Country code or type to search"
-                          className="w-full sm:w-36 rounded-r-none min-h-[44px] touch-target"
+                          className="w-full rounded-b-none sm:rounded-b-md sm:rounded-r-none min-h-[44px] touch-target text-sm"
                         />
                         <button
                           type="button"
-                          className="px-3 border border-l-0 border-gray-300 rounded-r bg-gray-50 hover:bg-gray-100 touch-target min-h-[44px]"
+                          className="px-3 border border-t-0 sm:border-t sm:border-l-0 border-gray-300 rounded-t-none sm:rounded-t-md sm:rounded-l-none bg-gray-50 hover:bg-gray-100 touch-target min-h-[44px]"
                           onClick={() => setShowPhoneCountryDropdown(!showPhoneCountryDropdown)}
                         >
-                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                          <ChevronDown className="w-4 h-4 text-gray-600" />
                         </button>
                       </div>
                       {showPhoneCountryDropdown && (
@@ -1012,7 +825,7 @@ export default function CheckoutPage() {
                               Search: "{phoneCountryQuery}" - {filteredCountryCodes.length} results
                             </div>
                           )}
-                          {(phoneCountryQuery ? filteredCountryCodes : countryCodes).map((country, index) => (
+                          {(phoneCountryQuery ? filteredCountryCodes : COUNTRY_CODES).map((country, index) => (
                             <div
                               key={index}
                               className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${selectedCountryIndex === index

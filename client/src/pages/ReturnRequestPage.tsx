@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Package, Calendar, AlertCircle, ArrowLeft, FileText, History, Clock, XCircle, DollarSign, CheckCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import SEO from "@/components/SEO";
+import Breadcrumb from "@/components/Breadcrumb";
 
 interface Order {
   id: number;
@@ -62,7 +64,7 @@ export default function ReturnRequestPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [step, setStep] = useState(1); // 1: Select Order, 2: Return Details, 3: Confirmation
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [guestEmail, setGuestEmail] = useState(""); // Guest must enter their own email
@@ -160,7 +162,7 @@ export default function ReturnRequestPage() {
 
   const handleItemSelection = (bookId: number, quantity: number, reason: string) => {
     const existingIndex = selectedItems.findIndex(item => item.bookId === bookId);
-    
+
     if (quantity === 0 || !reason || reason === "none") {
       // Remove item if quantity is 0 or no reason selected
       if (existingIndex !== -1) {
@@ -170,7 +172,7 @@ export default function ReturnRequestPage() {
       // Add or update item
       const newItem: ReturnItem = { bookId, quantity, reason };
       if (existingIndex !== -1) {
-        setSelectedItems(prev => prev.map((item, index) => 
+        setSelectedItems(prev => prev.map((item, index) =>
           index === existingIndex ? newItem : item
         ));
       } else {
@@ -181,7 +183,7 @@ export default function ReturnRequestPage() {
 
   const calculateRefundAmount = () => {
     if (!selectedOrder) return 0;
-    
+
     return selectedItems.reduce((total, item) => {
       const orderItem = selectedOrder.items.find(oi => oi.bookId === item.bookId);
       if (orderItem) {
@@ -215,13 +217,21 @@ export default function ReturnRequestPage() {
 
   return (
     <Layout>
-      <div className="container-custom py-8 mt-6">
+      <SEO
+        title="Return & Refund Request - A2Z BOOKSHOP"
+        description="Easily request a return and refund for your orders within 30 days of delivery at A2Z BOOKSHOP."
+        keywords="return request, refund request, book return, book refund"
+        url="https://a2zbookshop.com/my-orders"
+        type="website"
+      />
+      <div className="container-custom">
+        <Breadcrumb items={[{ label: "Return & Refund" }]} />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-base-black mb-2">Request Return & Refund</h1>
           <p className="text-secondary-black">
             Return your order within 30 days of delivery for a full refund
           </p>
-        </div> 
+        </div>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
@@ -262,15 +272,14 @@ export default function ReturnRequestPage() {
                             <Badge variant="outline" className="font-mono text-xs">
                               {returnRequest.returnRequestNumber || `REQ-${returnRequest.id}`}
                             </Badge>
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              returnRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${returnRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                               returnRequest.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                              returnRequest.status === 'processing' ? 'bg-purple-100 text-purple-800' :
-                              returnRequest.status === 'refund_processed' ? 'bg-green-100 text-green-800' :
-                              returnRequest.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              returnRequest.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
+                                returnRequest.status === 'processing' ? 'bg-purple-100 text-purple-800' :
+                                  returnRequest.status === 'refund_processed' ? 'bg-green-100 text-green-800' :
+                                    returnRequest.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                      returnRequest.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                        'bg-gray-100 text-gray-800'
+                              }`}>
                               {returnRequest.status === 'pending' && <Clock className="h-3 w-3" />}
                               {returnRequest.status === 'approved' && <CheckCircle className="h-3 w-3" />}
                               {returnRequest.status === 'processing' && <Package className="h-3 w-3" />}
@@ -289,7 +298,7 @@ export default function ReturnRequestPage() {
                           <p className="text-xs text-gray-500">Refund Amount</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2">
                         {returnRequest.order.items.map((item) => (
                           <Badge key={item.id} variant="secondary" className="text-xs">
@@ -297,7 +306,7 @@ export default function ReturnRequestPage() {
                           </Badge>
                         ))}
                       </div>
-                      
+
                       <div>
                         <p className="text-sm text-gray-700">
                           <span className="font-medium">Reason:</span> {returnRequest.returnReason}
@@ -387,18 +396,17 @@ export default function ReturnRequestPage() {
                   {eligibleOrders.map((order) => (
                     <div
                       key={order.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                        selectedOrderId === order.id
-                          ? 'border-primary-aqua bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${selectedOrderId === order.id
+                        ? 'border-primary-aqua bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
                       onClick={() => setSelectedOrderId(order.id)}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Checkbox
                             checked={selectedOrderId === order.id}
-                            onChange={() => {}}
+                            onChange={() => { }}
                           />
                           <span className="font-semibold">Order #{order.id}</span>
                           <Badge variant="secondary">
@@ -450,9 +458,9 @@ export default function ReturnRequestPage() {
 
               <div>
                 <Label htmlFor="returnReason">Reason for Return *</Label>
-                <select 
+                <select
                   id="returnReason"
-                  value={returnReason} 
+                  value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
                 >
@@ -493,7 +501,7 @@ export default function ReturnRequestPage() {
                             <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                           </div>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label>Return Quantity</Label>
@@ -610,13 +618,13 @@ export default function ReturnRequestPage() {
                 </ul>
               </div>
               <div className="space-x-4">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => window.location.href = '/my-orders'}
                 >
                   View My Orders
                 </Button>
-                <Button 
+                <Button
                   onClick={() => window.location.href = '/'}
                   className="bg-primary-aqua hover:bg-secondary-aqua"
                 >
