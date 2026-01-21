@@ -515,6 +515,10 @@ export default function CheckoutPage() {
 
   // Pre-fill user data
   useEffect(() => {
+    if (!user) {
+      setLocation("/login?redirect=/checkout");
+      return;
+    }
     if (user) {
       setCustomerName(`${user.firstName || ""} ${user.lastName || ""}`.trim());
       setCustomerEmail(user.email || "");
@@ -630,12 +634,6 @@ export default function CheckoutPage() {
   }, [shippingAddress, sameBillingAddress]);
 
   // Redirect if cart is empty
-  useEffect(() => {
-    if (cartCount === 0) {
-      setLocation("/cart");
-      return;
-    }
-  }, [cartCount, setLocation]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -888,7 +886,7 @@ export default function CheckoutPage() {
     !nameError && !emailError && !phoneError;
 
 
-  if (cartCount === 0 || isCartLoading || (mode === "buyNow" && isBookLoading)) {
+  if ((mode === "cart" && isCartLoading) || (mode === "buyNow" && isBookLoading)) {
     return (
       <Layout>
         <div className="container-custom py-8 mt-6">
