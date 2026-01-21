@@ -1,7 +1,7 @@
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Star, ShoppingCart, Truck, Shield, RotateCcw, ChevronRight, Minus, Plus } from "lucide-react";
+import { Star, ShoppingCart, Truck, Shield, RotateCcw, BadgeDollarSign, Minus, Plus } from "lucide-react";
 import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO, { generateBookStructuredData } from "@/components/SEO";
@@ -32,8 +32,9 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useGlobalContext();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { shippingRate } = useShipping();
+  const { shippingRate, isLoading: isShippingLoading } = useShipping();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
@@ -60,6 +61,10 @@ export default function BookDetailPage() {
     }
   };
 
+  const handleBuyNow = async () => {
+    setLocation(`/checkout/buyNow/${id}`);
+}
+
   const getConditionColor = (condition: string) => {
     switch (condition.toLowerCase()) {
       case "new":
@@ -81,16 +86,17 @@ export default function BookDetailPage() {
     return (
       <Layout>
         <div className="container-custom py-8">
-           <Breadcrumb
-          items={[
-            { label: "Catalog", href: "/catalog" },
-            { label: "Loading...." }
-          ]}
-          className="mt-6"
-        />
+          <Breadcrumb
+            items={[
+              { label: "Catalog", href: "/catalog" },
+              { label: "Loading..." }
+            ]}
+            className="mt-6"
+          />
           <div className="animate-pulse">
             <div className="grid lg:grid-cols-2 gap-12">
-              <div className="aspect-[3/4] bg-gray-200 rounded-lg"></div>
+              {/* Book Image Skeleton */}
+              <div className="aspect-[3/4] bg-gray-200 rounded-lg max-w-md mx-auto p-6"></div>
               {/* Book Details Skeleton */}
               <div className="space-y-6">
                 {/* Title */}
@@ -108,7 +114,7 @@ export default function BookDetailPage() {
                 </div>
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2 mb-6">
-                  {[...Array(3)].map((_, i) => (
+                  {[...Array(4)].map((_, i) => (
                     <div key={i} className="bg-gray-200 h-6 w-20 rounded"></div>
                   ))}
                 </div>
@@ -132,26 +138,9 @@ export default function BookDetailPage() {
                     <div className="bg-gray-200 h-12 w-40 rounded-full"></div>
                   </div>
                 </div>
-                {/* Separator */}
-                <div className="bg-gray-200 h-1 w-full rounded my-4"></div>
-                {/* Book Info Rows */}
-                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i}>
-                      <div className="bg-gray-200 h-4 w-20 rounded mb-1"></div>
-                      <div className="bg-gray-200 h-4 w-32 rounded"></div>
-                    </div>
-                  ))}
-                </div>
-                {/* Separator */}
-                <div className="bg-gray-200 h-1 w-full rounded my-4"></div>
-                {/* Return Policy */}
-                <div className="bg-green-100 h-16 w-full rounded-lg mb-4"></div>
-                {/* Delivery Info */}
+                {/* Shipping Info Skeleton */}
                 <div className="bg-blue-100 h-16 w-full rounded-lg mb-4"></div>
-                {/* Description */}
-                <div className="bg-gray-200 h-20 w-full rounded mb-4"></div>
-                {/* Trust Badges */}
+                {/* Trust Badges Skeleton */}
                 <div className="grid grid-cols-2 gap-4 pt-6 border-t">
                   <div className="flex items-center gap-3">
                     <div className="bg-green-100 h-10 w-10 rounded-full"></div>
@@ -168,6 +157,19 @@ export default function BookDetailPage() {
                     </div>
                   </div>
                 </div>
+                {/* Book Info Grid Skeleton */}
+                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                  {[...Array(7)].map((_, i) => (
+                    <div key={i}>
+                      <div className="bg-gray-200 h-4 w-20 rounded mb-1"></div>
+                      <div className="bg-gray-200 h-4 w-32 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+                {/* Description Skeleton */}
+                <div className="bg-gray-200 h-20 w-full rounded mb-4"></div>
+                {/* Return Policy Skeleton */}
+                <div className="bg-green-100 h-16 w-full rounded-lg mb-4"></div>
               </div>
             </div>
           </div>
@@ -217,7 +219,7 @@ export default function BookDetailPage() {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Book Image */}
           <div className="space-y-4">
-            <div className="aspect-[3/4] overflow-hidden rounded-lg bg-white max-w-md mx-auto p-6">
+            <div className=" border   aspect-[3/4] overflow-hidden rounded-lg bg-white max-w-md mx-auto p-6 sticky top-32">
               <img
                 src={getImageSrc(book.imageUrl)}
                 alt={book.title}
@@ -365,16 +367,90 @@ export default function BookDetailPage() {
                   <Button
                     onClick={handleAddToCart}
                     disabled={isAddingToCart || quantity < 1}
-                    className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto shadow-md hover:shadow-lg transition-shadow"
+                    className="bg-primary-aqua hover:bg-secondary-aqua text-white px-8 py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-[180px] shadow-md hover:shadow-lg flex items-center justify-center transition-all"
                   >
                     <ShoppingCart className={`h-4 w-4 mr-2 ${isAddingToCart ? 'animate-cart-slide' : ''}`} />
-                    {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+                    <span className="whitespace-nowrap">
+                      {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+                    </span>
+                  </Button>
+
+                  <Button
+                    onClick={handleBuyNow}
+                    disabled={isAddingToCart}
+                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-[180px] shadow-md hover:shadow-lg flex items-center justify-center transition-all" >
+                    <BadgeDollarSign className={`h-4 w-4 ${isBuying ? 'animate-rotate-bounce' : ''}`} />
+                    Buy Now
                   </Button>
                 </div>
               )}
             </div>
 
+            {shippingRate && (
+              <div className="rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-900 mb-1">Expected Delivery</h3>
+                    <p className="text-blue-800 text-sm">
+                      {(() => {
+                        const deliveryEstimate = calculateDeliveryDate(
+                          shippingRate.minDeliveryDays,
+                          shippingRate.maxDeliveryDays
+                        );
+                        return deliveryEstimate.deliveryText;
+                      })()}
+                    </p>
+                    <p className="text-blue-600 text-xs mt-1">
+                      To {shippingRate.countryName} • Order today for fastest delivery
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 pt-6 border-t">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-base-black text-sm">Quality Guaranteed</p>
+                  <p className="text-xs text-secondary-black">Accurately described</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Truck className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-base-black text-sm">Fast Shipping</p>
+                  {shippingRate ? (
+                    <p className="text-xs text-secondary-black">
+                      {(() => {
+                        const deliveryEstimate = calculateDeliveryDate(
+                          shippingRate.minDeliveryDays,
+                          shippingRate.maxDeliveryDays
+                        );
+                        return `Arrives ${deliveryEstimate.deliveryRange}`;
+                      })()}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-secondary-black">Secure packaging</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+
             <Separator />
+
 
             {/* Book Information */}
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -425,59 +501,7 @@ export default function BookDetailPage() {
                 </div>
               )}
             </div>
-
             <Separator />
-
-            {/* 30-Day Return Policy */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <RotateCcw className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-green-800 mb-2">30-Day Return Policy</h3>
-                  <p className="text-sm text-green-700 leading-relaxed">
-                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund.
-                    Books must be in the same condition as when received. Return shipping is free for damaged or incorrectly described items.
-                  </p>
-                  <Link href="/return-request" className="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium mt-2">
-                    Start a return request <ChevronRight className="h-3 w-3 ml-1" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Delivery Information */}
-            {shippingRate && (
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-blue-900 mb-1">Expected Delivery</h3>
-                    <p className="text-blue-800 text-sm">
-                      {(() => {
-                        const deliveryEstimate = calculateDeliveryDate(
-                          shippingRate.minDeliveryDays,
-                          shippingRate.maxDeliveryDays
-                        );
-                        return deliveryEstimate.deliveryText;
-                      })()}
-                    </p>
-                    <p className="text-blue-600 text-xs mt-1">
-                      To {shippingRate.countryName} • Order today for fastest delivery
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Description */}
             {book.description && (
@@ -488,40 +512,31 @@ export default function BookDetailPage() {
                 </p>
               </div>
             )}
+            <Separator />
 
-            {/* Trust Badges */}
-            <div className="grid grid-cols-2 gap-4 pt-6 border-t">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-green-600" />
+
+            {/* 30-Day Return Policy */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <RotateCcw className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-semibold text-base-black text-sm">Quality Guaranteed</p>
-                  <p className="text-xs text-secondary-black">Accurately described</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Truck className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-base-black text-sm">Fast Shipping</p>
-                  {shippingRate ? (
-                    <p className="text-xs text-secondary-black">
-                      {(() => {
-                        const deliveryEstimate = calculateDeliveryDate(
-                          shippingRate.minDeliveryDays,
-                          shippingRate.maxDeliveryDays
-                        );
-                        return `Arrives ${deliveryEstimate.deliveryRange}`;
-                      })()}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-secondary-black">Secure packaging</p>
-                  )}
+                  <h3 className="font-semibold text-green-800 mb-2">30-Day Return Policy</h3>
+                  <p className="text-sm text-green-700 leading-relaxed">
+                    Not satisfied with your purchase? Return this book within <strong>30 days</strong> of delivery for a full refund.
+                    Books must be in the same condition as when received. Return shipping is free for damaged or incorrectly described items.
+                  </p>
                 </div>
               </div>
             </div>
+
+
+            {/* Delivery Information */}
+
+
+            {/* Trust Badges */}
+
           </div>
         </div>
       </div>

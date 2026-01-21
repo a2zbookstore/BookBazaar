@@ -160,7 +160,10 @@ export default function SearchInput({
               handleSubmit(e as any);
             }
           }}
-          className="w-full pr-12 rounded-full"
+          className={`w-full pr-12 ${showSuggestions && suggestions.length > 0
+            ? ''
+            : 'rounded-full'
+            }`}
         />
         {showButton && (
           <Button
@@ -173,7 +176,7 @@ export default function SearchInput({
       </form>
 
       {/* Suggestions dropdown */}
-      {showSuggestions && suggestions.length > 0 && (
+      {/* {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
           className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"
@@ -190,6 +193,29 @@ export default function SearchInput({
               </div>
             </button>
           ))}
+        </div>
+      )} */}
+
+      {showSuggestions && suggestions.length > 0 && (
+        <div
+          ref={suggestionsRef}
+          className="absolute rounded-b-xl top-full left-0 right-0 z-50 bg-white border border-primary-aqua shadow-lg mt-4 overflow-hidden"
+          style={{ minWidth: '100%' }}
+        >
+          <ul className="divide-y divide-gray-100">
+            {suggestions.map((suggestion, index) => (
+              <li key={index}>
+                <button
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="w-full flex  items-center px-5 py-3 text-left hover:bg-primary-aqua/70 focus:bg-primary-aqua/20 transition-colors duration-150 outline-none"
+                // style={{ borderRadius: '0.75rem' }}
+                >
+                  <Search className="h-4 w-4 min-w-[16px] shrink-0 text-primary-aqua mr-3" />
+                  <span className="text-base text-gray-800 font-medium">{suggestion}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

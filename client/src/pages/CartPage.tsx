@@ -73,7 +73,7 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 }
 
 export default function CartPage() {
-  const { cartItems, updateCartItem, removeFromCart, isLoading } = useGlobalContext();
+  const { cartItems, updateCartItem, removeFromCart, isLoading,cartCount } = useGlobalContext();
   const [optimisticCartItems, setOptimisticCartItems] = useState<CartItem[] | null>(null);
   const [optimisticallyRemovedId, setOptimisticallyRemovedId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -657,7 +657,7 @@ export default function CartPage() {
                     hover:from-secondary-aqua hover:to-primary-aqua text-white font-semibold 
                     py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 
                     transform hover:scale-[1.02]">
-                    <Link to="/checkout" className="flex items-center gap-2 justify-center w-full">
+                    <Link to={`/checkout/cart/${cartCount}`} className="flex items-center gap-2 justify-center w-full">
                       <ShoppingBag className="h-6 w-6" />
                       Proceed to Checkout
                     </Link>

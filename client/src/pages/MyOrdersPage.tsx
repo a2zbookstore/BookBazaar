@@ -224,8 +224,8 @@ export default function MyOrdersPage() {
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gray-50 py-8">
+      <Layout >
+        <div className="mt-8 min-h-screen bg-gray-50 py-8">
           <div className="container-custom">
             <div className="animate-pulse space-y-4">
               <div className="h-8 bg-gray-200 rounded w-1/3"></div>

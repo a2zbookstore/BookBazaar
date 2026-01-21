@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, Globe, CheckCircle, ScrollText, MapPinPlusInside, UserPen } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
 import StripeCheckoutForm from "@/components/StripeCheckoutForm";
+import { Book } from "@/types";
+import { useSearchParams } from "react-router-dom";
+import { use } from "passport";
+import { is } from "drizzle-orm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 declare global {
@@ -133,8 +138,6 @@ const countryCodes = [
   { code: "+504", country: "HN", name: "Honduras" },
   { code: "+852", country: "HK", name: "Hong Kong" },
   { code: "+354", country: "IS", name: "Iceland" },
-  { code: "+1876", country: "JM", name: "Jamaica" },
-  { code: "+962", country: "JO", name: "Jordan" },
   { code: "+7", country: "KZ", name: "Kazakhstan" },
   { code: "+965", country: "KW", name: "Kuwait" },
   { code: "+996", country: "KG", name: "Kyrgyzstan" },
@@ -266,12 +269,13 @@ function CheckoutItemPrice({ bookPrice, quantity }: { bookPrice: number; quantit
 }
 
 export default function CheckoutPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const { cartItems, cartCount, clearCart } = useGlobalContext();
+  const { cartItems: cartContent, cartCount, clearCart, isLoading: isCartLoading } = useGlobalContext();
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
   const { shippingCost, shippingRate } = useShipping();
   const { toast } = useToast();
+  const [cartItems, setCartItems] = useState(cartContent);
 
   // Form state
   const [customerName, setCustomerName] = useState("");
@@ -308,6 +312,27 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const { mode, bookId } = useParams();
+  const { data: book, isLoading: isBookLoading } = useQuery<Book>({
+    queryKey: [`/api/books/${bookId}`],
+    enabled: mode === "buyNow" && !!bookId,
+  });
+
+  useEffect(() => {
+    if (mode === "buyNow" && book && !isBookLoading) {
+      setCartItems([{
+        id: book.id ?? "temp-buy-now-item",
+        createdAt: new Date().toISOString(),
+        userId: user?.id ?? null,
+        bookId: book.id,
+        book: book,
+        quantity: 1
+      }]);
+    }
+    if (mode === "cart" && !isCartLoading) {
+      setCartItems(cartContent);
+    }
+  }, [cartContent, mode, book, isCartLoading, isBookLoading]);
 
   // Check if cart has any non-gift books
   const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
@@ -409,29 +434,6 @@ export default function CheckoutPage() {
     return total + (parseFloat(item.book.price) * item.quantity);
   }, 0);
 
-  // Priority order for shipping cost:
-  // 1. User's detected location shipping rate (from useShipping hook)
-  // 2. Selected country in form (if different from detected)
-  // 3. Default shipping rate
-
-  const getShippingCountryCode = (countryName: string): string => {
-    const countryCodeMap: { [key: string]: string } = {
-      "United States": "US", "India": "IN", "United Kingdom": "GB", "Canada": "CA",
-      "Australia": "AU", "Germany": "DE", "France": "FR", "Italy": "IT", "Spain": "ES",
-      "Netherlands": "NL", "Japan": "JP", "China": "CN", "Brazil": "BR", "Mexico": "MX",
-      "Russia": "RU", "South Korea": "KR", "Turkey": "TR", "Saudi Arabia": "SA",
-      "South Africa": "ZA", "Nigeria": "NG", "Egypt": "EG", "Thailand": "TH",
-      "Malaysia": "MY", "Singapore": "SG", "Philippines": "PH", "Indonesia": "ID",
-      "Vietnam": "VN", "Pakistan": "PK", "Bangladesh": "BD", "Sri Lanka": "LK",
-      "Nepal": "NP", "Afghanistan": "AF", "Iran": "IR", "Iraq": "IQ", "Israel": "IL",
-      "UAE": "AE", "Switzerland": "CH", "Austria": "AT", "Belgium": "BE",
-      "Sweden": "SE", "Norway": "NO", "Denmark": "DK", "Finland": "FI",
-      "Poland": "PL", "Czech Republic": "CZ", "Hungary": "HU", "Greece": "GR",
-      "Portugal": "PT", "Ireland": "IE", "Ukraine": "UA", "Argentina": "AR",
-      "Chile": "CL", "Colombia": "CO", "Peru": "PE", "Venezuela": "VE"
-    };
-    return countryCodeMap[countryName] || "XX";
-  };
 
   // Use dynamic shipping cost based on user location
   const checkoutShippingCost = shippingCost || 0;
@@ -680,34 +682,6 @@ export default function CheckoutPage() {
   });
 
 
-
-  const handlePayPalSuccess = (details: any) => {
-    const orderItems = cartItems.map(item => ({
-      bookId: item.book.id,
-      quantity: item.quantity,
-      price: item.book.price,
-      title: item.book.title,
-      author: item.book.author
-    }));
-
-    completeOrderMutation.mutate({
-      customerName,
-      customerEmail,
-      customerPhone,
-      shippingAddress,
-      billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
-      subtotal: subtotal.toFixed(2),
-      shipping: shippingCost.toFixed(2),
-      tax: tax.toFixed(2),
-      total: total.toFixed(2),
-      paymentMethod: "PayPal",
-      paymentId: details.id,
-      items: orderItems
-    });
-  };
-
-
-
   const handleRazorpayInternationalPayment = async () => {
     await processRazorpayPayment(true); // International payment
   };
@@ -913,8 +887,28 @@ export default function CheckoutPage() {
     validateName(customerName) && validateEmail(customerEmail) && validatePhone(customerPhone) &&
     !nameError && !emailError && !phoneError;
 
-  if (cartCount === 0) {
-    return <Layout><div>Loading...</div></Layout>;
+
+  if (cartCount === 0 || isCartLoading || (mode === "buyNow" && isBookLoading)) {
+    return (
+      <Layout>
+        <div className="container-custom py-8 mt-6">
+          <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left Column - Forms */}
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-lg" />
+            </div>
+            {/* Right Column - Order Summary */}
+            <div className="space-y-6">
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-lg" />
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
   }
 
   return (
@@ -1374,7 +1368,7 @@ export default function CheckoutPage() {
                         size="sm"
                         onClick={applyCoupon}
                         disabled={isApplyingCoupon || !couponCode.trim()}
-                        className="bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white rounded-lg px-6 font-semibold shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+                        className="bg-gradient-to-r from-primary-aqua to-secondary-aqua hover:from-secondary-aqua hover:to-primary-aqua text-white rounded-full px-6 font-semibold shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
                       >
                         {isApplyingCoupon ? "Applying..." : "Apply"}
                       </Button>

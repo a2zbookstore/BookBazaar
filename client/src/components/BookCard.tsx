@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { Star, StarHalf, ShoppingCart, Truck, Clock, Book as BookIcon, RotateCcw } from "lucide-react";
+import { Star, ShoppingCart, Truck, Clock, RotateCcw, BadgeDollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalContext } from "@/contexts/GlobalContext";
@@ -182,6 +182,10 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
     }
   };
 
+  const handleBuyNow = async () => {
+    setLocation(`/checkout/buyNow/${book.id}`);
+  }
+
   return (
     <div className="group relative bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px]">
       {/* Wishlist Heart */}
@@ -308,18 +312,43 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
       </Link>
 
       {/* Add to Cart Button */}
-      <div className="px-4 pb-4">
+      <div className="flex gap-2 flex-col px-4 pb-4">
         <Button
           onClick={handleAddToCart}
           disabled={isAddingToCart}
-          className="py-2 bg-primary-aqua hover:bg-secondary-aqua text-white px-8 rounded-full disabled:opacity-50 disabled:cursor-not-allowed w-full shadow-md hover:shadow-lg transition-shadow"
-          // className="w-full bg-primary-aqua hover:bg-primary-aqua/90 text-white text-sm py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-          size="sm"
+          className="
+              w-full h-11
+              bg-primary-aqua hover:bg-secondary-aqua
+              text-white text-sm font-medium
+              rounded-full
+              shadow-md hover:shadow-lg
+              transition-all
+              flex items-center justify-center gap-2
+              disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ShoppingCart
-            className={`h-4 w-4 mr-2 ${isAddingToCart ? 'animate-cart-slide' : ''}`}
+            className={`h-4 w-4 ${isAddingToCart ? 'animate-cart-slide' : ''}`}
           />
           {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+        </Button>
+
+        <Button
+          onClick={handleBuyNow}
+          disabled={isAddingToCart}
+          className="
+              w-full h-11
+              bg-red-500 hover:bg-red-600
+              text-white text-sm font-medium
+              rounded-full
+              shadow-md hover:shadow-lg
+              transition-all
+              flex items-center justify-center gap-2
+              disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <BadgeDollarSign
+            className={`h-4 w-4 ${isBuying ? 'animate-rotate-bounce' : ''}`}
+          />
+          Buy Now
         </Button>
       </div>
     </div>

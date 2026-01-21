@@ -73,7 +73,7 @@ export default function Header() {
                             className="flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors px-2 py-1 rounded-lg hover:bg-green-50"
                         >
                             <SiWhatsapp className="h-5 w-5" />
-                            <span className="text-sm font-medium">WhatsApp</span>
+                            <span className="text-sm font-medium">Chat with us</span>
                         </a>
                         {isAuthenticated && (
                             <Link
