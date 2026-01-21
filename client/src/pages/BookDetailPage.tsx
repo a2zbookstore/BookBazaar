@@ -379,7 +379,7 @@ export default function BookDetailPage() {
                     onClick={handleBuyNow}
                     disabled={isAddingToCart}
                     className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-[180px] shadow-md hover:shadow-lg flex items-center justify-center transition-all" >
-                    <BadgeDollarSign className={`h-4 w-4 ${isBuying ? 'animate-rotate-bounce' : ''}`} />
+                    <BadgeDollarSign className={`h-4 w-4 animate-rotate-bounce`} />
                     Buy Now
                   </Button>
                 </div>

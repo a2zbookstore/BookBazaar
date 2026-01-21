@@ -346,7 +346,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <BadgeDollarSign
-            className={`h-4 w-4 ${isBuying ? 'animate-rotate-bounce' : ''}`}
+            className={`h-4 w-4 animate-rotate-bounce`}
           />
           Buy Now
         </Button>
