@@ -86,3 +86,16 @@ export const COUNTRIES = [
 
 export type CountryCode = typeof COUNTRY_CODES[number];
 export type Country = typeof COUNTRIES[number];
+
+
+
+
+// refactor: Extract country constants and improve responsive design
+
+// - Extract COUNTRY_CODES and COUNTRIES to dedicated lib/countryData.ts
+// - Replace emoji flags with flag-icons library for Windows compatibility
+// - Make SearchInput fully responsive with breakpoint-based sizing
+// - Implement responsive phone input with mobile stacking
+// - Fix Layout header positioning with calculated margins
+// - Update multiple pages for responsive design improvements
+// - Reduce CheckoutPage size by ~300 lines through constant extraction
