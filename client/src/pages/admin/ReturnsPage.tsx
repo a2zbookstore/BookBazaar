@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { 
-  Package, 
-  Calendar, 
-  DollarSign, 
-  Eye, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Package,
+  Calendar,
+  DollarSign,
+  Eye,
+  CheckCircle,
+  XCircle,
   Clock,
   RefreshCw,
   Filter,
   Download
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ReturnRequest {
   id: number;
@@ -73,7 +75,7 @@ export default function ReturnsPage() {
   const { admin, isLoading: authLoading, isAuthenticated } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedReturn, setSelectedReturn] = useState<ReturnRequest | null>(null);
   const [newStatus, setNewStatus] = useState("");
@@ -199,7 +201,7 @@ export default function ReturnsPage() {
 
   const handleProcessRefund = () => {
     console.log("Process Refund clicked - selectedReturn:", selectedReturn?.id, "refundMethod:", refundMethod, "refundReason:", refundReason);
-    
+
     if (!selectedReturn || !refundMethod || !refundReason) {
       console.log("Missing required fields - cannot process refund");
       return;
@@ -236,321 +238,321 @@ export default function ReturnsPage() {
   }
 
   return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-base-black">Return & Refund Management</h1>
-            <p className="text-secondary-black">Manage customer return requests and process refunds</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="refund_processed">Refund Processed</option>
-              </select>
-            </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-base-black">Return & Refund Management</h1>
+          <p className="text-secondary-black">Manage customer return requests and process refunds</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="refund_processed">Refund Processed</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                  <p className="text-2xl font-bold">{total}</p>
-                </div>
-                <Package className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold">
-                    {returnRequests.filter((r: ReturnRequest) => r.status === "pending").length}
-                  </p>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold">
-                    {returnRequests.filter((r: ReturnRequest) => r.status === "approved").length}
-                  </p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Refunds Processed</p>
-                  <p className="text-2xl font-bold">
-                    {returnRequests.filter((r: ReturnRequest) => r.status === "refund_processed").length}
-                  </p>
-                </div>
-                <DollarSign className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Return Requests Table */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Return Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">
-                <RefreshCw className="h-8 w-8 animate-spin mx-auto" />
-                <p className="mt-2">Loading return requests...</p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Requests</p>
+                <p className="text-2xl font-bold">{total}</p>
               </div>
-            ) : returnRequests.length === 0 ? (
-              <div className="text-center py-8">
-                <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">No Return Requests</h3>
-                <p className="text-gray-600">No return requests found for the selected filter.</p>
+              <Package className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-2xl font-bold">
+                  {returnRequests.filter((r: ReturnRequest) => r.status === "pending").length}
+                </p>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {returnRequests.map((returnRequest: ReturnRequest) => (
-                  <div key={returnRequest.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <h3 className="font-semibold">Return #{returnRequest.id}</h3>
-                          <p className="text-sm text-gray-600">
-                            Order #{returnRequest.orderId} • {returnRequest.customerName}
-                          </p>
-                        </div>
-                        <Badge className={`${getStatusColor(returnRequest.status)} border-0`}>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(returnRequest.status)}
-                            {returnRequest.status.charAt(0).toUpperCase() + returnRequest.status.slice(1).replace('_', ' ')}
-                          </div>
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <p className="font-semibold text-green-600">
-                            ${parseFloat(returnRequest.totalRefundAmount).toFixed(2)}
-                          </p>
-                          <p className="text-sm text-gray-600 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(returnRequest.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedReturn(returnRequest);
-                                setNewStatus(returnRequest.status);
-                                setAdminNotes(returnRequest.adminNotes || "");
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Return Request #{returnRequest.id}</DialogTitle>
-                            </DialogHeader>
-                            
-                            <div className="space-y-6">
-                              {/* Customer Info */}
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="font-semibold">Customer</Label>
-                                  <p>{returnRequest.customerName}</p>
-                                  <p className="text-sm text-gray-600">{returnRequest.customerEmail}</p>
-                                </div>
-                                <div>
-                                  <Label className="font-semibold">Order Details</Label>
-                                  <p>Order #{returnRequest.orderId}</p>
-                                  <p className="text-sm text-gray-600">
-                                    Original Amount: ${parseFloat(returnRequest.order.totalAmount).toFixed(2)}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Return Details */}
-                              <div>
-                                <Label className="font-semibold">Return Reason</Label>
-                                <p className="mt-1">{returnRequest.returnReason.replace('_', ' ')}</p>
-                              </div>
-
-                              <div>
-                                <Label className="font-semibold">Customer Description</Label>
-                                <p className="mt-1 p-3 bg-gray-50 rounded border">{returnRequest.returnDescription}</p>
-                              </div>
-
-                              {/* Items to Return */}
-                              <div>
-                                <Label className="font-semibold">Items to Return</Label>
-                                <div className="space-y-2 mt-2">
-                                  {returnRequest.itemsToReturn.map((item, index) => {
-                                    const orderItem = returnRequest.order.items.find(oi => oi.bookId === item.bookId);
-                                    if (!orderItem) return null;
-                                    
-                                    return (
-                                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                                        <div>
-                                          <p className="font-medium">{orderItem.title}</p>
-                                          <p className="text-sm text-gray-600">by {orderItem.author}</p>
-                                          <p className="text-sm text-red-600">Reason: {item.reason.replace('_', ' ')}</p>
-                                        </div>
-                                        <div className="text-right">
-                                          <p>Qty: {item.quantity} of {orderItem.quantity}</p>
-                                          <p className="font-semibold">
-                                            ${(parseFloat(orderItem.price) * item.quantity).toFixed(2)}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                <div className="mt-4 p-3 bg-green-50 rounded">
-                                  <p className="font-semibold text-green-800">
-                                    Total Refund Amount: ${parseFloat(returnRequest.totalRefundAmount).toFixed(2)}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Status Update */}
-                              <div className="border-t pt-6">
-                                <h3 className="font-semibold mb-4">Update Return Status</h3>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label htmlFor="status">Status</Label>
-                                    <select
-                                      id="status"
-                                      value={newStatus}
-                                      onChange={(e) => setNewStatus(e.target.value)}
-                                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                      <option value="pending">Pending</option>
-                                      <option value="approved">Approved</option>
-                                      <option value="rejected">Rejected</option>
-                                    </select>
-                                  </div>
-                                  <div></div>
-                                </div>
-
-                                <div className="mt-4">
-                                  <Label htmlFor="adminNotes">Admin Notes</Label>
-                                  <Textarea
-                                    id="adminNotes"
-                                    value={adminNotes}
-                                    onChange={(e) => setAdminNotes(e.target.value)}
-                                    placeholder="Add notes for customer..."
-                                    rows={3}
-                                  />
-                                </div>
-
-                                <div className="flex gap-4 mt-4">
-                                  <Button
-                                    onClick={handleUpdateStatus}
-                                    disabled={updateStatusMutation.isPending}
-                                    className="bg-primary-aqua hover:bg-secondary-aqua"
-                                  >
-                                    {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
-                                  </Button>
-
-                                  {returnRequest.status === "approved" && (
-                                    <div className="flex gap-2">
-                                      <select
-                                        value={refundMethod}
-                                        onChange={(e) => setRefundMethod(e.target.value)}
-                                        className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                      >
-                                        <option value="">Select Method</option>
-                                        <option value="paypal">PayPal</option>
-                                        <option value="razorpay">Razorpay</option>
-                                        <option value="bank_transfer">Bank Transfer</option>
-                                      </select>
-                                      <Input
-                                        placeholder="Refund reason"
-                                        value={refundReason}
-                                        onChange={(e) => setRefundReason(e.target.value)}
-                                        className="w-48"
-                                      />
-                                      <Button
-                                        onClick={handleProcessRefund}
-                                        disabled={processRefundMutation.isPending || !refundMethod || !refundReason}
-                                        className="bg-green-600 hover:bg-green-700"
-                                      >
-                                        {processRefundMutation.isPending ? "Processing..." : "Process Refund"}
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {returnRequest.adminNotes && (
-                                <div className="border-t pt-4">
-                                  <Label className="font-semibold">Previous Admin Notes</Label>
-                                  <p className="mt-1 p-3 bg-blue-50 rounded border">{returnRequest.adminNotes}</p>
-                                </div>
-                              )}
-
-                              {returnRequest.refundProcessedAt && (
-                                <div className="border-t pt-4">
-                                  <Label className="font-semibold">Refund Information</Label>
-                                  <div className="mt-2 p-3 bg-green-50 rounded">
-                                    <p><strong>Method:</strong> {returnRequest.refundMethod}</p>
-                                    <p><strong>Transaction ID:</strong> {returnRequest.refundTransactionId}</p>
-                                    <p><strong>Processed:</strong> {new Date(returnRequest.refundProcessedAt).toLocaleString()}</p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Reason:</span> {returnRequest.returnReason.replace('_', ' ')}
-                      </div>
-                      <div>
-                        <span className="font-medium">Items:</span> {returnRequest.itemsToReturn.length}
-                      </div>
-                      <div>
-                        <span className="font-medium">Deadline:</span> {new Date(returnRequest.returnDeadline).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <Clock className="h-8 w-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Approved</p>
+                <p className="text-2xl font-bold">
+                  {returnRequests.filter((r: ReturnRequest) => r.status === "approved").length}
+                </p>
               </div>
-            )}
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Refunds Processed</p>
+                <p className="text-2xl font-bold">
+                  {returnRequests.filter((r: ReturnRequest) => r.status === "refund_processed").length}
+                </p>
+              </div>
+              <DollarSign className="h-8 w-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
       </div>
-    );
-  }
+
+      {/* Return Requests Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Return Requests</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto" />
+              <p className="mt-2">Loading return requests...</p>
+            </div>
+          ) : returnRequests.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">No Return Requests</h3>
+              <p className="text-gray-600">No return requests found for the selected filter.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {returnRequests.map((returnRequest: ReturnRequest) => (
+                <div key={returnRequest.id} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <h3 className="font-semibold">Return #{returnRequest.id}</h3>
+                        <p className="text-sm text-gray-600">
+                          Order #{returnRequest.orderId} • {returnRequest.customerName}
+                        </p>
+                      </div>
+                      <Badge className={`${getStatusColor(returnRequest.status)} border-0`}>
+                        <div className="flex items-center gap-1">
+                          {getStatusIcon(returnRequest.status)}
+                          {returnRequest.status.charAt(0).toUpperCase() + returnRequest.status.slice(1).replace('_', ' ')}
+                        </div>
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="font-semibold text-green-600">
+                          ${parseFloat(returnRequest.totalRefundAmount).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(returnRequest.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedReturn(returnRequest);
+                              setNewStatus(returnRequest.status);
+                              setAdminNotes(returnRequest.adminNotes || "");
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Return Request #{returnRequest.id}</DialogTitle>
+                          </DialogHeader>
+
+                          <div className="space-y-6">
+                            {/* Customer Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="font-semibold">Customer</Label>
+                                <p>{returnRequest.customerName}</p>
+                                <p className="text-sm text-gray-600">{returnRequest.customerEmail}</p>
+                              </div>
+                              <div>
+                                <Label className="font-semibold">Order Details</Label>
+                                <p>Order #{returnRequest.orderId}</p>
+                                <p className="text-sm text-gray-600">
+                                  Original Amount: ${parseFloat(returnRequest.order.totalAmount).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Return Details */}
+                            <div>
+                              <Label className="font-semibold">Return Reason</Label>
+                              <p className="mt-1">{returnRequest.returnReason.replace('_', ' ')}</p>
+                            </div>
+
+                            <div>
+                              <Label className="font-semibold">Customer Description</Label>
+                              <p className="mt-1 p-3 bg-gray-50 rounded border">{returnRequest.returnDescription}</p>
+                            </div>
+
+                            {/* Items to Return */}
+                            <div>
+                              <Label className="font-semibold">Items to Return</Label>
+                              <div className="space-y-2 mt-2">
+                                {returnRequest.itemsToReturn.map((item, index) => {
+                                  const orderItem = returnRequest.order.items.find(oi => oi.bookId === item.bookId);
+                                  if (!orderItem) return null;
+
+                                  return (
+                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                                      <div>
+                                        <p className="font-medium">{orderItem.title}</p>
+                                        <p className="text-sm text-gray-600">by {orderItem.author}</p>
+                                        <p className="text-sm text-red-600">Reason: {item.reason.replace('_', ' ')}</p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p>Qty: {item.quantity} of {orderItem.quantity}</p>
+                                        <p className="font-semibold">
+                                          ${(parseFloat(orderItem.price) * item.quantity).toFixed(2)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="mt-4 p-3 bg-green-50 rounded">
+                                <p className="font-semibold text-green-800">
+                                  Total Refund Amount: ${parseFloat(returnRequest.totalRefundAmount).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Status Update */}
+                            <div className="border-t pt-6">
+                              <h3 className="font-semibold mb-4">Update Return Status</h3>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="status">Status</Label>
+                                  <select
+                                    id="status"
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                  </select>
+                                </div>
+                                <div></div>
+                              </div>
+
+                              <div className="mt-4">
+                                <Label htmlFor="adminNotes">Admin Notes</Label>
+                                <Textarea
+                                  id="adminNotes"
+                                  value={adminNotes}
+                                  onChange={(e) => setAdminNotes(e.target.value)}
+                                  placeholder="Add notes for customer..."
+                                  rows={3}
+                                />
+                              </div>
+
+                              <div className="flex gap-4 mt-4">
+                                <Button
+                                  onClick={handleUpdateStatus}
+                                  disabled={updateStatusMutation.isPending}
+                                  className="bg-primary-aqua hover:bg-secondary-aqua"
+                                >
+                                  {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
+                                </Button>
+
+                                {returnRequest.status === "approved" && (
+                                  <div className="flex gap-2">
+                                    <select
+                                      value={refundMethod}
+                                      onChange={(e) => setRefundMethod(e.target.value)}
+                                      className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      <option value="">Select Method</option>
+                                      <option value="paypal">PayPal</option>
+                                      <option value="razorpay">Razorpay</option>
+                                      <option value="bank_transfer">Bank Transfer</option>
+                                    </select>
+                                    <Input
+                                      placeholder="Refund reason"
+                                      value={refundReason}
+                                      onChange={(e) => setRefundReason(e.target.value)}
+                                      className="w-48"
+                                    />
+                                    <Button
+                                      onClick={handleProcessRefund}
+                                      disabled={processRefundMutation.isPending || !refundMethod || !refundReason}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      {processRefundMutation.isPending ? "Processing..." : "Process Refund"}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {returnRequest.adminNotes && (
+                              <div className="border-t pt-4">
+                                <Label className="font-semibold">Previous Admin Notes</Label>
+                                <p className="mt-1 p-3 bg-blue-50 rounded border">{returnRequest.adminNotes}</p>
+                              </div>
+                            )}
+
+                            {returnRequest.refundProcessedAt && (
+                              <div className="border-t pt-4">
+                                <Label className="font-semibold">Refund Information</Label>
+                                <div className="mt-2 p-3 bg-green-50 rounded">
+                                  <p><strong>Method:</strong> {returnRequest.refundMethod}</p>
+                                  <p><strong>Transaction ID:</strong> {returnRequest.refundTransactionId}</p>
+                                  <p><strong>Processed:</strong> {new Date(returnRequest.refundProcessedAt).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Reason:</span> {returnRequest.returnReason.replace('_', ' ')}
+                    </div>
+                    <div>
+                      <span className="font-medium">Items:</span> {returnRequest.itemsToReturn.length}
+                    </div>
+                    <div>
+                      <span className="font-medium">Deadline:</span> {new Date(returnRequest.returnDeadline).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

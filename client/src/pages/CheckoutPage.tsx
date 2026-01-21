@@ -128,6 +128,7 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const { mode, bookId } = useParams();
+  
   const { data: book, isLoading: isBookLoading } = useQuery<Book>({
     queryKey: [`/api/books/${bookId}`],
     enabled: mode === "buyNow" && !!bookId,

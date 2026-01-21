@@ -14,6 +14,7 @@ import { Package, Calendar, AlertCircle, ArrowLeft, FileText, History, Clock, XC
 import { apiRequest } from "@/lib/queryClient";
 import SEO from "@/components/SEO";
 import Breadcrumb from "@/components/Breadcrumb";
+import { useLocation } from "wouter";
 
 interface Order {
   id: number;
@@ -64,7 +65,7 @@ export default function ReturnRequestPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
+  
   const [step, setStep] = useState(1); // 1: Select Order, 2: Return Details, 3: Confirmation
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [guestEmail, setGuestEmail] = useState(""); // Guest must enter their own email
@@ -74,6 +75,19 @@ export default function ReturnRequestPage() {
   const [returnReason, setReturnReason] = useState("none");
   const [returnDescription, setReturnDescription] = useState("");
   const [selectedItems, setSelectedItems] = useState<ReturnItem[]>([]);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to request a return for your orders.",
+        variant: "destructive",
+      });
+      setLocation("/login?redirect=/return-request");
+      return;
+    }
+  }, [user]);
 
   // Fetch eligible orders
   const { data: eligibleOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
@@ -162,7 +176,7 @@ export default function ReturnRequestPage() {
 
   const handleItemSelection = (bookId: number, quantity: number, reason: string) => {
     const existingIndex = selectedItems.findIndex(item => item.bookId === bookId);
-
+    
     if (quantity === 0 || !reason || reason === "none") {
       // Remove item if quantity is 0 or no reason selected
       if (existingIndex !== -1) {
@@ -172,7 +186,7 @@ export default function ReturnRequestPage() {
       // Add or update item
       const newItem: ReturnItem = { bookId, quantity, reason };
       if (existingIndex !== -1) {
-        setSelectedItems(prev => prev.map((item, index) =>
+        setSelectedItems(prev => prev.map((item, index) => 
           index === existingIndex ? newItem : item
         ));
       } else {
@@ -183,7 +197,7 @@ export default function ReturnRequestPage() {
 
   const calculateRefundAmount = () => {
     if (!selectedOrder) return 0;
-
+    
     return selectedItems.reduce((total, item) => {
       const orderItem = selectedOrder.items.find(oi => oi.bookId === item.bookId);
       if (orderItem) {
@@ -231,7 +245,7 @@ export default function ReturnRequestPage() {
           <p className="text-secondary-black">
             Return your order within 30 days of delivery for a full refund
           </p>
-        </div>
+        </div> 
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
@@ -298,7 +312,7 @@ export default function ReturnRequestPage() {
                           <p className="text-xs text-gray-500">Refund Amount</p>
                         </div>
                       </div>
-
+                      
                       <div className="flex flex-wrap gap-2">
                         {returnRequest.order.items.map((item) => (
                           <Badge key={item.id} variant="secondary" className="text-xs">
@@ -306,7 +320,7 @@ export default function ReturnRequestPage() {
                           </Badge>
                         ))}
                       </div>
-
+                      
                       <div>
                         <p className="text-sm text-gray-700">
                           <span className="font-medium">Reason:</span> {returnRequest.returnReason}
@@ -406,7 +420,7 @@ export default function ReturnRequestPage() {
                         <div className="flex items-center gap-2">
                           <Checkbox
                             checked={selectedOrderId === order.id}
-                            onChange={() => { }}
+                            onChange={() => {}}
                           />
                           <span className="font-semibold">Order #{order.id}</span>
                           <Badge variant="secondary">
@@ -458,9 +472,9 @@ export default function ReturnRequestPage() {
 
               <div>
                 <Label htmlFor="returnReason">Reason for Return *</Label>
-                <select
+                <select 
                   id="returnReason"
-                  value={returnReason}
+                  value={returnReason} 
                   onChange={(e) => setReturnReason(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
                 >
@@ -501,7 +515,7 @@ export default function ReturnRequestPage() {
                             <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                           </div>
                         </div>
-
+                        
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label>Return Quantity</Label>
@@ -618,13 +632,13 @@ export default function ReturnRequestPage() {
                 </ul>
               </div>
               <div className="space-x-4">
-                <Button
-                  variant="outline"
+                <Button 
+                  variant="outline" 
                   onClick={() => window.location.href = '/my-orders'}
                 >
                   View My Orders
                 </Button>
-                <Button
+                <Button 
                   onClick={() => window.location.href = '/'}
                   className="bg-primary-aqua hover:bg-secondary-aqua"
                 >

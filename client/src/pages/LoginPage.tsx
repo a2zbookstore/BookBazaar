@@ -208,7 +208,7 @@ export default function LoginPage() {
             onClick={handleClose}
             variant="ghost"
             size="icon"
-            className="absolute right-2 top-4 sm:right-4 sm:top-4 z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
+            className="absolute right-5 top-6 sm:right-5 sm:top-12 z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
           >
             <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
           </Button>

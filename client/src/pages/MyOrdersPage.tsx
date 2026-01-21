@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow } from "date-fns";
 import { Package, Eye, FileDown, Home, Calendar, CreditCard, Mail } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { toast } from "@/hooks/use-toast";
 
 interface Order {
   id: number;
@@ -75,6 +76,7 @@ const statusLabels = {
 
 export default function MyOrdersPage() {
   const { user, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Guest email input for order lookup
@@ -106,6 +108,18 @@ export default function MyOrdersPage() {
       refetchGuestOrders();
     }
   };
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to access your orders.",
+        variant: "destructive",
+      });
+      setLocation("/login?redirect=/my-orders");
+      return;
+    }
+  }, [user]);
 
   if (!isAuthenticated) {
     return (
@@ -225,7 +239,7 @@ export default function MyOrdersPage() {
   if (isLoading) {
     return (
       <Layout >
-        <div className="mt-8 min-h-screen bg-gray-50 py-8">
+        <div className="mt-8 min-h-screen bg-gray-50">
           <div className="container-custom">
             <div className="animate-pulse space-y-4">
               <div className="h-8 bg-gray-200 rounded w-1/3"></div>
@@ -313,7 +327,7 @@ export default function MyOrdersPage() {
         url="https://a2zbookshop.com/my-orders"
         type="website"
       />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50">
         <div className="container-custom">
           <Breadcrumb items={[{ label: "My Orders" }]} />
 

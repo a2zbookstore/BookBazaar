@@ -8,6 +8,7 @@ import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
 import CountrySelector from "@/components/CountrySelector";
 import { SiWhatsapp } from "react-icons/si";
+import ProfileMenu from "./ui/profileMenu";
 
 export default function Header() {
     const [location, setLocation] = useLocation();
@@ -15,6 +16,7 @@ export default function Header() {
     const { cartCount, isCartAnimating, wishlistCount } = useGlobalContext();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    
 
     useEffect(() => {
         const handleScroll = () => {
@@ -106,21 +108,23 @@ export default function Header() {
                             )}
                         </Link>
                         {isAuthenticated ? (
-                            <Button
-                                variant="ghost"
-                                onClick={async () => {
-                                    try {
-                                        await fetch("/api/auth/logout", { method: "POST" });
-                                        window.location.href = "/";
-                                    } catch (error) {
-                                        window.location.href = "/api/logout";
-                                    }
-                                }}
-                                className="text-secondary-black hover:text-primary-aqua"
-                            >
-                                <User className="h-4 w-4 mr-2" />
-                                Logout
-                            </Button>
+                            // <Button
+                            //     variant="ghost"
+                            //     onClick={async () => {
+                            //         try {
+                            //             await fetch("/api/auth/logout", { method: "POST" });
+                            //             window.location.href = "/";
+                            //         } catch (error) {
+                            //             window.location.href = "/api/logout";
+                            //         }
+                            //     }}
+                            //     className="text-secondary-black hover:text-primary-aqua"
+                            // >
+                            //     <User className="h-4 w-4 mr-2" />
+                            //     Logout
+                            // </Button>
+
+                            <ProfileMenu user={user} />
                         ) : (
                             <div className="flex items-center space-x-2">
                                 <Button

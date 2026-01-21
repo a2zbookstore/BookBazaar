@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -14,11 +14,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { BookOpen, Mail, Phone, User, DollarSign, Hash, Package, Book } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import Breadcrumb from "@/components/Breadcrumb";
 
 const RequestBookPage = () => {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+
 
   const form = useForm<InsertBookRequest>({
     resolver: zodResolver(insertBookRequestSchema),
@@ -37,6 +42,18 @@ const RequestBookPage = () => {
       notes: "",
     },
   });
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to request a book.",
+        variant: "destructive",
+      });
+      setLocation("/login?redirect=/request-book");
+      return;
+    }
+  }, [user]);
 
   const createBookRequestMutation = useMutation({
     mutationFn: async (data: InsertBookRequest) => {
