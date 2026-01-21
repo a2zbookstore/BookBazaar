@@ -12,6 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Package, Calendar, AlertCircle, ArrowLeft, FileText, History, Clock, XCircle, DollarSign, CheckCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import SEO from "@/components/SEO";
+import Breadcrumb from "@/components/Breadcrumb";
+import { useLocation } from "wouter";
 
 interface Order {
   id: number;
@@ -72,6 +75,19 @@ export default function ReturnRequestPage() {
   const [returnReason, setReturnReason] = useState("none");
   const [returnDescription, setReturnDescription] = useState("");
   const [selectedItems, setSelectedItems] = useState<ReturnItem[]>([]);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to request a return for your orders.",
+        variant: "destructive",
+      });
+      setLocation("/login?redirect=/return-request");
+      return;
+    }
+  }, [user]);
 
   // Fetch eligible orders
   const { data: eligibleOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
@@ -215,7 +231,15 @@ export default function ReturnRequestPage() {
 
   return (
     <Layout>
-      <div className="container-custom py-8 mt-6">
+      <SEO
+        title="Return & Refund Request - A2Z BOOKSHOP"
+        description="Easily request a return and refund for your orders within 30 days of delivery at A2Z BOOKSHOP."
+        keywords="return request, refund request, book return, book refund"
+        url="https://a2zbookshop.com/my-orders"
+        type="website"
+      />
+      <div className="container-custom">
+        <Breadcrumb items={[{ label: "Return & Refund" }]} />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-base-black mb-2">Request Return & Refund</h1>
           <p className="text-secondary-black">
@@ -262,15 +286,14 @@ export default function ReturnRequestPage() {
                             <Badge variant="outline" className="font-mono text-xs">
                               {returnRequest.returnRequestNumber || `REQ-${returnRequest.id}`}
                             </Badge>
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              returnRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${returnRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                               returnRequest.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                              returnRequest.status === 'processing' ? 'bg-purple-100 text-purple-800' :
-                              returnRequest.status === 'refund_processed' ? 'bg-green-100 text-green-800' :
-                              returnRequest.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              returnRequest.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
+                                returnRequest.status === 'processing' ? 'bg-purple-100 text-purple-800' :
+                                  returnRequest.status === 'refund_processed' ? 'bg-green-100 text-green-800' :
+                                    returnRequest.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                      returnRequest.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                        'bg-gray-100 text-gray-800'
+                              }`}>
                               {returnRequest.status === 'pending' && <Clock className="h-3 w-3" />}
                               {returnRequest.status === 'approved' && <CheckCircle className="h-3 w-3" />}
                               {returnRequest.status === 'processing' && <Package className="h-3 w-3" />}
@@ -387,11 +410,10 @@ export default function ReturnRequestPage() {
                   {eligibleOrders.map((order) => (
                     <div
                       key={order.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                        selectedOrderId === order.id
-                          ? 'border-primary-aqua bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${selectedOrderId === order.id
+                        ? 'border-primary-aqua bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
                       onClick={() => setSelectedOrderId(order.id)}
                     >
                       <div className="flex items-center justify-between mb-2">

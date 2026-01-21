@@ -261,7 +261,7 @@ export default function HomePage() {
         structuredData={structuredData}
       />
 
-      <div className="container-custom py-8 mt-4">
+      <div className="hidden md:block container-custom py-8 mt-4">
         <BannerCarousel
           pageName="home"
           autoPlayInterval={5000}

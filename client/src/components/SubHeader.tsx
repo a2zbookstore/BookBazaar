@@ -10,7 +10,7 @@ export default function SubHeader() {
   };
 
   return (
-    <div className="fixed top-[64px] left-0 w-full bg-white border-b border-gray-100 flex items-center justify-center py-3 z-20">
+    <div className="hidden md:flex fixed top-[64px] left-0 w-full bg-white border-b border-gray-100 flex items-center justify-center py-3 z-20">
       <nav className="flex items-center gap-4">
         <Link
           href="/"

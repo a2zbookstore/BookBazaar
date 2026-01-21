@@ -216,7 +216,7 @@ export default function CatalogPage() {
 
   return (
     <Layout>
-      <div className="container-custom py-8">
+      <div className="container-custom">
         <Breadcrumb items={[{ label: "Catalog" }]} />
 
         {/* Floating Filters Sidebar */}

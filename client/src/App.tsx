@@ -53,6 +53,7 @@ import FAQPage from "@/pages/FAQPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import RequestBookPage from "@/pages/RequestBookPage";
 import NotFound from "@/pages/NotFound";
+import MyProfile from "./pages/MyProfile";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -84,6 +85,7 @@ function AppRouter() {
       <Route path="/my-orders" component={MyOrdersPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout/:mode/:bookId" component={CheckoutPage} />
+      <Route path="/profile" component={MyProfile} />
       <Route path="/paypal-complete" component={PayPalCompletePage} />
       <Route path="/orders/:id" component={OrderDetailPage} />
       <Route path="/returns" component={ReturnRequestPage} />

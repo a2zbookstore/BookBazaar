@@ -8,6 +8,7 @@ import SearchInput from "@/components/SearchInput";
 import Logo from "@/components/Logo";
 import CountrySelector from "@/components/CountrySelector";
 import { SiWhatsapp } from "react-icons/si";
+import ProfileMenu from "./ui/profileMenu";
 
 export default function Header() {
     const [location, setLocation] = useLocation();
@@ -15,6 +16,7 @@ export default function Header() {
     const { cartCount, isCartAnimating, wishlistCount } = useGlobalContext();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+
 
     useEffect(() => {
         const handleScroll = () => {
@@ -65,7 +67,7 @@ export default function Header() {
                         />
                     </div>
                     {/* Desktop Right Actions */}
-                    <div className="hidden md:flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <a
                             href="https://wa.me/14145956843"
                             target="_blank"
@@ -73,18 +75,19 @@ export default function Header() {
                             className="flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors px-2 py-1 rounded-lg hover:bg-green-50"
                         >
                             <SiWhatsapp className="h-5 w-5" />
-                            <span className="text-sm font-medium">Chat with us</span>
+                            <span className="hidden md:block text-sm font-medium">Chat with us</span>
                         </a>
                         {isAuthenticated && (
                             <Link
                                 href="/wishlist"
                                 className={`text-secondary-black hover:text-primary-aqua transition-colors relative ${isActive("/wishlist") ? "text-primary-aqua font-semibold" : ""}`}
                             >
-                                <div className="flex items-center gap-1">
-                                    <Heart className="h-4 w-4" />
-                                    <span>Wishlist</span>
+                                <div className="flex items-center gap-[1px] md:gap-1 relative">
+                                    
+                                    <Heart className="md:h-5 md:w-5" /> 
+                                    <span className="hidden md:block">Wishlist</span>
                                     {wishlistCount > 0 && (
-                                        <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-1">
+                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                             {wishlistCount}
                                         </span>
                                     )}
@@ -106,21 +109,7 @@ export default function Header() {
                             )}
                         </Link>
                         {isAuthenticated ? (
-                            <Button
-                                variant="ghost"
-                                onClick={async () => {
-                                    try {
-                                        await fetch("/api/auth/logout", { method: "POST" });
-                                        window.location.href = "/";
-                                    } catch (error) {
-                                        window.location.href = "/api/logout";
-                                    }
-                                }}
-                                className="text-secondary-black hover:text-primary-aqua"
-                            >
-                                <User className="h-4 w-4 mr-2" />
-                                Logout
-                            </Button>
+                            <ProfileMenu user={user} />
                         ) : (
                             <div className="flex items-center space-x-2">
                                 <Button
@@ -140,7 +129,7 @@ export default function Header() {
                         )}
                     </div>
                     {/* Mobile Right Actions */}
-                    <div className="flex md:hidden items-center gap-3">
+                    {/* <div className="flex md:hidden items-center gap-3">
                         <Link
                             href="/cart"
                             className={`transition-colors relative p-2 rounded-lg hover:bg-primary-aqua/10 ${isCartAnimating ? "cart-pulse-animation" : "text-secondary-black hover:text-primary-aqua cart-normal"}`}
@@ -152,15 +141,7 @@ export default function Header() {
                                 </span>
                             )}
                         </Link>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="p-2 rounded-lg hover:bg-primary-aqua/10"
-                        >
-                            <Menu className="h-5 w-5" />
-                        </Button>
-                    </div>
+                    </div> */}
                 </div>
                 {/* Mobile Search Bar */}
                 <div className="md:hidden px-3 pb-3">

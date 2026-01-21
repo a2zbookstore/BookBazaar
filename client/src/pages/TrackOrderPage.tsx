@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Package, Truck, CheckCircle, XCircle, Clock, AlertCircle, Search } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 
 interface TrackingInfo {
   id: number;
@@ -60,6 +62,9 @@ export default function TrackOrderPage() {
   const [email, setEmail] = useState("");
   const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+
 
   const trackOrderMutation = useMutation({
     mutationFn: async (data: { orderId: string; email: string }): Promise<TrackingInfo> => {
@@ -102,6 +107,18 @@ export default function TrackOrderPage() {
       email: email.trim(),
     });
   };
+  
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to track your orders.",
+        variant: "destructive",
+      });
+      setLocation("/login?redirect=/track-order");
+      return;
+    }
+  }, [user]);
 
   const StatusIcon = trackingInfo
     ? statusIcons[trackingInfo.status as keyof typeof statusIcons] || AlertCircle
@@ -116,7 +133,7 @@ export default function TrackOrderPage() {
         url="https://a2zbookshop.com/track-order"
         type="website"
       />
-      <div className="container-custom py-8">
+      <div className="container-custom">
         <Breadcrumb
           items={[
             { label: "Track Order" }

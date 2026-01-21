@@ -7,17 +7,17 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const headerHeight = 64; // px
-  const subHeaderHeight = 20; // px
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-      <SubHeader />
+      <div className="fixed top-0 left-0 right-0 z-40">
+        <Header />
+        <SubHeader />
+      </div>
       <main
-        className="flex-1 transition-all duration-300"
-        style={{ paddingTop: `${headerHeight + subHeaderHeight}px` }}
+        className="flex-1 transition-all duration-300 mb-16"
+        style={{ marginTop: 'calc(64px + 48px)' }}
       >
-        {children}
+        {children} 
       </main>
       <Footer />
     </div>
