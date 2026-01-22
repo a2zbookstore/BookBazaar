@@ -127,19 +127,6 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
     }
   }, [book.price, userCurrency, convertPrice, formatAmount, shipCost, location]);
 
-  // Listen for currency changes to force re-conversion
-  // useEffect(() => {
-  //   const handleCurrencyChange = (event: CustomEvent) => {
-  //     // Force re-conversion when currency changes
-  //     setIsConverting(true);
-  //     convertPrices();
-  //   };
-
-  //   window.addEventListener('currencyChanged', handleCurrencyChange as EventListener);
-  //   return () => window.removeEventListener('currencyChanged', handleCurrencyChange as EventListener);
-  // }, [convertPrices]);
-
-  // Convert prices when dependencies change
   useEffect(() => {
     setIsConverting(true);
     convertPrices();
@@ -187,22 +174,20 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   }
 
   return (
-    <div className="group relative bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px]">
-      {/* Wishlist Heart */}
+    <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px] w-full h-auto min-w-0">
       <div className="absolute top-2 right-2 z-10">
         <WishlistHeart bookId={book.id} />
       </div>
 
-      <Link to={`/books/${book.id}`} className="block">
-        <div className="aspect-[3/4] overflow-hidden bg-white relative p-4">
-          <img
-            src={getImageSrc(book.imageUrl)}
-            alt={book.title}
-            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
-            onError={(e) => {
-              e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-            }}
-          />
+      <Link to={`/books/${book.id}`} className="block min-w-0">
+        <div className="relative bg-white p-4 h-[260px] flex items-center justify-center overflow-hidden">          <img
+          src={getImageSrc(book.imageUrl)}
+          alt={book.title}
+          className="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300"
+          onError={(e) => {
+            e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+          }}
+        />
           {book.featured && (
             <Badge className="absolute top-2 left-2 bg-amber-500 text-white">
               Featured
@@ -215,14 +200,14 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           )}
         </div>
 
-        <div className="px-4 pb-4">
+        <div className="px-4">
           <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm h-10">
             {book.title}
           </h3>
           <p className="text-sm text-gray-600 mb-2 truncate">{book.author}</p>
 
           <div className="flex items-center justify-between mb-2">
-            <div className="text-lg font-bold text-secondary-aqua">
+            <div className="text-lg font-bold text-secondary-aqua min-w-0 truncate">
               {isGift ? (
                 <span>
                   <span className="text-xs text-gray-400 line-through mr-2">
@@ -285,7 +270,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           <div className="space-y-1 text-xs text-gray-500 mb-3">
             <div className="flex items-center gap-1">
               <Truck className="h-3 w-3 text-green-600" />
-              <span className="text-secondary-black font-medium">
+              <span className="text-secondary-black font-medium truncate">
                 {isShippingLoading ? (
                   <span className="inline-block h-[1em] w-24 align-middle rounded bg-gray-300 animate-pulse" />
                 ) : shippingCost}
@@ -312,12 +297,12 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
       </Link>
 
       {/* Add to Cart Button */}
-      <div className="flex gap-2 flex-col px-4 pb-4">
+      <div className="flex gap-2 px-4 pb-4 min-w-0">
         <Button
           onClick={handleAddToCart}
           disabled={isAddingToCart}
           className="
-              w-full h-11
+              flex-1 min-w-0
               bg-primary-aqua hover:bg-secondary-aqua
               text-white text-sm font-medium
               rounded-full
@@ -326,9 +311,9 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               flex items-center justify-center gap-2
               disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <ShoppingCart
+          {/* <ShoppingCart
             className={`h-4 w-4 ${isAddingToCart ? 'animate-cart-slide' : ''}`}
-          />
+          /> */}
           {isAddingToCart ? 'Adding...' : 'Add to Cart'}
         </Button>
 
@@ -336,7 +321,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           onClick={handleBuyNow}
           disabled={isAddingToCart}
           className="
-              w-full h-11
+              flex-1 min-w-0
               bg-red-500 hover:bg-red-600
               text-white text-sm font-medium
               rounded-full
@@ -345,9 +330,9 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               flex items-center justify-center gap-2
               disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <BadgeDollarSign
-            className={`h-4 w-4 animate-rotate-bounce`}
-          />
+          {/* <BadgeDollarSign
+            className={` h-4 w-4 animate-rotate-bounce`}
+          /> */}
           Buy Now
         </Button>
       </div>

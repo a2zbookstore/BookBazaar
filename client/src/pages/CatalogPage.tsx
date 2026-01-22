@@ -31,56 +31,23 @@ export default function CatalogPage() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-
   const itemsPerPage = 15;
 
-  // Update filters when URL changes
   useEffect(() => {
-    // Extract search params from current URL properly
     const params = new URLSearchParams(window.location.search);
     setSearchParams(params);
 
     const searchParam = params.get('search') || '';
-    // Only update search state if it's different
     if (searchParam !== search) {
       setSearch(searchParam);
-      // Reset to first page when search changes
       setCurrentPage(1);
 
-      // Reset other filters when coming from homepage search
       if (searchParam) {
         setSelectedCategories([]);
         setSelectedConditions([]);
         setMinPrice('');
         setMaxPrice('');
       }
-    }
-
-    // Handle other URL parameters
-    const categoryParam = params.get('category');
-    if (categoryParam && !searchParam) {
-      setSelectedCategories([categoryParam]);
-    }
-
-    const featuredParam = params.get('featured');
-    const bestsellerParam = params.get('bestseller');
-    const trendingParam = params.get('trending');
-    const newArrivalParam = params.get('newArrival');
-    const boxSetParam = params.get('boxSet');
-    if (featuredParam === 'true' && !searchParam) {
-      // Handle featured filter if needed
-    }
-    if (bestsellerParam === 'true' && !searchParam) {
-      // Handle bestseller filter if needed
-    }
-    if (trendingParam === 'true' && !searchParam) {
-      // Handle trending filter if needed
-    }
-    if (newArrivalParam === 'true' && !searchParam) {
-      // Handle new arrival filter if needed
-    }
-    if (boxSetParam === 'true' && !searchParam) {
-      // Handle box set filter if needed
     }
   }, [location, search]);
 
@@ -262,31 +229,6 @@ export default function CatalogPage() {
               )}
             </Button>
 
-            {/* <BannerCarousel
-              banners={[{
-                id: 1,
-                image: "/uploads/images/banner/banner-3.png",
-                alt: "Buy 3 Books Offer",
-                link: "/catalog"
-              },
-              {
-                id: 2,
-                image: "/uploads/images/banner/banner-2.png",
-                alt: "Shop for $499",
-                link: "/catalog"
-              },
-              {
-                id: 3,
-                image: "/uploads/images/banner/banner-3.png",
-                alt: "Shop for $999",
-                link: "/catalog"
-              }]}
-              autoPlayInterval={5000}
-              showIndicators={true}
-              showNavigation={true}
-              height="h-48 md:h-64"
-            /> */}
-
             <div className="flex-1 flex justify-end w-full sm:w-auto">
               <SortFilterHeader
                 currentCount={books.length}
@@ -332,10 +274,12 @@ export default function CatalogPage() {
             </div>
           ) : books.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-                {books.map((book) => {
-                  return <BookCard key={book.id} book={book} />;
-                })}
+              <div className="grid gap-4 sm:gap-6 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+                {books.map((book) => (
+                  <div key={book.id} className="flex-[1_1_180px]">
+                    <BookCard book={book} />
+                  </div>
+                ))}
               </div>
 
               {/* Pagination */}
