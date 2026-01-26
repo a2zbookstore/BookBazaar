@@ -93,7 +93,7 @@ export function SecretAdminAccess({ children, className }: SecretAdminAccessProp
           <Button
             variant="ghost"
             size="sm"
-            className={`text-gray-400 hover:text-gray-600 opacity-50 hover:opacity-100 ${className}`}
+            className={`text-gray-400 hover:text-gray-600 opacity-50 hover:opacity-100 hover:rounded-full ${className}`}
           >
             <Lock className="w-4 h-4" />
           </Button>
@@ -106,7 +106,7 @@ export function SecretAdminAccess({ children, className }: SecretAdminAccessProp
             Admin Access
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="admin-username">Username</Label>

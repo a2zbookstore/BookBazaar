@@ -84,7 +84,7 @@ function AppRouter() {
       <Route path="/track-order" component={TrackOrderPage} />
       <Route path="/my-orders" component={MyOrdersPage} />
       <Route path="/cart" component={CartPage} />
-      <Route path="/checkout/:mode/:bookId" component={CheckoutPage} />
+      <Route path="/checkout/:mode/:bookId/:quantity" component={CheckoutPage} />
       <Route path="/profile" component={MyProfile} />
       <Route path="/paypal-complete" component={PayPalCompletePage} />
       <Route path="/orders/:id" component={OrderDetailPage} />
