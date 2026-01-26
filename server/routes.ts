@@ -221,7 +221,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId && isCustomerAuth) {
         const user = await storage.getUser(userId);
         if (user) {
-          return res.json(user);
+          // Only include safe fields in response
+          const safeUser = {
+            id: user.id,
+            email: user.email,
+            phone: user.phone,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+            role: user.role,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+          };
+          return res.json(safeUser);
         }
       }
 
@@ -230,7 +242,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const replitUserId = req.user.claims.sub;
         const user = await storage.getUser(replitUserId);
         if (user) {
-          return res.json(user);
+          // Only include safe fields in response
+          const safeUser = {
+            id: user.id,
+            email: user.email,
+            phone: user.phone,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+            role: user.role,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+          };
+          return res.json(safeUser);
         }
       }
 
