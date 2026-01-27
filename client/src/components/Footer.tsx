@@ -3,6 +3,7 @@ import { SecretAdminAccess } from "@/components/SecretAdminAccess";
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Send } from "lucide-react";
 import { useState } from "react";
 import Modal from "@/components/Modal";
+import { useAuth } from "@/hooks/useAuth";
 
 const footerLinks = {
   quickLinks: [
@@ -208,6 +209,7 @@ export default function Footer() {
   const [subscribed, setSubscribed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ title: string; content: string } | null>(null);
+  const { user } = useAuth();
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,7 +245,7 @@ export default function Footer() {
               <h3 className="text-2xl font-bookerly font-bold text-white">
                 A<span className="text-red-500">2</span>Z BOOKSHOP
               </h3>
-              <SecretAdminAccess />
+              {user?.role === "admin" && <SecretAdminAccess />}
             </div>
             <p className="text-gray-400 leading-relaxed mb-4 text-sm">
               Your trusted partner in discovering rare, collectible, and contemporary books from around the world.
@@ -365,8 +367,8 @@ export default function Footer() {
       </div>
 
       {/* Modal */}
-      <Modal 
-        isOpen={modalOpen} 
+      <Modal
+        isOpen={modalOpen}
         onClose={closeModal}
         title={modalData?.title || ""}
       >

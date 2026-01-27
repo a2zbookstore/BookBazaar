@@ -107,7 +107,7 @@ export default function TrackOrderPage() {
       email: email.trim(),
     });
   };
-  
+
   useEffect(() => {
     if (!user) {
       toast({
@@ -115,7 +115,7 @@ export default function TrackOrderPage() {
         description: "Please log in to track your orders.",
         variant: "destructive",
       });
-      setLocation("/login?redirect=/track-order");
+      setLocation("/login?redirect=/");
       return;
     }
   }, [user]);

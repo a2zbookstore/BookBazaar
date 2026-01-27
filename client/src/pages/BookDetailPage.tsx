@@ -62,7 +62,7 @@ export default function BookDetailPage() {
   };
 
   const handleBuyNow = async () => {
-    setLocation(`/checkout/buyNow/${id}`);
+    setLocation(`/checkout/buyNow/${id}/${quantity}`);
 }
 
   const getConditionColor = (condition: string) => {

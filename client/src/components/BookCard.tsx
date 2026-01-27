@@ -170,7 +170,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   };
 
   const handleBuyNow = async () => {
-    setLocation(`/checkout/buyNow/${book.id}`);
+    setLocation(`/checkout/buyNow/${book.id}/1`);
   }
 
   return (
@@ -178,16 +178,18 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
       <div className="absolute top-2 right-2 z-10">
         <WishlistHeart bookId={book.id} />
       </div>
-
       <Link to={`/books/${book.id}`} className="block min-w-0">
-        <div className="relative bg-white p-4 h-[260px] flex items-center justify-center overflow-hidden">          <img
-          src={getImageSrc(book.imageUrl)}
-          alt={book.title}
-          className="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300"
-          onError={(e) => {
-            e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-          }}
-        />
+
+        {/* image container */}
+        <div className="relative bg-white p-4 h-[260px] flex items-center justify-center overflow-hidden">
+          <img
+            src={getImageSrc(book.imageUrl)}
+            alt={book.title}
+            className="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+            }}
+          />
           {book.featured && (
             <Badge className="absolute top-2 left-2 bg-amber-500 text-white">
               Featured
@@ -200,6 +202,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           )}
         </div>
 
+        {/* book-details */}
         <div className="px-4">
           <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm h-10">
             {book.title}
@@ -296,7 +299,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
         </div>
       </Link>
 
-      {/* Add to Cart Button */}
+      {/* Buttons */}
       <div className="flex gap-2 px-4 pb-4 min-w-0">
         <Button
           onClick={handleAddToCart}

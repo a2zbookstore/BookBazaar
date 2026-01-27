@@ -50,7 +50,7 @@ const RequestBookPage = () => {
         description: "Please log in to request a book.",
         variant: "destructive",
       });
-      setLocation("/login?redirect=/request-book");
+      setLocation("/login?redirect=/");
       return;
     }
   }, [user]);

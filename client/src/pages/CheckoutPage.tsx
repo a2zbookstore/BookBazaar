@@ -127,8 +127,8 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const { mode, bookId } = useParams();
-  
+  const { mode, bookId, quantity } = useParams();
+
   const { data: book, isLoading: isBookLoading } = useQuery<Book>({
     queryKey: [`/api/books/${bookId}`],
     enabled: mode === "buyNow" && !!bookId,
@@ -136,13 +136,22 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (mode === "buyNow" && book && !isBookLoading) {
+
+      if (book.stock <= 0 || book.stock < ( quantity ? parseInt(quantity) : 1)) {
+        toast({
+          title: "Out of Stock",
+          description: "This book is currently out of stock.",
+        });
+        setLocation("/catalog");
+        return;
+      }
       setCartItems([{
         id: book.id ?? "temp-buy-now-item",
         createdAt: new Date().toISOString(),
         userId: user?.id ?? null,
         bookId: book.id,
         book: book,
-        quantity: 1
+        quantity: quantity ? parseInt(quantity) : 1
       }]);
     }
     if (mode === "cart" && !isCartLoading) {
@@ -332,7 +341,7 @@ export default function CheckoutPage() {
   // Pre-fill user data
   useEffect(() => {
     if (!user) {
-      setLocation("/login?redirect=/checkout");
+      setLocation("/login?redirect=/");
       return;
     }
     if (user) {

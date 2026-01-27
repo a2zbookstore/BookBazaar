@@ -84,7 +84,7 @@ export default function ReturnRequestPage() {
         description: "Please log in to request a return for your orders.",
         variant: "destructive",
       });
-      setLocation("/login?redirect=/return-request");
+      setLocation("/login?redirect=/");
       return;
     }
   }, [user]);

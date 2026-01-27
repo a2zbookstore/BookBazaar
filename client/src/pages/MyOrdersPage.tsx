@@ -116,7 +116,7 @@ export default function MyOrdersPage() {
         description: "Please log in to access your orders.",
         variant: "destructive",
       });
-      setLocation("/login?redirect=/my-orders");
+      setLocation("/login?redirect=/");
       return;
     }
   }, [user]);

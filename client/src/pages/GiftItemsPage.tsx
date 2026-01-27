@@ -12,20 +12,31 @@ import { toast } from "@/hooks/use-toast";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { apiRequest } from "@/lib/queryClient";
 import { GiftItem, GiftCategory } from "@/shared/schema";
+import { useEffect } from "react";
 
 export default function GiftItemsPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [selectedGift, setSelectedGift] = useState<string | null>(null);
-  const { cartCount } = useGlobalContext();
+  const [selectedGift, setSelectedGift] = useState<null | number>(null);
   const queryClient = useQueryClient();
 
   const { data: giftCategories = [], isLoading: isCategoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
   });
+  const { cartItems, isLoading: isCartLoading, cartCount } = useGlobalContext();
 
   const { data: giftItems = [], isLoading: isItemsLoading } = useQuery<GiftItem[]>({
     queryKey: ["/api/gift-items"],
   });
+
+  useEffect(() => {
+    // Reset selected gift if cart becomes empty
+    if (cartCount === 0) {
+      setSelectedGift(null);
+    }
+    const giftBookId = cartItems.find(item => item?.isGift)?.book?.id ?? null;    // setSelectedGift(cartItems.find(item => item.book)?.giftCategoryId?.toString() || null);
+    setSelectedGift(giftBookId);
+
+  }, [cartItems]);
 
   const giftTypes = Array.from(new Set(giftCategories.map(gift => gift.type)));
   const filteredGifts = selectedCategory
@@ -43,9 +54,10 @@ export default function GiftItemsPage() {
 
   // Add gift to cart mutation
   const addGiftMutation = useMutation({
-    mutationFn: async (giftId: string) => {
+    mutationFn: async (giftId: number) => {
       const response = await apiRequest("POST", "/api/cart/gift", {
-        giftId: parseInt(giftId)
+        giftId: giftId,
+        giftCategoryId: giftId
       });
       return response;
     },
@@ -66,7 +78,7 @@ export default function GiftItemsPage() {
     },
   });
 
-  const handleGiftSelect = (giftId: string) => {
+  const handleGiftSelect = (giftId: number) => {
     // Prevent multiple clicks while mutation is pending
     if (addGiftMutation.isPending) {
       return;
@@ -320,7 +332,7 @@ export default function GiftItemsPage() {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredGifts.map((category) => {
-                const isSelected = selectedGift === category.id.toString();
+                const isSelected = selectedGift === category.id;
                 return (
                   <div
                     key={category.id}
