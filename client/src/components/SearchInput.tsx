@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Cross, Search, X } from "lucide-react";
 
 interface SearchInputProps {
   placeholder?: string;
@@ -24,16 +24,27 @@ export default function SearchInput({
 }: SearchInputProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Typing animation for placeholder
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
 
-  useEffect(() => {
-    console.log("sasa");
 
+  // On mount, read search query from URL if present
+
+  useEffect(() => {
+    const queryString = location.split('?')[1] || '';
+    const params = new URLSearchParams(queryString);
+    const urlQuery = params.get('search') || '';
+
+    if (urlQuery !== searchQuery) {
+      setSearchQuery(urlQuery);
+    }
+  }, [location]);
+
+  useEffect(() => {
     if (!enableTypingAnimation || searchQuery) {
       setTypedPlaceholder(placeholder);
       return;
@@ -92,8 +103,8 @@ export default function SearchInput({
         onSearch(searchTerm);
       } else {
         console.log("Navigating to catalog with search:", searchTerm);
-        // Force page refresh to ensure proper search parameter handling
-        window.location.href = `/catalog?search=${encodeURIComponent(searchTerm)}`;
+        // Use client-side navigation to prevent full page reload
+        setLocation(`/catalog?search=${encodeURIComponent(searchTerm)}`);
       }
     }
   };
@@ -157,14 +168,20 @@ export default function SearchInput({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              console.log("Enter key pressed, submitting search");
-              handleSubmit(e as any);
-            }
-          }}
+          // Let form's onSubmit handle Enter key
           className={`w-full pr-10 sm:pr-12 rounded-full text-sm sm:text-base h-9 sm:h-11`}
         />
+        {searchQuery && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            className="absolute mx-2 right-8 sm:right-10 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center hover:bg-gray-200 rounded-full justify-center text-gray-400 hover:text-primary-aqua focus:outline-none"
+            onClick={() => setSearchQuery("")}
+            tabIndex={0}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
         {showButton && (
           <Button
             type="submit"

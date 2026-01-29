@@ -421,11 +421,36 @@ export class DatabaseStorage implements IStorage {
       .where(whereClause);
 
     // Get books with simplified ordering
+    // Dynamic ordering
+    // Map allowed sort columns to books table properties
+    const sortColumns: Record<string, any> = {
+      id: books.id,
+      title: books.title,
+      author: books.author,
+      price: books.price,
+      stock: books.stock,
+      publishedYear: books.publishedYear,
+      publisher: books.publisher,
+      featured: books.featured,
+      bestseller: books.bestseller,
+      trending: books.trending,
+      newArrival: books.newArrival,
+      boxSet: books.boxSet,
+      createdAt: books.createdAt,
+      updatedAt: books.updatedAt,
+    };
+    let orderExpr;
+    if (sortBy && sortColumns[sortBy]) {
+      orderExpr = sortOrder === "asc" ? asc(sortColumns[sortBy]) : desc(sortColumns[sortBy]);
+    } else {
+      // Fallback to createdAt
+      orderExpr = sortOrder === "asc" ? asc(books.createdAt) : desc(books.createdAt);
+    }
     const booksList = await db
       .select()
       .from(books)
       .where(whereClause)
-      .orderBy(desc(books.createdAt))
+      .orderBy(orderExpr)
       .limit(limit)
       .offset(offset);
 

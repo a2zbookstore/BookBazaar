@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { useLocation, useParams } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -136,7 +137,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (mode === "buyNow" && book && !isBookLoading) {
 
-      if (book.stock <= 0 || book.stock < ( quantity ? parseInt(quantity) : 1)) {
+      if (book.stock <= 0 || book.stock < (quantity ? parseInt(quantity) : 1)) {
         toast({
           title: "Out of Stock",
           description: "This book is currently out of stock.",
@@ -820,41 +821,62 @@ export default function CheckoutPage() {
                           <ChevronDown className="w-4 h-4 text-gray-600" />
                         </button>
                       </div>
-                      {showPhoneCountryDropdown && (
-                        <div
-                          className="absolute z-50 w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
-                          onMouseLeave={() => {
-                            if (!phoneCountryQuery) {
-                              setShowPhoneCountryDropdown(false);
-                            }
-                          }}
-                        >
-                          {phoneCountryQuery && (
-                            <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b">
-                              Search: "{phoneCountryQuery}" - {filteredCountryCodes.length} results
-                            </div>
-                          )}
-                          {(phoneCountryQuery ? filteredCountryCodes : COUNTRY_CODES).map((country, index) => (
-                            <div
-                              key={index}
-                              className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${selectedCountryIndex === index
-                                ? 'bg-blue-100 text-blue-900'
-                                : 'hover:bg-gray-100'
-                                }`}
-                              onClick={() => selectPhoneCountry(country.code)}
-                              onMouseEnter={() => setSelectedCountryIndex(index)}
-                            >
-                              <span className="font-medium text-blue-600 min-w-[3rem]">{country.code}</span>
-                              <span className="text-gray-700">{country.name}</span>
-                            </div>
-                          ))}
-                          {phoneCountryQuery && filteredCountryCodes.length === 0 && (
-                            <div className="px-3 py-2 text-sm text-gray-500">
-                              No countries found for "{phoneCountryQuery}"
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {showPhoneCountryDropdown &&
+                        typeof window !== 'undefined' &&
+                        ReactDOM.createPortal(
+                          (() => {
+                            const inputEl = document.querySelector('.phone-country-dropdown-container input');
+                            const buttonEl = document.querySelector('.phone-country-dropdown-container button');
+                            const inputWidth = inputEl?.offsetWidth || 0;
+                            const buttonWidth = buttonEl?.offsetWidth || 0;
+                            const totalWidth = inputWidth + buttonWidth || 320;
+                            const left = inputEl?.getBoundingClientRect().left || 0;
+                            const top = (inputEl?.getBoundingClientRect().bottom || 0) + window.scrollY;
+                            return (
+                              <div
+                                className="fixed left-0 top-0 z-[9999] bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
+                                style={{
+                                  position: 'absolute',
+                                  left,
+                                  top,
+                                  width: totalWidth,
+                                }}
+                                onMouseLeave={() => {
+                                  if (!phoneCountryQuery) {
+                                    setShowPhoneCountryDropdown(false);
+                                  }
+                                }}
+                              >
+                                {phoneCountryQuery && (
+                                  <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b">
+                                    Search: "{phoneCountryQuery}" - {filteredCountryCodes.length} results
+                                  </div>
+                                )}
+                                {(phoneCountryQuery ? filteredCountryCodes : COUNTRY_CODES).map((country, index) => (
+                                  <div
+                                    key={index}
+                                    className={`px-1 cursor-pointer text-[13px] flex items-center gap-2 ${selectedCountryIndex === index
+                                      ? 'bg-blue-100 text-primary-aqua'
+                                      : 'hover:bg-gray-100'
+                                      }`}
+                                    onClick={() => selectPhoneCountry(country.code)}
+                                    onMouseEnter={() => setSelectedCountryIndex(index)}
+                                  >
+                                    <span className="font-medium text-primary-aqua min-w-[3rem]">{country.code}</span>
+                                    <span className="text-gray-700">{country.name}</span>
+                                  </div>
+                                ))}
+                                {phoneCountryQuery && filteredCountryCodes.length === 0 && (
+                                  <div className="px-3 py-2 text-sm text-gray-500">
+                                    No countries found for "{phoneCountryQuery}"
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })(),
+                          document.body
+                        )
+                      }
                     </div>
                     <Input
                       id="customerPhone"
@@ -933,19 +955,31 @@ export default function CheckoutPage() {
                       placeholder="Type to search countries..."
                       required
                     />
-                    {showCountryDropdown && filteredCountries.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                        {filteredCountries.map((country, index) => (
-                          <div
-                            key={index}
-                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
-                            onClick={() => selectCountry(country)}
-                          >
-                            {country}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {showCountryDropdown && filteredCountries.length > 0 &&
+                      typeof window !== 'undefined' &&
+                      ReactDOM.createPortal(
+                        <div
+                          className="fixed left-0 top-0 z-[9999] w-[320px] bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto"
+                          style={{
+                            position: 'absolute',
+                            left: document.querySelector('#country')?.getBoundingClientRect().left || 0,
+                            top: (document.querySelector('#country')?.getBoundingClientRect().bottom || 0) + window.scrollY,
+                            width: document.querySelector('#country')?.offsetWidth || '320px',
+                          }}
+                        >
+                          {filteredCountries.map((country, index) => (
+                            <div
+                              key={index}
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                              onClick={() => selectCountry(country)}
+                            >
+                              {country}
+                            </div>
+                          ))}
+                        </div>,
+                        document.body
+                      )
+                    }
                   </div>
                 </div>
               </CardContent>

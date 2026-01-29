@@ -17,8 +17,9 @@ interface BooksResponse {
 }
 
 export default function CatalogPage() {
+  console.log('CatalogPage mounted or rendered');
   const [location] = useLocation();
-  const [searchParams, setSearchParams] = useState(new URLSearchParams());
+  // const [searchParams, setSearchParams] = useState(new URLSearchParams());
 
   // Filter states
   const [search, setSearch] = useState('');
@@ -32,23 +33,49 @@ export default function CatalogPage() {
   const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 15;
 
+  // useEffect(() => {
+  //   // Use router location for search params
+  //   const url = location || '';
+  //   const queryString = url.includes('?') ? url.split('?')[1] : '';
+  //   const params = new URLSearchParams(queryString);
+  //   console.log('CatalogPage useEffect triggered. location:', location, 'queryString:', queryString);
+  //   setSearchParams(params);
+
+  //   const searchParam = params.get('search') || '';
+  //   console.log('Extracted searchParam:', searchParam);
+  //   setSearch(searchParam);
+  //   setCurrentPage(1);
+
+  //   if (searchParam) {
+  //     setSelectedCategories([]);
+  //     setSelectedConditions([]);
+  //     setMinPrice('');
+  //     setMaxPrice('');
+  //   }
+  // }, [location]);
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSearchParams(params);
+    console.log('CatalogPage useEffect triggered');
+    console.log('location:', location);
 
+    const queryString = location.split('?')[1] || '';
+    console.log('Query string:', queryString);
+
+    const params = new URLSearchParams(queryString);
     const searchParam = params.get('search') || '';
-    if (searchParam !== search) {
-      setSearch(searchParam);
-      setCurrentPage(1);
+    console.log('Extracted searchParam:', searchParam);
 
-      if (searchParam) {
-        setSelectedCategories([]);
-        setSelectedConditions([]);
-        setMinPrice('');
-        setMaxPrice('');
-      }
+    setSearch(searchParam);
+    setCurrentPage(1);
+
+    if (searchParam) {
+      setSelectedCategories([]);
+      setSelectedConditions([]);
+      setMinPrice('');
+      setMaxPrice('');
     }
-  }, [location, search]);
+  }, [location]);
+
 
   // Build query parameters
   const queryParams = new URLSearchParams();
@@ -59,7 +86,7 @@ export default function CatalogPage() {
   if (maxPrice) queryParams.set('maxPrice', maxPrice);
 
   // Check URL params for special filters
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
   if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
   if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');
   if (urlParams.get('trending') === 'true') queryParams.set('trending', 'true');
@@ -73,9 +100,11 @@ export default function CatalogPage() {
 
   const apiUrl = `/api/books?${queryParams.toString()}`;
 
+  console.log('CatalogPage API URL:', apiUrl);
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: ['/api/books', search, selectedCategories, selectedConditions, minPrice, maxPrice, sortBy, sortOrder, currentPage],
+    queryKey: ['/api/books', location, search, selectedCategories, selectedConditions, minPrice, maxPrice, sortBy, sortOrder, currentPage],
     queryFn: async () => {
+      console.log('API call triggered with URL:', apiUrl);
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch books');
       const data = await response.json();
@@ -217,7 +246,7 @@ export default function CatalogPage() {
             <Button
               onClick={() => setShowFilters(true)}
               variant="outline"
-              className="flex items-center gap-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+              className="flex items-center gap-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
             >
               <Filter className="h-4 w-4" />
               Filters
@@ -236,7 +265,7 @@ export default function CatalogPage() {
                 endIndex={Math.min(currentPage * itemsPerPage, totalBooks)}
                 sortValue={`${sortBy}-${sortOrder}`}
                 onSortChange={handleSortChange}
-                sortOptions={sortOptions}
+                sortOptions={sortOptions ?? []}
                 showResults={false}
               />
             </div>

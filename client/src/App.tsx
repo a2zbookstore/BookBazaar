@@ -5,8 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
-import { CartProvider } from "@/contexts/CartContext";
-import { WishlistProvider } from "@/contexts/WishlistContext";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import { GlobalProvider } from "@/contexts/GlobalContext";
 import { LocationProvider } from "@/contexts/userLocationContext";

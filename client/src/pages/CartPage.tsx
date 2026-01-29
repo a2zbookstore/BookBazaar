@@ -72,7 +72,7 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 }
 
 export default function CartPage() {
-  const { cartItems, updateCartItem, removeFromCart, isLoading,cartCount } = useGlobalContext();
+  const { cartItems, updateCartItem, removeFromCart, isLoading, cartCount } = useGlobalContext();
   const [optimisticCartItems, setOptimisticCartItems] = useState<CartItem[] | null>(null);
   const [optimisticallyRemovedId, setOptimisticallyRemovedId] = useState<number | null>(null);
   const { toast } = useToast();

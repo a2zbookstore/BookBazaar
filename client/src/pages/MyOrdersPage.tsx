@@ -130,7 +130,7 @@ export default function MyOrdersPage() {
           url="https://a2zbookshop.com/my-orders"
           type="website"
         />
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen ">
           <div className="container-custom">
             <Breadcrumb items={[{ label: "My Orders" }]} />
 
@@ -238,7 +238,7 @@ export default function MyOrdersPage() {
   if (isLoading) {
     return (
       < >
-        <div className="mt-8 min-h-screen bg-gray-50">
+        <div className="mt-8 min-h-screen">
           <div className="container-custom">
             <div className="animate-pulse space-y-4">
               <div className="h-8 bg-gray-200 rounded w-1/3"></div>
@@ -326,7 +326,7 @@ export default function MyOrdersPage() {
         url="https://a2zbookshop.com/my-orders"
         type="website"
       />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="container-custom">
           <Breadcrumb items={[{ label: "My Orders" }]} />
 

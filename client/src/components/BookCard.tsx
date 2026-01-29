@@ -294,7 +294,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               shadow-md hover:shadow-lg
               transition-all
               flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed text-[10px]"
+              disabled:opacity-50 disabled:cursor-not-allowed text-[11px]"
               
         >
           {/* <ShoppingCart
@@ -314,7 +314,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               shadow-md hover:shadow-lg
               transition-all
               flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed text-[10px]"
+              disabled:opacity-50 disabled:cursor-not-allowed text-[11px]"
         >
           {/* <BadgeDollarSign
             className={` h-4 w-4 animate-rotate-bounce`}
