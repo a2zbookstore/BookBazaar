@@ -32,6 +32,8 @@ export default function SearchInput({
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
 
   useEffect(() => {
+    console.log("sasa");
+
     if (!enableTypingAnimation || searchQuery) {
       setTypedPlaceholder(placeholder);
       return;
@@ -66,6 +68,7 @@ export default function SearchInput({
     return () => {
       setTypedPlaceholder("");
     };
+
   }, [placeholder, enableTypingAnimation, searchQuery]);
 
   // Fetch search suggestions

@@ -5,7 +5,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Loader2 } from "lucide-react";
 
@@ -136,11 +135,11 @@ export default function PayPalCompletePage() {
   }, [isAuthenticated, setLocation, completeOrderMutation, toast]);
 
   if (!isAuthenticated) {
-    return <Layout><div>Redirecting...</div></Layout>;
+    return <><div>Redirecting...</div></>;
   }
 
   return (
-    <Layout>
+    <>
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
@@ -190,6 +189,6 @@ export default function PayPalCompletePage() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </>
   );
 }

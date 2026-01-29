@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles } from "lucide-react";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -314,18 +313,18 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Loading cart...</div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   const isCartEmpty = (optimisticCartItems !== null ? optimisticCartItems.length === 0 : cartItems.length === 0);
   if (isCartEmpty) {
     return (
-      <Layout>
+      <>
         <div className="container mx-auto px-4 mt-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
@@ -344,12 +343,12 @@ export default function CartPage() {
 
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Shopping Cart"
         description="Review your cart and proceed to checkout. Buy books online at A2Z BOOKSHOP with secure payment and fast shipping."
@@ -697,6 +696,6 @@ export default function CartPage() {
           </div>
         </div>
       </div>
-    </Layout >
+    </ >
   );
 }

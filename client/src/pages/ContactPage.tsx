@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -91,7 +90,7 @@ export default function ContactPage() {
   };
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Contact Us"
         description="Get in touch with A2Z BOOKSHOP. Contact our customer service team for book inquiries, orders, shipping questions, or general assistance. We're here to help!"
@@ -404,6 +403,6 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

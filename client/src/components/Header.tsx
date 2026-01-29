@@ -30,12 +30,17 @@ export default function Header() {
         };
         handleScroll();
         window.addEventListener('scroll', handleScroll);
+        console.log("hjknlm");
+
         window.addEventListener('resize', handleScroll);
         return () => {
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleScroll);
         };
+
     }, []);
+
+
 
     const isActive = (path: string) => {
         if (path === "/" && location === "/") return true;
@@ -83,8 +88,8 @@ export default function Header() {
                                 className={`text-secondary-black hover:text-primary-aqua transition-colors relative ${isActive("/wishlist") ? "text-primary-aqua font-semibold" : ""}`}
                             >
                                 <div className="flex items-center gap-[1px] md:gap-1 relative">
-                                    
-                                    <Heart className="md:h-5 md:w-5" /> 
+
+                                    <Heart className="md:h-5 md:w-5" />
                                     <span className="hidden md:block">Wishlist</span>
                                     {wishlistCount > 0 && (
                                         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

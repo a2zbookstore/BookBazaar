@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -106,7 +105,7 @@ export default function GiftItemsPage() {
   const hasBookInCart = cartCount > 0;
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Choose Your Free Gift! | A2Z BOOKSHOP"
         description="Select a wonderful free gift with your book purchase at A2Z BOOKSHOP. Browse our exciting collection of complimentary items and make your order extra special!"
@@ -531,6 +530,6 @@ export default function GiftItemsPage() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

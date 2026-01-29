@@ -1,6 +1,5 @@
 import { useParams, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,27 +23,27 @@ export default function OrderDetailPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
             <p className="mt-4 text-secondary-black">Loading order details...</p>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (!order) {
     return (
-      <Layout>
+      <>
         <div className="max-w-4xl mx-auto py-8 px-4">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-base-black mb-4">Order Not Found</h1>
             <p className="text-secondary-black">The order you're looking for doesn't exist or you don't have permission to view it.</p>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -182,7 +181,7 @@ export default function OrderDetailPage() {
   };
 
   return (
-    <Layout>
+    <>
       <SEO
         title={`Order #${order.id} - Order Details`}
         description="View your order details, track shipment, and download invoice from A2Z BOOKSHOP."
@@ -334,6 +333,6 @@ export default function OrderDetailPage() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

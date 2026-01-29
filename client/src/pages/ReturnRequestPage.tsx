@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -230,7 +229,7 @@ export default function ReturnRequestPage() {
   const canProceedToStep2 = selectedOrderId && (user || (guestEmail && customerName && customerEmail));
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Return & Refund Request - A2Z BOOKSHOP"
         description="Easily request a return and refund for your orders within 30 days of delivery at A2Z BOOKSHOP."
@@ -649,6 +648,6 @@ export default function ReturnRequestPage() {
           </Card>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

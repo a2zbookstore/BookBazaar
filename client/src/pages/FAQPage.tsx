@@ -1,4 +1,3 @@
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, HelpCircle, Book, ShoppingCart, Truck, CreditCard, Mail, Phone, MessageCircle } from "lucide-react";
@@ -154,7 +153,7 @@ export default function FAQPage() {
   ];
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Frequently Asked Questions (FAQ)"
         description="Find answers to common questions about ordering, shipping, returns, and payments at A2Z BOOKSHOP. Get help with your book purchases."
@@ -269,6 +268,6 @@ export default function FAQPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

@@ -1,12 +1,11 @@
 import React from 'react';
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import Breadcrumb from "@/components/Breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const MyProfile: React.FC = () => {
     return (
-        <Layout>
+        <>
             <SEO
                 title="My Profile"
                 description="Manage your profile and account settings at A2Z BOOKSHOP. Update your personal information, view your order history, and more."
@@ -38,7 +37,7 @@ const MyProfile: React.FC = () => {
                     </Card>
                 </div>
             </div>
-        </Layout>
+        </>
     );
 };
 

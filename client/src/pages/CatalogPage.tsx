@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import BookCard from "@/components/BookCard";
 import FiltersSidebar from "@/components/FiltersSidebar";
@@ -182,7 +181,7 @@ export default function CatalogPage() {
   });
 
   return (
-    <Layout>
+    <>
       <div className="container-custom">
         <Breadcrumb items={[{ label: "Catalog" }]} />
 
@@ -346,6 +345,6 @@ export default function CatalogPage() {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

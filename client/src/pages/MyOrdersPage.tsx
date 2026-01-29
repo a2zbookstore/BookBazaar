@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -123,7 +122,7 @@ export default function MyOrdersPage() {
 
   if (!isAuthenticated) {
     return (
-      <Layout>
+      <>
         <SEO
           title="My Orders"
           description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
@@ -232,13 +231,13 @@ export default function MyOrdersPage() {
             </Card>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <Layout >
+      < >
         <div className="mt-8 min-h-screen bg-gray-50">
           <div className="container-custom">
             <div className="animate-pulse space-y-4">
@@ -251,7 +250,7 @@ export default function MyOrdersPage() {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -319,7 +318,7 @@ export default function MyOrdersPage() {
   };
 
   return (
-    <Layout>
+    <>
       <SEO
         title="My Orders"
         description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
@@ -632,7 +631,7 @@ export default function MyOrdersPage() {
         </DialogContent>
       </Dialog>
 
-    </Layout >
+    </ >
   );
 }
 

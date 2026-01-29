@@ -17,20 +17,6 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
     return 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
   }
 
-  // If it's already a full external URL, return as-is
-  // if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-  //   return imageUrl;
-  // }
-
-  // // If it's already a correct path, return as-is
-  // if (imageUrl.startsWith('/uploads/images/')) {
-  //   return imageUrl;
-  // }
-
-  // // If it's just a filename, prepend the uploads path
-  // const filename = imageUrl.split('/').pop() || imageUrl;
-  // return `/uploads/images/${filename}`;
-
   return imageUrl;
 };
 
@@ -270,7 +256,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           </div>
 
           {/* Shipping and Return Info */}
-          <div className="space-y-1 text-xs text-gray-500 mb-3">
+          <div className="flex justify-between text-xs text-gray-500 mb-3">
             <div className="flex items-center gap-1">
               <Truck className="h-3 w-3 text-green-600" />
               <span className="text-secondary-black font-medium truncate">
@@ -279,21 +265,17 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
                 ) : shippingCost}
               </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex  items-center gap-1">
               <Clock className="h-3 w-3 text-blue-600" />
               <span className="text-secondary-black">
                 {isShippingLoading ? (
                   <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
                 ) : (
                   shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
-                    `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days delivery` :
-                    '5-7 days delivery'
+                    `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days` :
+                    '5-7 days'
                 )}
               </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <RotateCcw className="h-3 w-3 text-green-600" />
-              <span className="text-secondary-black">30-day returns</span>
             </div>
           </div>
         </div>
@@ -312,7 +294,8 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               shadow-md hover:shadow-lg
               transition-all
               flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled:opacity-50 disabled:cursor-not-allowed text-[10px]"
+              
         >
           {/* <ShoppingCart
             className={`h-4 w-4 ${isAddingToCart ? 'animate-cart-slide' : ''}`}
@@ -331,7 +314,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               shadow-md hover:shadow-lg
               transition-all
               flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled:opacity-50 disabled:cursor-not-allowed text-[10px]"
         >
           {/* <BadgeDollarSign
             className={` h-4 w-4 animate-rotate-bounce`}

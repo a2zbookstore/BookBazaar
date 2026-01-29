@@ -9,7 +9,6 @@ import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import { COUNTRY_CODES, COUNTRIES } from "@/lib/countryData";
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -713,7 +712,7 @@ export default function CheckoutPage() {
 
   if ((mode === "cart" && isCartLoading) || (mode === "buyNow" && isBookLoading)) {
     return (
-      <Layout>
+      <>
         <div className="container-custom mt-6">
           <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
           <div className="grid lg:grid-cols-3 gap-6">
@@ -730,12 +729,12 @@ export default function CheckoutPage() {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Checkout"
         description="Complete your book purchase securely at A2Z BOOKSHOP. Multiple payment options including PayPal, credit cards, and Razorpay."
@@ -1341,6 +1340,6 @@ export default function CheckoutPage() {
           paymentMethod={paymentMethod === 'paypal' ? 'paypal' : 'razorpay'}
         />
       )}
-    </Layout>
+    </>
   );
 }
