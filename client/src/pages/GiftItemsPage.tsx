@@ -32,7 +32,8 @@ export default function GiftItemsPage() {
     if (cartCount === 0) {
       setSelectedGift(null);
     }
-    const giftBookId = cartItems.find(item => item?.isGift)?.book?.id ?? null;    // setSelectedGift(cartItems.find(item => item.book)?.giftCategoryId?.toString() || null);
+    const giftBookId = cartItems.find(item => item?.isGift)?.book?.categoryId ?? null;    // setSelectedGift(cartItems.find(item => item.book)?.giftCategoryId?.toString() || null);
+    
     setSelectedGift(giftBookId);
 
   }, [cartItems]);
@@ -53,11 +54,17 @@ export default function GiftItemsPage() {
 
   // Add gift to cart mutation
   const addGiftMutation = useMutation({
-    mutationFn: async (giftId: number) => {
-      const response = await apiRequest("POST", "/api/cart/gift", {
-        giftId: giftId,
-        giftCategoryId: giftId
-      });
+    mutationFn: async (giftId: number, options?: { engrave?: boolean; engravingMessage?: string }) => {
+      const payload: any = {
+        giftId,
+        giftCategoryId: giftId,
+        quantity: 1,
+      };
+      if (options?.engrave) {
+        payload.engrave = true;
+        payload.engravingMessage = options.engravingMessage || "";
+      }
+      const response = await apiRequest("POST", "/api/cart/gift", payload);
       return response;
     },
     onSuccess: () => {

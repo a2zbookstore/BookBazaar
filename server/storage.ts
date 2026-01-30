@@ -58,6 +58,7 @@ import {
   Banner,
   InsertBanner,
   banners,
+  giftCart,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -490,7 +491,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // Allow deletion of books even if they have been ordered
       // Order history will remain intact in the order_items table
-      
+
       // First, delete all cart items related to this book
       await db.delete(cartItems).where(eq(cartItems.bookId, id));
 
@@ -1649,6 +1650,58 @@ export class DatabaseStorage implements IStorage {
     const rows = await db.select({ page_type: banners.page_type }).from(banners);
     const uniqueTypes = Array.from(new Set(rows.map(r => r.page_type)));
     return uniqueTypes;
+  }
+
+  async addGiftToCart(entry) {
+    const [giftCartRow] = await db.insert(giftCart).values(entry).returning();
+    return giftCartRow;
+  }
+
+  async getGiftCartItemByUserId(userId: string) {
+    const [row] = await db
+      .select({
+        id: giftCart.id,
+        userId: giftCart.userId,
+        giftCategoryId: giftCart.giftCategoryId,
+        engraving: giftCart.engrave,
+        createdAt: giftCart.addedAt,
+        category: {
+          id: giftCategories.id,
+          name: giftCategories.name,
+          imageUrl: giftCategories.imageUrl,
+          price: giftCategories.price,
+          type: giftCategories.type,
+        }
+      })
+      .from(giftCart)
+      .leftJoin(giftCategories, eq(giftCart.giftCategoryId, giftCategories.id))
+      .where(eq(giftCart.userId, userId));
+    if (!row) return null;
+    // Merge category details into the gift cart item
+    return {
+      id: row.id,
+      userId: row.userId,
+      giftCategoryId: row.giftCategoryId,
+      engraving: row.engraving,
+      createdAt: row.createdAt,
+      category: row.category,
+      imageUrl: row.category?.imageUrl || null,
+      price: row.category?.price || null,
+      name: row.category?.name || null,
+      type: row.category?.type || null,
+    }
+  }
+  // Remove any existing gift for the user before adding a new one
+  async replaceGiftCartItemForUser(userId: string, entry) {
+    await db.delete(giftCart).where(eq(giftCart.userId, userId));
+    const [giftCartRow] = await db.insert(giftCart).values(entry).returning();
+    return giftCartRow;
+  }
+
+  // Remove any existing gift for the user before adding a new one
+  async removeForUser(userId: string) {
+    const [deletedGift] = await db.delete(giftCart).where(eq(giftCart.userId, userId)).returning();
+    return deletedGift;
   }
 
 }
