@@ -197,21 +197,29 @@ export default function LoginPage() {
             <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
           </div>
 
-          <div className="w-full max-w-lg space-y-3 sm:space-y-6 relative z-10 my-4 sm:my-8">
-            <Button
-              onClick={handleClose}
-              variant="ghost"
-              size="icon"
-              className="absolute right-5 top-6 sm:right-5 sm:top-12 z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
-            >
-              <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
-            </Button>
-
+          <div className="w-full max-w-lg space-y-1 sm:space-y-3 relative z-10 my-4 sm:my-8">
             <Card className="shadow-2xl border-2 border-white/50 overflow-hidden backdrop-blur-xl bg-white/90 rounded-xl sm:rounded-2xl transform transition-all duration-300 hover:shadow-3xl">
-              <CardHeader className="relative space-y-2 sm:space-y-3 text-center text-white rounded-t-xl sm:rounded-t-2xl py-6 sm:py-10 px-4 sm:px-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(188, 100%, 29%) 0%, hsl(188, 100%, 26%) 50%, hsl(188, 79%, 38%) 100%)' }}>
+              <CardHeader className="relative space-y-2 sm:space-y-2 text-center text-white rounded-t-xl sm:rounded-t-2xl py-6 px-4 sm:px-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(188, 100%, 29%) 0%, hsl(188, 100%, 26%) 50%, hsl(188, 79%, 38%) 100%)' }}>
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
+                <div className="flex justify-between items-center">
+                  <Link href="/" className="inline-flex items-center gap-2 text-xs sm:text-sm text-white hover:text-gray-900 font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-white/50 transition-all">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Home
+                  </Link>
+
+                  <Button
+                    onClick={handleClose}
+                    variant="ghost"
+                    size="icon"
+                    className=" z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
+                  >
+                    <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+                  </Button>
+                </div>
                 <div className="relative">
                   <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm mb-2 sm:mb-4 shadow-lg">
                     <LogIn className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
@@ -226,12 +234,12 @@ export default function LoginPage() {
               </CardHeader>
               <CardContent className="p-4 sm:p-8">
                 <Tabs value={loginType} onValueChange={setLoginType} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-8 bg-gray-100 p-1 rounded-xl">
-                    <TabsTrigger value="email" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+                  <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-8 bg-gray-100 p-1 rounded-full">
+                    <TabsTrigger value="email" className="flex items-center gap-2 rounded-full data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
                       <Mail className="h-4 w-4" />
                       <span className="font-semibold">Email</span>
                     </TabsTrigger>
-                    <TabsTrigger value="phone" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+                    <TabsTrigger value="phone" className="flex items-center gap-2 rounded-full data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
                       <Phone className="h-4 w-4" />
                       <span className="font-semibold">Phone</span>
                     </TabsTrigger>
@@ -272,7 +280,7 @@ export default function LoginPage() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-full transition-colors"
                             onClick={() => setShowEmailPassword(!showEmailPassword)}
                           >
                             {showEmailPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
@@ -328,9 +336,6 @@ export default function LoginPage() {
                             />
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1 ml-1">
-                          📱 {phoneFormData.countryCode}{phoneFormData.phoneNumber}
-                        </p>
                       </div>
 
                       <div className="space-y-2">
@@ -350,7 +355,7 @@ export default function LoginPage() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-gray-100 rounded-full transition-colors"
                             onClick={() => setShowPhonePassword(!showPhonePassword)}
                           >
                             {showPhonePassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
@@ -377,13 +382,13 @@ export default function LoginPage() {
                   </TabsContent>
                 </Tabs>
 
-                <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
+                <div className="mt-6 sm:mt-8 space-y-2">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t-2 border-gray-200"></span>
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-3 text-gray-500 font-semibold">Or</span>
+                      <span className=" px-3 text-gray-500 font-semibold">Or</span>
                     </div>
                   </div>
 
@@ -447,15 +452,6 @@ export default function LoginPage() {
                 </div>
               </CardContent>
             </Card>
-
-            <div className="text-center mt-2 sm:mt-4">
-              <Link href="/" className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-white/50 transition-all">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Home
-              </Link>
-            </div>
           </div>
         </div>
       </div>

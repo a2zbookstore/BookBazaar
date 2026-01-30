@@ -67,8 +67,8 @@ export default function GiftItemsPage() {
       const response = await apiRequest("POST", "/api/cart/gift", payload);
       return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    onSuccess: async () => {
+     await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Selected as your free gift!",
         description: "Your free gift has been added to cart",
