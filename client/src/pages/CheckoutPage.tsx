@@ -9,7 +9,6 @@ import { useShipping } from "@/hooks/useShipping";
 import { useToast } from "@/hooks/use-toast";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import { COUNTRY_CODES, COUNTRIES } from "@/lib/countryData";
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,6 +127,7 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const { mode, bookId, quantity } = useParams();
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
   const { data: book, isLoading: isBookLoading } = useQuery<Book>({
     queryKey: [`/api/books/${bookId}`],
@@ -137,7 +137,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (mode === "buyNow" && book && !isBookLoading) {
 
-      if (book.stock <= 0 || book.stock < ( quantity ? parseInt(quantity) : 1)) {
+      if (book.stock <= 0 || book.stock < (quantity ? parseInt(quantity) : 1)) {
         toast({
           title: "Out of Stock",
           description: "This book is currently out of stock.",
@@ -370,7 +370,6 @@ export default function CheckoutPage() {
   };
 
   const handlePhoneChange = (value: string) => {
-    // Allow only numbers, spaces, hyphens, and parentheses
     const cleanedValue = value.replace(/[^0-9\s\-\(\)]/g, '');
     setCustomerPhone(cleanedValue);
     if (cleanedValue && !validatePhone(cleanedValue)) {
@@ -394,18 +393,8 @@ export default function CheckoutPage() {
 
   const filteredCountries = COUNTRIES.filter(country =>
     country.toLowerCase().includes(countryQuery.toLowerCase())
-  ).slice(0, 10);
+  )
 
-  const filteredCountryCodes = COUNTRY_CODES.filter(country =>
-    country.name.toLowerCase().includes(phoneCountryQuery.toLowerCase()) ||
-    country.code.includes(phoneCountryQuery)
-  ).slice(0, 10);
-
-  const handlePhoneCountrySearch = (value: string) => {
-    setPhoneCountryQuery(value);
-    setShowPhoneCountryDropdown(true);
-    setSelectedCountryIndex(-1);
-  };
 
   const selectPhoneCountry = (countryCode: string) => {
     setPhoneCountryCode(countryCode);
@@ -414,42 +403,109 @@ export default function CheckoutPage() {
     setSelectedCountryIndex(-1);
   };
 
+
   const handlePhoneCountryKeyDown = (e: React.KeyboardEvent) => {
-    const filtered = phoneCountryQuery ? filteredCountryCodes : countryCodes;
+    const filtered = filteredCountryCodes;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        if (!showPhoneCountryDropdown) {
-          setShowPhoneCountryDropdown(true);
-        }
         setSelectedCountryIndex(prev =>
-          prev < filtered.length - 1 ? prev + 1 : 0
+          prev === -1 || prev >= filtered.length - 1 ? 0 : prev + 1
         );
         break;
+
       case 'ArrowUp':
         e.preventDefault();
-        if (!showPhoneCountryDropdown) {
-          setShowPhoneCountryDropdown(true);
-        }
         setSelectedCountryIndex(prev =>
-          prev > 0 ? prev - 1 : filtered.length - 1
+          prev <= 0 ? filtered.length - 1 : prev - 1
         );
         break;
+
       case 'Enter':
         e.preventDefault();
-        if (selectedCountryIndex >= 0 && filtered[selectedCountryIndex]) {
+        if (filtered[selectedCountryIndex]) {
           selectPhoneCountry(filtered[selectedCountryIndex].code);
         }
         break;
+
       case 'Escape':
         e.preventDefault();
         setShowPhoneCountryDropdown(false);
-        setPhoneCountryQuery("");
         setSelectedCountryIndex(-1);
         break;
     }
   };
+
+  const filteredCountryCodes = COUNTRY_CODES.filter(country => {
+    if (!phoneCountryQuery) return true;
+
+    return (
+      country.code.replace('+', '').includes(phoneCountryQuery) ||
+      country.name.toLowerCase().includes(phoneCountryQuery.toLowerCase())
+    );
+  });
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showCountryDropdown) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < filteredCountries.length - 1 ? prev + 1 : 0
+        );
+        break;
+
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredCountries.length - 1
+        );
+        break;
+
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < filteredCountries.length) {
+          selectCountry(filteredCountries[highlightedIndex]);
+        }
+        break;
+
+      case 'Escape':
+        setShowCountryDropdown(false);
+        break;
+    }
+  };
+
+
+
+  const handlePhoneCountryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // If user types numbers or "+"
+    if (/^\+?\d*$/.test(value)) {
+      const formattedValue = value.startsWith('+')
+        ? value
+        : value
+          ? `+${value}`
+          : '';
+
+      setPhoneCountryCode(formattedValue);
+      setPhoneCountryQuery(value.replace('+', ''));
+      setShowPhoneCountryDropdown(true);
+      setSelectedCountryIndex(-1);
+      return;
+    }
+
+    // If user types letters → search by country name
+    setPhoneCountryQuery(value);
+    setPhoneCountryCode('');
+    setShowPhoneCountryDropdown(true);
+    setSelectedCountryIndex(-1);
+  };
+
+
+
 
   // Copy billing address
   useEffect(() => {
@@ -713,7 +769,7 @@ export default function CheckoutPage() {
 
   if ((mode === "cart" && isCartLoading) || (mode === "buyNow" && isBookLoading)) {
     return (
-      <Layout>
+      <>
         <div className="container-custom mt-6">
           <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>
           <div className="grid lg:grid-cols-3 gap-6">
@@ -730,12 +786,12 @@ export default function CheckoutPage() {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Checkout"
         description="Complete your book purchase securely at A2Z BOOKSHOP. Multiple payment options including PayPal, credit cards, and Razorpay."
@@ -750,7 +806,7 @@ export default function CheckoutPage() {
           {/* Left Column - Forms */}
           <div className="lg:col-span-2 space-y-6">
             {/* Customer Information */}
-            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+            <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
                 <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
                   <UserPen className="w-6 h-6" />
@@ -790,37 +846,27 @@ export default function CheckoutPage() {
                   <Label htmlFor="customerPhone">Phone Number *</Label>
                   <div className="flex flex-row gap-2 w-full">
                     <div className="relative phone-country-dropdown-container w-32">
-                      <div className="flex flex-col sm:flex-row">
+                      <div className="relative w-full">
                         <Input
                           value={phoneCountryQuery || phoneCountryCode}
                           onChange={(e) => {
-                            const value = e.target.value;
-                            if (value.startsWith('+') || /^\+?\d*$/.test(value)) {
-                              // Manual country code entry
-                              const formattedValue = value.startsWith('+') ? value : (value ? `+${value}` : '');
-                              setPhoneCountryCode(formattedValue);
-                              setPhoneCountryQuery("");
-                              if (value.length > 1) {
-                                setShowPhoneCountryDropdown(false);
-                              }
-                            } else {
-                              // Search functionality
-                              handlePhoneCountrySearch(value);
-                            }
+                            handlePhoneCountryChange(e);
                           }}
                           onFocus={() => setShowPhoneCountryDropdown(true)}
                           onKeyDown={handlePhoneCountryKeyDown}
-                          placeholder="Country code or type to search"
-                          className="w-full rounded-b-none sm:rounded-b-md sm:rounded-r-none min-h-[44px] touch-target text-sm"
+                          placeholder="+"
+                          className="w-full pr-10 min-h-[44px] text-sm touch-target z-50"
                         />
+
                         <button
                           type="button"
-                          className="px-3 border border-t-0 sm:border-t sm:border-l-0 border-gray-300 rounded-t-none sm:rounded-t-md sm:rounded-l-none bg-gray-50 hover:bg-gray-100 touch-target min-h-[44px]"
                           onClick={() => setShowPhoneCountryDropdown(!showPhoneCountryDropdown)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-transparent hover:bg-primary-aqua  rounded-full  focus:outline-none"
                         >
-                          <ChevronDown className="w-4 h-4 text-gray-600" />
+                          <ChevronDown className="hover:text-white w-4 h-4 text-gray-600" />
                         </button>
                       </div>
+
                       {showPhoneCountryDropdown && (
                         <div
                           className="absolute z-50 w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
@@ -830,25 +876,31 @@ export default function CheckoutPage() {
                             }
                           }}
                         >
-                          {phoneCountryQuery && (
-                            <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b">
-                              Search: "{phoneCountryQuery}" - {filteredCountryCodes.length} results
-                            </div>
-                          )}
-                          {(phoneCountryQuery ? filteredCountryCodes : COUNTRY_CODES).map((country, index) => (
-                            <div
-                              key={index}
-                              className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${selectedCountryIndex === index
-                                ? 'bg-blue-100 text-blue-900'
-                                : 'hover:bg-gray-100'
-                                }`}
-                              onClick={() => selectPhoneCountry(country.code)}
-                              onMouseEnter={() => setSelectedCountryIndex(index)}
-                            >
-                              <span className="font-medium text-blue-600 min-w-[3rem]">{country.code}</span>
-                              <span className="text-gray-700">{country.name}</span>
-                            </div>
-                          ))}
+
+                          {(phoneCountryQuery ? filteredCountryCodes : COUNTRY_CODES)
+                            .slice() // avoid mutating original array
+                            .sort((a, b) => {
+                              const codeA = parseInt(a.code.replace('+', ''), 10)
+                              const codeB = parseInt(b.code.replace('+', ''), 10)
+                              return codeA - codeB
+                            })
+                            .map((country, index) => (
+                              <div
+                                key={index}
+                                className={`px-3 py-2 cursor-pointer text-sm flex items-center gap-2 ${selectedCountryIndex === index
+                                  ? 'bg-blue-100 text-blue-900'
+                                  : 'hover:bg-gray-100'
+                                  }`}
+                                onClick={() => selectPhoneCountry(country.code)}
+                                onMouseEnter={() => setSelectedCountryIndex(index)}
+                              >
+                                <span className="font-medium text-blue-600 min-w-[3rem]">
+                                  {country.code}
+                                </span>
+                                <span className="text-gray-700">{country.name}</span>
+                              </div>
+                            ))}
+
                           {phoneCountryQuery && filteredCountryCodes.length === 0 && (
                             <div className="px-3 py-2 text-sm text-gray-500">
                               No countries found for "{phoneCountryQuery}"
@@ -873,7 +925,7 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Shipping Address */}
-            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+            <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="px-6 pt-4 pb-2 bg-white border-b-2 border-gray-100">
                 <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
                   <MapPinPlusInside className="w-5 h-5" />
@@ -931,16 +983,30 @@ export default function CheckoutPage() {
                       value={countryQuery || shippingAddress.country}
                       onChange={(e) => handleCountrySearch(e.target.value)}
                       onFocus={() => setShowCountryDropdown(true)}
+                      onKeyDown={handleKeyDown}
+                      // onBlur={() => setShowCountryDropdown(false)}
                       placeholder="Type to search countries..."
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                      className="absolute right-2 top-11 -translate-y-1/2 p-1 bg-transparent hover:bg-primary-aqua  rounded-full  focus:outline-none"
+                    >
+                      <ChevronDown className="hover:text-white w-4 h-4 text-gray-600" />
+                    </button>
                     {showCountryDropdown && filteredCountries.length > 0 && (
                       <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
                         {filteredCountries.map((country, index) => (
                           <div
                             key={index}
-                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm z-50"
                             onClick={() => selectCountry(country)}
+                            onMouseDown={(e) => {
+                              e.preventDefault(); // prevent blur
+                              selectCountry(country);
+                            }}
+                            onMouseEnter={() => setHighlightedIndex(index)} // hover also updates highlight
                           >
                             {country}
                           </div>
@@ -953,7 +1019,7 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Payment Method */}
-            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+            <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
                 <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
                   <svg className="w-6 h-6 text-primary-aqua" fill="currentColor" viewBox="0 0 20 20">
@@ -1074,7 +1140,7 @@ export default function CheckoutPage() {
 
           {/* Right Column - Order Summary */}
           <div className="space-y-6">
-            <Card className="border-2 border-gray-100 shadow-lg overflow-hidden rounded-xl">
+            <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
                 <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
                   <ScrollText className="w-6 h-6 text-primary-aqua" />
@@ -1095,7 +1161,7 @@ export default function CheckoutPage() {
                     {cartItems.map((item) => (
                       <div key={item.id} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100 hover:border-primary-aqua/30 transition-all duration-200">
                         {item.book?.imageUrl && (
-                          <div className="flex-shrink-0 w-16 h-20 rounded overflow-hidden bg-white shadow-sm">
+                          <div className="flex-shrink-0 w-16 h-20 rounded bg-white shadow-sm">
                             <img
                               src={item.book.imageUrl}
                               alt={item.book.title}
@@ -1341,6 +1407,6 @@ export default function CheckoutPage() {
           paymentMethod={paymentMethod === 'paypal' ? 'paypal' : 'razorpay'}
         />
       )}
-    </Layout>
+    </>
   );
 }

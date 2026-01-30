@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -123,7 +122,7 @@ export default function MyOrdersPage() {
 
   if (!isAuthenticated) {
     return (
-      <Layout>
+      <>
         <SEO
           title="My Orders"
           description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
@@ -131,7 +130,7 @@ export default function MyOrdersPage() {
           url="https://a2zbookshop.com/my-orders"
           type="website"
         />
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen ">
           <div className="container-custom">
             <Breadcrumb items={[{ label: "My Orders" }]} />
 
@@ -232,14 +231,14 @@ export default function MyOrdersPage() {
             </Card>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <Layout >
-        <div className="mt-8 min-h-screen bg-gray-50">
+      < >
+        <div className="mt-8 min-h-screen">
           <div className="container-custom">
             <div className="animate-pulse space-y-4">
               <div className="h-8 bg-gray-200 rounded w-1/3"></div>
@@ -251,7 +250,7 @@ export default function MyOrdersPage() {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -319,7 +318,7 @@ export default function MyOrdersPage() {
   };
 
   return (
-    <Layout>
+    <>
       <SEO
         title="My Orders"
         description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
@@ -327,7 +326,7 @@ export default function MyOrdersPage() {
         url="https://a2zbookshop.com/my-orders"
         type="website"
       />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="container-custom">
           <Breadcrumb items={[{ label: "My Orders" }]} />
 
@@ -345,7 +344,7 @@ export default function MyOrdersPage() {
                   You haven't placed any orders yet. Start shopping to see your orders here.
                 </p>
                 <Link href="/catalog">
-                  <Button className="bg-primary-aqua hover:bg-secondary-aqua">
+                  <Button className="bg-primary-aqua hover:bg-secondary-aqua rounded-full">
                     Browse Books
                   </Button>
                 </Link>
@@ -632,7 +631,7 @@ export default function MyOrdersPage() {
         </DialogContent>
       </Dialog>
 
-    </Layout >
+    </ >
   );
 }
 

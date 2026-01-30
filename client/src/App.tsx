@@ -5,8 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
-import { CartProvider } from "@/contexts/CartContext";
-import { WishlistProvider } from "@/contexts/WishlistContext";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import { GlobalProvider } from "@/contexts/GlobalContext";
 import { LocationProvider } from "@/contexts/userLocationContext";
@@ -54,6 +52,7 @@ import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import RequestBookPage from "@/pages/RequestBookPage";
 import NotFound from "@/pages/NotFound";
 import MyProfile from "./pages/MyProfile";
+import Layout from "./components/Layout";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -207,15 +206,18 @@ function AppRouter() {
 }
 
 function App() {
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <LocationProvider>
           <GlobalProvider>
             <Toaster />
-            <Router>
-              <AppRouter />
-            </Router>
+            <Layout>
+              <Router>
+                <AppRouter />
+              </Router>
+            </Layout>
           </GlobalProvider>
         </LocationProvider>
       </TooltipProvider>

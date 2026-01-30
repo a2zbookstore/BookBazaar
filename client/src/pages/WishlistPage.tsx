@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import BookCard from "@/components/BookCard";
@@ -44,7 +43,7 @@ export default function WishlistPage() {
 
   if (!isAuthenticated) {
     return (
-      <Layout>
+      <>
         <div className="container-custom py-8">
           <div className="text-center py-12">
             <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -70,13 +69,13 @@ export default function WishlistPage() {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <Layout>
+      <>
         <div className="container-custom py-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
@@ -94,12 +93,12 @@ export default function WishlistPage() {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <SEO
         title="My Wishlist"
         description="Save your favorite books to your wishlist. Keep track of books you want to buy later at A2Z BOOKSHOP."
@@ -180,6 +179,6 @@ export default function WishlistPage() {
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

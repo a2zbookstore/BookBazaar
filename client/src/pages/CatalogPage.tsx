@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import BookCard from "@/components/BookCard";
 import FiltersSidebar from "@/components/FiltersSidebar";
@@ -18,10 +17,7 @@ interface BooksResponse {
 }
 
 export default function CatalogPage() {
-  const [location] = useLocation();
-  const [searchParams, setSearchParams] = useState(new URLSearchParams());
-
-  // Filter states
+  const [location,setLocation] = useLocation();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
@@ -32,24 +28,20 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 15;
+  const searchParams = useSearch();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSearchParams(params);
-
-    const searchParam = params.get('search') || '';
-    if (searchParam !== search) {
-      setSearch(searchParam);
-      setCurrentPage(1);
-
-      if (searchParam) {
-        setSelectedCategories([]);
-        setSelectedConditions([]);
-        setMinPrice('');
-        setMaxPrice('');
-      }
+    const params = new URLSearchParams(searchParams);
+    const query = params.get("search") || "";
+    setSearch(query);
+    setCurrentPage(1);
+    if (query) {
+      setSelectedCategories([]);
+      setSelectedConditions([]);
+      setMinPrice('');
+      setMaxPrice('');
     }
-  }, [location, search]);
+  }, [searchParams]);
 
   // Build query parameters
   const queryParams = new URLSearchParams();
@@ -60,7 +52,7 @@ export default function CatalogPage() {
   if (maxPrice) queryParams.set('maxPrice', maxPrice);
 
   // Check URL params for special filters
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
   if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
   if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');
   if (urlParams.get('trending') === 'true') queryParams.set('trending', 'true');
@@ -75,7 +67,7 @@ export default function CatalogPage() {
   const apiUrl = `/api/books?${queryParams.toString()}`;
 
   const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: ['/api/books', search, selectedCategories, selectedConditions, minPrice, maxPrice, sortBy, sortOrder, currentPage],
+    queryKey: ['/api/books', location, search, selectedCategories, selectedConditions, minPrice, maxPrice, sortBy, sortOrder, currentPage],
     queryFn: async () => {
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch books');
@@ -137,6 +129,7 @@ export default function CatalogPage() {
     setSortBy('createdAt');
     setSortOrder('desc');
     setCurrentPage(1);
+    setLocation('/catalog');
   };
 
   // Dynamic SEO based on filters
@@ -182,7 +175,7 @@ export default function CatalogPage() {
   });
 
   return (
-    <Layout>
+    <>
       <div className="container-custom">
         <Breadcrumb items={[{ label: "Catalog" }]} />
 
@@ -218,7 +211,7 @@ export default function CatalogPage() {
             <Button
               onClick={() => setShowFilters(true)}
               variant="outline"
-              className="flex items-center gap-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+              className="flex items-center gap-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
             >
               <Filter className="h-4 w-4" />
               Filters
@@ -237,7 +230,7 @@ export default function CatalogPage() {
                 endIndex={Math.min(currentPage * itemsPerPage, totalBooks)}
                 sortValue={`${sortBy}-${sortOrder}`}
                 onSortChange={handleSortChange}
-                sortOptions={sortOptions}
+                sortOptions={sortOptions ?? []}
                 showResults={false}
               />
             </div>
@@ -251,7 +244,7 @@ export default function CatalogPage() {
 
           {/* Search Results Info */}
           {search && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
               <p className="text-sm text-blue-800">
                 Search results for: <strong>"{search}"</strong> ({totalBooks} {totalBooks === 1 ? 'book' : 'books'} found)
               </p>
@@ -324,28 +317,46 @@ export default function CatalogPage() {
               )}
             </>
           ) : (
-            <div className="text-center py-12">
-              <div className="mb-4">
-                <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-4xl">📚</span>
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-full text-center bg-white rounded-2xl shadow-md p-8 border border-gray-100">
+                {/* Icon / Illustration */}
+                <div className="w-28 h-28 mx-auto bg-primary-aqua/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                  <span className="text-5xl">📚</span>
                 </div>
-                <h3 className="text-xl font-bookerly font-semibold text-base-black mb-2">
+
+                {/* Heading */}
+                <h3 className="text-2xl sm:text-3xl font-bookerly font-semibold text-base-black mb-3">
                   No books found
                 </h3>
-                <p className="text-secondary-black mb-6">
-                  Try adjusting your search criteria or browse our featured books.
+
+                {/* Description */}
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  We couldn’t find any books matching your search. Try adjusting your filters, or explore our featured books below.
                 </p>
+
+                {/* Clear Filters Button */}
                 <Button
                   onClick={clearFilters}
-                  className="bg-primary-aqua hover:bg-secondary-aqua"
+                  className="bg-primary-aqua hover:bg-secondary-aqua text-white font-medium px-6 py-3 rounded-full transition-transform transform hover:scale-105 focus:outline-none"
                 >
                   Clear Filters
                 </Button>
+
+                {/* <div className="mt-8">
+                  <h4 className="text-lg font-semibold text-base-black mb-4">Featured Books</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {books.slice(0, 4).map((book) => (
+                      <div key={book.id} className="bg-gray-50 p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm text-center">
+                        {book.title}
+                      </div>
+                    ))}
+                  </div>
+                </div> */}
               </div>
             </div>
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

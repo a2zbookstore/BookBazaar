@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Book, Category } from "@/types";
@@ -250,7 +249,7 @@ export default function HomePage() {
 
 
   return (
-    <Layout>
+    <>
       <SEO
         title="A2Z BOOKSHOP - Buy Books Online | New & Used Books"
         description="Discover thousands of books at A2Z Bookshop. Best prices on fiction, non-fiction, bestsellers, trending books and more. Fast shipping across India with secure payment options."
@@ -443,6 +442,6 @@ export default function HomePage() {
           onSlideChange={(slide) => setCategorySlides(prev => ({ ...prev, [category.id]: slide }))}
         />
       ))}
-    </Layout>
+    </>
   );
 }

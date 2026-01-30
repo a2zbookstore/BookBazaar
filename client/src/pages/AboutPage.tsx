@@ -1,13 +1,13 @@
 import React from "react";
 import { Shield, Truck, Heart } from "lucide-react";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "wouter";
 
 export default function AboutPage() {
   return (
-    <Layout>
+    <>
       <SEO
         title="About Us"
         description="Learn about A2Z BOOKSHOP, your premier destination for rare, collectible, and contemporary books. Quality guaranteed, fast shipping, and exceptional customer service."
@@ -155,6 +155,6 @@ export default function AboutPage() {
           </Link>
         </section>
       </div>
-    </Layout>
+    </>
   );
 }

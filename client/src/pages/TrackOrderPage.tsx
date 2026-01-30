@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -125,7 +124,7 @@ export default function TrackOrderPage() {
     : Search;
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Track Your Order"
         description="Track your book order from A2Z BOOKSHOP. Check shipping status, delivery updates, and tracking information."
@@ -376,6 +375,6 @@ export default function TrackOrderPage() {
           </Card>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

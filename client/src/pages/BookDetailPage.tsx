@@ -1,8 +1,7 @@
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { Star, ShoppingCart, Truck, Shield, RotateCcw, BadgeDollarSign, Minus, Plus } from "lucide-react";
-import Layout from "@/components/Layout";
+import { useState, useEffect } from "react";
+import { Star, ShoppingCart, Truck, Shield, RotateCcw, BadgeDollarSign, Minus, Plus, Clock, Pen } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO, { generateBookStructuredData } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import { Book } from "@/types";
 import { useGlobalContext } from "@/contexts/GlobalContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // Image helper function
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -34,9 +34,22 @@ export default function BookDetailPage() {
   const { addToCart } = useGlobalContext();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { shippingRate, isLoading: isShippingLoading } = useShipping();
+  const { shippingRate, isLoading: isShippingLoading, shippingCost: shipCost } = useShipping();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [shippingCost, setShippingCost] = useState<string>("");
+  const { userCurrency, convertPrice, formatAmount } = useCurrency();
+
+  // Shipping cost logic from BookCard
+  useEffect(() => {
+    if (shipCost !== undefined) {
+      if (shipCost === 0) {
+        setShippingCost("Free Delivery");
+      } else {
+        setShippingCost(formatAmount(shipCost, "USD"));
+      }
+    }
+  }, [shipCost, formatAmount]);
 
   const { data: book, isLoading } = useQuery<Book>({
     queryKey: [`/api/books/${id}`],
@@ -63,7 +76,7 @@ export default function BookDetailPage() {
 
   const handleBuyNow = async () => {
     setLocation(`/checkout/buyNow/${id}/${quantity}`);
-}
+  }
 
   const getConditionColor = (condition: string) => {
     switch (condition.toLowerCase()) {
@@ -84,7 +97,7 @@ export default function BookDetailPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <>
         <div className="container-custom py-8">
           <Breadcrumb
             items={[
@@ -174,13 +187,13 @@ export default function BookDetailPage() {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (!book) {
     return (
-      <Layout>
+      <>
         <div className="container-custom py-8">
           <div className="text-center">
             <h2 className="text-2xl font-bookerly font-bold text-base-black mb-4">Book Not Found</h2>
@@ -192,12 +205,12 @@ export default function BookDetailPage() {
             </Link>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <SEO
         title={`${book.title} by ${book.author}`}
         description={book.description || `Buy ${book.title} by ${book.author}. ${book.condition} condition. Available now at A2Z BOOKSHOP with fast shipping.`}
@@ -427,7 +440,8 @@ export default function BookDetailPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Truck className="h-5 w-5 text-blue-600" />
+
+                  <Clock className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <p className="font-semibold text-base-black text-sm">Fast Shipping</p>
@@ -442,13 +456,30 @@ export default function BookDetailPage() {
                       })()}
                     </p>
                   ) : (
-                    <p className="text-xs text-secondary-black">Secure packaging</p>
+                    <p className="flex items-center gap-[4px] text-xs text-secondary-black">
+                      Arrives 5-7 days</p>
                   )}
                 </div>
               </div>
+              <div className="flex gap-4 items-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center ">
+                  <Pen className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-base-black text-sm mt-1">Personalised Gifts</p>
+                  <p className="text-xs text-secondary-black">Engrave your name or message</p>
+                </div>
+              </div>
+              <div className="flex gap-4 items-center ">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center ">
+                  <Truck className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-base-black text-sm mt-1">Shipping Cost</p>
+                  <p className="text-xs text-secondary-black">{shippingCost}</p>
+                </div>
+              </div>
             </div>
-
-
             <Separator />
 
 
@@ -540,6 +571,6 @@ export default function BookDetailPage() {
           </div>
         </div>
       </div>
-    </Layout >
+    </ >
   );
 }

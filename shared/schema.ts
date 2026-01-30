@@ -526,6 +526,22 @@ export const giftItems = pgTable("gift_items", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Gift Cart table: tracks gifts added by users, links to user and gift category
+export const giftCart = pgTable("gift_cart", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  giftCategoryId: integer("gift_category_id").notNull().references(() => giftCategories.id),
+  quantity: integer("quantity").notNull().default(1),
+  addedAt: timestamp("added_at").notNull().defaultNow(),
+  note: text("note"), // optional note from user
+  engrave: boolean("engrave").notNull().default(false), // user wants engraving
+  engravingMessage: text("engraving_message"), // message to engrave
+},);
+
+export const insertGiftCartSchema = createInsertSchema(giftCart);
+export type InsertGiftCart = z.infer<typeof insertGiftCartSchema>;
+export type GiftCart = typeof giftCart.$inferSelect;
+
 // Homepage Content Management
 export const homepageContent = pgTable("homepage_content", {
   id: serial("id").primaryKey(),

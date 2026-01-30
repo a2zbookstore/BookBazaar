@@ -1,10 +1,9 @@
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { RotateCcw, Clock, Shield, Check, AlertCircle } from "lucide-react";
 
 export default function ReturnPolicyPage() {
   return (
-    <Layout>
+    <>
       <SEO
         title="Return Policy"
         description="A2Z BOOKSHOP's 30-day return guarantee. Learn about our hassle-free return process, refund policy, and customer satisfaction commitment."
@@ -222,6 +221,6 @@ export default function ReturnPolicyPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

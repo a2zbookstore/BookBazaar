@@ -58,6 +58,7 @@ import {
   Banner,
   InsertBanner,
   banners,
+  giftCart,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
@@ -387,28 +388,30 @@ export class DatabaseStorage implements IStorage {
     if (trending !== undefined) conditions.push(eq(books.trending, trending));
     if (newArrival !== undefined) conditions.push(eq(books.newArrival, newArrival));
     if (boxSet !== undefined) conditions.push(eq(books.boxSet, boxSet));
-    if (search) {
-      const searchTerm = search.toLowerCase();
+    if (search?.trim()) {
+      const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const normalizedSearchTerm = normalize(search);
+      const normalizeField = (field: any) =>
+        sql`REGEXP_REPLACE(LOWER(${field}), '[^a-z0-9]', '', 'g')`;
       if (titleOnly) {
-        // Search in title and publisher when titleOnly is true
         conditions.push(
           or(
-            sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.publisher}) LIKE ${`%${searchTerm}%`}`
+            sql`${normalizeField(books.title)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.publisher)} LIKE ${`%${normalizedSearchTerm}%`}`
           )
         );
       } else {
-        // Search across multiple fields
         conditions.push(
           or(
-            sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.isbn}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.description}) LIKE ${`%${searchTerm}%`}`
+            sql`${normalizeField(books.title)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.author)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.isbn)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.description)} LIKE ${`%${normalizedSearchTerm}%`}`
           )
         );
       }
     }
+
     if (minPrice) conditions.push(sql`${books.price} >= ${minPrice}`);
     if (maxPrice) conditions.push(sql`${books.price} <= ${maxPrice}`);
 
@@ -420,12 +423,34 @@ export class DatabaseStorage implements IStorage {
       .from(books)
       .where(whereClause);
 
-    // Get books with simplified ordering
+    const sortColumns: Record<string, any> = {
+      id: books.id,
+      title: books.title,
+      author: books.author,
+      price: books.price,
+      stock: books.stock,
+      publishedYear: books.publishedYear,
+      publisher: books.publisher,
+      featured: books.featured,
+      bestseller: books.bestseller,
+      trending: books.trending,
+      newArrival: books.newArrival,
+      boxSet: books.boxSet,
+      createdAt: books.createdAt,
+      updatedAt: books.updatedAt,
+    };
+    let orderExpr;
+    if (sortBy && sortColumns[sortBy]) {
+      orderExpr = sortOrder === "asc" ? asc(sortColumns[sortBy]) : desc(sortColumns[sortBy]);
+    } else {
+      // Fallback to createdAt
+      orderExpr = sortOrder === "asc" ? asc(books.createdAt) : desc(books.createdAt);
+    }
     const booksList = await db
       .select()
       .from(books)
       .where(whereClause)
-      .orderBy(desc(books.createdAt))
+      .orderBy(orderExpr)
       .limit(limit)
       .offset(offset);
 
@@ -463,13 +488,8 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBook(id: number): Promise<void> {
     try {
-      // Allow deletion of books even if they have been ordered
-      // Order history will remain intact in the order_items table
-      
-      // First, delete all cart items related to this book
       await db.delete(cartItems).where(eq(cartItems.bookId, id));
 
-      // Then delete the book
       const result = await db.delete(books).where(eq(books.id, id));
 
       if (result.rowCount === 0) {
@@ -1624,6 +1644,58 @@ export class DatabaseStorage implements IStorage {
     const rows = await db.select({ page_type: banners.page_type }).from(banners);
     const uniqueTypes = Array.from(new Set(rows.map(r => r.page_type)));
     return uniqueTypes;
+  }
+
+  async addGiftToCart(entry) {
+    const [giftCartRow] = await db.insert(giftCart).values(entry).returning();
+    return giftCartRow;
+  }
+
+  async getGiftCartItemByUserId(userId: string) {
+    const [row] = await db
+      .select({
+        id: giftCart.id,
+        userId: giftCart.userId,
+        giftCategoryId: giftCart.giftCategoryId,
+        engraving: giftCart.engrave,
+        createdAt: giftCart.addedAt,
+        category: {
+          id: giftCategories.id,
+          name: giftCategories.name,
+          imageUrl: giftCategories.imageUrl,
+          price: giftCategories.price,
+          type: giftCategories.type,
+        }
+      })
+      .from(giftCart)
+      .leftJoin(giftCategories, eq(giftCart.giftCategoryId, giftCategories.id))
+      .where(eq(giftCart.userId, userId));
+    if (!row) return null;
+    // Merge category details into the gift cart item
+    return {
+      id: row.id,
+      userId: row.userId,
+      giftCategoryId: row.giftCategoryId,
+      engraving: row.engraving,
+      createdAt: row.createdAt,
+      category: row.category,
+      imageUrl: row.category?.imageUrl || null,
+      price: row.category?.price || null,
+      name: row.category?.name || null,
+      type: row.category?.type || null,
+    }
+  }
+  // Remove any existing gift for the user before adding a new one
+  async replaceGiftCartItemForUser(userId: string, entry) {
+    await db.delete(giftCart).where(eq(giftCart.userId, userId));
+    const [giftCartRow] = await db.insert(giftCart).values(entry).returning();
+    return giftCartRow;
+  }
+
+  // Remove any existing gift for the user before adding a new one
+  async removeForUser(userId: string) {
+    const [deletedGift] = await db.delete(giftCart).where(eq(giftCart.userId, userId)).returning();
+    return deletedGift;
   }
 
 }

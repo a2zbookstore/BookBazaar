@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { insertBookRequestSchema, type InsertBookRequest } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -130,7 +129,7 @@ const RequestBookPage = () => {
 
   if (isSubmitted) {
     return (
-      <Layout>
+      <>
         <SEO
           title="Request Submitted - A2Z BOOKSHOP"
           description="Your book request has been submitted successfully. We'll get back to you soon."
@@ -197,12 +196,12 @@ const RequestBookPage = () => {
             </CardContent>
           </Card>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Request a Book"
         description="Can't find the book you're looking for? Request a book at A2Z BOOKSHOP and we'll do our best to find it for you."
@@ -230,7 +229,7 @@ const RequestBookPage = () => {
         <div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Two Column Layout */}
+              {/* Two Column  */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - Customer Information */}
                 <Card className="rounded-xl border-2 hover:border-primary-aqua/50 transition-all duration-300 shadow-sm hover:shadow-md">
@@ -537,7 +536,7 @@ const RequestBookPage = () => {
           </Form>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 

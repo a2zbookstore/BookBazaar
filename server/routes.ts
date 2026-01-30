@@ -1983,12 +1983,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sortOrder: (sortOrder as "asc" | "desc") || "desc",
       };
 
-      // Debug logging for search functionality
-      if (search) {
-        console.log("Search query received:", search);
-        console.log("Search options being passed to storage:", options);
-      }
-
       const result = await storage.getBooks(options);
 
       if (search) {
@@ -2346,19 +2340,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Auto-remove gifts if no books remain
         await autoRemoveGiftsIfNoBooks(req, cartItems);
 
-        const giftItem = (req.session as any).giftItem;
+        // Fetch gift item from gift_cart table for authenticated user
+        const giftItem = await storage.getGiftCartItemByUserId(userId);
 
         // Add gift item to cart if present and there are books
         const fullCart = [...cartItems];
         if (giftItem && hasNonGiftBooks(cartItems)) {
           fullCart.push({
-            id: `gift_${giftItem.giftId}`,
+            id: giftItem.id,
             book: {
-              id: giftItem.giftId,
-              title: giftItem.name,
-              author: giftItem.type,
+              id: giftItem.id,
+              title: giftItem.name || "Gift Item",
+              author: giftItem.type || "Gift",
               price: "0.00",
-              imageUrl: giftItem.imageUrl
+              imageUrl: giftItem.imageUrl,
+              categoryId: giftItem.category?.id || null
             },
             quantity: 1,
             isGift: true
@@ -2602,100 +2598,179 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Gift cart management routes
+  // app.post("/api/cart/gift", async (req: any, res) => {
+  //   try {
+  //     const { giftId, name, type, imageUrl, price, quantity, giftCategoryId } = req.body;
+
+  //     console.log("Gift cart request received:", {
+  //       giftId, name, type, giftCategoryId,
+  //       hasGiftId: !!giftId,
+  //       hasGiftCategoryId: !!giftCategoryId
+  //     });
+
+  //     // Check for authenticated user first
+  //     const sessionUserId = (req.session as any).userId;
+  //     const isCustomerAuth = (req.session as any).isCustomerAuth;
+  //     let userId = null;
+
+  //     if (sessionUserId && isCustomerAuth) {
+  //       userId = sessionUserId;
+  //     } else if (req.isAuthenticated && req.isAuthenticated()) {
+  //       userId = req.user.claims.sub;
+  //     }
+
+  //     // Check if user has any books in cart before allowing gift
+  //     let hasBooks = false;
+  //     if (userId) {
+  //       const cartItems = await storage.getCartItems(userId);
+  //       hasBooks = hasNonGiftBooks(cartItems);
+  //     } else {
+  //       const guestCart = (req.session as any).guestCart || [];
+  //       hasBooks = hasNonGiftBooks(guestCart);
+  //     }
+
+  //     if (!hasBooks) {
+  //       return res.status(400).json({ message: "You must have at least one book in your cart to select a gift" });
+  //     }
+
+  //     let giftItem;
+
+  //     // Handle gift category selection
+  //     if (giftCategoryId) {
+  //       console.log("Processing gift category selection:", giftCategoryId);
+
+  //       // Debug: Check if method exists
+  //       console.log("Storage methods available:", Object.getOwnPropertyNames(storage));
+  //       console.log("getGiftCategoryById exists:", typeof storage.getGiftCategoryById);
+
+  //       // Get the gift category details
+  //       const giftCategory = await storage.getGiftCategoryById(giftCategoryId);
+  //       if (!giftCategory) {
+  //         return res.status(404).json({ message: "Gift category not found" });
+  //       }
+
+  //       giftItem = {
+  //         giftId: giftCategory.id,
+  //         name: giftCategory.name,
+  //         type: giftCategory.type,
+  //         imageUrl: giftCategory.imageUrl,
+  //         price: 0, // Always free
+  //         quantity: 1, // Always 1
+  //         isGift: true
+  //       };
+  //     } else {
+  //       // Handle individual gift item selection
+  //       giftItem = {
+  //         giftId,
+  //         name,
+  //         type,
+  //         imageUrl,
+  //         price: 0, // Always free
+  //         quantity: 1, // Always 1
+  //         isGift: true
+  //       };
+  //     }
+
+  //     console.log("Gift item created:", giftItem);
+
+  //     if (userId) {
+  //       // For authenticated users, store in database session or custom field
+  //       // For now, use session storage
+  //       (req.session as any).giftItem = giftItem;
+  //     } else {
+  //       // For guest users, store in session
+  //       (req.session as any).giftItem = giftItem;
+  //     }
+
+  //     res.json({ message: "Gift added to cart", gift: giftItem });
+  //   } catch (error) {
+  //     console.error("Error adding gift to cart:", error);
+  //     res.status(500).json({ message: "Failed to add gift to cart" });
+  //   }
+  // });
+
+
+
+
   app.post("/api/cart/gift", async (req: any, res) => {
     try {
-      const { giftId, name, type, imageUrl, price, quantity, giftCategoryId } = req.body;
-
-      console.log("Gift cart request received:", {
-        giftId, name, type, giftCategoryId,
-        hasGiftId: !!giftId,
-        hasGiftCategoryId: !!giftCategoryId
-      });
+      const { giftId, giftCategoryId, quantity, engrave, engravingMessage } = req.body;
 
       // Check for authenticated user first
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
-
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
         userId = req.user.claims.sub;
       }
 
-      // Check if user has any books in cart before allowing gift
-      let hasBooks = false;
+
+      // Prepare gift cart entry
+      const giftCartEntry = {
+        userId,
+        giftCategoryId: giftCategoryId || null,
+        giftItemId: giftId || null,
+        quantity: quantity || 1,
+        engrave: !!engrave,
+        engravingMessage: engravingMessage || null,
+        addedAt: new Date(),
+      };
+
+      // Save to database (for authenticated users)
       if (userId) {
-        const cartItems = await storage.getCartItems(userId);
-        hasBooks = hasNonGiftBooks(cartItems);
-      } else {
-        const guestCart = (req.session as any).guestCart || [];
-        hasBooks = hasNonGiftBooks(guestCart);
-      }
-
-      if (!hasBooks) {
-        return res.status(400).json({ message: "You must have at least one book in your cart to select a gift" });
-      }
-
-      let giftItem;
-
-      // Handle gift category selection
-      if (giftCategoryId) {
-        console.log("Processing gift category selection:", giftCategoryId);
-
-        // Debug: Check if method exists
-        console.log("Storage methods available:", Object.getOwnPropertyNames(storage));
-        console.log("getGiftCategoryById exists:", typeof storage.getGiftCategoryById);
-
-        // Get the gift category details
-        const giftCategory = await storage.getGiftCategoryById(giftCategoryId);
-        if (!giftCategory) {
-          return res.status(404).json({ message: "Gift category not found" });
-        }
-
-        giftItem = {
-          giftId: giftCategory.id,
-          name: giftCategory.name,
-          type: giftCategory.type,
-          imageUrl: giftCategory.imageUrl,
-          price: 0, // Always free
-          quantity: 1, // Always 1
-          isGift: true
-        };
-      } else {
-        // Handle individual gift item selection
-        giftItem = {
-          giftId,
-          name,
-          type,
-          imageUrl,
-          price: 0, // Always free
-          quantity: 1, // Always 1
-          isGift: true
-        };
-      }
-
-      console.log("Gift item created:", giftItem);
-
-      if (userId) {
-        // For authenticated users, store in database session or custom field
-        // For now, use session storage
-        (req.session as any).giftItem = giftItem;
+        // Always replace any existing gift for this user
+        const result = await storage.replaceGiftCartItemForUser(userId, giftCartEntry);
+        return res.json({ message: "Gift added to cart", gift: result });
       } else {
         // For guest users, store in session
-        (req.session as any).giftItem = giftItem;
+        (req.session as any).giftItem = {
+          ...giftCartEntry,
+          isGift: true
+        };
+        req.session.save(() => {
+          res.json({ message: "Gift added to cart (guest)", gift: (req.session as any).giftItem });
+        });
       }
-
-      res.json({ message: "Gift added to cart", gift: giftItem });
     } catch (error) {
       console.error("Error adding gift to cart:", error);
       res.status(500).json({ message: "Failed to add gift to cart" });
     }
   });
 
-  app.delete("/api/cart/gift", async (req: any, res) => {
+  // app.delete("/api/cart/gift", async (req: any, res) => {
+  //   try {
+  //     // Check for authenticated user first
+  //     const sessionUserId = (req.session as any).userId;
+  //     const isCustomerAuth = (req.session as any).isCustomerAuth;
+  //     let userId = null;
+
+  //     if (sessionUserId && isCustomerAuth) {
+  //       userId = sessionUserId;
+  //     } else if (req.isAuthenticated && req.isAuthenticated()) {
+  //       userId = req.user.claims.sub;
+  //     }
+
+  //     if (userId) {
+  //       // Remove gift from authenticated user's session
+  //       (req.session as any).giftItem = null;
+  //     } else {
+  //       // Remove gift from guest session
+  //       (req.session as any).giftItem = null;
+  //     }
+
+  //     res.json({ message: "Gift removed from cart" });
+  //   } catch (error) {
+  //     console.error("Error removing gift from cart:", error);
+  //     res.status(500).json({ message: "Failed to remove gift from cart" });
+  //   }
+  // });
+
+
+  app.delete("/api/removeGift", async (req: any, res) => {
     try {
-      // Check for authenticated user first
+      // Get user ID from session/auth (adjust as needed for your auth system)
       const sessionUserId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
       let userId = null;
@@ -2706,18 +2781,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId = req.user.claims.sub;
       }
 
-      if (userId) {
-        // Remove gift from authenticated user's session
-        (req.session as any).giftItem = null;
-      } else {
-        // Remove gift from guest session
-        (req.session as any).giftItem = null;
+      if (!userId || typeof userId !== 'string') {
+        return res.status(401).json({ error: "Unauthorized" });
       }
-
-      res.json({ message: "Gift removed from cart" });
+      const result = await storage.removeForUser(userId);
+      if (!result || result.length === 0) {
+        return res.json({ success: true, message: "No gift cart entry found" });
+      }
+      return res.json({ success: true });
     } catch (error) {
-      console.error("Error removing gift from cart:", error);
-      res.status(500).json({ message: "Failed to remove gift from cart" });
+      return res.status(500).json({ error: "Failed to remove gift cart item" });
     }
   });
 

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,8 @@ export default function GiftItemsPage() {
     if (cartCount === 0) {
       setSelectedGift(null);
     }
-    const giftBookId = cartItems.find(item => item?.isGift)?.book?.id ?? null;    // setSelectedGift(cartItems.find(item => item.book)?.giftCategoryId?.toString() || null);
+    const giftBookId = cartItems.find(item => item?.isGift)?.book?.categoryId ?? null;    // setSelectedGift(cartItems.find(item => item.book)?.giftCategoryId?.toString() || null);
+    
     setSelectedGift(giftBookId);
 
   }, [cartItems]);
@@ -54,15 +54,21 @@ export default function GiftItemsPage() {
 
   // Add gift to cart mutation
   const addGiftMutation = useMutation({
-    mutationFn: async (giftId: number) => {
-      const response = await apiRequest("POST", "/api/cart/gift", {
-        giftId: giftId,
-        giftCategoryId: giftId
-      });
+    mutationFn: async (giftId: number, options?: { engrave?: boolean; engravingMessage?: string }) => {
+      const payload: any = {
+        giftId,
+        giftCategoryId: giftId,
+        quantity: 1,
+      };
+      if (options?.engrave) {
+        payload.engrave = true;
+        payload.engravingMessage = options.engravingMessage || "";
+      }
+      const response = await apiRequest("POST", "/api/cart/gift", payload);
       return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    onSuccess: async () => {
+     await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Selected as your free gift!",
         description: "Your free gift has been added to cart",
@@ -106,7 +112,7 @@ export default function GiftItemsPage() {
   const hasBookInCart = cartCount > 0;
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Choose Your Free Gift! | A2Z BOOKSHOP"
         description="Select a wonderful free gift with your book purchase at A2Z BOOKSHOP. Browse our exciting collection of complimentary items and make your order extra special!"
@@ -531,6 +537,6 @@ export default function GiftItemsPage() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

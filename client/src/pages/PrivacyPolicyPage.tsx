@@ -1,10 +1,9 @@
-import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { Shield, Lock, Eye, Database, Users, Mail, Check } from "lucide-react";
 
 export default function PrivacyPolicyPage() {
   return (
-    <Layout>
+    <>
       <SEO
         title="Privacy Policy"
         description="Read A2Z BOOKSHOP's privacy policy. Learn how we protect your personal information, handle data, and maintain your privacy."
@@ -322,6 +321,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

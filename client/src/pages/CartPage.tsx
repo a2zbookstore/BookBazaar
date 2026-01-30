@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles } from "lucide-react";
-import Layout from "@/components/Layout";
+import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles, Truck } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
-// import {  } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 // Image helper function
@@ -73,7 +72,8 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 }
 
 export default function CartPage() {
-  const { cartItems, updateCartItem, removeFromCart, isLoading,cartCount } = useGlobalContext();
+  const { cartItems, updateCartItem, removeFromCart, isLoading, cartCount } = useGlobalContext();
+  const queryClient = useQueryClient();
   const [optimisticCartItems, setOptimisticCartItems] = useState<CartItem[] | null>(null);
   const [optimisticallyRemovedId, setOptimisticallyRemovedId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -282,6 +282,41 @@ export default function CartPage() {
     };
   }, []);
 
+  const handleRemoveGift = async (itemId: number) => {
+    if (removingItemId !== null) return;
+    setRemovingItemId(itemId);
+
+    try {
+      const res = await fetch('/api/removeGift', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.message || 'Failed to remove gift');
+      }
+      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      setGiftItem(null);
+      localStorage.removeItem('giftDetails');
+      localStorage.removeItem('selectedGift');
+      toast({
+        title: "Gift Removed",
+        description: "Your gift has been removed from the cart.",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to remove gift",
+        description: `${error ? error : 'Failed to remove gift. Please try again.'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setRemovingItemId(null);
+    }
+    return;
+  }
+
   const handleRemoveItem = async (itemId: number) => {
     if (removingItemId !== null) return; // Prevent double click
     setRemovingItemId(itemId);
@@ -314,18 +349,18 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Loading cart...</div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   const isCartEmpty = (optimisticCartItems !== null ? optimisticCartItems.length === 0 : cartItems.length === 0);
   if (isCartEmpty) {
     return (
-      <Layout>
+      <>
         <div className="container mx-auto px-4 mt-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
@@ -344,12 +379,12 @@ export default function CartPage() {
 
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <SEO
         title="Shopping Cart"
         description="Review your cart and proceed to checkout. Buy books online at A2Z BOOKSHOP with secure payment and fast shipping."
@@ -432,7 +467,7 @@ export default function CartPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleRemoveItem(item.id)}
+                                onClick={() => !isGift ? handleRemoveItem(item.id) : handleRemoveGift(item.id)}
                                 className="text-red-500 hover:bg-red-700 hover:text-white hover:rounded-full"
                                 disabled={removingItemId === item.id}
                               >
@@ -447,7 +482,7 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
+                        {!isGift && <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -483,14 +518,12 @@ export default function CartPage() {
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
-                        </div>
+                        </div>}
 
                         <div className="text-right">
-                          {isGift ? (
-                            <p className="text-xl font-bold text-green-600">FREE</p>
-                          ) : (
+                          {!isGift &&
                             <ItemPrice bookPrice={parseFloat(item.book.price)} quantity={displayQuantity} />
-                          )}
+                          }
                         </div>
                       </div>
                     </div>
@@ -697,6 +730,6 @@ export default function CartPage() {
           </div>
         </div>
       </div>
-    </Layout >
+    </ >
   );
 }
