@@ -388,28 +388,30 @@ export class DatabaseStorage implements IStorage {
     if (trending !== undefined) conditions.push(eq(books.trending, trending));
     if (newArrival !== undefined) conditions.push(eq(books.newArrival, newArrival));
     if (boxSet !== undefined) conditions.push(eq(books.boxSet, boxSet));
-    if (search) {
-      const searchTerm = search.toLowerCase();
+    if (search?.trim()) {
+      const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const normalizedSearchTerm = normalize(search);
+      const normalizeField = (field: any) =>
+        sql`REGEXP_REPLACE(LOWER(${field}), '[^a-z0-9]', '', 'g')`;
       if (titleOnly) {
-        // Search in title and publisher when titleOnly is true
         conditions.push(
           or(
-            sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.publisher}) LIKE ${`%${searchTerm}%`}`
+            sql`${normalizeField(books.title)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.publisher)} LIKE ${`%${normalizedSearchTerm}%`}`
           )
         );
       } else {
-        // Search across multiple fields
         conditions.push(
           or(
-            sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.isbn}) LIKE ${`%${searchTerm}%`}`,
-            sql`LOWER(${books.description}) LIKE ${`%${searchTerm}%`}`
+            sql`${normalizeField(books.title)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.author)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.isbn)} LIKE ${`%${normalizedSearchTerm}%`}`,
+            sql`${normalizeField(books.description)} LIKE ${`%${normalizedSearchTerm}%`}`
           )
         );
       }
     }
+
     if (minPrice) conditions.push(sql`${books.price} >= ${minPrice}`);
     if (maxPrice) conditions.push(sql`${books.price} <= ${maxPrice}`);
 
@@ -421,9 +423,6 @@ export class DatabaseStorage implements IStorage {
       .from(books)
       .where(whereClause);
 
-    // Get books with simplified ordering
-    // Dynamic ordering
-    // Map allowed sort columns to books table properties
     const sortColumns: Record<string, any> = {
       id: books.id,
       title: books.title,
@@ -489,13 +488,8 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBook(id: number): Promise<void> {
     try {
-      // Allow deletion of books even if they have been ordered
-      // Order history will remain intact in the order_items table
-
-      // First, delete all cart items related to this book
       await db.delete(cartItems).where(eq(cartItems.bookId, id));
 
-      // Then delete the book
       const result = await db.delete(books).where(eq(books.id, id));
 
       if (result.rowCount === 0) {

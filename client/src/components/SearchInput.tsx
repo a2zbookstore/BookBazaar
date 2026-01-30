@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Cross, Search, X } from "lucide-react";
+import { useSearch } from "wouter";
 
 interface SearchInputProps {
   placeholder?: string;
@@ -27,22 +28,31 @@ export default function SearchInput({
   const [location, setLocation] = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-
-  // Typing animation for placeholder
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
+  const search = useSearch();
 
 
-  // On mount, read search query from URL if present
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
 
   useEffect(() => {
-    const queryString = location.split('?')[1] || '';
-    const params = new URLSearchParams(queryString);
-    const urlQuery = params.get('search') || '';
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 1000); // wait 1000ms after typing stops
 
-    if (urlQuery !== searchQuery) {
-      setSearchQuery(urlQuery);
-    }
-  }, [location]);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  
+
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const urlQuery = params.get("search") || "";
+    setSearchQuery(urlQuery);
+  }, [search]);
+
 
   useEffect(() => {
     if (!enableTypingAnimation || searchQuery) {
@@ -57,7 +67,7 @@ export default function SearchInput({
       : placeholder;
 
     let currentIndex = 0;
-    const typingSpeed = 100; // milliseconds per character
+    const typingSpeed = 1000; // milliseconds per character
     const pauseBeforeRestart = 2000; // pause at end before restarting
 
     const typeNextChar = () => {
@@ -66,7 +76,6 @@ export default function SearchInput({
         currentIndex++;
         setTimeout(typeNextChar, typingSpeed);
       } else {
-        // Pause at end, then restart
         setTimeout(() => {
           currentIndex = 0;
           setTypedPlaceholder(staticPart);
@@ -84,26 +93,26 @@ export default function SearchInput({
 
   // Fetch search suggestions
   const { data: suggestions = [] } = useQuery<string[]>({
-    queryKey: ["/api/books/search-suggestions", searchQuery],
+    queryKey: ["/api/books/search-suggestions", debouncedQuery],
     queryFn: async () => {
-      if (searchQuery.length < 2) return [];
-      const response = await fetch(`/api/books/search-suggestions?q=${encodeURIComponent(searchQuery)}`);
+      if (debouncedQuery.length < 3) return [];
+      const response = await fetch(
+        `/api/books/search-suggestions?q=${encodeURIComponent(debouncedQuery)}`
+      );
       return response.json();
     },
-    enabled: searchQuery.length >= 2,
+    enabled: debouncedQuery.length >= 3,
   });
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Search submitted with query:", searchQuery);
     if (searchQuery.trim()) {
       setShowSuggestions(false);
       const searchTerm = searchQuery.trim();
       if (onSearch) {
         onSearch(searchTerm);
       } else {
-        console.log("Navigating to catalog with search:", searchTerm);
-        // Use client-side navigation to prevent full page reload
         setLocation(`/catalog?search=${encodeURIComponent(searchTerm)}`);
       }
     }
@@ -132,7 +141,6 @@ export default function SearchInput({
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
-    // Delay hiding suggestions to allow for clicks
     setTimeout(() => {
       if (!suggestionsRef.current?.contains(e.relatedTarget as Node)) {
         setShowSuggestions(false);
@@ -186,6 +194,7 @@ export default function SearchInput({
           <Button
             type="submit"
             className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-8 sm:w-8 rounded-full bg-primary-aqua hover:bg-secondary-aqua p-0 transition-colors"
+            onClick={handleSubmit}
           >
             <Search className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
@@ -202,7 +211,7 @@ export default function SearchInput({
               <li key={index}>
                 <button
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="w-full flex items-center px-3 sm:px-5 py-2 sm:py-3 text-left hover:bg-primary-aqua/70 focus:bg-primary-aqua/20 transition-colors duration-150 outline-none"
+                  className="w-full hover:bg-gray-100 flex items-center px-3 sm:px-5 py-2 sm:py-3 text-left hover:bg-primary-aqua/70 focus:bg-primary-aqua/20 transition-colors duration-150 outline-none"
                 >
                   <Search className="h-3.5 sm:h-4 w-3.5 sm:w-4 min-w-[14px] sm:min-w-[16px] shrink-0 text-primary-aqua mr-2 sm:mr-3" />
                   <span className="text-sm sm:text-base text-gray-800 font-medium truncate">{suggestion}</span>

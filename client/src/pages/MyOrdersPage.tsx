@@ -344,7 +344,7 @@ export default function MyOrdersPage() {
                   You haven't placed any orders yet. Start shopping to see your orders here.
                 </p>
                 <Link href="/catalog">
-                  <Button className="bg-primary-aqua hover:bg-secondary-aqua">
+                  <Button className="bg-primary-aqua hover:bg-secondary-aqua rounded-full">
                     Browse Books
                   </Button>
                 </Link>
