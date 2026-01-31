@@ -645,3 +645,15 @@ button:active, .button:active {
 .animate-rotate-bounce {
   animation: rotateBounce 1.2s cubic-bezier(.68,-0.55,.27,1.55) both;
 }
+
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
