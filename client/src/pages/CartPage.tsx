@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles, Truck, Delete, Trash } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles, Truck } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -229,21 +229,7 @@ export default function CartPage() {
   }, [cartItems, updateCartItem, toast]);
 
   const handleUpdateQuantity = (itemId: number, newQuantity: number) => {
-    const stock = cartItems.find(item => item.id === itemId)?.book.stock;
-    if (stock !== undefined && newQuantity > stock) {
-      toast({
-        title: "Insufficient Stock",
-        description: `Only ${stock} item(s) available in stock. Please adjust your quantity.`,
-      })
-      setLocalQuantities(prev => ({
-        ...prev,
-        [itemId]: stock
-      }));
-      return;
-    }
-    if (newQuantity < 1) {
-      handleRemoveItem(itemId);
-    };
+    if (newQuantity < 1) return;
 
     setLocalQuantities(prev => ({
       ...prev,
@@ -253,23 +239,7 @@ export default function CartPage() {
   };
 
   const handleBlurUpdate = (itemId: number, newQuantity: number) => {
-
-    const stock = cartItems.find(item => item.id === itemId)?.book.stock;
-    if (stock !== undefined && newQuantity > stock) {
-      toast({
-        title: "Insufficient Stock",
-        description: `Only ${stock} item(s) available in stock. Please adjust your quantity.`,
-      })
-      setLocalQuantities(prev => ({
-        ...prev,
-        [itemId]: stock
-      }));
-      return;
-    }
-    if (newQuantity < 1) {
-      handleUpdateQuantity(itemId, 1);
-      return
-    };
+    if (newQuantity < 1) return;
 
     const currentItem = cartItems.find(item => item.id === itemId);
     if (currentItem && currentItem.quantity === newQuantity) {
@@ -517,12 +487,9 @@ export default function CartPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleUpdateQuantity(item.id, displayQuantity - 1)}
+                            disabled={displayQuantity <= 1 || isUpdating === item.id}
                           >
-                            {displayQuantity > 1
-                              ?
-                              <Minus className="h-4 w-4" />
-                              :
-                              <Trash className="h-4 w-4 text-red-700" />}
+                            <Minus className="h-4 w-4" />
                           </Button>
                           <input
                             type="number"
@@ -530,16 +497,18 @@ export default function CartPage() {
                             value={displayQuantity}
                             onChange={(e) => {
                               const value = parseInt(e.target.value);
-                              setLocalQuantities(prev => ({
-                                ...prev,
-                                [item.id]: value
-                              }));
+                              if (!isNaN(value) && value >= 1) {
+                                handleUpdateQuantity(item.id, value);
+                              }
                             }}
                             onBlur={(e) => {
                               const value = parseInt(e.target.value);
-                              handleBlurUpdate(item.id, value);
+                              if (!isNaN(value) && value >= 1) {
+                                handleBlurUpdate(item.id, value);
+                              }
                             }}
-                            className="w-12 text-center border rounded px-1 py-1 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-moz-appearance]:textfield" disabled={isUpdating === item.id}
+                            className="w-12 text-center border rounded px-1 py-1"
+                            disabled={isUpdating === item.id}
                           />
                           <Button
                             variant="outline"

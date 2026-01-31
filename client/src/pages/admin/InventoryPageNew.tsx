@@ -754,7 +754,6 @@ export default function InventoryPageNew() {
                       <option value="Hardcover">Hardcover</option>
                       <option value="Softcover">Softcover</option>
                       <option value="No Binding">No Binding</option>
-                      <option value="No Binding">Spiral</option>
                     </select>
                   </div>
                   <div>
