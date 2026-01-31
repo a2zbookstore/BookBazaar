@@ -11,11 +11,9 @@ import { useUserLocation } from "@/contexts/userLocationContext";
 
 interface CategoryCarouselProps {
   category: Category;
-  currentSlide: number;
-  onSlideChange: (slide: number) => void;
 }
 
-function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCarouselProps) {
+function CategoryCarousel({ category }: CategoryCarouselProps) {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -76,8 +74,6 @@ function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCar
 
           <BookCarousel
             books={categoryBooks}
-            currentSlide={currentSlide}
-            onSlideChange={onSlideChange}
             emptyMessage={`No ${category.name} books available at the moment.`}
             showEmptyBrowseButton={false}
             isLoading={isLoading}
@@ -92,8 +88,6 @@ function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCar
           </div>
           <BookCarousel
             books={[]}
-            currentSlide={0}
-            onSlideChange={() => { }}
             emptyMessage=""
             showEmptyBrowseButton={false}
             isLoading={true}
@@ -105,15 +99,15 @@ function CategoryCarousel({ category, currentSlide, onSlideChange }: CategoryCar
 }
 
 export default function HomePage() {
-  const [nfpaSlide, setNfpaSlide] = useState(0);
-  const [dsmSlide, setDsmSlide] = useState(0);
-  const [bestsellersSlide, setBestsellersSlide] = useState(0);
-  const [featuredSlide, setFeaturedSlide] = useState(0);
-  const [trendingSlide, setTrendingSlide] = useState(0);
-  const [newArrivalsSlide, setNewArrivalsSlide] = useState(0);
-  const [boxSetSlide, setBoxSetSlide] = useState(0);
-  const [hasItemsInCart, setHasItemsInCart] = useState(false);
-  const [categorySlides, setCategorySlides] = useState<Record<number, number>>({});
+  // const [nfpaSlide, setNfpaSlide] = useState(0);
+  // const [dsmSlide, setDsmSlide] = useState(0);
+  // const [bestsellersSlide, setBestsellersSlide] = useState(0);
+  // const [featuredSlide, setFeaturedSlide] = useState(0);
+  // const [trendingSlide, setTrendingSlide] = useState(0);
+  // const [newArrivalsSlide, setNewArrivalsSlide] = useState(0);
+  // const [boxSetSlide, setBoxSetSlide] = useState(0);
+  // const [hasItemsInCart, setHasItemsInCart] = useState(false);
+  // const [categorySlides, setCategorySlides] = useState<Record<number, number>>({});
 
   // Visibility states for lazy loading
   const [isNfpaVisible, setIsNfpaVisible] = useState(false);
@@ -239,15 +233,6 @@ export default function HomePage() {
     queryKey: ["/api/categories"],
   });
 
-  const { data: cartItems = [], refetch } = useQuery<any[]>({
-    queryKey: ["/api/cart"],
-  });
-
-  useEffect(() => {
-    setHasItemsInCart(Array.isArray(cartItems) && cartItems.length > 0);
-  }, [cartItems]);
-
-
   return (
     <>
       <SEO
@@ -285,8 +270,6 @@ export default function HomePage() {
         </div>
         <BookCarousel
           books={nfpaBooks}
-          currentSlide={nfpaSlide}
-          onSlideChange={setNfpaSlide}
           bgGradient="bg-gradient-to-r from-red-50 via-orange-50 to-amber-50"
           emptyMessage="No NFPA books available at the moment."
           showEmptyBrowseButton={false}
@@ -309,8 +292,6 @@ export default function HomePage() {
         </div>
         <BookCarousel
           books={dsmBooks}
-          currentSlide={dsmSlide}
-          onSlideChange={setDsmSlide}
           bgGradient="bg-gradient-to-r from-purple-50 via-violet-50 to-fuchsia-50"
           emptyMessage="No DSM books available at the moment."
           showEmptyBrowseButton={false}
@@ -333,8 +314,6 @@ export default function HomePage() {
         </div>
         <BookCarousel
           books={bestsellerBooks}
-          currentSlide={bestsellersSlide}
-          onSlideChange={setBestsellersSlide}
           bgGradient="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50"
           emptyMessage="Loading bestsellers..."
           showEmptyBrowseButton={false}
@@ -357,8 +336,6 @@ export default function HomePage() {
         </div>
         <BookCarousel
           books={featuredBooks}
-          currentSlide={featuredSlide}
-          onSlideChange={setFeaturedSlide}
           emptyMessage="No featured books available at the moment."
           isLoading={featuredLoading || !isFeaturedVisible}
         />
@@ -379,8 +356,6 @@ export default function HomePage() {
         </div>
         <BookCarousel
           books={trendingBooks}
-          currentSlide={trendingSlide}
-          onSlideChange={setTrendingSlide}
           bgGradient="bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50"
           emptyMessage="No trending books available at the moment."
           isLoading={trendingLoading || !isTrendingVisible}
@@ -402,8 +377,6 @@ export default function HomePage() {
         </div>
         <BookCarousel
           books={newArrivals}
-          currentSlide={newArrivalsSlide}
-          onSlideChange={setNewArrivalsSlide}
           bgGradient="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50"
           emptyMessage="No new arrivals available at the moment."
           isLoading={newArrivalsLoading || !isNewArrivalsVisible}
@@ -425,8 +398,6 @@ export default function HomePage() {
         </div>
         <BookCarousel
           books={boxSetBooks}
-          currentSlide={boxSetSlide}
-          onSlideChange={setBoxSetSlide}
           bgGradient="bg-gradient-to-r from-purple-50 via-violet-50 to-indigo-50"
           emptyMessage="No box set collections available at the moment."
           isLoading={boxSetLoading || !isBoxSetVisible}
@@ -438,8 +409,6 @@ export default function HomePage() {
         <CategoryCarousel
           key={category.id}
           category={category}
-          currentSlide={categorySlides[category.id] || 0}
-          onSlideChange={(slide) => setCategorySlides(prev => ({ ...prev, [category.id]: slide }))}
         />
       ))}
     </>
