@@ -237,7 +237,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-gradient-to-b from-gray-900 to-gray-950 text-white border-t border-gray-800">
-      <div className="container-custom px-3 md:px-6 py-8">
+      <div className="container-custom px-3 md:px-6 sm:py-8">
         <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
           {/* Brand Section */}
           <div>
@@ -247,7 +247,7 @@ export default function Footer() {
               </h3>
               {user?.role === "admin" && <SecretAdminAccess />}
             </div>
-            <p className="text-gray-400 leading-relaxed mb-4 text-sm">
+            <p className="text-gray-400 leading-relaxed mb-2 sm:mb-4 text-sm">
               Your trusted partner in discovering rare, collectible, and contemporary books from around the world.
             </p>
 
@@ -356,7 +356,7 @@ export default function Footer() {
         </div>
 
         {/* Footer Bottom */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-2 pt-4 text-gray-500">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-2 sm:pt-4 text-gray-500">
           <p className="text-xs">
             © 2026 A<span className="text-red-500">2</span>Z BOOKSHOP. All rights reserved.
           </p>

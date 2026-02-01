@@ -84,7 +84,7 @@ export default function CartPage() {
   const [removingItemId, setRemovingItemId] = useState<number | null>(null);
   const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
   const updateTimeouts = React.useRef<Record<number, NodeJS.Timeout>>({});
-  const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
+  const hasNonGiftBooks = cartItems.some(item => item.isGift === true);
 
   useEffect(() => {
     const currentItems = optimisticCartItems !== null ? optimisticCartItems : cartItems;
@@ -100,12 +100,12 @@ export default function CartPage() {
     const savedGift = localStorage.getItem('giftDetails');
     if (savedGift && cartItems.length > 0 && hasNonGiftBooks) {
       try {
-        setGiftItem(JSON.parse(savedGift));
+        // setGiftItem(JSON.parse(savedGift));
       } catch (error) {
         console.error('Error parsing gift details:', error);
       }
     } else {
-      setGiftItem(null);
+      // setGiftItem(null);
       // Clear localStorage if no books remain and show notification
       if (!hasNonGiftBooks && localStorage.getItem('selectedGift')) {
         localStorage.removeItem('giftDetails');
@@ -119,6 +119,7 @@ export default function CartPage() {
         }
       }
     }
+
   }, [cartItems, hasNonGiftBooks, toast]);
 
   // Calculate cart totals using dynamic shipping rates
@@ -328,7 +329,7 @@ export default function CartPage() {
         throw new Error(data?.message || 'Failed to remove gift');
       }
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      setGiftItem(null);
+      // setGiftItem(null);
       localStorage.removeItem('giftDetails');
       localStorage.removeItem('selectedGift');
       toast({
@@ -438,25 +439,27 @@ export default function CartPage() {
               const displayQuantity = localQuantities[item.id] ?? item.quantity;
 
               return (
-                <Card key={item.id} className="p-4 rounded-xl">
+                <Card key={item.id} className="p-2 sm:p-4 rounded-xl">
                   <div className="flex items-center gap-4">
                     {!isGift && item.book?.id ? (
-                      <Link href={`/book/${item.book.id}`} className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
-                        <img
-                          src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
-                          alt={title || 'Item'}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
-                          }}
-                        />
-                      </Link>
+                      <div className="w-16 h-20 sm:w-20 sm:h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                        <Link href={`/books/${item.book.id}`} className="block w-16 h-20 sm:w-20 sm:h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+                          <img
+                            src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
+                            alt={title || 'Item'}
+                            className="block w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
+                            }}
+                          />
+                        </Link>
+                      </div>
                     ) : (
-                      <div className="w-20 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                      <div className="w-16 h-20 sm:w-20 sm:h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                         <img
                           src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
                           alt={title || 'Item'}
-                          className="w-full h-full object-cover"
+                          className="block w-full h-full object-cover"
                           onError={(e) => {
                             e.currentTarget.src = isGift
                               ? 'https://via.placeholder.com/300x400/f0f0f0/666?text=Gift'
@@ -466,90 +469,138 @@ export default function CartPage() {
                       </div>
                     )}
 
+
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
+                      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 flex-nowrap">
+                        {/* LEFT CONTENT */}
+                        <div className="min-w-0 flex-1">
                           {!isGift && item.book?.id ? (
                             <Link href={`/books/${item.book.id}`}>
-                              <h3 className="font-semibold text-gray-900 mb-1 cursor-pointer hover:text-primary-aqua transition-colors">
-                                {title}
+                              <h3
+                                className="line-clamp-1 font-semibold text-gray-900 cursor-pointer transition-colors
+                                  hover:text-primary-aqua text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1 leading-snug"
+                              >
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="line-clamp-1 ">{title}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {title}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+
                               </h3>
                             </Link>
                           ) : (
-                            <h3 className="font-semibold text-gray-900 mb-1">
-                              {title}
+                            <h3
+                              className="line-clamp-2 font-semibold text-gray-900 cursor-pointer transition-colors 
+                              hover:text-primary-aqua text-sm sm:text-base 
+                              lg:text-lg mb-0.5 sm:mb-1 leading-snug break-words overflow-hidden">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="line-clamp-1 ">{title}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {title}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </h3>
                           )}
+
                           {author && (
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p
+                              className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 truncate"
+                            >
                               by {author}
                             </p>
                           )}
+
                           {isGift && (
-                            <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                            <span
+                              className="inline-block bg-green-100 text-green-800 text-[10px] sm:text-xs
+                                  px-2 py-0.5 rounded "
+                            >
                               FREE Gift
                             </span>
                           )}
                         </div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => !isGift ? handleRemoveItem(item.id) : handleRemoveGift(item.id)}
-                                className="text-red-500 hover:bg-red-700 hover:text-white hover:rounded-full"
-                                disabled={removingItemId === item.id}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Remove from cart</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+
+                        {/* RIGHT ACTION */}
+                        <div className="flex-shrink-0">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    !isGift
+                                      ? handleRemoveItem(item.id)
+                                      : handleRemoveGift(item.id)
+                                  }
+                                  className="text-red-500 hover:bg-red-700 hover:text-white hover:rounded-full"
+                                  disabled={removingItemId === item.id}
+                                >
+                                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Remove from cart</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </div>
 
+
+
                       <div className="flex justify-between items-center">
-                        {!isGift && <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, displayQuantity - 1)}
-                          >
-                            {displayQuantity > 1
-                              ?
-                              <Minus className="h-4 w-4" />
-                              :
-                              <Trash className="h-4 w-4 text-red-700" />}
-                          </Button>
-                          <input
-                            type="number"
-                            min="1"
-                            value={displayQuantity}
-                            onChange={(e) => {
-                              const value = parseInt(e.target.value);
-                              setLocalQuantities(prev => ({
-                                ...prev,
-                                [item.id]: value
-                              }));
-                            }}
-                            onBlur={(e) => {
-                              const value = parseInt(e.target.value);
-                              handleBlurUpdate(item.id, value);
-                            }}
-                            className="w-12 text-center border rounded px-1 py-1 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-moz-appearance]:textfield" disabled={isUpdating === item.id}
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, displayQuantity + 1)}
-                            disabled={isUpdating === item.id}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>}
+                        {!isGift &&
+                          <div className="flex items-center gap-1 sm:gap:2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, displayQuantity - 1)}
+                              className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                            >
+                              {displayQuantity > 1 ? (
+                                <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                              ) : (
+                                <Trash className="h-3 w-3 sm:h-4 sm:w-4 text-red-700" />
+                              )}
+                            </Button>
+
+                            <input
+                              type="number"
+                              min="1"
+                              value={displayQuantity}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                setLocalQuantities(prev => ({
+                                  ...prev,
+                                  [item.id]: value
+                                }));
+                              }}
+                              onBlur={(e) => {
+                                const value = parseInt(e.target.value);
+                                handleBlurUpdate(item.id, value);
+                              }}
+                              className="w-12 text-center border rounded px-1 py-1 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-moz-appearance]:textfield" disabled={isUpdating === item.id}
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, displayQuantity + 1)}
+                              disabled={isUpdating === item.id}
+                              className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                            >
+                              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </div>}
 
                         <div className="text-right">
                           {!isGift &&
@@ -564,7 +615,7 @@ export default function CartPage() {
             })}
 
             {/* Gift Item Display */}
-            {giftItem && (
+            {/* {giftItem && (
               <Card className="p-4 border-green-200 bg-green-50">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-green-600 font-semibold">🎁 Selected Gift:</span>
@@ -589,39 +640,47 @@ export default function CartPage() {
                   </div>
                 </div>
               </Card>
-            )}
+            )} */}
 
             {/* Gift Reminder Banner - Show only if user has books but no gift selected */}
-            {hasNonGiftBooks && !giftItem && (
+            {!hasNonGiftBooks && cartItems.length > 0 && (
               <Card className="rounded-xl bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 border-2 border-purple-300 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full p-3 shadow-lg animate-bounce">
-                        <Gift className="h-6 w-6" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+                    {/* Left content */}
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full p-2.5 sm:p-3 shadow-lg animate-bounce flex-shrink-0">
+                        <Gift className="h-5 w-5 sm:h-6 sm:w-6" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                          <h3 className="text-sm sm:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent break-words">
                             Don't forget your FREE gift! 🎁
                           </h3>
-                          <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
+                          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 animate-pulse flex-shrink-0" />
                         </div>
-                        <p className="text-gray-700 text-sm">
+
+                        <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
                           You qualify for a complimentary gift with your purchase. Pick your favorite now!
                         </p>
                       </div>
                     </div>
-                    <Link href="/gift-items">
-                      <Button className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+
+                    {/* CTA */}
+                    <Link href="/gift-items" className="w-full sm:w-auto">
+                      <Button className="w-full sm:w-auto rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                         <Gift className="h-4 w-4 mr-2" />
                         Choose Gift
                       </Button>
                     </Link>
+
                   </div>
                 </CardContent>
               </Card>
             )}
+
           </div>
 
           {/* Order Summary */}

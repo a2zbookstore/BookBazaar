@@ -35,7 +35,7 @@ export default function SortFilterHeader({
   const displayEndIndex = endIndex ?? currentCount;
 
   return (
-    <div className="flex justify-between items-center mb-6 ">
+    <div className="flex justify-between items-center ">
       {leftContent ? (
         leftContent
       ) : showResults ? (
@@ -47,7 +47,7 @@ export default function SortFilterHeader({
       {rightContent ? (
         rightContent
       ) : sortOptions.length > 0 ? (
-        <div className="relative w-48">
+        <div className="relative w-36">
           <select
             value={sortValue}
             onChange={(e) => onSortChange(e.target.value)}

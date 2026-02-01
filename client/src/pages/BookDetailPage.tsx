@@ -39,6 +39,8 @@ export default function BookDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [shippingCost, setShippingCost] = useState<string>("");
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
+  const [expanded, setExpanded] = useState(false);
+
 
   // Shipping cost logic from BookCard
   useEffect(() => {
@@ -97,99 +99,87 @@ export default function BookDetailPage() {
 
   if (isLoading) {
     return (
-      <>
-        <div className="container-custom py-8">
-          <Breadcrumb
-            items={[
-              { label: "Catalog", href: "/catalog" },
-              { label: "Loading..." }
-            ]}
-            className="mt-6"
-          />
-          <div className="animate-pulse">
-            <div className="grid lg:grid-cols-2 gap-12">
-              {/* Book Image Skeleton */}
-              <div className="aspect-[3/4] bg-gray-200 rounded-lg max-w-md mx-auto p-6"></div>
-              {/* Book Details Skeleton */}
-              <div className="space-y-6">
-                {/* Title */}
-                <div className="bg-gray-200 h-8 rounded w-3/4 mb-2"></div>
-                {/* Author */}
-                <div className="bg-gray-200 h-6 rounded w-1/2 mb-4"></div>
-                {/* Rating */}
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="bg-gray-200 h-4 w-4 rounded"></div>
-                    ))}
-                  </div>
-                  <div className="bg-gray-200 h-4 w-16 rounded"></div>
-                </div>
-                {/* Badges */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-gray-200 h-6 w-20 rounded"></div>
+      <div className="container-custom py-8">
+        <Breadcrumb
+          items={[
+            { label: "Catalog", href: "/catalog" },
+            { label: "Loading..." }
+          ]}
+          className="mt-6"
+        />
+
+        <div className="animate-pulse">
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* LEFT: Book Image */}
+            <div className="space-y-4">
+              <div className="aspect-[3/4] max-w-md mx-auto rounded-lg bg-gray-200 p-6 sticky top-32" />
+            </div>
+
+            {/* RIGHT: Book Details */}
+            <div className="space-y-6">
+              {/* Title */}
+              <div className="h-8 bg-gray-200 rounded w-3/4" />
+              {/* Author */}
+              <div className="h-5 bg-gray-200 rounded w-1/2" />
+
+              {/* Rating */}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-4 w-4 bg-gray-200 rounded" />
                   ))}
                 </div>
-                {/* Price and Stock */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-gray-200 h-8 w-24 rounded"></div>
-                    <div className="bg-gray-200 h-4 w-32 rounded"></div>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mt-2">
-                    {/* Quantity Selector */}
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gray-200 h-4 w-8 rounded"></div>
-                      <div className="flex items-center gap-1 border rounded-lg p-1 bg-gray-100 shadow-sm">
-                        <div className="bg-gray-200 h-8 w-8 rounded"></div>
-                        <div className="bg-gray-200 h-8 w-12 rounded"></div>
-                        <div className="bg-gray-200 h-8 w-8 rounded"></div>
-                      </div>
-                    </div>
-                    {/* Add to Cart Button */}
-                    <div className="bg-gray-200 h-12 w-40 rounded-full"></div>
-                  </div>
-                </div>
-                {/* Shipping Info Skeleton */}
-                <div className="bg-blue-100 h-16 w-full rounded-lg mb-4"></div>
-                {/* Trust Badges Skeleton */}
-                <div className="grid grid-cols-2 gap-4 pt-6 border-t">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-green-100 h-10 w-10 rounded-full"></div>
-                    <div>
-                      <div className="bg-gray-200 h-4 w-24 rounded mb-1"></div>
-                      <div className="bg-gray-200 h-3 w-20 rounded"></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 h-10 w-10 rounded-full"></div>
-                    <div>
-                      <div className="bg-gray-200 h-4 w-24 rounded mb-1"></div>
-                      <div className="bg-gray-200 h-3 w-20 rounded"></div>
-                    </div>
-                  </div>
-                </div>
-                {/* Book Info Grid Skeleton */}
-                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                  {[...Array(7)].map((_, i) => (
-                    <div key={i}>
-                      <div className="bg-gray-200 h-4 w-20 rounded mb-1"></div>
-                      <div className="bg-gray-200 h-4 w-32 rounded"></div>
-                    </div>
-                  ))}
-                </div>
-                {/* Description Skeleton */}
-                <div className="bg-gray-200 h-20 w-full rounded mb-4"></div>
-                {/* Return Policy Skeleton */}
-                <div className="bg-green-100 h-16 w-full rounded-lg mb-4"></div>
+                <div className="h-4 w-20 bg-gray-200 rounded" />
               </div>
+
+              {/* Badges */}
+              <div className="flex flex-wrap gap-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-6 w-20 bg-gray-200 rounded-full" />
+                ))}
+              </div>
+
+              {/* Price */}
+              <div className="flex items-center gap-4">
+                <div className="h-8 w-24 bg-gray-200 rounded" />
+                <div className="h-4 w-32 bg-gray-200 rounded" />
+              </div>
+
+              {/* Quantity + Buttons */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-4 w-10 bg-gray-200 rounded" />
+                  <div className="flex items-center gap-1 p-1 border rounded-lg bg-gray-100">
+                    <div className="h-8 w-8 bg-gray-200 rounded" />
+                    <div className="h-8 w-12 bg-gray-200 rounded" />
+                    <div className="h-8 w-8 bg-gray-200 rounded" />
+                  </div>
+                </div>
+
+                <div className="h-12 w-full md:w-[180px] bg-gray-200 rounded-full" />
+                <div className="h-12 w-full md:w-[180px] bg-gray-200 rounded-full" />
+              </div>
+
+              {/* Delivery Info */}
+              <div className="h-20 bg-blue-100 rounded-xl" />
+
+              {/* Description */}
+              <div className="space-y-2">
+                <div className="h-5 w-32 bg-gray-200 rounded" />
+                <div className="h-4 w-full bg-gray-200 rounded" />
+                <div className="h-4 w-5/6 bg-gray-200 rounded" />
+                <div className="h-4 w-2/3 bg-gray-200 rounded" />
+              </div>
+
+              {/* Return Policy */}
+              <div className="h-20 bg-green-100 rounded-xl" />
             </div>
           </div>
         </div>
-      </>
+      </div>
     );
   }
+
 
   if (!book) {
     return (
@@ -232,7 +222,7 @@ export default function BookDetailPage() {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Book Image */}
           <div className="space-y-4">
-            <div className=" border   aspect-[3/4] overflow-hidden rounded-lg bg-white max-w-md mx-auto p-6 sticky top-32">
+            <div className=" border aspect-[3/4] overflow-hidden rounded-lg bg-white max-w-md mx-auto p-6 sticky top-32">
               <img
                 src={getImageSrc(book.imageUrl)}
                 alt={book.title}
@@ -249,43 +239,56 @@ export default function BookDetailPage() {
 
           {/* Book Details */}
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bookerly font-bold text-base-black mb-2">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bookerly font-bold text-base-black mb-1 sm:mb-2 break-words">
                 {book.title}
               </h1>
-              <p className="text-xl text-secondary-black mb-4">by {book.author}</p>
+
+              <p className="text-sm sm:text-base lg:text-xl text-secondary-black mb-3 sm:mb-4 truncate">
+                by {book.author}
+              </p>
 
               {/* Rating */}
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
-                      className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                      className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400"
                     />
                   ))}
                 </div>
-                <span className="text-sm text-secondary-black">(4.8 out of 5)</span>
+                <span className="text-xs sm:text-sm text-secondary-black">
+                  (4.8 out of 5)
+                </span>
               </div>
 
               {/* Badges */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                <Badge className={getConditionColor(book.condition)}>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6">
+                <Badge className={`${getConditionColor(book.condition)} text-xs sm:text-sm`}>
                   {book.condition}
                 </Badge>
+
                 {book.binding && (
-                  <Badge className="bg-purple-100 text-purple-800">
+                  <Badge className="bg-purple-100 text-purple-800 text-xs sm:text-sm">
                     {book.binding}
                   </Badge>
                 )}
+
                 {book.category && (
-                  <Badge variant="outline">{book.category.name}</Badge>
+                  <Badge variant="outline" className="text-xs sm:text-sm truncate max-w-[140px] sm:max-w-none">
+                    {book.category.name}
+                  </Badge>
                 )}
+
                 {book.featured && (
-                  <Badge className="bg-abe-red text-white">Featured</Badge>
+                  <Badge className="bg-abe-red text-white text-xs sm:text-sm">
+                    Featured
+                  </Badge>
                 )}
               </div>
             </div>
+
 
             {/* Price and Stock */}
             <div className="space-y-4">
@@ -484,47 +487,54 @@ export default function BookDetailPage() {
 
 
             {/* Book Information */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
               {book.isbn && (
                 <div>
                   <span className="font-semibold text-base-black">ISBN:</span>
-                  <p className="text-secondary-black">{book.isbn}</p>
+                  <p className="text-secondary-black break-words">{book.isbn}</p>
                 </div>
               )}
+
               {book.publisher && (
                 <div>
                   <span className="font-semibold text-base-black">Publisher:</span>
                   <p className="text-secondary-black">{book.publisher}</p>
                 </div>
               )}
+
               {book.publishedYear && (
                 <div>
                   <span className="font-semibold text-base-black">Published:</span>
                   <p className="text-secondary-black">{book.publishedYear}</p>
                 </div>
               )}
+
               {book.pages && (
                 <div>
                   <span className="font-semibold text-base-black">Pages:</span>
                   <p className="text-secondary-black">{book.pages}</p>
                 </div>
               )}
+
               <div>
                 <span className="font-semibold text-base-black">Condition:</span>
                 <p className="text-secondary-black">{book.condition}</p>
               </div>
+
               {book.binding && (
                 <div>
                   <span className="font-semibold text-base-black">Binding:</span>
                   <p className="text-secondary-black">{book.binding}</p>
                 </div>
               )}
+
               {book.language && (
                 <div>
                   <span className="font-semibold text-base-black">Language:</span>
                   <p className="text-secondary-black">{book.language}</p>
                 </div>
               )}
+
               {book.dimensions && (
                 <div>
                   <span className="font-semibold text-base-black">Dimensions:</span>
@@ -532,17 +542,32 @@ export default function BookDetailPage() {
                 </div>
               )}
             </div>
+
             <Separator />
 
-            {/* Description */}
             {book.description && (
-              <div>
-                <h3 className="font-bookerly font-semibold text-base-black mb-3">Description</h3>
-                <p className="text-secondary-black leading-relaxed whitespace-pre-wrap">
+              <div className="min-w-0">
+                <h3 className="font-bookerly font-semibold text-base-black text-base sm:text-lg mb-2 sm:mb-3">
+                  Description
+                </h3>
+                <p
+                  className={`text-secondary-black text-sm sm:text-base leading-relaxed sm:leading-loose
+                              whitespace-pre-wrap break-words transition-all
+                              ${expanded ? "line-clamp-none" : "line-clamp-4 sm:line-clamp-6 lg:line-clamp-8"}`}
+                >
+
                   {book.description}
                 </p>
-              </div>
-            )}
+                {/* Read more / less */}
+                <button
+                  type="button"
+                  onClick={() => setExpanded(!expanded)}
+                  className="mt-2 text-sm font-medium text-primary-aqua hover:underline focus:outline-none"
+                >
+                  {expanded ? "Read less" : "Read more"}
+                </button>
+              </div>)}
+
             <Separator />
 
 

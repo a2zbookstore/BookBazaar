@@ -112,10 +112,10 @@ export default function CatalogPage() {
   };
 
   const sortOptions = [
-    { value: 'createdAt-desc', label: 'Newest First' },
-    { value: 'createdAt-asc', label: 'Oldest First' },
-    { value: 'price-asc', label: 'Price: Low to High' },
-    { value: 'price-desc', label: 'Price: High to Low' },
+    { value: 'createdAt-desc', label: 'New to Old' },
+    { value: 'createdAt-asc', label: 'Old to New' },
+    { value: 'price-asc', label: 'Low to High' },
+    { value: 'price-desc', label: 'High to Low' },
     { value: 'title-asc', label: 'Title: A to Z' },
     { value: 'title-desc', label: 'Title: Z to A' },
   ];
@@ -207,10 +207,11 @@ export default function CatalogPage() {
         {/* Main Content - Full Width */}
         <div className="w-full">
           {/* Filter Button & Sort Options */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex sm:flex-row justify-between items-center sm:items-center gap-4 mb-6">
             <Button
               onClick={() => setShowFilters(true)}
               variant="outline"
+              size={"sm"}
               className="flex items-center gap-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
             >
               <Filter className="h-4 w-4" />
@@ -222,7 +223,6 @@ export default function CatalogPage() {
               )}
             </Button>
 
-            <div className="flex-1 flex justify-end w-full sm:w-auto">
               <SortFilterHeader
                 currentCount={books.length}
                 totalCount={totalBooks}
@@ -233,7 +233,6 @@ export default function CatalogPage() {
                 sortOptions={sortOptions ?? []}
                 showResults={false}
               />
-            </div>
           </div>
 
           {/* Results Count */}
@@ -269,7 +268,7 @@ export default function CatalogPage() {
             <>
               <div className="grid gap-4 sm:gap-6 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
                 {books.map((book) => (
-                  <div key={book.id} className="flex-[1_1_180px]">
+                  <div key={book.id} className="flex items-center justify-center flex-[1_1_180px]">
                     <BookCard book={book} />
                   </div>
                 ))}

@@ -808,7 +808,7 @@ export default function CheckoutPage() {
             {/* Customer Information */}
             <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
-                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
                   <UserPen className="w-6 h-6" />
                   Customer Information
                 </CardTitle>
@@ -927,7 +927,7 @@ export default function CheckoutPage() {
             {/* Shipping Address */}
             <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="px-6 pt-4 pb-2 bg-white border-b-2 border-gray-100">
-                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
                   <MapPinPlusInside className="w-5 h-5" />
                   Shipping Address
                 </CardTitle>
@@ -1021,11 +1021,8 @@ export default function CheckoutPage() {
             {/* Payment Method */}
             <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
-                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
-                  <svg className="w-6 h-6 text-primary-aqua" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                    <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
-                  </svg>
+                <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                  <CreditCard className="w-5 h-5 text-primary-aqua" />
                   Payment Method
                 </CardTitle>
                 <p className="text-gray-600 text-sm mt-1 ml-8">Choose how to pay</p>
@@ -1034,28 +1031,17 @@ export default function CheckoutPage() {
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                   <div className="space-y-4">
 
-                    <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#635BFF]/30 bg-[#635BFF]/5">
+                    <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#635BFF]/30 bg-[#635BFF]/5 ">
                       <RadioGroupItem value="stripe" id="stripe" />
                       <div className="flex items-center space-x-2 flex-1">
                         <CreditCard className="w-5 h-5 text-[#635BFF]" />
                         <Label htmlFor="stripe" className="flex-1 cursor-pointer">
                           <span className="font-semibold text-[#635BFF]">Stripe</span> - Credit/Debit Card
-                          <Badge variant="secondary" className="ml-2 bg-[#635BFF]/10 text-[#635BFF]">Recommended</Badge>
+                          <Badge variant="secondary" className=" ml-2 bg-[#635BFF]/10 text-[#635BFF]">Recommended</Badge>
                           <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex, and more</p>
                         </Label>
                       </div>
                     </div>
-
-                    {/* <div className="flex items-center space-x-3 p-4 border rounded-xl">
-                      <RadioGroupItem value="paypal" id="paypal" />
-                      <div className="flex items-center space-x-2 flex-1">
-                        <Globe className="w-5 h-5 text-blue-600" />
-                        <Label htmlFor="paypal" className="flex-1 cursor-pointer">
-                          PayPal
-                          <Badge variant="secondary" className="ml-2">International</Badge>
-                        </Label>
-                      </div>
-                    </div> */}
 
                     <div className="flex items-center space-x-3 p-4 border rounded-xl">
                       <RadioGroupItem value="razorpay-international" id="razorpay-international" />
@@ -1142,7 +1128,7 @@ export default function CheckoutPage() {
           <div className="space-y-6">
             <Card className="border-2 border-gray-100 shadow-lg rounded-xl">
               <CardHeader className="bg-white px-6 pt-4 pb-3 border-b-2 border-gray-100">
-                <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
+                <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-2 text-primary-aqua">
                   <ScrollText className="w-6 h-6 text-primary-aqua" />
                   Order Summary
                 </CardTitle>

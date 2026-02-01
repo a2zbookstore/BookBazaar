@@ -54,24 +54,29 @@ function CategoryCarousel({ category }: CategoryCarouselProps) {
   }
 
   return (
-    <div ref={containerRef} className="container-custom py-8">
+    <div ref={containerRef} className="py-4 w-full">
       {isVisible ? (
         <>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <Library className="h-8 w-8 text-primary-aqua" />
-              <h3 className="text-3xl font-bookerly font-bold text-base-black">
-                {category.name}
-                {/* {isLoading && <span className="text-sm text-gray-500 ml-3">Loading...</span>} */}
-              </h3>
+          <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center justify-between gap-3 group">
+              {/* <Library className="h-8 w-8 text-primary-aqua" /> */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-red-400 rounded-lg blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                <BookOpen className="relative sm:h-6 sm:w-6 md:h-8 md:w-8 text-red-600 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300" />
+              </div>
+              <div className="relative">
+                <h3 className="text-2xl md:text-3xl font-bookerly font-bold bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 bg-clip-text text-transparent drop-shadow-sm">
+                  {category.name}
+                </h3>
+                <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-red-600 to-amber-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+              </div>
             </div>
             <Link href={`/catalog?categoryId=${category.id}`}>
               <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-                View All {category.name}
+                View All
               </Button>
             </Link>
           </div>
-
           <BookCarousel
             books={categoryBooks}
             emptyMessage={`No ${category.name} books available at the moment.`}
@@ -81,10 +86,19 @@ function CategoryCarousel({ category }: CategoryCarouselProps) {
         </>
       ) : (
         // Placeholder while waiting to scroll into view - show category name
-        <div className="py-8">
-          <div className="flex items-center gap-3 mb-8 opacity-50">
-            <Library className="h-8 w-8 text-gray-400" />
-            <h3 className="text-3xl font-bookerly font-bold text-gray-400">{category.name}</h3>
+        <div className="py-4 w-full">
+          <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center justify-between gap-3 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-red-400 rounded-lg blur-md opacity-30 group-hover:opacity-50 transition-opacity"> </div>
+                <Library className="relative sm:h-6 sm:w-6 md:h-8 md:w-8 text-red-600 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300" />
+              </div>
+              <div className="relative">
+                <h3 className="text-2xl md:text-3xl font-bookerly font-bold bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 bg-clip-text text-transparent drop-shadow-sm">
+                  {category.name}</h3> </div>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-red-600 to-amber-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+
+            </div>
           </div>
           <BookCarousel
             books={[]}
@@ -99,16 +113,6 @@ function CategoryCarousel({ category }: CategoryCarouselProps) {
 }
 
 export default function HomePage() {
-  // const [nfpaSlide, setNfpaSlide] = useState(0);
-  // const [dsmSlide, setDsmSlide] = useState(0);
-  // const [bestsellersSlide, setBestsellersSlide] = useState(0);
-  // const [featuredSlide, setFeaturedSlide] = useState(0);
-  // const [trendingSlide, setTrendingSlide] = useState(0);
-  // const [newArrivalsSlide, setNewArrivalsSlide] = useState(0);
-  // const [boxSetSlide, setBoxSetSlide] = useState(0);
-  // const [hasItemsInCart, setHasItemsInCart] = useState(false);
-  // const [categorySlides, setCategorySlides] = useState<Record<number, number>>({});
-
   // Visibility states for lazy loading
   const [isNfpaVisible, setIsNfpaVisible] = useState(false);
   const [isDsmVisible, setIsDsmVisible] = useState(false);
@@ -245,7 +249,7 @@ export default function HomePage() {
         structuredData={structuredData}
       />
 
-      <div className="hidden md:block container-custom py-8 mt-4">
+      <div className="hidden md:block my-8">
         <BannerCarousel
           pageName="home"
           autoPlayInterval={5000}
@@ -256,15 +260,24 @@ export default function HomePage() {
       </div>
 
       {/* NFPA Books Section - Moving Carousel */}
-      <div ref={nfpaRef} className="container-custom py-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-8 w-8 text-red-600" />
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">NFPA Books</h3>
+      <div ref={nfpaRef} className="py-4 w-full">
+        <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center justify-between gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-red-400 rounded-lg blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
+              <BookOpen className="relative sm:h-6 sm:w-6 md:h-8 md:w-8 text-red-600 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300" />
+            </div>
+            <div className="relative">
+              <h3 className="text-2xl md:text-3xl font-bookerly font-bold bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 bg-clip-text text-transparent drop-shadow-sm">
+                NFPA Books
+              </h3>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-red-600 to-amber-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+            </div>
           </div>
           <Link href="/catalog?search=NFPA">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-              View All NFPA Books
+            <Button variant="outline" size={"sm"} className="border-primary-aqua text-primary-aqua 
+            hover:bg-primary-aqua hover:text-white rounded-full whitespace-nowrap text-sm sm:text-base">
+              View All
             </Button>
           </Link>
         </div>
@@ -278,15 +291,24 @@ export default function HomePage() {
       </div>
 
       {/* DSM Books Section - Moving Carousel */}
-      <div ref={dsmRef} className="container-custom py-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Award className="h-8 w-8 text-purple-600" />
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">DSM Books</h3>
+      <div ref={dsmRef} className="py-4 w-full">
+        <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-purple-400 rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
+              <Award className="relative h-8 w-8 text-purple-600 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-300" />
+            </div>
+            <div className="relative">
+              <h3 className="text-2xl sm:text-3xl font-bookerly font-bold bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-sm">
+                DSM Books
+              </h3>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-purple-600 to-fuchsia-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+            </div>
           </div>
           <Link href="/catalog?search=DSM">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-              View All DSM Books
+            <Button variant="outline" size={"sm"} className="border-primary-aqua text-primary-aqua 
+            hover:bg-primary-aqua hover:text-white rounded-full whitespace-nowrap text-sm sm:text-base">
+              View All
             </Button>
           </Link>
         </div>
@@ -300,15 +322,24 @@ export default function HomePage() {
       </div>
 
       {/* Bestsellers Section - Moving Carousel */}
-      <div ref={bestsellersRef} className="container-custom py-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <TrendingUp className={`h-8 w-8 text-primary-aqua`} />
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">Bestsellers</h3>
+      <div ref={bestsellersRef} className="py-4 w-full">
+        <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-400 rounded-lg blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
+              <TrendingUp className="relative h-8 w-8 text-primary-aqua group-hover:scale-110 group-hover:translate-y-[-4px] transition-all duration-300" />
+            </div>
+            <div className="relative">
+              <h3 className="text-2xl sm:text-3xl font-bookerly font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent drop-shadow-sm">
+                Bestsellers
+              </h3>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-blue-600 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+            </div>
           </div>
           <Link href="/catalog?bestseller=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-              View All Bestsellers
+            <Button variant="outline" size={"sm"} className="border-primary-aqua text-primary-aqua 
+            hover:bg-primary-aqua hover:text-white rounded-full whitespace-nowrap text-sm sm:text-base">
+              View All
             </Button>
           </Link>
         </div>
@@ -322,15 +353,24 @@ export default function HomePage() {
       </div>
 
       {/* Featured Books Section - Moving Carousel */}
-      <div ref={featuredRef} className="container-custom py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Star className={`h-8 w-8 text-yellow-500`} />
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">Featured Books</h3>
+      <div ref={featuredRef} className="py-4 w-full">
+        <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-yellow-400 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+              <Star className="relative h-8 w-8 text-yellow-500 group-hover:scale-110 group-hover:rotate-[360deg] transition-all duration-500 fill-yellow-400" />
+            </div>
+            <div className="relative">
+              <h3 className="text-2xl sm:text-3xl font-bookerly font-bold bg-gradient-to-r from-yellow-600 via-amber-600 to-orange-600 bg-clip-text text-transparent drop-shadow-sm">
+                Featured Books
+              </h3>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-yellow-600 to-orange-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+            </div>
           </div>
           <Link href="/catalog?featured=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-              View All Featured
+            <Button variant="outline" size={"sm"} className="border-primary-aqua text-primary-aqua 
+            hover:bg-primary-aqua hover:text-white rounded-full whitespace-nowrap text-sm sm:text-base">
+              View All
             </Button>
           </Link>
         </div>
@@ -342,15 +382,24 @@ export default function HomePage() {
       </div>
 
       {/* Trending Items Section - Moving Carousel */}
-      <div ref={trendingRef} className="container-custom py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Flame className={`h-8 w-8 text-red-500`} />
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">Trending Now</h3>
+      <div ref={trendingRef} className="py-4 w-full">
+        <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-red-500 rounded-lg blur-md opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+              <Flame className="relative h-8 w-8 text-red-500 group-hover:scale-110 group-hover:translate-y-[-2px] transition-all duration-300 fill-red-400" />
+            </div>
+            <div className="relative">
+              <h3 className="text-2xl sm:text-3xl font-bookerly font-bold bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 bg-clip-text text-transparent drop-shadow-sm">
+                Trending Now
+              </h3>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-red-600 to-yellow-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+            </div>
           </div>
           <Link href="/catalog?trending=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-              View All Trending
+            <Button variant="outline" size={"sm"} className="border-primary-aqua text-primary-aqua 
+            hover:bg-primary-aqua hover:text-white rounded-full whitespace-nowrap text-sm sm:text-base">
+              View All
             </Button>
           </Link>
         </div>
@@ -363,15 +412,24 @@ export default function HomePage() {
       </div>
 
       {/* New Arrivals Section - Moving Carousel */}
-      <div ref={newArrivalsRef} className="container-custom py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Package className={`h-8 w-8 text-green-600`} />
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">New Arrivals</h3>
+      <div ref={newArrivalsRef} className="py-4 w-full">
+        <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-400 rounded-md blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
+              <Package className="relative h-8 w-8 text-green-600 group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-3 transition-all duration-300" />
+            </div>
+            <div className="relative">
+              <h3 className="text-2xl sm:text-3xl font-bookerly font-bold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent drop-shadow-sm">
+                New Arrivals
+              </h3>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-green-600 to-teal-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+            </div>
           </div>
           <Link href="/catalog?newArrival=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-              View All New Arrivals
+            <Button variant="outline" size={"sm"} className="border-primary-aqua text-primary-aqua 
+            hover:bg-primary-aqua hover:text-white rounded-full whitespace-nowrap text-sm sm:text-base">
+              View All
             </Button>
           </Link>
         </div>
@@ -384,15 +442,24 @@ export default function HomePage() {
       </div>
 
       {/* Box Set Items Section - Moving Carousel */}
-      <div ref={boxSetRef} className="container-custom py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <BookOpen className={`h-8 w-8 text-purple-600`} />
-            <h3 className="text-3xl font-bookerly font-bold text-base-black">Box Set Collections</h3>
+      <div ref={boxSetRef} className="py-4 w-full">
+        <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-purple-400 rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
+              <BookOpen className={`relative h-8 w-8 text-purple-600 group-hover:scale-110 transition-transform`} />
+            </div>
+            <div className="relative">
+              <h3 className="text-2xl sm:text-3xl font-bookerly font-bold bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-sm">
+                Boxset Collections
+              </h3>
+              <div className="absolute -bottom-1 left-0 h-1 w-0 bg-gradient-to-r from-purple-600 to-fuchsia-600 group-hover:w-full transition-all duration-300 rounded-full"></div>
+            </div>
           </div>
           <Link href="/catalog?boxSet=true">
-            <Button variant="outline" className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full">
-              View All Box Sets
+            <Button variant="outline" size={"sm"} className="border-primary-aqua text-primary-aqua 
+            hover:bg-primary-aqua hover:text-white rounded-full whitespace-nowrap text-sm sm:text-base">
+              View All
             </Button>
           </Link>
         </div>
@@ -411,6 +478,8 @@ export default function HomePage() {
           category={category}
         />
       ))}
+
+
     </>
   );
 }

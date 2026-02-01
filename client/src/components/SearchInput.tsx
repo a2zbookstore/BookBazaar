@@ -44,7 +44,7 @@ export default function SearchInput({
     };
   }, [searchQuery]);
 
-  
+
 
 
   useEffect(() => {
@@ -183,7 +183,7 @@ export default function SearchInput({
           <button
             type="button"
             aria-label="Clear search"
-            className="absolute mx-2 right-8 sm:right-10 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center hover:bg-gray-200 rounded-full justify-center text-gray-400 hover:text-primary-aqua focus:outline-none"
+            className="absolute mx-4 right-8 sm:right-10 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center hover:bg-gray-200 rounded-full justify-center text-gray-400 hover:text-primary-aqua focus:outline-none"
             onClick={() => setSearchQuery("")}
             tabIndex={0}
           >
@@ -193,10 +193,17 @@ export default function SearchInput({
         {showButton && (
           <Button
             type="submit"
-            className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-8 sm:w-8 rounded-full bg-primary-aqua hover:bg-secondary-aqua p-0 transition-colors"
             onClick={handleSubmit}
+            className="
+              absolute right-2 top-1/2 -translate-y-1/2
+              h-8 w-8 sm:h-10 sm:w-10
+              rounded-full
+              bg-primary-aqua hover:bg-secondary-aqua
+              p-0 transition-colors
+              active:scale-95
+              focus:outline-none focus:ring-2 focus:ring-primary-aqua/50"
           >
-            <Search className="h-3 w-3 sm:h-4 sm:w-4" />
+            <Search className="h-4 w-4" />
           </Button>
         )}
       </form>

@@ -22,7 +22,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
     const CARD_WIDTH_REM = 14; // w-56 = 14rem
     const GAP_REM = 1;        // gap-4 = 1rem
     const STEP = CARD_WIDTH_REM + GAP_REM;
-    const VISIBLE_CARDS = 4;
+    const VISIBLE_CARDS = 2 + Math.floor((window.innerWidth - 640) / (CARD_WIDTH_REM * 16 + GAP_REM * 16)); // 2 cards for mobile + additional for desktop
     const [currentSlide, setCurrentSlide] = useState(0);
     const maxSlide = Math.max(0, books.length - VISIBLE_CARDS);
 
@@ -39,15 +39,33 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
         return (
             <div className="animate-pulse">
                 {/* Mobile skeleton */}
-                <div className="md:hidden overflow-x-auto">
-                    <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="flex-none bg-gray-200 rounded-lg" style={{ width: '200px', height: '320px' }}>
-                                <div className="aspect-[3/4] bg-gray-300 rounded-t-lg"></div>
-                                <div className="p-3 space-y-2">
-                                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                                    <div className="h-4 bg-gray-300 rounded w-1/3"></div>
+                {/* Mobile skeleton (updated to match BookCard) */}
+                <div className="md:hidden w-[90vw] overflow-x-auto pb-4 pl-4 pr-2">
+                    <div className="flex gap-4 w-max animate-pulse">
+                        {Array.from({ length: VISIBLE_CARDS }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="flex-none w-64 rounded-xl bg-white shadow-sm border"
+                            >
+                                {/* Book image */}
+                                <div className="aspect-[3/4] bg-gray-300 rounded-t-xl" />
+
+                                {/* Content */}
+                                <div className="p-4 space-y-3">
+                                    {/* Title */}
+                                    <div className="h-4 bg-gray-300 rounded w-5/6" />
+
+                                    {/* Author */}
+                                    <div className="h-3 bg-gray-300 rounded w-2/3" />
+
+                                    {/* Price / rating row */}
+                                    <div className="flex items-center justify-between pt-2">
+                                        <div className="h-4 bg-gray-300 rounded w-1/3" />
+                                        <div className="h-3 bg-gray-300 rounded w-1/4" />
+                                    </div>
+
+                                    {/* CTA button */}
+                                    <div className="h-9 bg-gray-300 rounded-lg mt-3" />
                                 </div>
                             </div>
                         ))}
@@ -57,7 +75,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                 {/* Desktop skeleton */}
                 <div className="hidden md:block">
                     <div className="flex gap-3 sm:gap-4">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                             <div key={i} className="flex-none w-56 bg-gray-200 rounded-lg">
                                 <div className="aspect-[3/4] bg-gray-300 rounded-t-lg"></div>
                                 <div className="p-4 space-y-2">
@@ -77,11 +95,17 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
         <>
             {books.length > 0 ? (
                 <>
-                    {/* Mobile horizontal scroll view */}
-                    <div className="md:hidden overflow-x-auto">
-                        <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
+                    {/* Mobile horizontal scroll */}
+                    <div
+                        className="md:hidden w-[90vw] carousel-scroll-container overflow-x-auto scroll-smooth pb-4 pl-4 pr-2 snap-x snap-proximity"
+                        style={{
+                            touchAction: 'pan-x pan-y',
+                            WebkitOverflowScrolling: 'touch'
+                        }}
+                    >
+                        <div className="flex gap-4 w-max">
                             {books.map((book) => (
-                                <div key={book.id} className="flex-none" style={{ width: '200px' }}>
+                                <div key={book.id} className="flex-none w-64 snap-start">
                                     <BookCard book={book} />
                                 </div>
                             ))}
