@@ -22,7 +22,10 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
     const CARD_WIDTH_REM = 14; // w-56 = 14rem
     const GAP_REM = 1;        // gap-4 = 1rem
     const STEP = CARD_WIDTH_REM + GAP_REM;
-    const VISIBLE_CARDS = 2 + Math.floor((window.innerWidth - 640) / (CARD_WIDTH_REM * 16 + GAP_REM * 16)); // 2 cards for mobile + additional for desktop
+    // Calculate visible cards based on screen size - ensure it's never negative
+    const VISIBLE_CARDS = window.innerWidth >= 768 
+        ? Math.floor((window.innerWidth - 64) / (CARD_WIDTH_REM * 16 + GAP_REM * 16))
+        : 2; // Always show 2 cards on mobile for skeleton
     const [currentSlide, setCurrentSlide] = useState(0);
     const maxSlide = Math.max(0, books.length - VISIBLE_CARDS);
 
@@ -42,10 +45,10 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                 {/* Mobile skeleton (updated to match BookCard) */}
                 <div className="md:hidden w-[90vw] overflow-x-auto pb-4 pl-4 pr-2">
                     <div className="flex gap-4 w-max animate-pulse">
-                        {Array.from({ length: VISIBLE_CARDS }).map((_, i) => (
+                        {Array.from({ length: 3 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="flex-none w-64 rounded-xl bg-white shadow-sm border"
+                                className="flex-none w-[314px] rounded-xl bg-white shadow-sm border"
                             >
                                 {/* Book image */}
                                 <div className="aspect-[3/4] bg-gray-300 rounded-t-xl" />
@@ -105,7 +108,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                     >
                         <div className="flex gap-4 w-max">
                             {books.map((book) => (
-                                <div key={book.id} className="flex-none w-64 snap-start">
+                                <div key={book.id} className="flex-none snap-start">
                                     <BookCard book={book} />
                                 </div>
                             ))}

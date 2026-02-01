@@ -1876,10 +1876,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { id } = req.body;
+      const { id, sort_order } = req.body;
       if (!id) {
         return res.status(400).json({ message: "Category id is required" });
       }
+
+
 
       const categoryData = insertCategorySchema.parse(req.body);
 
@@ -1896,7 +1898,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Slug already exists" });
       }
 
-      const updatedCategory = await storage.updateCategory(id, { ...categoryData, slug });
+      const updatePayload = { ...categoryData, slug };
+      if (typeof sort_order !== 'undefined' && sort_order !== null && sort_order !== "") {
+        updatePayload.sort_order = Number(sort_order);
+      }else {
+        updatePayload.sort_order = null;
+      }
+
+      const updatedCategory = await storage.updateCategory(id, updatePayload);
       res.json(updatedCategory);
     } catch (error) {
       console.log("error", error);

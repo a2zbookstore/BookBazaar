@@ -160,7 +160,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   }
 
   return (
-    <div className="group  relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px] sm:w-full w-[314px] ">
+    <div className="group  relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px] sm:w-full max-w-[314px] ">
       <div className="absolute top-2 right-2 z-10">
         <WishlistHeart bookId={book.id} />
       </div>
@@ -262,7 +262,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               <Truck className="h-3 w-3 text-green-600" />
               <span className="text-secondary-black font-medium truncate">
                 {isShippingLoading ? (
-                  <span className="inline-block h-[1em] w-24 align-middle rounded bg-gray-300 animate-pulse" />
+                  <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
                 ) : shippingCost}
               </span>
             </div>
@@ -270,7 +270,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               <Clock className="h-3 w-3 text-blue-600" />
               <span className="text-secondary-black">
                 {isShippingLoading ? (
-                  <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
+                  <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
                 ) : (
                   shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
                     `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days` :

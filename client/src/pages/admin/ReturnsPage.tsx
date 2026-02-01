@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,9 @@ import {
   XCircle,
   Clock,
   RefreshCw,
-  Filter,
-  Download
+  Filter
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
 
 interface ReturnRequest {
   id: number;
@@ -200,19 +197,9 @@ export default function ReturnsPage() {
   };
 
   const handleProcessRefund = () => {
-    console.log("Process Refund clicked - selectedReturn:", selectedReturn?.id, "refundMethod:", refundMethod, "refundReason:", refundReason);
-
     if (!selectedReturn || !refundMethod || !refundReason) {
-      console.log("Missing required fields - cannot process refund");
       return;
     }
-
-    console.log("Processing refund with data:", {
-      id: selectedReturn.id,
-      refundMethod,
-      refundReason: refundReason.trim(),
-    });
-
     processRefundMutation.mutate({
       id: selectedReturn.id,
       refundMethod,

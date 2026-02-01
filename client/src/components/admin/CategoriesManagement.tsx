@@ -15,12 +15,14 @@ interface CategoryForm {
     name: string;
     slug: string;
     description: string;
+    sort_order?: number | "";
 }
 
 const initialCategoryForm: CategoryForm = {
     name: "",
     slug: "",
     description: "",
+    sort_order: "",
 };
 
 export default function CategoriesManagement() {
@@ -30,6 +32,8 @@ export default function CategoriesManagement() {
 
     const updateCategoryMutation = useMutation({
         mutationFn: async (data: Category & CategoryForm) => {
+            console.log("dua",data);
+            
             await apiRequest("POST", "/api/updateCategory", data);
         },
         onSuccess: () => {
@@ -73,7 +77,7 @@ export default function CategoriesManagement() {
     });
 
     const handleEditClick = (category: Category) => {
-        setCategoryToEdit(category);
+        setCategoryToEdit({ ...category, sort_order: category.sort_order ?? "" });
         setEditDialogOpen(true);
     };
 
@@ -85,6 +89,7 @@ export default function CategoriesManagement() {
             name: categoryToEdit.name,
             slug: categoryToEdit.slug,
             description: categoryToEdit.description,
+            sort_order: categoryToEdit.sort_order === "" ? undefined : Number(categoryToEdit.sort_order),
         });
     };
 
@@ -134,6 +139,7 @@ export default function CategoriesManagement() {
         createCategoryMutation.mutate({
             ...categoryForm,
             slug,
+            sort_order: categoryForm.sort_order === "" ? undefined : Number(categoryForm.sort_order),
         });
     };
 
@@ -203,6 +209,21 @@ export default function CategoriesManagement() {
                                         rows={3}
                                         placeholder="Optional description for the category"
                                     />
+                                </div>
+                                <div>
+                                    <Label htmlFor="categoryOrder">Order</Label>
+                                    <Input
+                                        id="categoryOrder"
+                                        type="number"
+                                        name="sort_order"
+                                        min={0}
+                                        value={categoryForm.order}
+                                        onChange={e => setCategoryForm(prev => ({ ...prev, sort_order: e.target.value }))}
+                                        placeholder="e.g., 1"
+                                    />
+                                    <p className="text-xs text-secondary-black mt-1">
+                                        Determines the display order of categories (lower comes first).
+                                    </p>
                                 </div>
                                 <div className="flex justify-end space-x-2">
                                     <Button
@@ -319,6 +340,20 @@ export default function CategoriesManagement() {
                                     rows={3}
                                     placeholder="Optional description for the category"
                                 />
+                            </div>
+                            <div>
+                                <Label htmlFor="editCategorySortOrder">Sort Order</Label>
+                                <Input
+                                    id="editCategorySortOrder"
+                                    type="number"
+                                    min={0}
+                                    value={categoryToEdit.sort_order}
+                                    onChange={e => setCategoryToEdit(prev => prev ? { ...prev, sort_order: e.target.value } : prev)}
+                                    placeholder="e.g., 1"
+                                />
+                                <p className="text-xs text-secondary-black mt-1">
+                                    Determines the display order of categories (lower comes first).
+                                </p>
                             </div>
                             <div className="flex justify-end space-x-2">
                                 <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>

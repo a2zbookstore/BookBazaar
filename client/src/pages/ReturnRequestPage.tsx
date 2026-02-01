@@ -240,15 +240,15 @@ export default function ReturnRequestPage() {
       <div className="container-custom">
         <Breadcrumb items={[{ label: "Return & Refund" }]} />
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-base-black mb-2">Request Return & Refund</h1>
-          <p className="text-secondary-black">
+          <h1 className="text-xl lg:text-3xl font-bold text-base-black mb-2">Request Return & Refund</h1>
+          <p className="text-secondary-black text-sm sm:text-base">
             Return your order within 30 days of delivery for a full refund
           </p>
         </div> 
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 lg:space-x-4">
             <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-primary-aqua text-white' : 'bg-gray-200'}`}>
               1
             </div>
@@ -341,8 +341,8 @@ export default function ReturnRequestPage() {
         {step === 1 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-xl lg:text-2xl">
+                <Package className="h-8 w-8 " />
                 Select Order to Return
               </CardTitle>
             </CardHeader>

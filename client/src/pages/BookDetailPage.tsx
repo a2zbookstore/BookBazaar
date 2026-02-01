@@ -570,7 +570,6 @@ export default function BookDetailPage() {
 
             <Separator />
 
-
             {/* 30-Day Return Policy */}
             <div className="bg-green-50 border border-green-200 p-4 rounded-xl">
               <div className="flex items-start gap-3">
@@ -586,13 +585,6 @@ export default function BookDetailPage() {
                 </div>
               </div>
             </div>
-
-
-            {/* Delivery Information */}
-
-
-            {/* Trust Badges */}
-
           </div>
         </div>
       </div>

@@ -283,7 +283,7 @@ export default function ContactPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-base-black mb-1">Address</h3>
-                          <p className="text-secondary-black whitespace-pre-line">
+                          <p className="text-sm sm:text-lg text-secondary-black whitespace-pre-line">
                             {(storeInfo?.storeAddress || "Address not available").replace(/,\s*/g, ",\n")}                          </p>
                           <p className="text-xs text-tertiary-black">Click to view on map</p>
                         </div>
@@ -304,8 +304,8 @@ export default function ContactPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-base-black mb-1">Phone</h3>
-                          <p className="text-secondary-black">{storeInfo?.storePhone || "Phone not available"}</p>
-                          <p className="text-xs text-tertiary-black">Available 24/7 • Click to call</p>
+                          <p className="text-secondary-black text-sm sm:text-lg ">{storeInfo?.storePhone || "Phone not available"}</p>
+                          <p className="text-xs text-tertiary-black  sm:text-sm ">Available 24/7 • Click to call</p>
                         </div>
                       </div>
                     </CardContent>
@@ -324,8 +324,8 @@ export default function ContactPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-base-black mb-1">Email</h3>
-                          <p className="text-secondary-black">{storeInfo?.storeEmail || "Email not available"}</p>
-                          <p className="text-xs text-tertiary-black">We respond within 24 hours</p>
+                          <p className="text-secondary-black text-sm sm:text-lg ">{storeInfo?.storeEmail || "Email not available"}</p>
+                          <p className="text-xs text-tertiary-black sm:text-sm" >We respond within 24 hours</p>
                         </div>
                       </div>
                     </CardContent>
@@ -360,10 +360,10 @@ export default function ContactPage() {
                         <Clock className="h-6 w-6 text-primary-aqua" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-base-black mb-1">Business Hours</h3>
+                        <h3 className="font-semibold text-base-black mb-1 text-sm sm:text-lg ">Business Hours</h3>
                         <div className="text-secondary-black text-sm space-y-1">
-                          <p className="font-semibold text-primary-aqua">Open 24/7</p>
-                          <p className="text-xs text-tertiary-black">We're available around the clock to serve you</p>
+                          <p className="font-semibold text-primary-aqua text-sm sm:text-lg">Open 24/7</p>
+                          <p className="text-xs text-tertiary-black sm:text-sm">We're available around the clock</p>
                         </div>
                       </div>
                     </div>

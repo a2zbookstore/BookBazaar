@@ -238,7 +238,7 @@ export default function HomePage() {
   });
 
   return (
-    <>
+    <div className="xl:mx-16 sm:px-8">
       <SEO
         title="A2Z BOOKSHOP - Buy Books Online | New & Used Books"
         description="Discover thousands of books at A2Z Bookshop. Best prices on fiction, non-fiction, bestsellers, trending books and more. Fast shipping across India with secure payment options."
@@ -260,7 +260,7 @@ export default function HomePage() {
       </div>
 
       {/* NFPA Books Section - Moving Carousel */}
-      <div ref={nfpaRef} className="py-4 w-full">
+      {/* <div ref={nfpaRef} className="py-4 w-full">
         <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center justify-between gap-3 group">
             <div className="relative">
@@ -288,10 +288,10 @@ export default function HomePage() {
           showEmptyBrowseButton={false}
           isLoading={nfpaLoading || !isNfpaVisible}
         />
-      </div>
+      </div> */}
 
       {/* DSM Books Section - Moving Carousel */}
-      <div ref={dsmRef} className="py-4 w-full">
+      {/* <div ref={dsmRef} className="py-4 w-full">
         <div className="flex flex-row items-center sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3 group">
             <div className="relative">
@@ -319,7 +319,25 @@ export default function HomePage() {
           showEmptyBrowseButton={false}
           isLoading={dsmLoading || !isDsmVisible}
         />
-      </div>
+      </div>  */}
+
+      {/* Category-Based Carousels */}
+      {categories.length > 0 && categories
+        .slice() // copy array to avoid mutating original
+        .sort((a, b) => {
+          if (a.sort_order != null && b.sort_order != null) {
+            return a.sort_order - b.sort_order;
+          }
+          if (a.sort_order != null) return -1;
+          if (b.sort_order != null) return 1;
+          return 0;
+        })
+        .map((category) => (
+          <CategoryCarousel
+            key={category.id}
+            category={category}
+          />
+        ))}
 
       {/* Bestsellers Section - Moving Carousel */}
       <div ref={bestsellersRef} className="py-4 w-full">
@@ -471,15 +489,6 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Category-Based Carousels */}
-      {categories.length > 0 && categories.map((category) => (
-        <CategoryCarousel
-          key={category.id}
-          category={category}
-        />
-      ))}
-
-
-    </>
+    </div>
   );
 }

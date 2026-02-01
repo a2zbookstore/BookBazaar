@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 
 export interface BannerItem {
@@ -34,9 +36,28 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
 }) => {
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
+      dragFree: false,
+      containScroll: "trimSnaps",
+    },
+    autoPlayInterval > 0 ? [Autoplay({ delay: autoPlayInterval })] : []
+  );
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+  }, [emblaApi, onSelect]);
 
   // Fetch banners from API
   useEffect(() => {
@@ -62,54 +83,26 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
       });
   }, [pageName]);
 
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
 
-  useEffect(() => {
-    if (banners.length <= 1 || autoPlayInterval <= 0) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % banners.length);
-    }, autoPlayInterval);
-    return () => clearInterval(interval);
-  }, [banners.length, autoPlayInterval]);
+  const scrollNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
 
-  const goToPrevious = () => {
-    setCurrentSlide((prev) => (prev - 1 + banners.length) % banners.length);
-  };
-
-  const goToNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % banners.length);
-  };
-
-  // Touch handlers for mobile swiping
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) goToNext();
-    if (isRightSwipe) goToPrevious();
-  };
+  const scrollTo = useCallback(
+    (index: number) => {
+      if (emblaApi) emblaApi.scrollTo(index);
+    },
+    [emblaApi]
+  );
 
   if (isLoading) {
     return (
       <div className={`relative ${height} overflow-hidden rounded-lg shadow-md ${className}`}>
-        <div className="flex h-full animate-pulse">
-          {[1,2,3].map((i) => (
-            <div key={i} className="min-w-full h-full flex-shrink-0 relative">
-              <div className="h-full w-full bg-gray-200" />
-            </div>
-          ))}
+        <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
+          <div className="text-gray-400 text-lg">Loading...</div>
         </div>
       </div>
     );
@@ -117,66 +110,61 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   if (banners.length === 0) return null;
 
   return (
-    <div 
-      className={`relative ${height} overflow-hidden rounded-lg shadow-md ${className}`}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      {/* Banner slides */}
-      <div
-        className="flex h-full transition-transform duration-700 ease-in-out"
-        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-      >
-        {banners.map((banner) => (
-          <div key={banner.id} className="min-w-full h-full flex-shrink-0 relative">
-            <div className="h-full w-full">
-              <img
-                src={banner.image}
-                alt={banner.alt || banner.title || "Banner"}
-                className="w-full h-full object-cover"
-              />
-              
-              {(banner.title || banner.subtitle) && (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4 md:p-8">
-                  <div className="max-w-[85%] md:max-w-2xl">
-                    {banner.title && (
-                      <h2 className="text-white text-xl md:text-5xl font-bold mb-1 md:mb-2 line-clamp-2">
-                        {banner.title}
-                      </h2>
-                    )}
-                    {banner.subtitle && (
-                      <p className="text-white/90 text-sm md:text-xl mb-3 md:mb-4 line-clamp-2">
-                        {banner.subtitle}
-                      </p>
-                    )}
-                    {banner.buttonText && (
-                      <Link href={banner.link || "#"}>
-                        <button className="bg-primary-aqua hover:bg-secondary-aqua text-white text-sm md:text-base px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold w-fit transition-colors">
-                          {banner.buttonText}
-                        </button>
-                      </Link>
-                    )}
+    <div className={`relative ${height} overflow-hidden rounded-lg shadow-md ${className}`}>
+      <div className="embla h-full" ref={emblaRef}>
+        <div className="embla__container flex h-full">
+          {banners.map((banner, index) => (
+            <div key={banner.id} className="embla__slide flex-[0_0_100%] relative h-full">
+              <div className="h-full w-full relative">
+                <img
+                  src={banner.image}
+                  alt={banner.alt || banner.title || "Banner"}
+                  className="w-full h-full object-cover object-center block"
+                  style={{ minHeight: '100%' }}
+                  loading={index === 0 ? "eager" : "lazy"}
+                />
+                
+                {(banner.title || banner.subtitle) && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4 md:p-8">
+                    <div className="max-w-[85%] md:max-w-2xl">
+                      {banner.title && (
+                        <h2 className="text-white text-xl md:text-5xl font-bold mb-1 md:mb-2 line-clamp-2">
+                          {banner.title}
+                        </h2>
+                      )}
+                      {banner.subtitle && (
+                        <p className="text-white/90 text-sm md:text-xl mb-3 md:mb-4 line-clamp-2">
+                          {banner.subtitle}
+                        </p>
+                      )}
+                      {banner.buttonText && (
+                        <Link href={banner.link || "#"}>
+                          <button className="bg-primary-aqua hover:bg-secondary-aqua text-white text-sm md:text-base px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold w-fit transition-colors">
+                            {banner.buttonText}
+                          </button>
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Navigation arrows - Hidden/Smaller on mobile */}
       {showNavigation && banners.length > 1 && (
         <>
           <button
-            onClick={goToPrevious}
+            onClick={scrollPrev}
             className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/80 md:bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-all"
             aria-label="Previous banner"
           >
             <ChevronLeft className="h-5 w-5 md:h-8 md:w-8 text-primary-aqua" />
           </button>
           <button
-            onClick={goToNext}
+            onClick={scrollNext}
             className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/80 md:bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-all"
             aria-label="Next banner"
           >
@@ -191,9 +179,9 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
           {banners.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentSlide(index)}
+              onClick={() => scrollTo(index)}
               className={`h-1.5 md:h-2 rounded-full transition-all ${
-                index === currentSlide ? "bg-white w-4 md:w-8" : "bg-white/50 w-1.5 md:w-2"
+                index === selectedIndex ? "bg-white w-4 md:w-8" : "bg-white/50 w-1.5 md:w-2"
               }`}
               aria-label={`Go to banner ${index + 1}`}
             />

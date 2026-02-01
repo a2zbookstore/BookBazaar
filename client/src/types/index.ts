@@ -30,6 +30,7 @@ export interface Category {
   slug: string;
   description?: string;
   createdAt: string;
+  sort_order?: number;
 }
 
 export interface CartItem {

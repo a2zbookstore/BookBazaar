@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,9 @@ export default function SearchInput({
   const [location, setLocation] = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
+  const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0, width: 0 });
   const search = useSearch();
 
 
@@ -148,6 +151,30 @@ export default function SearchInput({
     }, 100);
   };
 
+  // Update suggestion position when showing or on scroll/resize
+  useEffect(() => {
+    const updatePosition = () => {
+      if (inputRef.current && showSuggestions) {
+        const rect = inputRef.current.getBoundingClientRect();
+        setSuggestionPosition({
+          top: rect.bottom,
+          left: rect.left,
+          width: rect.width
+        });
+      }
+    };
+
+    if (showSuggestions) {
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [showSuggestions]);
+
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -166,7 +193,7 @@ export default function SearchInput({
   }, []);
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`}>
       <form onSubmit={handleSubmit} className="relative">
         <Input
           ref={inputRef}
@@ -176,7 +203,6 @@ export default function SearchInput({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          // Let form's onSubmit handle Enter key
           className={`w-full pr-10 sm:pr-12 rounded-full text-sm sm:text-base h-9 sm:h-11`}
         />
         {searchQuery && (
@@ -207,26 +233,33 @@ export default function SearchInput({
           </Button>
         )}
       </form>
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && suggestions.length > 0 && createPortal(
         <div
           ref={suggestionsRef}
-          className="absolute rounded-b-xl top-full left-0 right-0 z-[999] bg-white border border-primary-aqua shadow-lg mt-2 sm:mt-4 overflow-hidden max-h-80 overflow-y-auto"
-          style={{ minWidth: '100%' }}
+          className="fixed rounded-b-xl z-[9999] bg-white border border-primary-aqua shadow-lg overflow-hidden max-h-80 overflow-y-auto"
+          style={{ 
+            top: `${suggestionPosition.top + (window.innerWidth < 640 ? 8 : 16)}px`,
+            left: `${suggestionPosition.left}px`,
+            width: `${suggestionPosition.width}px`
+          }}
         >
           <ul className="divide-y divide-gray-100">
             {suggestions.map((suggestion, index) => (
               <li key={index}>
                 <button
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="w-full hover:bg-gray-100 flex items-center px-3 sm:px-5 py-2 sm:py-3 text-left hover:bg-primary-aqua/70 focus:bg-primary-aqua/20 transition-colors duration-150 outline-none"
+                  className="w-full hover:bg-gray-100 px-3 sm:px-5 py-2 sm:py-3 text-left hover:bg-primary-aqua/70 
+                            focus:bg-primary-aqua/20 transition-colors duration-150 outline-none"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <Search className="h-3.5 sm:h-4 w-3.5 sm:w-4 min-w-[14px] sm:min-w-[16px] shrink-0 text-primary-aqua mr-2 sm:mr-3" />
-                  <span className="text-sm sm:text-base text-gray-800 font-medium truncate">{suggestion}</span>
+                  <Search className="text-primary-aqua" style={{ width: '14px', height: '14px', minWidth: '14px', flexShrink: 0 }} />
+                  <span className="text-gray-800 font-medium" style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>{suggestion}</span>
                 </button>
               </li>
             ))}
           </ul>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
