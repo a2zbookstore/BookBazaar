@@ -133,7 +133,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                             {books.map((book) => (
                                 <div
                                     key={book.id}
-                                    className="flex-none w-56 snap-start"
+                                    className="flex-none w-56 snap-start rounded-xl"
                                 >
                                     <BookCard book={book} />
                                 </div>

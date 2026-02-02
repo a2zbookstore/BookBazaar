@@ -160,7 +160,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   }
 
   return (
-    <div className="group  relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px] sm:w-full max-w-[314px] ">
+    <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-xl sm:w-full max-w-[314px]">
       <div className="absolute top-2 right-2 z-10">
         <WishlistHeart bookId={book.id} />
       </div>
