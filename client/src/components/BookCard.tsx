@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { Star, ShoppingCart, Truck, Clock, RotateCcw, BadgeDollarSign } from "lucide-react";
+import { Star, Truck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalContext } from "@/contexts/GlobalContext";
@@ -160,7 +160,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   }
 
   return (
-    <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-[5px] w-full h-auto min-w-0">
+    <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-xl sm:w-full max-w-[314px]">
       <div className="absolute top-2 right-2 z-10">
         <WishlistHeart bookId={book.id} />
       </div>
@@ -210,6 +210,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
                     <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
                   </span>) : (
                   displayPrice || formatAmount(parseFloat(book.price), 'USD')
+
                 )
               )}
             </div>
@@ -221,8 +222,8 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           </div>
 
           {/* Rating - Enhanced with Half Stars */}
-          <div className="flex items-center mb-2 bg-gradient-to-r from-amber-50 to-orange-50 px-2 py-1.5 rounded-lg border border-amber-100">
-            <div className="flex gap-0.5">
+          <div className="flex flex-nowrap whitespace-nowrap items-center mb-2 bg-gradient-to-r from-amber-50 to-orange-50 px-2 py-1.5 rounded-lg border border-amber-100">
+            <div className="flex shrink-0">
               {/* Full Stars */}
               {[...Array(fullStars)].map((_, i) => (
                 <Star
@@ -232,7 +233,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               ))}
               {/* Half Star */}
               {hasHalfStar && (
-                <div className="relative">
+                <div className="relative shrink-0">
                   <Star className="h-4 w-4 text-gray-300 fill-gray-300" />
                   <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
                     <Star className="h-4 w-4 text-amber-400 fill-amber-400 drop-shadow-sm" />
@@ -247,10 +248,10 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
                 />
               ))}
             </div>
-            <span className="text-xs font-semibold text-gray-700 ml-2">
+            <span className="text-xs font-semibold text-gray-700 ml-2 shrink-0">
               {bookRating.toFixed(1)}
             </span>
-            <span className="text-xs text-gray-500 ml-1">
+            <span className="text-xs text-gray-500 ml-1 shrink-0">
               ({reviewCount})
             </span>
           </div>
@@ -261,7 +262,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               <Truck className="h-3 w-3 text-green-600" />
               <span className="text-secondary-black font-medium truncate">
                 {isShippingLoading ? (
-                  <span className="inline-block h-[1em] w-24 align-middle rounded bg-gray-300 animate-pulse" />
+                  <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
                 ) : shippingCost}
               </span>
             </div>
@@ -269,7 +270,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               <Clock className="h-3 w-3 text-blue-600" />
               <span className="text-secondary-black">
                 {isShippingLoading ? (
-                  <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
+                  <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
                 ) : (
                   shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
                     `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days` :
@@ -294,8 +295,8 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               shadow-md hover:shadow-lg
               transition-all
               flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed text-[11px]"
-              
+              disabled:opacity-50 disabled:cursor-not-allowed text-[12px]"
+
         >
           {/* <ShoppingCart
             className={`h-4 w-4 ${isAddingToCart ? 'animate-cart-slide' : ''}`}
@@ -314,7 +315,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               shadow-md hover:shadow-lg
               transition-all
               flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed text-[11px]"
+              disabled:opacity-50 disabled:cursor-not-allowed text-[12px]"
         >
           {/* <BadgeDollarSign
             className={` h-4 w-4 animate-rotate-bounce`}

@@ -14,8 +14,7 @@ export default function Layout({ children }: LayoutProps) {
         <SubHeader />
       </div>
       <main
-        className="flex-1 transition-all duration-300 mb-16"
-        style={{ marginTop: 'calc(64px + 48px)' }}
+        className="flex-1 transition-all duration-300 mt-[calc(100px+48px)] sm:mt-[calc(70px+48px)] px-4 sm:px-8 pb-12 w-screen"
       >
         {children} 
       </main>

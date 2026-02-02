@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -8,8 +8,7 @@ import SortFilterHeader from "@/components/SortFilterHeader";
 import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 import { Book, Category } from "@/types";
-import { Filter } from "lucide-react";
-import BannerCarousel from "@/components/BannerCarousel";
+import { ArrowLeft, ArrowRight, Filter } from "lucide-react";
 
 interface BooksResponse {
   books: Book[];
@@ -112,10 +111,10 @@ export default function CatalogPage() {
   };
 
   const sortOptions = [
-    { value: 'createdAt-desc', label: 'Newest First' },
-    { value: 'createdAt-asc', label: 'Oldest First' },
-    { value: 'price-asc', label: 'Price: Low to High' },
-    { value: 'price-desc', label: 'Price: High to Low' },
+    { value: 'createdAt-desc', label: 'New to Old' },
+    { value: 'createdAt-asc', label: 'Old to New' },
+    { value: 'price-asc', label: 'Low to High' },
+    { value: 'price-desc', label: 'High to Low' },
     { value: 'title-asc', label: 'Title: A to Z' },
     { value: 'title-desc', label: 'Title: Z to A' },
   ];
@@ -207,10 +206,11 @@ export default function CatalogPage() {
         {/* Main Content - Full Width */}
         <div className="w-full">
           {/* Filter Button & Sort Options */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex sm:flex-row justify-between items-center sm:items-center gap-4 mb-6">
             <Button
               onClick={() => setShowFilters(true)}
               variant="outline"
+              size={"sm"}
               className="flex items-center gap-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white rounded-full"
             >
               <Filter className="h-4 w-4" />
@@ -222,7 +222,6 @@ export default function CatalogPage() {
               )}
             </Button>
 
-            <div className="flex-1 flex justify-end w-full sm:w-auto">
               <SortFilterHeader
                 currentCount={books.length}
                 totalCount={totalBooks}
@@ -233,7 +232,6 @@ export default function CatalogPage() {
                 sortOptions={sortOptions ?? []}
                 showResults={false}
               />
-            </div>
           </div>
 
           {/* Results Count */}
@@ -269,7 +267,7 @@ export default function CatalogPage() {
             <>
               <div className="grid gap-4 sm:gap-6 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
                 {books.map((book) => (
-                  <div key={book.id} className="flex-[1_1_180px]">
+                  <div key={book.id} className="flex items-start justify-center sm:justify-start flex-[1_1_18px]">
                     <BookCard book={book} />
                   </div>
                 ))}
@@ -278,17 +276,17 @@ export default function CatalogPage() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center mt-8">
-                  <nav className="flex space-x-2">
+                  <nav className="flex flex-wrap gap-2 justify-center items-center w-full max-w-xs sm:max-w-none">
                     <Button
                       variant="outline"
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
-                      className="rounded-full"
+                      className="rounded-full px-3 py-1 text-xs sm:px-4 sm:py-2 sm:text-base"
                     >
-                      Previous
+                      <ArrowLeft className="h-4 w-4" />
                     </Button>
 
-                    {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                    {[...Array(Math.min(totalPages, 4))].map((_, i) => {
                       const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
                       if (pageNum > totalPages) return null;
 
@@ -297,7 +295,7 @@ export default function CatalogPage() {
                           key={pageNum}
                           variant={currentPage === pageNum ? "default" : "outline"}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`rounded-full ${currentPage === pageNum ? "bg-primary-aqua hover:bg-secondary-aqua" : ""}`}
+                          className={`rounded-full px-3 py-1 text-xs sm:px-4 sm:py-2 sm:text-base ${currentPage === pageNum ? "bg-primary-aqua hover:bg-secondary-aqua" : ""}`}
                         >
                           {pageNum}
                         </Button>
@@ -308,9 +306,9 @@ export default function CatalogPage() {
                       variant="outline"
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className="rounded-full"
+                      className="rounded-full px-3 py-1 text-xs sm:px-4 sm:py-2 sm:text-base"
                     >
-                      Next
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                   </nav>
                 </div>
@@ -341,17 +339,6 @@ export default function CatalogPage() {
                 >
                   Clear Filters
                 </Button>
-
-                {/* <div className="mt-8">
-                  <h4 className="text-lg font-semibold text-base-black mb-4">Featured Books</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {books.slice(0, 4).map((book) => (
-                      <div key={book.id} className="bg-gray-50 p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm text-center">
-                        {book.title}
-                      </div>
-                    ))}
-                  </div>
-                </div> */}
               </div>
             </div>
           )}

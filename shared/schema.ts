@@ -64,6 +64,7 @@ export const categories = pgTable("categories", {
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
+  sort_order: integer("sort_order")
 });
 
 // Books table

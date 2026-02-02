@@ -350,24 +350,24 @@ export default function TrackOrderPage() {
               <CardTitle>How to Track Your Order</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-primary-aqua text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="hidden w-6 h-6 bg-primary-aqua text-white rounded-full sm:flex items-center justify-center text-sm font-bold">1</div>
                 <div>
-                  <p className="font-medium">Find Your Order ID</p>
+                  <p className="font-semibold lg:font-medium">Find Your Order ID</p>
                   <p className="text-sm text-gray-600">Check your order confirmation email for the order ID number.</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-primary-aqua text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="hidden w-6 h-6 bg-primary-aqua text-white rounded-full sm:flex items-center justify-center text-sm font-bold">2</div>
                 <div>
-                  <p className="font-medium">Enter Your Email</p>
+                  <p className="font-semibold">Enter Your Email</p>
                   <p className="text-sm text-gray-600">Use the same email address you used when placing the order.</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-primary-aqua text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="hidden w-6 h-6 bg-primary-aqua text-white rounded-full sm:flex items-center justify-center text-sm font-bold">3</div>
                 <div>
-                  <p className="font-medium">Track Your Package</p>
+                  <p className="font-semibold">Track Your Package</p>
                   <p className="text-sm text-gray-600">Get real-time updates on your order status and shipping information.</p>
                 </div>
               </div>

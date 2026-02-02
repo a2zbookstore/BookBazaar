@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,6 @@ import { Book } from "@/types";
 
 interface BookCarouselProps {
     books: Book[];
-    currentSlide: number;
-    onSlideChange: (slide: number) => void;
     bgGradient?: string;
     emptyMessage?: string;
     showEmptyBrowseButton?: boolean;
@@ -17,18 +15,26 @@ interface BookCarouselProps {
 
 const BookCarousel: React.FC<BookCarouselProps> = ({
     books,
-    currentSlide,
-    onSlideChange,
     emptyMessage = "No books available at the moment.",
     showEmptyBrowseButton = true,
     isLoading = false,
 }) => {
+    const CARD_WIDTH_REM = 14; // w-56 = 14rem
+    const GAP_REM = 1;        // gap-4 = 1rem
+    const STEP = CARD_WIDTH_REM + GAP_REM;
+    // Calculate visible cards based on screen size - ensure it's never negative
+    const VISIBLE_CARDS = window.innerWidth >= 768 
+        ? Math.floor((window.innerWidth - 64) / (CARD_WIDTH_REM * 16 + GAP_REM * 16))
+        : 2; // Always show 2 cards on mobile for skeleton
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const maxSlide = Math.max(0, books.length - VISIBLE_CARDS);
+
     const handlePrevious = () => {
-        onSlideChange(Math.max(0, currentSlide - 1));
+        setCurrentSlide((prev) => Math.max(prev - 1, 0));
     };
 
     const handleNext = () => {
-        onSlideChange(Math.min(Math.ceil(books.length / 4) - 1, currentSlide + 1));
+        setCurrentSlide((prev) => Math.min(prev + 1, maxSlide));
     };
 
     // Loading skeleton component
@@ -36,15 +42,33 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
         return (
             <div className="animate-pulse">
                 {/* Mobile skeleton */}
-                <div className="md:hidden overflow-x-auto">
-                    <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="flex-none bg-gray-200 rounded-lg" style={{ width: '200px', height: '320px' }}>
-                                <div className="aspect-[3/4] bg-gray-300 rounded-t-lg"></div>
-                                <div className="p-3 space-y-2">
-                                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                                    <div className="h-4 bg-gray-300 rounded w-1/3"></div>
+                {/* Mobile skeleton (updated to match BookCard) */}
+                <div className="md:hidden w-[90vw] overflow-x-auto pb-4 pl-4 pr-2">
+                    <div className="flex gap-4 w-max animate-pulse">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="flex-none w-[314px] rounded-xl bg-white shadow-sm border"
+                            >
+                                {/* Book image */}
+                                <div className="aspect-[3/4] bg-gray-300 rounded-t-xl" />
+
+                                {/* Content */}
+                                <div className="p-4 space-y-3">
+                                    {/* Title */}
+                                    <div className="h-4 bg-gray-300 rounded w-5/6" />
+
+                                    {/* Author */}
+                                    <div className="h-3 bg-gray-300 rounded w-2/3" />
+
+                                    {/* Price / rating row */}
+                                    <div className="flex items-center justify-between pt-2">
+                                        <div className="h-4 bg-gray-300 rounded w-1/3" />
+                                        <div className="h-3 bg-gray-300 rounded w-1/4" />
+                                    </div>
+
+                                    {/* CTA button */}
+                                    <div className="h-9 bg-gray-300 rounded-lg mt-3" />
                                 </div>
                             </div>
                         ))}
@@ -54,7 +78,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                 {/* Desktop skeleton */}
                 <div className="hidden md:block">
                     <div className="flex gap-3 sm:gap-4">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                             <div key={i} className="flex-none w-56 bg-gray-200 rounded-lg">
                                 <div className="aspect-[3/4] bg-gray-300 rounded-t-lg"></div>
                                 <div className="p-4 space-y-2">
@@ -74,42 +98,53 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
         <>
             {books.length > 0 ? (
                 <>
-                    {/* Mobile horizontal scroll view */}
-                    <div className="md:hidden overflow-x-auto">
-                        <div className="flex gap-3 pb-4" style={{ width: 'max-content' }}>
+                    {/* Mobile horizontal scroll */}
+                    <div
+                        className="md:hidden w-[90vw] carousel-scroll-container overflow-x-auto scroll-smooth pb-4 pl-4 pr-2 snap-x snap-proximity"
+                        style={{
+                            touchAction: 'pan-x pan-y',
+                            WebkitOverflowScrolling: 'touch'
+                        }}
+                    >
+                        <div className="flex gap-4 w-max">
                             {books.map((book) => (
-                                <div key={book.id} className="flex-none" style={{ width: '200px' }}>
+                                <div key={book.id} className="flex-none snap-start">
                                     <BookCard book={book} />
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Desktop carousel view */}
-                    <div className="hidden md:block relative overflow-hidden ">
+                    {/* Desktop carousel with navigation */}
+                    <div className="hidden md:block relative overflow-hidden">
                         <button
                             onClick={handlePrevious}
                             disabled={currentSlide === 0}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110 border-2 border-primary-aqua/20 hover:border-primary-aqua/50 group"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110 border border-primary-aqua/30"
                         >
-                            <ChevronLeft className="h-8 w-8 text-primary-aqua mx-auto group-hover:text-secondary-aqua transition-colors" />
+                            <ChevronLeft className="h-8 w-8 text-primary-aqua mx-auto" />
                         </button>
                         <div
-                            className=" flex transition-transform duration-500 ease-in-out gap-3 sm:gap-4"
-                            style={{ transform: `translateX(-${currentSlide * 25}%)` }}
+                            className="flex gap-4 transition-transform duration-500 ease-out snap-x snap-mandatory"
+                            style={{
+                                transform: `translateX(-${currentSlide * STEP}rem)`
+                            }}
                         >
                             {books.map((book) => (
-                                <div key={book.id} className="flex-none w-56">
+                                <div
+                                    key={book.id}
+                                    className="flex-none w-56 snap-start rounded-xl"
+                                >
                                     <BookCard book={book} />
                                 </div>
                             ))}
                         </div>
                         <button
                             onClick={handleNext}
-                            disabled={currentSlide >= Math.ceil(books.length / 4) - 1}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110 border-2 border-primary-aqua/20 hover:border-primary-aqua/50 group"
+                            disabled={currentSlide >= maxSlide}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110 border border-primary-aqua/30"
                         >
-                            <ChevronRight className="h-8 w-8 text-primary-aqua mx-auto group-hover:text-secondary-aqua transition-colors" />
+                            <ChevronRight className="h-8 w-8 text-primary-aqua mx-auto" />
                         </button>
                     </div>
                 </>

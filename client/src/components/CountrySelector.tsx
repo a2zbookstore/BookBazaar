@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { Globe, ChevronDown, Search, X } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useUserLocation } from "@/contexts/userLocationContext";
@@ -30,17 +31,19 @@ const POPULAR_COUNTRIES = [
 interface CountrySelectorProps {
   className?: string;
   showShippingCost?: boolean;
+  compact?: boolean;
 }
 
 export default function CountrySelector({
   className = "",
+  compact = false,
 }: CountrySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentCountry, setCurrentCountry] =
     useState<(typeof POPULAR_COUNTRIES)[0] | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownContentRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { location, setManualLocation } = useUserLocation();
@@ -61,10 +64,11 @@ export default function CountrySelector({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+      const insideTrigger = dropdownRef.current?.contains(target);
+      const insideContent = dropdownContentRef.current?.contains(target);
+
+      if (!insideTrigger && !insideContent) {
         setIsOpen(false);
       }
     };
@@ -77,6 +81,17 @@ export default function CountrySelector({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
+
+  // Detect mobile viewport to decide portal rendering
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const updateIsMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    updateIsMobile();
+    window.addEventListener('resize', updateIsMobile);
+    return () => window.removeEventListener('resize', updateIsMobile);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -121,10 +136,10 @@ export default function CountrySelector({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`text-xs px-2 py-2 rounded-xl border bg-white flex items-center gap-1.5 w-[90px] ${className}`}
+        className={`text-xs px-2 py-2 rounded-xl border bg-white flex items-center gap-1.5 ${className}`}
       >
         <span className={`fi fi-${currentCountry.countryCode} h-4 w-6`}></span>
-        <span className="font-medium">{currentCountry.code}</span>
+        {compact ? null : <span className="font-medium">{currentCountry.code}</span>}
         <ChevronDown
           className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""
             }`}
@@ -132,38 +147,66 @@ export default function CountrySelector({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-xl z-50">
-          {/* Search */}
-          <div className="p-3">
-            <input
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search country..."
-              className="w-full px-3 py-2 border rounded"
-            />
-          </div>
-
-          {/* List */}
-          <div className="max-h-72 overflow-y-auto">
-            {filteredCountries.map((country) => (
-              <div
-                key={country.code}
-                onClick={() => handleCountrySelect(country)}
-                className={`px-4 py-3 cursor-pointer flex justify-between items-center ${currentCountry.code === country.code
-                  ? "bg-primary-aqua/10"
-                  : "hover:bg-gray-50"
-                  }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`fi fi-${country.countryCode} h-5 w-7`}></span>
-                  {country.name}
-                </div>
-                {currentCountry.code === country.code && "✓"}
+        (() => {
+          const content = (
+            <div
+              ref={dropdownContentRef}
+              className={
+                compact && isMobile
+                  ? "mobile-dropdown bg-white border rounded-xl shadow-xl"
+                  : "absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-xl z-50"
+              }
+            >
+              {/* Search */}
+              <div className="p-3">
+                <input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search country..."
+                  className="w-full px-3 py-2 border rounded"
+                />
               </div>
-            ))}
-          </div>
-        </div>
+
+              {/* List */}
+              <div className="max-h-72 overflow-y-auto">
+                {filteredCountries.map((country) => (
+                  <div
+                    key={country.code}
+                    onClick={() => handleCountrySelect(country)}
+                    className={`px-4 py-3 cursor-pointer flex justify-between items-center ${currentCountry.code === country.code
+                      ? "bg-primary-aqua/10"
+                      : "hover:bg-gray-50"
+                      }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`fi fi-${country.countryCode} h-5 w-7`}></span>
+                      {country.name}
+                    </div>
+                    {currentCountry.code === country.code && "✓"}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+
+          // On mobile, render in a portal with a backdrop
+          if (compact && isMobile) {
+            return ReactDOM.createPortal(
+              <div className="fixed inset-0 z-[1000]">
+                <div
+                  className="absolute inset-0 bg-black/40"
+                  onClick={() => setIsOpen(false)}
+                />
+                {content}
+              </div>,
+              document.body
+            );
+          }
+
+          // Desktop or non-compact: render inline
+          return content;
+        })()
       )}
     </div>
   );

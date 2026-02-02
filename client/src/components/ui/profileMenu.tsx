@@ -9,11 +9,13 @@ import {
     Phone,
     BookOpenCheck,
     LogOut,
+    List
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 
 const menuItems = [
+    { label: "Catalog", icon: List, location: "/catalog" },
     { label: "Your Profile", icon: User, location: "/profile" },
     { label: "My Orders", icon: ShoppingBag, location: "/my-orders" },
     { label: "Track Order", icon: Truck, location: "/track-order" },
@@ -29,7 +31,7 @@ export default function ProfileMenu(user?: any) {
     useEffect(() => {
         setCustomerName(user && (user.user.firstName || user.user.lastName)
             ? `${user.user.firstName.charAt(0).toUpperCase()}${user.user.lastName.charAt(0).toUpperCase()}`
-            : "User");
+            : "User"); 
     }, [user]);
 
     return (

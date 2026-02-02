@@ -14,7 +14,6 @@ export default function Header() {
     const [location, setLocation] = useLocation();
     const { user, isAuthenticated } = useAuth();
     const { cartCount, isCartAnimating, wishlistCount } = useGlobalContext();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
 
@@ -30,8 +29,6 @@ export default function Header() {
         };
         handleScroll();
         window.addEventListener('scroll', handleScroll);
-        console.log("hjknlm");
-
         window.addEventListener('resize', handleScroll);
         return () => {
             window.removeEventListener('scroll', handleScroll);
@@ -50,7 +47,7 @@ export default function Header() {
 
     return (
         <header className={`fixed-header bg-white border-b border-gray-200 w-full transition-all duration-300 z-30 ${isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''}`}>
-            <div className="container-custom px-3 md:px-6">
+            <div className="container-custom px-3 md:px-6 ">
                 {/* Top Row - Logo, Search, Right Actions */}
                 <div className={`flex items-center justify-between w-full transition-all duration-300 h-16 md:h-22 `}>
                     {/* Logo */}
@@ -71,7 +68,7 @@ export default function Header() {
                             staticKeyword="Search "
                         />
                     </div>
-                    {/* Desktop Right Actions */}
+
                     <div className="flex items-center gap-2">
                         <a
                             href="https://wa.me/14145956843"
@@ -101,22 +98,26 @@ export default function Header() {
                         )}
                         <div className="hidden lg:flex items-center ml-2">
                             <CountrySelector compact={false} />
+
                         </div>
+
+
+
                         <Link
                             href="/cart"
-                            className={`transition-colors relative mx-3 p-2 rounded-lg hover:bg-primary-aqua/10 border border-transparent hover:border-primary-aqua/20 ${isCartAnimating ? "cart-pulse-animation" : "text-secondary-black hover:text-primary-aqua cart-normal"}`}
+                            className={`transition-colors relative mx-1 sm:mx-3 sm:p-2 rounded-lg hover:bg-primary-aqua/10 border border-transparent hover:border-primary-aqua/20 ${isCartAnimating ? "cart-pulse-animation" : "text-secondary-black hover:text-primary-aqua cart-normal"}`}
                         >
                             <ShoppingCart className="h-6 w-6" />
                             {cartCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                                <span className="absolute -top-3 -right-3 sm:-top-1 sm:-right-1 bg-abe-red text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
                                     {cartCount}
                                 </span>
                             )}
-                        </Link>
+                        </Link> 
                         {isAuthenticated ? (
                             <ProfileMenu user={user} />
                         ) : (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"
                                     onClick={() => setLocation('/login')}
@@ -130,31 +131,22 @@ export default function Header() {
                                 >
                                     Register
                                 </Button>
+
+
                             </div>
                         )}
                     </div>
-                    {/* Mobile Right Actions */}
-                    {/* <div className="flex md:hidden items-center gap-3">
-                        <Link
-                            href="/cart"
-                            className={`transition-colors relative p-2 rounded-lg hover:bg-primary-aqua/10 ${isCartAnimating ? "cart-pulse-animation" : "text-secondary-black hover:text-primary-aqua cart-normal"}`}
-                        >
-                            <ShoppingCart className="h-5 w-5" />
-                            {cartCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-abe-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                                    {cartCount}
-                                </span>
-                            )}
-                        </Link>
-                    </div> */}
                 </div>
                 {/* Mobile Search Bar */}
-                <div className="md:hidden px-3 pb-3">
+                <div className="md:hidden my-4 flex items-center w-full justify-between "> 
+                    <CountrySelector className="lg:hidden" compact={true} />
                     <SearchInput
                         placeholder="Search books, authors, ISBN..."
-                        className="w-full h-10"
+                        className="flex-1 h-10"
                     />
+
                 </div>
+
             </div>
         </header>
     );
