@@ -505,6 +505,8 @@ export const giftCategories = pgTable("gift_categories", {
   price: decimal("price", { precision: 10, scale: 2 }),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
+  isEngravingAllowed: boolean("is_engraving_allowed").notNull().default(false),
+  engravingCharacterLimit: integer("engraving_character_limit"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -561,6 +563,11 @@ export const insertGiftCategorySchema = createInsertSchema(giftCategories).exten
   price: z.union([z.string(), z.number()]).optional().transform((val) => {
     if (val === undefined || val === null) return undefined;
     return typeof val === 'string' ? val : val.toString();
+  }),
+  isEngravingAllowed: z.boolean().optional(),
+  engravingCharacterLimit: z.union([z.number(), z.string()]).optional().transform((val) => {
+    if (val === undefined || val === null || val === "") return undefined;
+    return typeof val === 'string' ? parseInt(val) : val;
   })
 });
 export type InsertGiftCategory = z.infer<typeof insertGiftCategorySchema>;

@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Edit, Trash2, Package, Gift, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { GiftCategory } from "@/shared/schema";
+import type { GiftCategory } from "../../../../shared/schema";
 
 interface CategoryForm {
   name: string;
@@ -24,6 +24,8 @@ interface CategoryForm {
   price: number;
   isActive: boolean;
   sortOrder: number;
+  isEngravingAllowed: boolean;
+  engravingCharacterLimit: number | "";
 }
 
 export default function GiftCategoriesPage() {
@@ -57,6 +59,8 @@ export default function GiftCategoriesPage() {
     price: 0,
     isActive: true,
     sortOrder: 0,
+    isEngravingAllowed: false,
+    engravingCharacterLimit: "",
   });
 
   // Create/Update category mutation
@@ -118,6 +122,8 @@ export default function GiftCategoriesPage() {
       price: 0,
       isActive: true,
       sortOrder: 0,
+      isEngravingAllowed: false,
+      engravingCharacterLimit: "",
     });
     setEditingCategory(null);
     setUploadedImage(null);
@@ -143,6 +149,8 @@ export default function GiftCategoriesPage() {
       price: Number(category.price) || 0,
       isActive: category.isActive,
       sortOrder: category.sortOrder,
+      isEngravingAllowed: category.isEngravingAllowed ?? false,
+      engravingCharacterLimit: category.engravingCharacterLimit ?? "",
     });
     setImagePreview(category.imageUrl || '');
     setImagePreview2(category.imageUrl2 || '');
@@ -599,6 +607,32 @@ export default function GiftCategoriesPage() {
                 <Label htmlFor="isActive">Active</Label>
               </div>
 
+              <div className="flex items-center space-x-2 pt-2">
+                <Switch
+                  id="isEngravingAllowed"
+                  checked={form.isEngravingAllowed}
+                  onCheckedChange={(checked) => setForm({ ...form, isEngravingAllowed: checked, engravingCharacterLimit: checked ? form.engravingCharacterLimit : "" })}
+                />
+                <Label htmlFor="isEngravingAllowed">Engraving Allowed</Label>
+              </div>
+
+              {form.isEngravingAllowed && (
+                <div className="pt-2">
+                  <Label htmlFor="engravingCharacterLimit">Engraving Character Limit</Label>
+                  <Input
+                    id="engravingCharacterLimit"
+                    type="number"
+                    min="1"
+                    value={form.engravingCharacterLimit}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setForm({ ...form, engravingCharacterLimit: val === "" ? "" : Number(val) });
+                    }}
+                    placeholder="Max characters allowed for engraving"
+                  />
+                </div>
+              )}
+
               <div className="flex gap-2 pt-4">
                 <Button 
                   type="submit" 
@@ -656,6 +690,8 @@ export default function GiftCategoriesPage() {
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Sort Order</TableHead>
+                  <TableHead>Engraving Allowed</TableHead>
+                  <TableHead>Character Limit</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -694,6 +730,14 @@ export default function GiftCategoriesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{category.sortOrder}</TableCell>
+                    <TableCell>
+                      <Badge variant={category.isEngravingAllowed ? 'default' : 'secondary'}>
+                        {category.isEngravingAllowed ? 'Yes' : 'No'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {category.isEngravingAllowed ? (category.engravingCharacterLimit ?? '-') : '-'}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
