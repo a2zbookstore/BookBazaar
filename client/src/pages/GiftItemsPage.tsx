@@ -6,17 +6,23 @@ import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Gift, BookOpen, PartyPopper, ArrowLeft, Check, ShoppingCart, ShoppingBag } from "lucide-react";
+import EngraveFeature from "@/components/ui/EngraveFeature";
+import { Gift, BookOpen, PartyPopper, ArrowLeft, Check, ShoppingCart, ShoppingBag, Edit } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { apiRequest } from "@/lib/queryClient";
 import { GiftItem, GiftCategory } from "@/shared/schema";
 import { useEffect } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function GiftItemsPage() {
+  const [engravePanelOpen, setEngravePanelOpen] = useState(false);
+  const [engravePanelCategory, setEngravePanelCategory] = useState<GiftCategory | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedGift, setSelectedGift] = useState<null | number>(null);
   const queryClient = useQueryClient();
+  const [engraveEnabled, setEngraveEnabled] = useState(true);
+  const [engravingMessage, setEngravingMessage] = useState("");
 
   const { data: giftCategories = [], isLoading: isCategoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
@@ -33,7 +39,7 @@ export default function GiftItemsPage() {
       setSelectedGift(null);
     }
     const giftBookId = cartItems.find(item => item?.isGift)?.book?.categoryId ?? null;    // setSelectedGift(cartItems.find(item => item.book)?.giftCategoryId?.toString() || null);
-    
+
     setSelectedGift(giftBookId);
 
   }, [cartItems]);
@@ -54,21 +60,21 @@ export default function GiftItemsPage() {
 
   // Add gift to cart mutation
   const addGiftMutation = useMutation({
-    mutationFn: async (giftId: number, options?: { engrave?: boolean; engravingMessage?: string }) => {
+    mutationFn: async ({ giftId, engrave, engravingMessage }: { giftId: number; engrave?: boolean; engravingMessage?: string }) => {
       const payload: any = {
         giftId,
         giftCategoryId: giftId,
         quantity: 1,
       };
-      if (options?.engrave) {
+      if (engrave) {
         payload.engrave = true;
-        payload.engravingMessage = options.engravingMessage || "";
+        payload.engravingMessage = engravingMessage || "";
       }
       const response = await apiRequest("POST", "/api/cart/gift", payload);
       return response;
     },
     onSuccess: async () => {
-     await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Selected as your free gift!",
         description: "Your free gift has been added to cart",
@@ -105,7 +111,7 @@ export default function GiftItemsPage() {
     }
 
     setSelectedGift(giftId);
-    addGiftMutation.mutate(giftId);
+    addGiftMutation.mutate({ giftId, engrave: engraveEnabled, engravingMessage: engravingMessage });
   };
 
   // Check if user has books in cart (excluding gifts)
@@ -345,9 +351,7 @@ export default function GiftItemsPage() {
                     className={`
                       group relative bg-white shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border rounded-[5px]
                       ${isSelected ? 'ring-2 ring-pink-500 shadow-xl' : ''}
-                      ${!hasBookInCart || addGiftMutation.isPending ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                     `}
-                    onClick={() => !addGiftMutation.isPending && handleGiftSelect(category.id.toString())}
                   >
                     {/* Selection indicator - top right */}
                     {isSelected && (
@@ -370,19 +374,29 @@ export default function GiftItemsPage() {
                         </div>
                       )}
 
-                      {/* FREE Badge */}
-                      <Badge className="absolute top-2 left-2 bg-green-500 text-white font-bold">
-                        FREE
-                      </Badge>
-
-                      {/* Category Type Badge */}
-                      {category.type && (
-                        <Badge className={`absolute top-8 left-2 ${category.type === 'novel'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-purple-500 text-white'
-                          }`}>
-                          {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
+                      {/* Engraving Customizable Badge */}
+                      {category.isEngravingAllowed && (
+                        <Badge
+                          className="absolute top-6 left-2 h-6 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400
+                           text-white font-bold shadow-lg flex items-center gap-1 animate-pulse cursor-pointer"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="ml-1 text-xs">Engraving Available{category.engravingCharacterLimit ? ` (${category.engravingCharacterLimit} chars)` : ''}</span>
                         </Badge>
+                      )}
+                      {/* EngraveFeature right panel (only once, outside the loop) */}
+                      {engravePanelCategory && (
+                        <EngraveFeature
+                          open={engravePanelOpen}
+                          onClose={() => { setEngravePanelOpen(false); setEngravePanelCategory(null); }}
+                          category={engravePanelCategory}
+
+                          engraveEnabled={engraveEnabled}
+                          setEngraveEnabled={setEngraveEnabled}
+                          engravingMessage={engravingMessage}
+                          setEngravingMessage={setEngravingMessage}
+                          onSubmit={() => handleGiftSelect(engravePanelCategory.id)}
+                        />
                       )}
 
                       {/* Disabled Overlay */}
@@ -398,9 +412,41 @@ export default function GiftItemsPage() {
 
                     {/* Item Details */}
                     <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm h-10">
-                        {category.name}
-                      </h3>
+
+                      <div className="flex items-center justify-between mb-2">
+
+                        {/* <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm">
+                          {category.name}
+                        </h3> */}
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <h3
+                                className="font-semibold text-gray-900 mb-1 text-sm
+                   truncate whitespace-nowrap max-w-full cursor-default"
+                              >
+                                {category.name}
+                              </h3>
+                            </TooltipTrigger>
+
+                            <TooltipContent>
+                              <p className="max-w-xs break-words">{category.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+
+                        {/* Category Type Badge */}
+                        {category.type && (
+                          <Badge className={`${category.type === 'novel'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-purple-500 text-white'
+                            }`}>
+                            {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
+                          </Badge>
+                        )}
+                      </div>
 
                       {category.description && (
                         <p className="text-xs text-gray-600 mb-2 line-clamp-2">
@@ -429,10 +475,31 @@ export default function GiftItemsPage() {
                           </span>
                         </div>
                       </div>
+
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEngravePanelOpen(true);
+                          setEngravePanelCategory(category);
+                        }}
+                        disabled={!category.isEngravingAllowed}
+                        size={"sm"}
+                        className="rounded-full bg-gradient-to-l from-amber-400 via-rose-400 to-violet-500
+                          text-white font-bold shadow-lg shadow-rose-300/40 flex items-center gap-1
+                          cursor-pointer w-full hover:brightness-110 transition-all duration-2000
+                          animate-pulse md:animate-none" 
+                          >
+
+
+                        <Edit className="h-4 w-4" />
+                        <span className="ml-1 text-xs">Engraving Available{category.engravingCharacterLimit ? ` (${category.engravingCharacterLimit} chars)` : ''}</span>
+                      </Button>
                     </div>
 
                     {/* Select Button */}
                     <div className="px-4 pb-4">
+                      {/* Engraving Customizable Badge */}
+
                       <Button
                         disabled={!hasBookInCart || addGiftMutation.isPending}
                         className={`
@@ -441,7 +508,10 @@ export default function GiftItemsPage() {
                             ? 'bg-pink-500 hover:bg-pink-600 text-white'
                             : 'bg-primary-aqua hover:bg-secondary-aqua text-white'
                           }
+                          ${!hasBookInCart || addGiftMutation.isPending ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+
                         `}
+                        onClick={() => !addGiftMutation.isPending && handleGiftSelect(category.id.toString())}
                         size="sm"
                       >
                         {isSelected ? (
