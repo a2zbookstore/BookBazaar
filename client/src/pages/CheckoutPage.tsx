@@ -21,6 +21,7 @@ import { PaymentSpinner } from "@/components/PaymentSpinner";
 import StripeCheckoutForm from "@/components/StripeCheckoutForm";
 import { Book } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { staticCoupons } from "@/constant/staticCoupons";
 
 
 
@@ -162,7 +163,43 @@ export default function CheckoutPage() {
   // Check if cart has any non-gift books
   const hasNonGiftBooks = cartItems.some(item => !(item as any).isGift);
 
-  // Apply coupon function
+  const tagCoupon = (code: string) => {
+    setIsApplyingCoupon(true);
+
+    const coupon = staticCoupons.find(
+      (c) => c.code === code.toUpperCase()
+    );
+
+    if (!coupon) {
+      setCouponError("Invalid coupon code.");
+      setIsApplyingCoupon(false);
+      return;
+    }
+
+    if (convertedAmounts.subtotal < coupon.minSubtotal) {
+      setCouponError(
+        `This coupon requires a minimum order of $${coupon.minSubtotal}.`
+      );
+      setIsApplyingCoupon(false);
+      return;
+    }
+
+    setAppliedCoupon({
+      code: coupon.code,
+      description: coupon.description,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+    });
+
+    setCouponCode("");
+    toast({
+      title: "Coupon Applied!",
+      description: `You saved ${coupon.discountValue}% on your order.`,
+    });
+
+    setIsApplyingCoupon(false);
+  };
+
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
       setCouponError("Please enter a coupon code");
@@ -172,25 +209,159 @@ export default function CheckoutPage() {
     setIsApplyingCoupon(true);
     setCouponError("");
 
+    const code = couponCode.trim().toUpperCase();
+
+    // 🔹 Local coupon logic (from coupons.ts)
+    const localCoupon = staticCoupons.find(
+      (c) => c.code === code
+    );
+
+    if (localCoupon) {
+      if (convertedAmounts.subtotal < localCoupon.minSubtotal) {
+        setCouponError(
+          `This coupon requires a minimum order of $${localCoupon.minSubtotal}.`
+        );
+        setIsApplyingCoupon(false);
+        return;
+      }
+
+      setAppliedCoupon({
+        code: localCoupon.code,
+        description: localCoupon.description,
+        discountType: localCoupon.discountType,
+        discountValue: localCoupon.discountValue,
+      });
+
+      setCouponCode("");
+      toast({
+        title: "Coupon Applied!",
+        description:
+          localCoupon.discountType === "percentage"
+            ? `You saved ${localCoupon.discountValue}% on your order.`
+            : `You saved ${formatAmount(localCoupon.discountValue)} on your order.`,
+      });
+
+      setIsApplyingCoupon(false);
+      return;
+    }
+
+    // 🔹 Fallback to API coupon validation
     try {
       const response = await apiRequest("POST", "/api/coupons/validate", {
-        code: couponCode.trim(),
-        orderAmount: convertedAmounts.subtotal
+        code,
+        orderAmount: convertedAmounts.subtotal,
       });
 
       const data = await response.json();
       setAppliedCoupon(data);
       setCouponCode("");
+
       toast({
         title: "Coupon Applied!",
-        description: `You saved ${data.discountType === 'percentage' ? data.discountValue + '%' : formatAmount(data.discountValue)}`,
+        description:
+          data.discountType === "percentage"
+            ? `You saved ${data.discountValue}% on your order.`
+            : `You saved ${formatAmount(data.discountValue)} on your order.`,
       });
-    } catch (error: any) {
+    } catch (error) {
       setCouponError("Invalid coupon code");
     } finally {
       setIsApplyingCoupon(false);
     }
   };
+
+
+  // Apply coupon function
+  // const applyCoupon = async () => {
+  //   if (!couponCode.trim()) {
+  //     setCouponError("Please enter a coupon code");
+  //     return;
+  //   }
+
+  //   setIsApplyingCoupon(true);
+  //   setCouponError("");
+
+
+  //   // Custom logic for $10 off $100+, 20% off $200+, 30% off $300+
+  //   const code = couponCode.trim().toUpperCase();
+  //   if (code === "TENOFF100") {
+  //     if (convertedAmounts.subtotal >= 100) {
+  //       setAppliedCoupon({
+  //         code: "TENOFF100",
+  //         description: "$10 off orders $100+",
+  //         discountType: "fixed_amount",
+  //         discountValue: 10,
+  //       });
+  //       setCouponCode("");
+  //       toast({
+  //         title: "Coupon Applied!",
+  //         description: "You saved $10 on your order.",
+  //       });
+  //     } else {
+  //       setCouponError("This coupon requires a minimum order of $100.");
+  //     }
+  //     setIsApplyingCoupon(false);
+  //     return;
+  //   }
+  //   if (code === "TWENTYOFF200") {
+  //     if (convertedAmounts.subtotal >= 200) {
+  //       setAppliedCoupon({
+  //         code: "TWENTYOFF200",
+  //         description: "20% off orders $200+",
+  //         discountType: "percentage",
+  //         discountValue: 20,
+  //       });
+  //       setCouponCode("");
+  //       toast({
+  //         title: "Coupon Applied!",
+  //         description: "You saved 20% on your order.",
+  //       });
+  //     } else {
+  //       setCouponError("This coupon requires a minimum order of $200.");
+  //     }
+  //     setIsApplyingCoupon(false);
+  //     return;
+  //   }
+  //   if (code === "THIRTYOFF300") {
+  //     if (convertedAmounts.subtotal >= 300) {
+  //       setAppliedCoupon({
+  //         code: "THIRTYOFF300",
+  //         description: "30% off orders $300+",
+  //         discountType: "percentage",
+  //         discountValue: 30,
+  //       });
+  //       setCouponCode("");
+  //       toast({
+  //         title: "Coupon Applied!",
+  //         description: "You saved 30% on your order.",
+  //       });
+  //     } else {
+  //       setCouponError("This coupon requires a minimum order of $300.");
+  //     }
+  //     setIsApplyingCoupon(false);
+  //     return;
+  //   }
+
+  //   // Default API coupon logic
+  //   try {
+  //     const response = await apiRequest("POST", "/api/coupons/validate", {
+  //       code: couponCode.trim(),
+  //       orderAmount: convertedAmounts.subtotal
+  //     });
+
+  //     const data = await response.json();
+  //     setAppliedCoupon(data);
+  //     setCouponCode("");
+  //     toast({
+  //       title: "Coupon Applied!",
+  //       description: `You saved ${data.discountType === 'percentage' ? data.discountValue + '%' : formatAmount(data.discountValue)}`,
+  //     });
+  //   } catch (error: any) {
+  //     setCouponError("Invalid coupon code");
+  //   } finally {
+  //     setIsApplyingCoupon(false);
+  //   }
+  // };
 
   // Remove coupon function
   const removeCoupon = () => {
@@ -1227,6 +1398,9 @@ export default function CheckoutPage() {
                     </div>
                   ) : (
                     <div className="flex gap-2">
+
+                      {/* Coupon Quick Apply Tags */}
+
                       <Input
                         placeholder="Enter promo code"
                         value={couponCode}
@@ -1248,13 +1422,31 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   {couponError && (
-                    <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-xl w-fit">
                       <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                       <p className="text-xs text-red-600 font-medium">{couponError}</p>
                     </div>
                   )}
+                  <div
+                    className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2 w-full"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.5rem' }}
+                  >
+                    {staticCoupons.map(coupon => (
+                      <button
+                        key={coupon.code}
+                        type="button"
+                        className={`w-full px-3 py-1 rounded-full border font-semibold text-xs transition-all duration-150 shadow-sm hover:bg-primary-aqua hover:text-white focus:outline-none ${couponCode.trim().toUpperCase() === coupon.code ? 'bg-primary-aqua text-white border-primary-aqua' : 'bg-white text-primary-aqua border-primary-aqua'}`}
+                        onClick={() => {
+                          setCouponCode(coupon.code);
+                          setCouponError("");
+                        }}
+                      >
+                        {coupon.code}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="border-t-2 border-dashed border-gray-200"></div>

@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { SecretAdminAccess } from "@/components/SecretAdminAccess";
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Send } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -210,11 +211,39 @@ export default function Footer() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ title: string; content: string } | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
       setSubscribed(true);
+      try {
+        const res = await fetch("/api/newsletter/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast({
+            title: "Subscribed!",
+            description: "Newsletter subscription successful. Confirmation email sent.",
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Subscription Failed",
+            description: data.message || "Could not subscribe. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } catch (err: any) {
+        toast({
+          title: "Network Error",
+          description: err?.message || "Could not subscribe. Please try again.",
+          variant: "destructive"
+        });
+      }
       setTimeout(() => {
         setEmail("");
         setSubscribed(false);
@@ -282,15 +311,7 @@ export default function Footer() {
               >
                 <Facebook className="w-5 h-5" />
               </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-primary-aqua flex items-center justify-center transition-all duration-300 hover:scale-110"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
+             
               <a
                 href="https://instagram.com"
                 target="_blank"
@@ -300,15 +321,7 @@ export default function Footer() {
               >
                 <Instagram className="w-5 h-5" />
               </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-primary-aqua flex items-center justify-center transition-all duration-300 hover:scale-110"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
+              
             </div>
           </div>
 

@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   BarChart3,
   BookOpen,
   ShoppingCart,
-  TrendingUp,
   Users,
   Settings,
   Menu,
@@ -14,6 +13,8 @@ import {
   RotateCcw,
   Mail,
   Gift,
+  Percent,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const sidebarItems = [
   { href: "/admin/customers", icon: Users, label: "Customers" },
   { href: "/admin/messages", icon: Mail, label: "Messages" },
   { href: "/admin/returns", icon: RotateCcw, label: "Returns" },
+  { href: "/admin/coupons", icon: Percent, label: "Coupons" },
   { href: "/admin/gift-categories", icon: Gift, label: "Gift Categories" },
   { href: "/admin/gift-management", icon: Gift, label: "Gift Management" },
   { href: "/admin/welcome-email", icon: Mail, label: "Welcome Email" },
@@ -39,66 +41,95 @@ const sidebarItems = [
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const isActive = (href: string, exact = false) => {
-    if (exact) {
-      return location === href;
-    }
-    return location.startsWith(href);
-  };
+  const isActive = (href: string, exact = false) =>
+    exact ? location === href : location.startsWith(href);
+
+  /* ESC key closes sidebar */
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-2xl border-r border-slate-700">
-        <div className="p-6 bg-slate-900">
-          <Link href="/" className="flex items-center mb-8">
-            <h2 className="text-xl font-bookerly font-bold text-white">A2Z BOOKSHOP</h2>
-          </Link>
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white">Admin Dashboard</h3>
-            <p className="text-sm text-slate-300 bg-slate-700 px-3 py-1 rounded-full inline-block">Welcome back, {user?.firstName || 'Admin'}</p>
+      <aside
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white",
+          "transform transition-transform duration-300",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "md:translate-x-0 md:static md:z-auto"
+        )}
+      >
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold tracking-wide">A2Z BOOKSHOP</h2>
+            <p className="text-sm text-slate-300 mt-1">
+              {user?.firstName || "Admin"}
+            </p>
           </div>
+          <button
+            className="md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <nav className="flex-1 px-4 bg-slate-900">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="space-y-1">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.href, item.exact);
+
               return (
                 <li key={item.href}>
-                  <div
-                    className={cn(
-                      "flex items-center px-4 py-4 rounded-xl transition-all duration-300 cursor-pointer transform hover:scale-105 shadow-sm",
-                      isActive(item.href, item.exact)
-                        ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border-l-4 border-blue-300 font-semibold"
-                        : "text-slate-200 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 hover:text-white hover:shadow-md font-medium border-l-4 border-transparent hover:border-gray-400"
-                    )}
-                    onClick={() => {
-                      console.log("Navigating to:", item.href);
-                      setLocation(item.href);
-                    }}
-                  >
-                    <Icon className={cn(
-                      "h-6 w-6 mr-4 transition-colors duration-300",
-                      isActive(item.href, item.exact)
-                        ? "text-blue-100"
-                        : "text-slate-300 hover:text-white"
-                    )} />
-                    <span className="text-sm tracking-wide">{item.label}</span>
-                  </div>
+                  <Link href={item.href}>
+                    <a
+                      onClick={() => setSidebarOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors",
+                        active
+                          ? "bg-blue-600 text-white font-semibold"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.label}
+                    </a>
+                  </Link>
                 </li>
               );
             })}
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-slate-700 bg-slate-900">
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-slate-700">
           <Link href="/">
-            <Button variant="ghost" className="w-full justify-start text-slate-200 hover:text-white hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 transition-all duration-300 font-medium px-4 py-3 rounded-full transform hover:scale-105">
-              <LogOut className="h-6 w-6 mr-4 text-slate-300 hover:text-white transition-colors duration-300" />
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-slate-300 hover:text-white"
+            >
+              <LogOut className="h-4 w-4 mr-3" />
               Back to Store
             </Button>
           </Link>
@@ -106,26 +137,34 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div
+        className="flex-1 flex flex-col"
+        onClick={() => sidebarOpen && setSidebarOpen(false)}
+      >
         {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bookerly font-bold text-base-black">
-              Admin Dashboard
-            </h1>
-            <Button
-              onClick={() => window.location.href = "/api/logout"}
-              variant="outline"
-              size="sm"
+        <header className="sticky top-0 z-30 bg-white border-b px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              className="md:hidden"
+              onClick={() => setSidebarOpen(true)}
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+              <Menu className="h-5 w-5" />
+            </button>
+            <h1 className="text-xl font-bold">Admin Dashboard</h1>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => (window.location.href = "/api/logout")}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
       </div>
