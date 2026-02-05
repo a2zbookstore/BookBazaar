@@ -71,60 +71,6 @@ interface WelcomeEmailData {
   };
 }
 
-// Newsletter subscription confirmation email
-export async function sendNewsletterConfirmationEmail(email: string): Promise<boolean> {
-  try {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Newsletter Subscription Confirmation</title>
-        <style>
-          body { font-family: Arial, sans-serif; background: #f8fafc; color: #222; padding: 0; margin: 0; }
-          .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0001; padding: 32px; }
-          .header { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center; }
-          .content { padding: 24px; }
-          .footer { text-align: center; color: #888; font-size: 13px; margin-top: 32px; }
-          .btn { display: inline-block; background: #dc2626; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 18px; }
-          @media (max-width: 600px) { .container { padding: 12px; } .header, .content { padding: 12px; } }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>A<span style="color: #fff;">2</span>Z BOOKSHOP</h1>
-            <h2>Newsletter Subscription Confirmed</h2>
-          </div>
-          <div class="content">
-            <p>Dear Book Lover,</p>
-            <p>Thank you for subscribing to the A2Z BOOKSHOP newsletter!</p>
-            <p>You will now receive updates on new arrivals, exclusive offers, and bookshop news directly to <strong>${email}</strong>.</p>
-            <a href="https://a2zbookshop.com" class="btn">Visit Our Bookshop</a>
-            <p style="margin-top: 24px;">If you did not subscribe, please ignore this email or <a href="mailto:support@a2zbookshop.com">contact support</a>.</p>
-          </div>
-          <div class="footer">
-            <p>© 2025 A2Z BOOKSHOP. All rights reserved.</p>
-            <p>Follow us for more updates!</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-    return await sendEmail({
-      to: email,
-      from:  getWorkspaceEmail(),
-      subject: 'Welcome to the A2Z BOOKSHOP Newsletter!',
-      html,
-      text: `Thank you for subscribing to the A2Z BOOKSHOP newsletter! You will now receive updates and offers to your email (${email}). If you did not subscribe, please ignore this message.`
-    });
-  } catch (error) {
-    console.error('Error sending newsletter confirmation email:', error);
-    return false;
-  }
-}
-
 // Generate order confirmation email HTML
 const generateOrderConfirmationHTML = (data: OrderEmailData) => {
   const { order, customerName } = data;
@@ -268,7 +214,7 @@ const generateOrderConfirmationHTML = (data: OrderEmailData) => {
 // Generate status update email HTML
 const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
   const { order, customerName, newStatus, trackingNumber, shippingCarrier, notes } = data;
-
+  
   const statusColors: { [key: string]: { bg: string; text: string } } = {
     'pending': { bg: '#fbbf24', text: '#92400e' },
     'confirmed': { bg: '#3b82f6', text: '#1e40af' },
@@ -341,12 +287,12 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
         <h4 style="color: ${newStatus.toLowerCase() === 'delivered' ? '#047857' : '#1e40af'}; margin-top: 0;">
           ${newStatus.toLowerCase() === 'delivered' ? 'Enjoy Your Books!' : 'What\'s Next?'}
         </h4>
-        ${newStatus.toLowerCase() === 'delivered'
-      ? '<p style="margin-bottom: 10px;">• We hope you enjoy your new books!</p><p style="margin-bottom: 10px;">• Remember, we offer 30-day returns if needed</p><p style="margin-bottom: 0;">• Please consider leaving us a review</p>'
-      : newStatus.toLowerCase() === 'shipped'
-        ? '<p style="margin-bottom: 10px;">• Your order is on its way!</p><p style="margin-bottom: 10px;">• Use the tracking number above to monitor delivery</p><p style="margin-bottom: 0;">• Expected delivery varies by location</p>'
-        : '<p style="margin-bottom: 10px;">• We\'ll send another update when your order ships</p><p style="margin-bottom: 0;">• Thank you for your patience</p>'
-    }
+        ${newStatus.toLowerCase() === 'delivered' 
+          ? '<p style="margin-bottom: 10px;">• We hope you enjoy your new books!</p><p style="margin-bottom: 10px;">• Remember, we offer 30-day returns if needed</p><p style="margin-bottom: 0;">• Please consider leaving us a review</p>'
+          : newStatus.toLowerCase() === 'shipped'
+          ? '<p style="margin-bottom: 10px;">• Your order is on its way!</p><p style="margin-bottom: 10px;">• Use the tracking number above to monitor delivery</p><p style="margin-bottom: 0;">• Expected delivery varies by location</p>'
+          : '<p style="margin-bottom: 10px;">• We\'ll send another update when your order ships</p><p style="margin-bottom: 0;">• Thank you for your patience</p>'
+        }
       </div>
 
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -389,7 +335,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
       console.log('Email transporter not available - skipping order confirmation email');
       return false;
     }
-
+    
     const htmlContent = generateOrderConfirmationHTML(data);
 
     // Email to customer
@@ -438,7 +384,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
       console.log('Email transporter not available - skipping status update email');
       return false;
     }
-
+    
     const htmlContent = generateStatusUpdateHTML(data);
 
     const customerMailOptions = {
@@ -483,7 +429,7 @@ export const generateWelcomeHTMLInternal = (data: WelcomeEmailData) => {
   const { user } = data;
   const registrationMethod = user.authProvider === 'email' ? 'email address' : 'phone number';
   const contactInfo = user.email || user.phone || '';
-
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -752,11 +698,11 @@ export const testEmailConfiguration = async (): Promise<boolean> => {
       console.log('Email transporter not available - test failed');
       return false;
     }
-
+    
     // Test connection
     await transporter.verify();
     console.log('✅ Email configuration test successful');
-
+    
     // Send test email
     const workspaceEmail = getWorkspaceEmail();
     const info = await transporter.sendMail({
@@ -780,7 +726,7 @@ export const testEmailConfiguration = async (): Promise<boolean> => {
         </div>
       `
     });
-
+    
     console.log('✅ Test email sent successfully - Message ID:', info.messageId);
     return true;
   } catch (error) {
