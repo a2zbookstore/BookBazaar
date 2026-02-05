@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Filter, X } from 'lucide-react';
 import { Category } from '@/types';
-import { useCurrency } from '@/hooks/useCurrency';
 
 interface FiltersSidebarProps {
   // Visibility
@@ -57,10 +56,6 @@ export default function FiltersSidebar({
   const [tempSelectedConditions, setTempSelectedConditions] = useState<string[]>(selectedConditions);
   const [tempMinPrice, setTempMinPrice] = useState(minPrice);
   const [tempMaxPrice, setTempMaxPrice] = useState(maxPrice);
-  const {currency,userCurrency,formatAmount} = useCurrency();
-
-  console.log(currency,"DAds",userCurrency);
-  
 
   // Sync with parent state when filters change externally
   useEffect(() => {

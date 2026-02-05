@@ -16,7 +16,7 @@ interface BooksResponse {
 }
 
 export default function CatalogPage() {
-  const [location,setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
@@ -28,13 +28,28 @@ export default function CatalogPage() {
   const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 15;
   const searchParams = useSearch();
+  const queryParams = new URLSearchParams();
+
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
-    const query = params.get("search") || "";
-    setSearch(query);
+    const searchQuery = params.get("search") || "";
+    const categoryIdQuery = params.get("categoryId") || "";
+    const condition = Object.fromEntries(params.entries());
+    console.log(condition);
+
+    if (condition.featured === 'true') queryParams.set('featured', 'true');
+    if (condition.bestseller === 'true') { queryParams.set('bestseller', 'true'); }
+    if (condition.trending === 'true') queryParams.set('trending', 'true');
+    if (condition.newArrival === 'true') queryParams.set('newArrival', 'true');
+    if (condition.boxSet === 'true') queryParams.set('boxSet', 'true');
+    searchQuery ? setSearch(searchQuery) : setSearch('');
+    categoryIdQuery ? setSelectedCategories([categoryIdQuery]) : setSelectedCategories([]);
+
+    console.log(queryParams.toString());
+
     setCurrentPage(1);
-    if (query) {
+    if (searchQuery) {
       setSelectedCategories([]);
       setSelectedConditions([]);
       setMinPrice('');
@@ -42,8 +57,12 @@ export default function CatalogPage() {
     }
   }, [searchParams]);
 
+  // useEffect(() => {
+  //   // Reset to first page when filters change
+  //   setCurrentPage(1);
+  // }, [params]);
+
   // Build query parameters
-  const queryParams = new URLSearchParams();
   if (search) queryParams.set('search', search);
   if (selectedCategories.length > 0) queryParams.set('categoryId', selectedCategories[0]); // For now, just use first category
   if (selectedConditions.length > 0) queryParams.set('condition', selectedConditions[0]); // For now, just use first condition
@@ -52,6 +71,8 @@ export default function CatalogPage() {
 
   // Check URL params for special filters
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  console.log("drty",urlParams.toString());
+  
   if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
   if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');
   if (urlParams.get('trending') === 'true') queryParams.set('trending', 'true');
@@ -222,16 +243,16 @@ export default function CatalogPage() {
               )}
             </Button>
 
-              <SortFilterHeader
-                currentCount={books.length}
-                totalCount={totalBooks}
-                startIndex={books.length > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0}
-                endIndex={Math.min(currentPage * itemsPerPage, totalBooks)}
-                sortValue={`${sortBy}-${sortOrder}`}
-                onSortChange={handleSortChange}
-                sortOptions={sortOptions ?? []}
-                showResults={false}
-              />
+            <SortFilterHeader
+              currentCount={books.length}
+              totalCount={totalBooks}
+              startIndex={books.length > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0}
+              endIndex={Math.min(currentPage * itemsPerPage, totalBooks)}
+              sortValue={`${sortBy}-${sortOrder}`}
+              onSortChange={handleSortChange}
+              sortOptions={sortOptions ?? []}
+              showResults={false}
+            />
           </div>
 
           {/* Results Count */}

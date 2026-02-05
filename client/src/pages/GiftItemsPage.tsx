@@ -377,11 +377,10 @@ export default function GiftItemsPage() {
                       {/* Engraving Customizable Badge */}
                       {category.isEngravingAllowed && (
                         <Badge
-                          className="absolute top-6 left-2 h-6 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400
-                           text-white font-bold shadow-lg flex items-center gap-1 animate-pulse cursor-pointer"
+                          className="absolute top-6 left-2 h-6 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400
+                           text-white font-bold shadow-lg flex items-center gap-1 animate-bounce"
                         >
-                          <Edit className="h-4 w-4" />
-                          <span className="ml-1 text-xs">Engraving Available{category.engravingCharacterLimit ? ` (${category.engravingCharacterLimit} chars)` : ''}</span>
+                          <span className="ml-1 text-xs">Engraving Available</span>
                         </Badge>
                       )}
                       {/* EngraveFeature right panel (only once, outside the loop) */}
@@ -484,15 +483,13 @@ export default function GiftItemsPage() {
                         }}
                         disabled={!category.isEngravingAllowed}
                         size={"sm"}
-                        className="rounded-full bg-gradient-to-l from-amber-400 via-rose-400 to-violet-500
+                        className="rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-red-500
                           text-white font-bold shadow-lg shadow-rose-300/40 flex items-center gap-1
                           cursor-pointer w-full hover:brightness-110 transition-all duration-2000
-                          animate-pulse md:animate-none" 
-                          >
-
-
+                          animate-pulse md:animate-none"
+                      >
                         <Edit className="h-4 w-4" />
-                        <span className="ml-1 text-xs">Engraving Available{category.engravingCharacterLimit ? ` (${category.engravingCharacterLimit} chars)` : ''}</span>
+                        <span className="ml-1 text-xs">Click to Engrave</span>
                       </Button>
                     </div>
 

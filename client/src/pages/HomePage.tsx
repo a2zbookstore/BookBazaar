@@ -133,6 +133,7 @@ function CategoryCarousel({ category, variant = 'default' }: CategoryCarouselPro
                 </p>
 
                 {/* CTA */}
+                {/* /catalog?search=DSM */}
                 <Link href={`/catalog?categoryId=${category.id}`}>
                   <Button
                     variant="outline"

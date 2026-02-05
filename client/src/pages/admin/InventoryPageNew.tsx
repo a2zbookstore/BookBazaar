@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Book, Category } from "@/types";
 import BannerUploadPage from "./BannerUploadPage";
 import CategoriesManagement from "@/components/admin/CategoriesManagement";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Image helper function (same as BookCard)
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -571,7 +572,7 @@ export default function InventoryPageNew() {
   };
 
   return (
-    <div className="p-6">
+    <div className="">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bookerly font-bold text-base-black">
           Inventory Management
@@ -1222,7 +1223,16 @@ export default function InventoryPageNew() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-base-black truncate">{book.title}</h3>
+                        <h3 className="font-semibold text-base-black truncate w-60">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="truncate">{book.title}</span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                {book.title}
+                              </TooltipContent>
+                            </Tooltip>
+                          </h3>
                         <p className="text-secondary-black text-sm">{book.author}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge className={`text-xs ${getConditionColor(book.condition)}`}>
