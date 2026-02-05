@@ -8,7 +8,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
 import * as XLSX from "xlsx";
@@ -362,6 +362,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching order:", error);
       res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
+  // Newsletter subscription route
+  app.post("/api/newsletter/subscribe", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== "string" || !email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+
+      // Send confirmation email
+      try {
+        const sendNewsletterConfirmationEmailFunc = sendNewsletterConfirmationEmail;
+        await sendNewsletterConfirmationEmailFunc(email);
+      } catch (emailError) {
+        console.error("Failed to send newsletter confirmation email:", emailError);
+        // Don't fail subscription if email fails
+      }
+
+      res.json({ success: true, message: "Subscription successful! Confirmation email sent." });
+    } catch (error) {
+      console.error("Newsletter subscription error:", error);
+      res.status(500).json({ message: "Failed to subscribe to newsletter" });
     }
   });
 
@@ -1901,7 +1925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatePayload = { ...categoryData, slug };
       if (typeof sort_order !== 'undefined' && sort_order !== null && sort_order !== "") {
         updatePayload.sort_order = Number(sort_order);
-      }else {
+      } else {
         updatePayload.sort_order = null;
       }
 
@@ -4293,7 +4317,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const updateData = insertCouponSchema.partial().parse(req.body);
+      const transformedData = {
+        ...req.body,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+      };
+      const updateData = insertCouponSchema.partial().parse(transformedData);
 
       // If updating code, check for duplicates
       if (updateData.code) {
