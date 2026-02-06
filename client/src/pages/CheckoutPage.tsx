@@ -22,6 +22,7 @@ import StripeCheckoutForm from "@/components/StripeCheckoutForm";
 import { Book } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { staticCoupons } from "@/constant/staticCoupons";
+import { getLocalizedCoupon } from "@/constant/staticCoupons";
 
 
 
@@ -212,33 +213,33 @@ export default function CheckoutPage() {
     const code = couponCode.trim().toUpperCase();
 
     // 🔹 Local coupon logic (from coupons.ts)
-    const localCoupon = staticCoupons.find(
-      (c) => c.code === code
-    );
+    const localCoupon = staticCoupons.find((c) => c.code === code);
 
     if (localCoupon) {
-      if (convertedAmounts.subtotal < localCoupon.minSubtotal) {
+      const localizedCoupon = await getLocalizedCoupon(localCoupon, userCurrency, convertPrice);
+
+      if (convertedAmounts.subtotal < localizedCoupon.minSubtotal) {
         setCouponError(
-          `This coupon requires a minimum order of $${localCoupon.minSubtotal}.`
+          `This coupon requires a minimum order of ${formatAmount(localizedCoupon.minSubtotal, userCurrency)}.`
         );
         setIsApplyingCoupon(false);
         return;
       }
 
       setAppliedCoupon({
-        code: localCoupon.code,
-        description: localCoupon.description,
-        discountType: localCoupon.discountType,
-        discountValue: localCoupon.discountValue,
+        code: localizedCoupon.code,
+        description: localizedCoupon.description,
+        discountType: localizedCoupon.discountType,
+        discountValue: localizedCoupon.discountValue,
       });
 
       setCouponCode("");
       toast({
         title: "Coupon Applied!",
         description:
-          localCoupon.discountType === "percentage"
-            ? `You saved ${localCoupon.discountValue}% on your order.`
-            : `You saved ${formatAmount(localCoupon.discountValue)} on your order.`,
+          localizedCoupon.discountType === "percentage"
+            ? `You saved ${localizedCoupon.discountValue}% on your order.`
+            : `You saved ${formatAmount(localizedCoupon.discountValue, userCurrency)} on your order.`,
       });
 
       setIsApplyingCoupon(false);
@@ -261,7 +262,7 @@ export default function CheckoutPage() {
         description:
           data.discountType === "percentage"
             ? `You saved ${data.discountValue}% on your order.`
-            : `You saved ${formatAmount(data.discountValue)} on your order.`,
+            : `You saved ${formatAmount(data.discountValue, userCurrency)} on your order.`,
       });
     } catch (error) {
       setCouponError("Invalid coupon code");
@@ -1424,7 +1425,7 @@ export default function CheckoutPage() {
                   {couponError && (
                     <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-xl w-fit">
                       <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
                       </svg>
                       <p className="text-xs text-red-600 font-medium">{couponError}</p>
                     </div>
