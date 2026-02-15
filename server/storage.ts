@@ -1659,6 +1659,7 @@ export class DatabaseStorage implements IStorage {
         giftCategoryId: giftCart.giftCategoryId,
         engraving: giftCart.engrave,
         createdAt: giftCart.addedAt,
+        engravingMessage: giftCart.engravingMessage,
         category: {
           id: giftCategories.id,
           name: giftCategories.name,
@@ -1677,6 +1678,7 @@ export class DatabaseStorage implements IStorage {
       userId: row.userId,
       giftCategoryId: row.giftCategoryId,
       engraving: row.engraving,
+      engravingMessage:row.engravingMessage,
       createdAt: row.createdAt,
       category: row.category,
       imageUrl: row.category?.imageUrl || null,
@@ -1684,6 +1686,44 @@ export class DatabaseStorage implements IStorage {
       name: row.category?.name || null,
       type: row.category?.type || null,
     }
+  }
+
+  async getGiftCartItemByUserIdAndGiftCategoryId(userId: string, giftCategoryId: number) {
+    const [row] = await db
+      .select({
+        id: giftCart.id,
+        userId: giftCart.userId,
+        giftCategoryId: giftCart.giftCategoryId,
+        engraving: giftCart.engrave,
+        createdAt: giftCart.addedAt,
+        engravingMessage: giftCart.engravingMessage,
+        category: {
+          id: giftCategories.id,
+          name: giftCategories.name,
+          imageUrl: giftCategories.imageUrl,
+          price: giftCategories.price,
+          type: giftCategories.type,
+        },
+      })
+      .from(giftCart)
+      .leftJoin(giftCategories, eq(giftCart.giftCategoryId, giftCategories.id))
+      .where(and(eq(giftCart.userId, userId), eq(giftCart.giftCategoryId, giftCategoryId)));
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      userId: row.userId,
+      giftCategoryId: row.giftCategoryId,
+      engraving: row.engraving,
+      engravingMessage: row.engravingMessage,
+      createdAt: row.createdAt,
+      category: row.category,
+      imageUrl: row.category?.imageUrl || null,
+      price: row.category?.price || null,
+      name: row.category?.name || null,
+      type: row.category?.type || null,
+    };
   }
   // Remove any existing gift for the user before adding a new one
   async replaceGiftCartItemForUser(userId: string, entry) {

@@ -28,7 +28,7 @@ export interface EngraveFeatureProps {
 export default function EngraveFeature({ open, onClose, category, onSubmit, selectedItem, engraveEnabled, setEngraveEnabled, engravingMessage, setEngravingMessage }: EngraveFeatureProps) {
     //   const [engraveEnabled, setEngraveEnabled] = useState(true);
     //   const [engravingMessage, setEngravingMessage] = useState("");
-    const characterLimit = category.engravingCharacterLimit || 50;
+    const characterLimit = category?.engravingCharacterLimit || 50;
     const [isVisible, setIsVisible] = useState<boolean>(false);
     const [isClosing, setIsClosing] = useState<boolean>(false);
 
@@ -161,7 +161,7 @@ export default function EngraveFeature({ open, onClose, category, onSubmit, sele
                         />
                         <label htmlFor="engrave-enabled" className="font-medium text-gray-700">Enable Engraving</label>
                     </div>
-                    {engraveEnabled && (
+                    {(
                         <div>
                             <label htmlFor="engraving-message" className="block text-sm font-medium text-gray-700 mb-1">Engraving Message</label>
                             <Textarea
@@ -172,6 +172,7 @@ export default function EngraveFeature({ open, onClose, category, onSubmit, sele
                                 onChange={(e) => setEngravingMessage(e.target.value)}
                                 placeholder={`Enter message (max ${characterLimit} chars)`}
                                 className="w-full border border-pink-300 rounded-md px-3 py-2 min-h-[96px]"
+                                disabled={!engraveEnabled}
                             />
                             <div className="text-xs text-gray-500 mt-1 text-right">
                                 {engravingMessage.length}/{characterLimit} characters
@@ -191,15 +192,15 @@ export default function EngraveFeature({ open, onClose, category, onSubmit, sele
                 </div>
             </div>
             <style>{`
-        .animate-slide-in-right { animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .animate-slide-out-right { animation: slide-out-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .animate-slide-down { animation: slide-down 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes slide-in-right { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes slide-out-right { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
-        @keyframes slide-down { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
-      `}</style>
+                    .animate-slide-in-right { animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+                    .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+                    .animate-slide-out-right { animation: slide-out-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+                    .animate-slide-down { animation: slide-down 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+                    @keyframes slide-in-right { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                    @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                    @keyframes slide-out-right { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+                    @keyframes slide-down { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }`}
+            </style>
         </div>
     );
 }

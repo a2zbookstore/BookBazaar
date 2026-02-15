@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles, Truck, Delete, Trash } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -79,12 +80,12 @@ export default function CartPage() {
   const { toast } = useToast();
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
   const { shippingCost, shippingRate, isLoading: isShippingLoading } = useShipping();
-  const [giftItem, setGiftItem] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   const [removingItemId, setRemovingItemId] = useState<number | null>(null);
   const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
   const updateTimeouts = React.useRef<Record<number, NodeJS.Timeout>>({});
   const hasNonGiftBooks = cartItems.some(item => item.isGift === true);
+  const [engravePanelOpen, setEngravePanelOpen] = useState(false);
 
   useEffect(() => {
     const currentItems = optimisticCartItems !== null ? optimisticCartItems : cartItems;
@@ -437,6 +438,7 @@ export default function CartPage() {
               const title = item.book?.title;
               const author = isGift ? null : item.book?.author;
               const displayQuantity = localQuantities[item.id] ?? item.quantity;
+              const isEngrave = item.book.engraving
 
               return (
                 <Card key={item.id} className="p-2 sm:p-4 rounded-xl">
@@ -494,21 +496,25 @@ export default function CartPage() {
                               </h3>
                             </Link>
                           ) : (
-                            <h3
-                              className="line-clamp-2 font-semibold text-gray-900 cursor-pointer transition-colors 
+                            <div>
+                              <Link href={`/gift-items`}>
+                                <h3
+                                  className="line-clamp-2 font-semibold text-gray-900 cursor-pointer transition-colors 
                               hover:text-primary-aqua text-sm sm:text-base 
                               lg:text-lg mb-0.5 sm:mb-1 leading-snug break-words overflow-hidden">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="line-clamp-1 ">{title}</span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {title}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </h3>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="line-clamp-1 ">{title}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {title}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </h3>
+                              </Link>
+                            </div>
                           )}
 
                           {author && (
@@ -520,14 +526,25 @@ export default function CartPage() {
                           )}
 
                           {isGift && (
-                            <span
-                              className="inline-block bg-green-100 text-green-800 text-[10px] sm:text-xs
+                            <div>
+                              <span
+                                className="inline-block bg-green-100 text-green-800 text-[10px] sm:text-xs
                                   px-2 py-0.5 rounded "
-                            >
-                              FREE Gift
-                            </span>
+                              >
+                                FREE Gift
+                              </span>
+                            </div>
                           )}
                         </div>
+                        {isEngrave && <div>
+                          <Badge
+                            className="h-7 px-3 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 text-white font-bold shadow-lg flex items-center gap-2 animate-bounce border-2 border-yellow-300 rounded-full text-sm cursor-pointer"
+                            style={{ minWidth: 'fit-content', maxWidth: '100%' }}
+                          // onClick={handleEngrave}
+                          >
+                            <span className="ml-1 text-base sm:text-sm font-extrabold whitespace-nowrap drop-shadow-md" style={{ color: '#fff', textShadow: '0 1px 6px #ff9800' }}>{"Engraved"}</span>
+                          </Badge>
+                        </div>}
 
                         {/* RIGHT ACTION */}
                         <div className="flex-shrink-0">
@@ -613,34 +630,6 @@ export default function CartPage() {
                 </Card>
               );
             })}
-
-            {/* Gift Item Display */}
-            {/* {giftItem && (
-              <Card className="p-4 border-green-200 bg-green-50">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-green-600 font-semibold">🎁 Selected Gift:</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                    <img
-                      src={giftItem.imageUrl?.startsWith('data:') ? giftItem.imageUrl : getImageSrc(giftItem.imageUrl)}
-                      alt={giftItem.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=Gift';
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{giftItem.name}</h4>
-                    <p className="text-sm text-gray-600 mb-1">{giftItem.description}</p>
-                    <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                      FREE with your order
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            )} */}
 
             {/* Gift Reminder Banner - Show only if user has books but no gift selected */}
             {!hasNonGiftBooks && cartItems.length > 0 && (
@@ -786,12 +775,6 @@ export default function CartPage() {
                     </Link>
 
                   </Button>
-
-                  {/* <Link to="/catalog">
-                    <Button variant="outline" className="w-full border-2 border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white font-medium py-4 rounded-full transition-all duration-200">
-                      ← Continue Shopping
-                    </Button>
-                  </Link> */}
                 </div>
 
                 {/* Trust Badges */}
@@ -819,7 +802,7 @@ export default function CartPage() {
             </Card>
           </div>
         </div>
-      </div>
+      </div >
     </ >
   );
 }

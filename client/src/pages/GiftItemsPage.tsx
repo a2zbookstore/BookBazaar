@@ -21,8 +21,10 @@ export default function GiftItemsPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedGift, setSelectedGift] = useState<null | number>(null);
   const queryClient = useQueryClient();
-  const [engraveEnabled, setEngraveEnabled] = useState(true);
-  const [engravingMessage, setEngravingMessage] = useState("");
+  // Store engraving preferences per gift ID
+  const [engravingPreferences, setEngravingPreferences] = useState<{
+    [giftId: number]: { enabled: boolean; message: string }
+  }>({});
 
   const { data: giftCategories = [], isLoading: isCategoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
@@ -31,6 +33,21 @@ export default function GiftItemsPage() {
 
   const { data: giftItems = [], isLoading: isItemsLoading } = useQuery<GiftItem[]>({
     queryKey: ["/api/gift-items"],
+  });
+
+  const { data: selectedGiftCartRow } = useQuery<any | null>({
+    queryKey: ["gift-cart", selectedGift],
+    enabled: !!selectedGift,
+    retry: false,
+    queryFn: async () => {
+      const res = await fetch(`/api/gift-cart?giftId=${selectedGift}`, { credentials: "include" });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const text = (await res.text()) || res.statusText;
+        throw new Error(`${res.status}: ${text}`);
+      }
+      return res.json();
+    },
   });
 
   useEffect(() => {
@@ -43,6 +60,27 @@ export default function GiftItemsPage() {
     setSelectedGift(giftBookId);
 
   }, [cartItems]);
+
+  useEffect(() => {
+    if (!selectedGift || !selectedGiftCartRow) return;
+
+    const engraveEnabled =
+      selectedGiftCartRow.engraving ??
+      selectedGiftCartRow.engrave ??
+      false;
+    const engravingMessage =
+      selectedGiftCartRow.engravingMessage ??
+      selectedGiftCartRow.engraveMessage ??
+      "";
+
+    setEngravingPreferences(prev => ({
+      ...prev,
+      [selectedGift]: {
+        enabled: !!engraveEnabled,
+        message: typeof engravingMessage === "string" ? engravingMessage : "",
+      }
+    }));
+  }, [selectedGift, selectedGiftCartRow]);
 
   const giftTypes = Array.from(new Set(giftCategories.map(gift => gift.type)));
   const filteredGifts = selectedCategory
@@ -69,12 +107,13 @@ export default function GiftItemsPage() {
       if (engrave) {
         payload.engrave = true;
         payload.engravingMessage = engravingMessage || "";
-      }
+      }      
       const response = await apiRequest("POST", "/api/cart/gift", payload);
       return response;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      await queryClient.invalidateQueries({ queryKey: ["gift-cart"] });
       toast({
         title: "Selected as your free gift!",
         description: "Your free gift has been added to cart",
@@ -111,7 +150,13 @@ export default function GiftItemsPage() {
     }
 
     setSelectedGift(giftId);
-    addGiftMutation.mutate({ giftId, engrave: engraveEnabled, engravingMessage: engravingMessage });
+    
+    const prefs = engravingPreferences[giftId];
+    addGiftMutation.mutate({ 
+      giftId, 
+      engrave: prefs?.enabled || false, 
+      engravingMessage: prefs?.message || "" 
+    });
   };
 
   // Check if user has books in cart (excluding gifts)
@@ -390,10 +435,26 @@ export default function GiftItemsPage() {
                           onClose={() => { setEngravePanelOpen(false); setEngravePanelCategory(null); }}
                           category={engravePanelCategory}
 
-                          engraveEnabled={engraveEnabled}
-                          setEngraveEnabled={setEngraveEnabled}
-                          engravingMessage={engravingMessage}
-                          setEngravingMessage={setEngravingMessage}
+                          engraveEnabled={engravingPreferences[engravePanelCategory.id]?.enabled ?? true}
+                          setEngraveEnabled={(enabled) => {
+                            setEngravingPreferences(prev => ({
+                              ...prev,
+                              [engravePanelCategory.id]: {
+                                enabled,
+                                message: prev[engravePanelCategory.id]?.message || ""
+                              }
+                            }));
+                          }}
+                          engravingMessage={engravingPreferences[engravePanelCategory.id]?.message || ""}
+                          setEngravingMessage={(message) => {
+                            setEngravingPreferences(prev => ({
+                              ...prev,
+                              [engravePanelCategory.id]: {
+                                enabled: prev[engravePanelCategory.id]?.enabled ?? true,
+                                message
+                              }
+                            }));
+                          }}
                           onSubmit={() => handleGiftSelect(engravePanelCategory.id)}
                         />
                       )}
@@ -489,7 +550,9 @@ export default function GiftItemsPage() {
                           animate-pulse md:animate-none"
                       >
                         <Edit className="h-4 w-4" />
-                        <span className="ml-1 text-xs">Click to Engrave</span>
+                        <span className="ml-1 text-xs">
+                          {engravingPreferences[category.id]?.message ? 'Edit Engraving' : 'Click to Engrave'}
+                        </span>
                       </Button>
                     </div>
 
@@ -508,7 +571,7 @@ export default function GiftItemsPage() {
                           ${!hasBookInCart || addGiftMutation.isPending ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
 
                         `}
-                        onClick={() => !addGiftMutation.isPending && handleGiftSelect(category.id.toString())}
+                        onClick={() => !addGiftMutation.isPending && handleGiftSelect(category.id)}
                         size="sm"
                       >
                         {isSelected ? (
