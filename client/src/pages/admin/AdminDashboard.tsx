@@ -235,7 +235,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
               </a>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
   );
 }

@@ -103,7 +103,7 @@ export default function BannerUploadPage() {
     }, [pageName]);
 
     return (
-        <div className="p-8">
+        <div className="space-y-4">
             <h2 className="text-xl font-bold mb-4">Upload Banner Images</h2>
             <div>
                 <Label htmlFor="pageName">Page Name *</Label>

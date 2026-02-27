@@ -20,8 +20,8 @@ export default function InventoryPageSimple() {
   const totalBooks = booksResponse?.total || 0;
 
   return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bookerly font-bold text-base-black mb-6">
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bookerly font-bold text-base-black">
           Inventory Management (Simple Test)
         </h1>
 
