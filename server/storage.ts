@@ -62,6 +62,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
+import { fuzzyMatch, getFuzzyMatchScore, findBestFuzzyMatches, normalizeText } from "./fuzzySearch";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -388,9 +389,13 @@ export class DatabaseStorage implements IStorage {
     if (trending !== undefined) conditions.push(eq(books.trending, trending));
     if (newArrival !== undefined) conditions.push(eq(books.newArrival, newArrival));
     if (boxSet !== undefined) conditions.push(eq(books.boxSet, boxSet));
-    if (search?.trim()) {
+    
+    // Track if we're doing a search
+    const isSearchQuery = search?.trim();
+    
+    if (isSearchQuery) {
       const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
-      const normalizedSearchTerm = normalize(search);
+      const normalizedSearchTerm = normalize(isSearchQuery); // Use isSearchQuery which is guaranteed to be a string
       const normalizeField = (field: any) =>
         sql`REGEXP_REPLACE(LOWER(${field}), '[^a-z0-9]', '', 'g')`;
       if (titleOnly) {
@@ -446,13 +451,91 @@ export class DatabaseStorage implements IStorage {
       // Fallback to createdAt
       orderExpr = sortOrder === "asc" ? asc(books.createdAt) : desc(books.createdAt);
     }
-    const booksList = await db
+    let booksList = await db
       .select()
       .from(books)
       .where(whereClause)
       .orderBy(orderExpr)
       .limit(limit)
       .offset(offset);
+
+    // If search query returns few or no results, try fuzzy search
+    if (isSearchQuery && total < 5) {
+      console.log('Exact search returned', total, 'results. Trying fuzzy search...');
+      
+      // TypeScript: we know search is a string here since isSearchQuery is truthy
+      const searchTerm = search!; // Non-null assertion
+      
+      // Get all books that match other filters (without search)
+      const baseConditions = [];
+      baseConditions.push(sql`${books.stock} > 0`);
+      if (categoryId) baseConditions.push(eq(books.categoryId, categoryId));
+      if (condition) baseConditions.push(eq(books.condition, condition));
+      if (featured !== undefined) baseConditions.push(eq(books.featured, featured));
+      if (bestseller !== undefined) baseConditions.push(eq(books.bestseller, bestseller));
+      if (trending !== undefined) baseConditions.push(eq(books.trending, trending));
+      if (newArrival !== undefined) baseConditions.push(eq(books.newArrival, newArrival));
+      if (boxSet !== undefined) baseConditions.push(eq(books.boxSet, boxSet));
+      if (minPrice) baseConditions.push(sql`${books.price} >= ${minPrice}`);
+      if (maxPrice) baseConditions.push(sql`${books.price} <= ${maxPrice}`);
+      
+      const baseWhereClause = baseConditions.length > 0 ? and(...baseConditions) : undefined;
+      
+      // Get all books for fuzzy matching (limit to reasonable number for performance)
+      const allBooks = await db
+        .select()
+        .from(books)
+        .where(baseWhereClause)
+        .limit(500); // Limit for performance
+      
+      // Apply fuzzy matching in JavaScript with more lenient thresholds
+      const fuzzyMatches = allBooks
+        .map(book => {
+          let score = 0;
+          
+          if (titleOnly) {
+            // Check title and publisher for fuzzy match (lower threshold for partial matches)
+            if (fuzzyMatch(searchTerm, book.title, 0.55)) {
+              score = Math.max(score, getFuzzyMatchScore(searchTerm, book.title));
+            }
+            if (book.publisher && fuzzyMatch(searchTerm, book.publisher, 0.55)) {
+              score = Math.max(score, getFuzzyMatchScore(searchTerm, book.publisher));
+            }
+          } else {
+            // Check all fields for fuzzy match (more lenient thresholds)
+            if (fuzzyMatch(searchTerm, book.title, 0.55)) {
+              score = Math.max(score, getFuzzyMatchScore(searchTerm, book.title) * 1.2); // Boost title matches
+            }
+            if (fuzzyMatch(searchTerm, book.author, 0.55)) {
+              score = Math.max(score, getFuzzyMatchScore(searchTerm, book.author) * 1.1); // Boost author matches
+            }
+            if (book.isbn && fuzzyMatch(searchTerm, book.isbn, 0.7)) {
+              score = Math.max(score, getFuzzyMatchScore(searchTerm, book.isbn));
+            }
+            if (book.description && fuzzyMatch(searchTerm, book.description, 0.5)) {
+              score = Math.max(score, getFuzzyMatchScore(searchTerm, book.description) * 0.8); // Lower weight for description
+            }
+          }
+          
+          return { book, score };
+        })
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+      
+      console.log('Fuzzy search found', fuzzyMatches.length, 'matches');
+      
+      if (fuzzyMatches.length > 0) {
+        // Use fuzzy matches instead of exact matches
+        booksList = fuzzyMatches
+          .slice(offset, offset + limit)
+          .map(item => item.book);
+        
+        return { 
+          books: booksList, 
+          total: fuzzyMatches.length 
+        };
+      }
+    }
 
     return { books: booksList, total };
   }
@@ -514,33 +597,87 @@ export class DatabaseStorage implements IStorage {
   async getSearchSuggestions(query: string): Promise<string[]> {
     const searchTerm = query.toLowerCase();
 
-    // Get unique suggestions from titles and authors
+    // Get unique suggestions from titles and authors with exact matches
     const titleSuggestions = await db
       .selectDistinct({ value: books.title })
       .from(books)
       .where(sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`)
-      .limit(5);
+      .limit(8);
 
     const authorSuggestions = await db
       .selectDistinct({ value: books.author })
       .from(books)
       .where(sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`)
-      .limit(5);
+      .limit(8);
 
-    // Combine and deduplicate suggestions
-    const allSuggestions = [
+    // Combine exact match suggestions
+    const exactMatches = [
       ...titleSuggestions.map(s => s.value),
       ...authorSuggestions.map(s => s.value)
     ];
 
-    // Remove duplicates and return top 8 suggestions
-    const uniqueSuggestions: string[] = [];
-    for (const suggestion of allSuggestions) {
-      if (!uniqueSuggestions.includes(suggestion)) {
-        uniqueSuggestions.push(suggestion);
+    // Deduplicate exact matches
+    const uniqueExactMatches: string[] = [];
+    for (const suggestion of exactMatches) {
+      if (!uniqueExactMatches.includes(suggestion)) {
+        uniqueExactMatches.push(suggestion);
       }
     }
-    return uniqueSuggestions.slice(0, 8);
+
+    // If we have good exact matches, return them
+    if (uniqueExactMatches.length >= 5) {
+      return uniqueExactMatches.slice(0, 8);
+    }
+
+    // Only add fuzzy matches if we have very few exact matches
+    if (uniqueExactMatches.length < 2) {
+      console.log('Very few exact matches, adding fuzzy suggestions...');
+      
+      // Get titles and authors for fuzzy matching
+      const allTitles = await db
+        .selectDistinct({ value: books.title })
+        .from(books)
+        .limit(250);
+      
+      const allAuthors = await db
+        .selectDistinct({ value: books.author })
+        .from(books)
+        .limit(250);
+
+      // Find fuzzy matches with balanced threshold
+      const fuzzyTitleMatches = findBestFuzzyMatches(
+        query,
+        allTitles.map(t => t.value),
+        5,
+        0.55 // Balanced threshold - not too strict, not too lenient
+      );
+      
+      const fuzzyAuthorMatches = findBestFuzzyMatches(
+        query,
+        allAuthors.map(a => a.value),
+        3,
+        0.55
+      );
+
+      // Combine: exact matches first (highest priority), then fuzzy
+      const allSuggestions = [
+        ...uniqueExactMatches,
+        ...fuzzyTitleMatches,
+        ...fuzzyAuthorMatches
+      ];
+
+      // Remove duplicates and return top 8
+      const uniqueSuggestions: string[] = [];
+      for (const suggestion of allSuggestions) {
+        if (!uniqueSuggestions.includes(suggestion)) {
+          uniqueSuggestions.push(suggestion);
+        }
+      }
+      return uniqueSuggestions.slice(0, 8);
+    }
+
+    // Return exact matches if we have some (2-4 results)
+    return uniqueExactMatches.slice(0, 8);
   }
 
   // Order operations
