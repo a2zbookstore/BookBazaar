@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 
 const menuItems = [
     { label: "Catalog", icon: List, location: "/catalog" },
@@ -27,6 +28,7 @@ const menuItems = [
 export default function ProfileMenu(user?: any) {
     const [, setLocation] = useLocation();
     const [customerName, setCustomerName] = useState("");
+    const { setIsAuthTransitioning } = useGlobalContext();
 
     useEffect(() => {
         setCustomerName(user && (user.user.firstName || user.user.lastName)
@@ -104,11 +106,16 @@ export default function ProfileMenu(user?: any) {
                           hover:bg-red-500 hover:border-red-600
                         "
                         onClick={async () => {
+                            setIsAuthTransitioning(true);
                             try {
                                 await fetch("/api/auth/logout", { method: "POST" });
-                                window.location.href = "/";
+                                setTimeout(() => {
+                                    window.location.href = "/";
+                                }, 300);
                             } catch (error) {
-                                window.location.href = "/api/logout";
+                                setTimeout(() => {
+                                    window.location.href = "/api/logout";
+                                }, 300);
                             }
                         }}
                     >

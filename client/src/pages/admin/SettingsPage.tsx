@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Category, ContactMessage } from "@/types";
 
 interface StoreSettingsDB {
@@ -67,6 +68,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { setIsAuthTransitioning } = useGlobalContext();
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryForm>(initialCategoryForm);
@@ -543,7 +545,12 @@ export default function SettingsPage() {
                       <Button 
                         type="button"
                         variant="outline"
-                        onClick={() => window.location.href = "/api/logout"}
+                        onClick={() => {
+                          setIsAuthTransitioning(true);
+                          setTimeout(() => {
+                            window.location.href = "/api/logout";
+                          }, 300);
+                        }}
                       >
                         Sign Out
                       </Button>

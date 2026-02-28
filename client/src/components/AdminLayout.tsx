@@ -18,6 +18,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,7 @@ const sidebarItems = [
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { setIsAuthTransitioning } = useGlobalContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (href: string, exact = false) =>
@@ -158,7 +160,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => (window.location.href = "/api/logout")}
+            onClick={() => {
+              setIsAuthTransitioning(true);
+              setTimeout(() => {
+                window.location.href = "/api/logout";
+              }, 300);
+            }}
           >
             <LogOut className="h-4 w-4 mr-2" />
             Logout
