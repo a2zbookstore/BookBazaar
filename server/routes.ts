@@ -1969,7 +1969,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Cannot delete category: It is associated with one or more books." });
       }
 
-      await storage.deleteCategory(id);
+      // Get IP address for audit logging
+      const ipAddress = req.ip || req.connection?.remoteAddress;
+      
+      await storage.deleteCategory(id, undefined, ipAddress);
       res.json({ success: true, message: "Category deleted successfully" });
     } catch (error) {
       console.log("error", error);
@@ -2155,7 +2158,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid book ID" });
       }
 
-      await storage.deleteBook(id);
+      // Get IP address for audit logging
+      const ipAddress = req.ip || req.connection?.remoteAddress;
+      
+      await storage.deleteBook(id, adminId, ipAddress);
       res.json({ message: "Book deleted successfully" });
     } catch (error) {
       console.error("Error deleting book:", error);
@@ -4344,10 +4350,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete coupon (Admin only)
-  app.delete("/api/admin/coupons/:id", requireAdminAuth, async (req, res) => {
+  app.delete("/api/admin/coupons/:id", requireAdminAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteCoupon(id);
+      const adminId = (req.session as any)?.adminId;
+      const ipAddress = req.ip || req.connection?.remoteAddress;
+      
+      await storage.deleteCoupon(id, adminId, ipAddress);
       res.json({ message: "Coupon deleted successfully" });
     } catch (error) {
       console.error("Error deleting coupon:", error);
@@ -4702,6 +4711,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching banners:", error);
       res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  // Audit Log Routes (Admin only)
+  
+  // Get recent deletions
+  app.get("/api/admin/audit/deletions", requireAdminAuth, async (req: any, res) => {
+    try {
+      const days = parseInt(req.query.days || "30");
+      const { getRecentDeletions } = await import("./auditLog");
+      const deletions = await getRecentDeletions(days);
+      
+      // Parse JSON data for easier consumption
+      const parsedDeletions = deletions.map((log: any) => ({
+        ...log,
+        oldData: log.oldData ? JSON.parse(log.oldData) : null,
+        newData: log.newData ? JSON.parse(log.newData) : null,
+      }));
+      
+      res.json(parsedDeletions);
+    } catch (error) {
+      console.error("Error fetching deletion audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch deletion logs" });
+    }
+  });
+
+  // Get audit logs for a specific record
+  app.get("/api/admin/audit/:tableName/:recordId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { tableName, recordId } = req.params;
+      const { getAuditLogsForRecord } = await import("./auditLog");
+      const logs = await getAuditLogsForRecord(tableName, recordId);
+      
+      // Parse JSON data
+      const parsedLogs = logs.map((log: any) => ({
+        ...log,
+        oldData: log.oldData ? JSON.parse(log.oldData) : null,
+        newData: log.newData ? JSON.parse(log.newData) : null,
+      }));
+      
+      res.json(parsedLogs);
+    } catch (error) {
+      console.error("Error fetching audit logs for record:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
+  // Search audit logs with filters
+  app.get("/api/admin/audit/search", requireAdminAuth, async (req: any, res) => {
+    try {
+      const filters: any = {};
+      
+      if (req.query.tableName) filters.tableName = req.query.tableName;
+      if (req.query.action) filters.action = req.query.action;
+      if (req.query.adminId) filters.adminId = parseInt(req.query.adminId);
+      if (req.query.userId) filters.userId = req.query.userId;
+      if (req.query.startDate) filters.startDate = new Date(req.query.startDate);
+      if (req.query.endDate) filters.endDate = new Date(req.query.endDate);
+      if (req.query.limit) filters.limit = parseInt(req.query.limit);
+      
+      const { searchAuditLogs } = await import("./auditLog");
+      const logs = await searchAuditLogs(filters);
+      
+      // Parse JSON data
+      const parsedLogs = logs.map((log: any) => ({
+        ...log,
+        oldData: log.oldData ? JSON.parse(log.oldData) : null,
+        newData: log.newData ? JSON.parse(log.newData) : null,
+      }));
+      
+      res.json(parsedLogs);
+    } catch (error) {
+      console.error("Error searching audit logs:", error);
+      res.status(500).json({ message: "Failed to search audit logs" });
+    }
+  });
+
+  // Get audit logs by admin
+  app.get("/api/admin/audit/by-admin/:adminId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const adminId = parseInt(req.params.adminId);
+      const limit = parseInt(req.query.limit || "100");
+      
+      const { getAuditLogsByAdmin } = await import("./auditLog");
+      const logs = await getAuditLogsByAdmin(adminId, limit);
+      
+      // Parse JSON data
+      const parsedLogs = logs.map((log: any) => ({
+        ...log,
+        oldData: log.oldData ? JSON.parse(log.oldData) : null,
+        newData: log.newData ? JSON.parse(log.newData) : null,
+      }));
+      
+      res.json(parsedLogs);
+    } catch (error) {
+      console.error("Error fetching admin audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch admin audit logs" });
+    }
+  });
+
+  // Restore deleted book
+  app.post("/api/admin/restore/books/:recordId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const recordId = parseInt(req.params.recordId);
+      const { oldData } = req.body;
+      
+      if (!oldData) {
+        return res.status(400).json({ message: "oldData is required in request body" });
+      }
+
+      const adminId = req.user?.id;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const restoredBook = await storage.restoreBook(oldData, adminId, ipAddress);
+      
+      res.json({ 
+        message: "Book restored successfully",
+        book: restoredBook 
+      });
+    } catch (error) {
+      console.error("Error restoring book:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to restore book" 
+      });
+    }
+  });
+
+  // Restore deleted category
+  app.post("/api/admin/restore/categories/:recordId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const recordId = parseInt(req.params.recordId);
+      const { oldData } = req.body;
+      
+      if (!oldData) {
+        return res.status(400).json({ message: "oldData is required in request body" });
+      }
+
+      const adminId = req.user?.id;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const restoredCategory = await storage.restoreCategory(oldData, adminId, ipAddress);
+      
+      res.json({ 
+        message: "Category restored successfully",
+        category: restoredCategory 
+      });
+    } catch (error) {
+      console.error("Error restoring category:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to restore category" 
+      });
+    }
+  });
+
+  // Restore deleted coupon
+  app.post("/api/admin/restore/coupons/:recordId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const recordId = parseInt(req.params.recordId);
+      const { oldData } = req.body;
+      
+      if (!oldData) {
+        return res.status(400).json({ message: "oldData is required in request body" });
+      }
+
+      const adminId = req.user?.id;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const restoredCoupon = await storage.restoreCoupon(oldData, adminId, ipAddress);
+      
+      res.json({ 
+        message: "Coupon restored successfully",
+        coupon: restoredCoupon 
+      });
+    } catch (error) {
+      console.error("Error restoring coupon:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to restore coupon" 
+      });
     }
   });
 

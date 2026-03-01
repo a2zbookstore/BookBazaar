@@ -644,3 +644,32 @@ export const insertBannerSchemaDrizzle = createInsertSchema(banners).omit({
 });
 export type InsertBanner = typeof banners.$inferInsert;
 export type Banner = typeof banners.$inferSelect;
+
+// Audit Logs table for tracking all database changes
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  tableName: varchar("table_name", { length: 100 }).notNull(),
+  recordId: varchar("record_id", { length: 100 }).notNull(),
+  action: varchar("action", { length: 20 }).notNull(), // CREATE, UPDATE, DELETE, RESTORE
+  userId: varchar("user_id"),
+  adminId: integer("admin_id").references(() => admins.id),
+  oldData: text("old_data"), // JSON string of data before change
+  newData: text("new_data"), // JSON string of data after change
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_audit_table_record").on(table.tableName, table.recordId),
+  index("idx_audit_action").on(table.action),
+  index("idx_audit_created_at").on(table.createdAt),
+  index("idx_audit_admin").on(table.adminId),
+  index("idx_audit_user").on(table.userId),
+]);
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
