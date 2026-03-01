@@ -78,7 +78,6 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(id: number, adminId?: number, ipAddress?: string): Promise<void>;
-  restoreCategory(categoryData: any, adminId?: number, ipAddress?: string): Promise<Category>;
 
   // Book operations
   getBooks(options?: {
@@ -99,7 +98,6 @@ export interface IStorage {
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: number, book: Partial<InsertBook>): Promise<Book>;
   deleteBook(id: number, adminId?: number, ipAddress?: string): Promise<void>;
-  restoreBook(bookData: any, adminId?: number, ipAddress?: string): Promise<Book>;
   updateBookStock(id: number, quantity: number): Promise<void>;
   getSearchSuggestions(query: string): Promise<string[]>;
 
@@ -211,7 +209,6 @@ export interface IStorage {
   createCoupon(coupon: InsertCoupon): Promise<Coupon>;
   updateCoupon(id: number, coupon: Partial<InsertCoupon>): Promise<Coupon>;
   deleteCoupon(id: number, adminId?: number, ipAddress?: string): Promise<void>;
-  restoreCoupon(couponData: any, adminId?: number, ipAddress?: string): Promise<Coupon>;
   validateCoupon(code: string, customerEmail: string, orderAmount: number): Promise<{
     valid: boolean;
     coupon?: Coupon;
@@ -362,44 +359,6 @@ export class DatabaseStorage implements IStorage {
       ipAddress,
       notes: `Deleted category: ${categoryData.name}`,
     });
-  }
-
-  async restoreCategory(categoryData: any, adminId?: number, ipAddress?: string): Promise<Category> {
-    try {
-      // Remove id, createdAt to let DB generate new ones
-      const { id: oldId, createdAt, ...restoreData } = categoryData;
-      
-      // Check if a category with the same ID already exists
-      const existing = await db.select().from(categories).where(eq(categories.id, oldId)).limit(1);
-      if (existing.length > 0) {
-        throw new Error(`Category with ID ${oldId} already exists. Cannot restore.`);
-      }
-
-      // Insert the category data back
-      const [restoredCategory] = await db.insert(categories).values({
-        ...restoreData,
-        createdAt: new Date(),
-      }).returning();
-
-      // Log restoration to audit trail
-      await logAudit({
-        tableName: 'categories',
-        recordId: restoredCategory.id,
-        action: 'RESTORE',
-        adminId,
-        newData: restoredCategory,
-        ipAddress,
-        notes: `Restored category: ${restoredCategory.name} (original ID: ${oldId})`,
-      });
-
-      return restoredCategory;
-    } catch (error) {
-      console.error("Error in restoreCategory:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Failed to restore category");
-    }
   }
 
   // Book operations
@@ -664,45 +623,6 @@ export class DatabaseStorage implements IStorage {
         throw error;
       }
       throw new Error("Failed to delete book");
-    }
-  }
-
-  async restoreBook(bookData: any, adminId?: number, ipAddress?: string): Promise<Book> {
-    try {
-      // Remove id, createdAt, updatedAt to let DB generate new ones
-      const { id: oldId, createdAt, updatedAt, category, ...restoreData } = bookData;
-      
-      // Check if a book with the same ID already exists
-      const existingBook = await this.getBookById(oldId);
-      if (existingBook) {
-        throw new Error(`Book with ID ${oldId} already exists. Cannot restore.`);
-      }
-
-      // Insert the book data back
-      const [restoredBook] = await db.insert(books).values({
-        ...restoreData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).returning();
-
-      // Log restoration to audit trail
-      await logAudit({
-        tableName: 'books',
-        recordId: restoredBook.id,
-        action: 'RESTORE',
-        adminId,
-        newData: restoredBook,
-        ipAddress,
-        notes: `Restored book: ${restoredBook.title} (original ID: ${oldId})`,
-      });
-
-      return restoredBook;
-    } catch (error) {
-      console.error("Error in restoreBook:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Failed to restore book");
     }
   }
 
@@ -1724,46 +1644,6 @@ export class DatabaseStorage implements IStorage {
       ipAddress,
       notes: `Deleted coupon: ${coupon.code}`,
     });
-  }
-
-  async restoreCoupon(couponData: any, adminId?: number, ipAddress?: string): Promise<Coupon> {
-    try {
-      // Remove id, createdAt, updatedAt to let DB generate new ones
-      const { id: oldId, createdAt, updatedAt, usedCount, ...restoreData } = couponData;
-      
-      // Check if a coupon with the same code already exists
-      const existing = await db.select().from(coupons).where(eq(coupons.code, restoreData.code)).limit(1);
-      if (existing.length > 0) {
-        throw new Error(`Coupon with code ${restoreData.code} already exists. Cannot restore.`);
-      }
-
-      // Insert the coupon data back (reset usedCount to 0)
-      const [restoredCoupon] = await db.insert(coupons).values({
-        ...restoreData,
-        usedCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).returning();
-
-      // Log restoration to audit trail
-      await logAudit({
-        tableName: 'coupons',
-        recordId: restoredCoupon.id,
-        action: 'RESTORE',
-        adminId,
-        newData: restoredCoupon,
-        ipAddress,
-        notes: `Restored coupon: ${restoredCoupon.code} (original ID: ${oldId})`,
-      });
-
-      return restoredCoupon;
-    } catch (error) {
-      console.error("Error in restoreCoupon:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Failed to restore coupon");
-    }
   }
 
   async validateCoupon(code: string, customerEmail: string, orderAmount: number): Promise<{

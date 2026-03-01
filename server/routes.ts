@@ -4811,83 +4811,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Restore deleted book
-  app.post("/api/admin/restore/books/:recordId", requireAdminAuth, async (req: any, res) => {
+  // Restore a deleted record from audit log
+  app.post("/api/admin/audit/restore/:auditLogId", requireAdminAuth, async (req: any, res) => {
     try {
-      const recordId = parseInt(req.params.recordId);
-      const { oldData } = req.body;
-      
-      if (!oldData) {
-        return res.status(400).json({ message: "oldData is required in request body" });
+      const auditLogId = parseInt(req.params.auditLogId);
+      const adminId = (req.session as any)?.adminId;
+      const ipAddress = req.ip || req.connection?.remoteAddress;
+
+      if (!adminId) {
+        return res.status(401).json({ message: "Admin authentication required" });
       }
 
-      const adminId = req.user?.id;
-      const ipAddress = req.ip || req.connection.remoteAddress;
+      const { restoreFromAudit } = await import("./auditLog");
+      const result = await restoreFromAudit(auditLogId, adminId, ipAddress);
 
-      const restoredBook = await storage.restoreBook(oldData, adminId, ipAddress);
-      
-      res.json({ 
-        message: "Book restored successfully",
-        book: restoredBook 
-      });
-    } catch (error) {
-      console.error("Error restoring book:", error);
-      res.status(500).json({ 
-        message: error instanceof Error ? error.message : "Failed to restore book" 
-      });
-    }
-  });
-
-  // Restore deleted category
-  app.post("/api/admin/restore/categories/:recordId", requireAdminAuth, async (req: any, res) => {
-    try {
-      const recordId = parseInt(req.params.recordId);
-      const { oldData } = req.body;
-      
-      if (!oldData) {
-        return res.status(400).json({ message: "oldData is required in request body" });
+      if (result.success) {
+        res.json({
+          message: result.message,
+          restoredId: result.restoredId,
+        });
+      } else {
+        res.status(400).json({ message: result.message });
       }
-
-      const adminId = req.user?.id;
-      const ipAddress = req.ip || req.connection.remoteAddress;
-
-      const restoredCategory = await storage.restoreCategory(oldData, adminId, ipAddress);
-      
-      res.json({ 
-        message: "Category restored successfully",
-        category: restoredCategory 
-      });
     } catch (error) {
-      console.error("Error restoring category:", error);
+      console.error("Error restoring from audit log:", error);
       res.status(500).json({ 
-        message: error instanceof Error ? error.message : "Failed to restore category" 
-      });
-    }
-  });
-
-  // Restore deleted coupon
-  app.post("/api/admin/restore/coupons/:recordId", requireAdminAuth, async (req: any, res) => {
-    try {
-      const recordId = parseInt(req.params.recordId);
-      const { oldData } = req.body;
-      
-      if (!oldData) {
-        return res.status(400).json({ message: "oldData is required in request body" });
-      }
-
-      const adminId = req.user?.id;
-      const ipAddress = req.ip || req.connection.remoteAddress;
-
-      const restoredCoupon = await storage.restoreCoupon(oldData, adminId, ipAddress);
-      
-      res.json({ 
-        message: "Coupon restored successfully",
-        coupon: restoredCoupon 
-      });
-    } catch (error) {
-      console.error("Error restoring coupon:", error);
-      res.status(500).json({ 
-        message: error instanceof Error ? error.message : "Failed to restore coupon" 
+        message: error instanceof Error ? error.message : "Failed to restore record" 
       });
     }
   });

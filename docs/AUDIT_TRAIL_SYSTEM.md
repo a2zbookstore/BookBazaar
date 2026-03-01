@@ -114,7 +114,71 @@ Get all actions performed by a specific admin.
 GET /api/admin/audit/by-admin/:adminId?limit=100
 ```
 
-## Usage in Code
+### 5. Restore Deleted Record
+
+Restore a previously deleted record from the audit trail.
+
+```http
+POST /api/admin/audit/restore/:auditLogId
+```
+
+**Requirements:**
+- Must be a DELETE action audit log entry
+- The audit log must contain `oldData` (the deleted record data)
+- Only admin authentication required
+
+**Request:**
+```http
+POST /api/admin/audit/restore/123
+Content-Type: application/json
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Book restored successfully",
+  "restoredId": 789
+}
+```
+
+**Error Responses:**
+```json
+// Audit log not found
+{
+  "success": false,
+  "message": "Audit log entry not found"
+}
+
+// Not a DELETE action
+{
+  "success": false,
+  "message": "Only DELETE actions can be restored"
+}
+
+// No data to restore
+{
+  "success": false,
+  "message": "No data to restore"
+}
+```
+
+**What Happens:**
+1. Fetches the audit log entry
+2. Validates it's a DELETE action with oldData
+3. Parses the original record data
+4. Removes auto-generated fields (id, createdAt, updatedAt, usedCount)
+5. Creates a new record with the original data
+6. Logs a RESTORE action to the audit trail
+7. Returns the new record's ID
+
+**Important Notes:**
+- The restored record gets a **new ID** (not the original ID)
+- Auto-generated fields are reset to defaults
+- Supported tables: books, categories, coupons
+- Each restore creates a new RESTORE audit log entry
+
+---
 
 ### Automatic Logging (Already Implemented)
 

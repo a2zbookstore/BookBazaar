@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Calendar, Filter, Search, User, Clock, Database, AlertCircle, Eye, Undo } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Filter, Search, User, Clock, Database, AlertCircle, Eye, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -44,8 +44,9 @@ export default function AuditLogPage() {
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [restoring, setRestoring] = useState<number | null>(null);
+  const [restoringId, setRestoringId] = useState<number | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch recent deletions
   const { data: auditLogsData, isLoading, refetch } = useQuery<AuditLog[]>({
@@ -111,6 +112,45 @@ export default function AuditLogPage() {
   const handleViewDetails = (log: AuditLog) => {
     setSelectedLog(log);
     setDetailsOpen(true);
+  };
+
+  // Restore mutation
+  const restoreMutation = useMutation({
+    mutationFn: async (auditLogId: number) => {
+      const res = await fetch(`/api/admin/audit/restore/${auditLogId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to restore');
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success!",
+        description: data.message || "Record restored successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/audit/deletions"] });
+      setDetailsOpen(false);
+      setRestoringId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Restore Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setRestoringId(null);
+    },
+  });
+
+  const handleRestore = (log: AuditLog) => {
+    if (window.confirm(`Are you sure you want to restore this ${log.tableName} record?\n\nThis will create a new record with the deleted data.`)) {
+      setRestoringId(log.id);
+      restoreMutation.mutate(log.id);
+    }
   };
 
   const stats = {
@@ -322,14 +362,28 @@ export default function AuditLogPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewDetails(log)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDetails(log)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          {log.action === 'DELETE' && log.oldData && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleRestore(log)}
+                              disabled={restoringId === log.id}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-1" />
+                              {restoringId === log.id ? 'Restoring...' : 'Restore'}
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -458,6 +512,24 @@ export default function AuditLogPage() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+          {selectedLog && selectedLog.action === 'DELETE' && selectedLog.oldData && (
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setDetailsOpen(false)}
+              >
+                Close
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => handleRestore(selectedLog)}
+                disabled={restoringId === selectedLog.id}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                {restoringId === selectedLog.id ? 'Restoring...' : 'Restore Record'}
+              </Button>
             </div>
           )}
         </DialogContent>
