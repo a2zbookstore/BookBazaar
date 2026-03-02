@@ -258,7 +258,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Visitor Detail Modal */}
       <Dialog open={!!selectedVisitor} onOpenChange={() => setSelectedVisitor(null)}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">

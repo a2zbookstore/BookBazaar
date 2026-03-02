@@ -374,8 +374,8 @@ export default function GiftCategoriesPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
+    <div className="space-y-6">
+      <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gift Categories Management</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
           Manage gift categories like Classic Novel, Mystery Novel, Premium Notebook, etc.

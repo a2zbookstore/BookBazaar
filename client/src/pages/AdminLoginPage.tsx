@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { Eye, EyeOff, Shield, Lock } from "lucide-react";
 export default function AdminLoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { setIsAuthTransitioning } = useGlobalContext();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
@@ -22,12 +24,24 @@ export default function AdminLoginPage() {
     mutationFn: async (credentials: { username: string; password: string }) => {
       return await apiRequest("POST", "/api/admin/login", credentials);
     },
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
+      // Set transitioning state before any redirects
+      setIsAuthTransitioning(true);
+      
       toast({
         title: "Login Successful",
         description: "Welcome to Admin Panel!",
       });
-      setLocation("/admin");
+      
+      // Wait for auth to refresh
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/check"] });
+      
+      // Small delay to ensure everything is loaded
+      setTimeout(() => {
+        setIsAuthTransitioning(false);
+        setLocation("/admin");
+      }, 500);
     },
     onError: (error: any) => {
       toast({

@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
-import { GlobalProvider } from "@/contexts/GlobalContext";
+import { GlobalProvider, useGlobalContext } from "@/contexts/GlobalContext";
 import { LocationProvider } from "@/contexts/userLocationContext";
 
 // Pages
@@ -54,6 +54,7 @@ import RequestBookPage from "@/pages/RequestBookPage";
 import NotFound from "@/pages/NotFound";
 import MyProfile from "./pages/MyProfile";
 import Layout from "./components/Layout";
+import { Loader2 } from "lucide-react";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -212,12 +213,13 @@ function AppRouter() {
 }
 
 function App() {
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <LocationProvider>
           <GlobalProvider>
+            <AuthTransitionLoader />
             <Toaster />
             <Layout>
               <Router>
@@ -228,6 +230,23 @@ function App() {
         </LocationProvider>
       </TooltipProvider>
     </QueryClientProvider>
+  );
+}
+
+function AuthTransitionLoader() {
+  const { isAuthTransitioning } = useGlobalContext();
+
+  if (!isAuthTransitioning) return null;
+
+  return (
+    <div className="fixed inset-0 bg-transparent backdrop-blur-sm z-[9999] flex items-center justify-center">
+      <div className="text-center">
+        <div className="flex items-center justify-center gap-6">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-lg font-semibold text-secondary-black">Please Wait</p>
+        </div>
+      </div>
+    </div>
   );
 }
 

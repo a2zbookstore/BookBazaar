@@ -204,7 +204,7 @@ export default function RegisterPage() {
               </CardHeader>
               <CardContent className="p-4 sm:p-8">
                 <Tabs value={registrationType} onValueChange={setRegistrationType} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-4 bg-gray-100 p-1 rounded-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-8 sm:mb-4 bg-gray-100 p-1 rounded-full">
                     <TabsTrigger value="email" className="flex items-center gap-2  data-[state=active]:bg-white data-[state=active]:shadow-md transition-all rounded-full">
                       <Mail className="h-4 w-4" />
                       <span className="font-semibold">Email</span>
@@ -215,7 +215,7 @@ export default function RegisterPage() {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="email" className="space-y-4 sm:space-y-5">
+                  <TabsContent value="email" className="mt-16 sm:mt-0 space-y-4 sm:space-y-5">
                     <form onSubmit={handleEmailSubmit} className="space-y-4 sm:space-y-5">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-0">
@@ -330,7 +330,7 @@ export default function RegisterPage() {
                     </form>
                   </TabsContent>
 
-                  <TabsContent value="phone" className="space-y-4 sm:space-y-5">
+                  <TabsContent value="phone" className="mt-16 sm:mt-0 space-y-4 sm:space-y-5">
                     <form onSubmit={handlePhoneSubmit} className="space-y-4 sm:space-y-5">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-0">
