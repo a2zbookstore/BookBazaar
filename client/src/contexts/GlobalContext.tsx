@@ -18,6 +18,8 @@ interface GlobalContextType {
   triggerCartAnimation: () => void;
   refreshGuestCartStock: () => Promise<void>;
   refreshWishlistCount: () => void;
+  isAuthTransitioning: boolean;
+  setIsAuthTransitioning: (value: boolean) => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -29,6 +31,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [isCartAnimating, setIsCartAnimating] = useState(false);
   const [guestCart, setGuestCart] = useState<CartItem[]>([]);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [isAuthTransitioning, setIsAuthTransitioning] = useState(false);
 
   // Wishlist logic
   const { data: wishlistItems = [], refetch: refetchWishlist } = useQuery({
@@ -315,6 +318,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       triggerCartAnimation,
       refreshGuestCartStock,
       refreshWishlistCount,
+      isAuthTransitioning,
+      setIsAuthTransitioning,
     }}>
       {children}
     </GlobalContext.Provider>

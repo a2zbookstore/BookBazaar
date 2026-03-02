@@ -11,6 +11,18 @@ import { BookImporter } from "./bookImporter";
 import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
+import { 
+  getOrCreateSession, 
+  trackPageView, 
+  trackEvent,
+  getAnalyticsOverview,
+  getRealTimeVisitors,
+  getDailyStats,
+  getEventAnalytics,
+  getVisitorsList,
+  getVisitorDetail
+} from "./analyticsService";
+import { cleanupOldAnalytics, getAnalyticsDbStats } from "./analyticsCleanup";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
@@ -210,6 +222,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth middleware
   await setupAuth(app);
+
+  // Analytics tracking middleware - tracks only actual page routes
+  app.use(async (req: any, res, next) => {
+    // Only track actual user-facing pages, not development/build files or assets
+    const shouldTrack = 
+      !req.path.startsWith('/api') &&
+      !req.path.startsWith('/uploads') &&
+      !req.path.startsWith('/attached_assets') &&
+      !req.path.startsWith('/src') &&
+      !req.path.startsWith('/@') &&
+      !req.path.startsWith('/node_modules') &&
+      !req.path.includes('__vite') &&
+      !req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|map|json|txt|xml)$/) &&
+      req.method === 'GET' && // Only track GET requests (page views)
+      req.headers.accept?.includes('text/html'); // Only track HTML page requests
+    
+    if (shouldTrack) {
+      try {
+        const sessionId = await getOrCreateSession(req);
+        await trackPageView(req, sessionId);
+      } catch (error) {
+        console.error('Analytics tracking error:', error);
+        // Don't block the request if analytics fails
+      }
+    }
+    next();
+  });
+
+  // Analytics API endpoints
+  app.get('/api/analytics/overview', requireAdminAuth, async (req: any, res) => {
+    try {
+      const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
+      
+      const overview = await getAnalyticsOverview(startDate, endDate);
+      res.json(overview);
+    } catch (error) {
+      console.error('Error fetching analytics overview:', error);
+      res.status(500).json({ message: 'Failed to fetch analytics' });
+    }
+  });
+
+  app.get('/api/analytics/realtime', requireAdminAuth, async (req: any, res) => {
+    try {
+      const realtime = await getRealTimeVisitors();
+      res.json(realtime);
+    } catch (error) {
+      console.error('Error fetching realtime analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch realtime analytics' });
+    }
+  });
+
+  app.get('/api/analytics/daily', requireAdminAuth, async (req: any, res) => {
+    try {
+      const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
+      
+      const daily = await getDailyStats(startDate, endDate);
+      res.json(daily);
+    } catch (error) {
+      console.error('Error fetching daily stats:', error);
+      res.status(500).json({ message: 'Failed to fetch daily stats' });
+    }
+  });
+
+  app.get('/api/analytics/events', requireAdminAuth, async (req: any, res) => {
+    try {
+      const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
+      
+      const events = await getEventAnalytics(startDate, endDate);
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching event analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch event analytics' });
+    }
+  });
+
+  // Track custom events
+  app.post('/api/analytics/track', async (req: any, res) => {
+    try {
+      const { eventType, eventCategory, eventData, pagePath } = req.body;
+      const sessionId = await getOrCreateSession(req);
+      const userId = req.user?.id || (req.session as any).userId;
+      
+      await trackEvent(sessionId, eventType, eventCategory, eventData, userId, pagePath);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking event:', error);
+      res.status(500).json({ message: 'Failed to track event' });
+    }
+  });
+
+  // Get list of all visitors
+  app.get('/api/analytics/visitors', requireAdminAuth, async (req: any, res) => {
+    try {
+      const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
+      const limit = req.query.limit ? parseInt(req.query.limit) : 100;
+      
+      const visitors = await getVisitorsList(startDate, endDate, limit);
+      res.json(visitors);
+    } catch (error) {
+      console.error('Error fetching visitors:', error);
+      res.status(500).json({ message: 'Failed to fetch visitors' });
+    }
+  });
+
+  // Get detailed information for a specific visitor
+  app.get('/api/analytics/visitors/:sessionId', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const visitorDetail = await getVisitorDetail(sessionId);
+      
+      if (!visitorDetail) {
+        return res.status(404).json({ message: 'Visitor not found' });
+      }
+      
+      res.json(visitorDetail);
+    } catch (error) {
+      console.error('Error fetching visitor detail:', error);
+      res.status(500).json({ message: 'Failed to fetch visitor detail' });
+    }
+  });
+
+  // Get analytics database statistics
+  app.get('/api/analytics/db-stats', requireAdminAuth, async (req: any, res) => {
+    try {
+      const stats = await getAnalyticsDbStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching DB stats:', error);
+      res.status(500).json({ message: 'Failed to fetch database statistics' });
+    }
+  });
+
+  // Manually trigger analytics cleanup
+  app.post('/api/analytics/cleanup', requireAdminAuth, async (req: any, res) => {
+    try {
+      const result = await cleanupOldAnalytics();
+      res.json(result);
+    } catch (error) {
+      console.error('Error running cleanup:', error);
+      res.status(500).json({ message: 'Failed to run cleanup' });
+    }
+  });
 
   // Auth routes
   app.get('/api/auth/user', async (req: any, res) => {

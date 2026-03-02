@@ -673,3 +673,109 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   createdAt: true,
 });
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+// Analytics tables for visitor tracking
+export const analyticsPageViews = pgTable("analytics_page_views", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 255 }).notNull(),
+  userId: varchar("user_id").references(() => users.id), // null for anonymous users
+  pagePath: varchar("page_path", { length: 500 }).notNull(),
+  pageTitle: varchar("page_title", { length: 500 }),
+  referrer: varchar("referrer", { length: 500 }),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address", { length: 50 }),
+  country: varchar("country", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  deviceType: varchar("device_type", { length: 50 }), // desktop, mobile, tablet
+  browser: varchar("browser", { length: 100 }),
+  os: varchar("os", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_page_views_session").on(table.sessionId),
+  index("idx_page_views_path").on(table.pagePath),
+  index("idx_page_views_created").on(table.createdAt),
+]);
+
+export const analyticsSessions = pgTable("analytics_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 255 }).unique().notNull(),
+  userId: varchar("user_id").references(() => users.id),
+  firstVisit: timestamp("first_visit").defaultNow(),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  pageViewCount: integer("page_view_count").default(0),
+  country: varchar("country", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  deviceType: varchar("device_type", { length: 50 }),
+  browser: varchar("browser", { length: 100 }),
+  os: varchar("os", { length: 100 }),
+  landingPage: varchar("landing_page", { length: 500 }),
+  referrer: varchar("referrer", { length: 500 }),
+  utmSource: varchar("utm_source", { length: 100 }),
+  utmMedium: varchar("utm_medium", { length: 100 }),
+  utmCampaign: varchar("utm_campaign", { length: 100 }),
+}, (table) => [
+  index("idx_sessions_id").on(table.sessionId),
+  index("idx_sessions_first_visit").on(table.firstVisit),
+]);
+
+export const analyticsDailyStats = pgTable("analytics_daily_stats", {
+  id: serial("id").primaryKey(),
+  date: timestamp("date").notNull(),
+  totalVisitors: integer("total_visitors").default(0),
+  newVisitors: integer("new_visitors").default(0),
+  returningVisitors: integer("returning_visitors").default(0),
+  totalPageViews: integer("total_page_views").default(0),
+  totalSessions: integer("total_sessions").default(0),
+  averageSessionDuration: integer("average_session_duration").default(0), // in seconds
+  bounceRate: decimal("bounce_rate", { precision: 5, scale: 2 }).default("0"), // percentage
+  topPages: jsonb("top_pages"), // [{path, views}]
+  topCountries: jsonb("top_countries"), // [{country, count}]
+  deviceBreakdown: jsonb("device_breakdown"), // {desktop, mobile, tablet}
+  browserBreakdown: jsonb("browser_breakdown"), // {chrome, firefox, safari, etc}
+}, (table) => [
+  index("idx_daily_stats_date").on(table.date),
+]);
+
+export const analyticsEvents = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 255 }).notNull(),
+  userId: varchar("user_id").references(() => users.id),
+  eventType: varchar("event_type", { length: 100 }).notNull(), // add_to_cart, wishlist_add, checkout_start, purchase, etc
+  eventCategory: varchar("event_category", { length: 100 }), // ecommerce, engagement, navigation
+  eventData: jsonb("event_data"), // Additional event metadata
+  pagePath: varchar("page_path", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_events_session").on(table.sessionId),
+  index("idx_events_type").on(table.eventType),
+  index("idx_events_created").on(table.createdAt),
+]);
+
+// Analytics schemas
+export const insertPageViewSchema = createInsertSchema(analyticsPageViews).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertPageView = z.infer<typeof insertPageViewSchema>;
+export type AnalyticsPageView = typeof analyticsPageViews.$inferSelect;
+
+export const insertSessionSchema = createInsertSchema(analyticsSessions).omit({
+  id: true,
+  firstVisit: true,
+  lastActivity: true,
+  pageViewCount: true,
+});
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type AnalyticsSession = typeof analyticsSessions.$inferSelect;
+
+export const insertDailyStatsSchema = createInsertSchema(analyticsDailyStats).omit({
+  id: true,
+});
+export type InsertDailyStats = z.infer<typeof insertDailyStatsSchema>;
+export type AnalyticsDailyStats = typeof analyticsDailyStats.$inferSelect;
+
+export const insertEventSchema = createInsertSchema(analyticsEvents).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
