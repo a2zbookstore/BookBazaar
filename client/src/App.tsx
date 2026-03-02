@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
-import { GlobalProvider } from "@/contexts/GlobalContext";
+import { GlobalProvider, useGlobalContext } from "@/contexts/GlobalContext";
 import { LocationProvider } from "@/contexts/userLocationContext";
 
 // Pages
@@ -30,6 +30,7 @@ import MessagesPage from "@/pages/admin/MessagesPage";
 import GiftCategoriesPage from "@/pages/admin/GiftCategoriesPage";
 import CouponsPage from "@/pages/admin/CouponsPage";
 import BookRequestsPage from "@/pages/admin/BookRequestsPage";
+import AnalyticsPage from "@/pages/admin/AnalyticsPage";
 import GiftItemsPage from "@/pages/GiftItemsPage";
 import GiftManagementPage from "@/pages/admin/GiftManagementPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
@@ -53,6 +54,7 @@ import RequestBookPage from "@/pages/RequestBookPage";
 import NotFound from "@/pages/NotFound";
 import MyProfile from "./pages/MyProfile";
 import Layout from "./components/Layout";
+import { Loader2 } from "lucide-react";
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -152,6 +154,11 @@ function AppRouter() {
           <BookRequestsPage />
         </AdminProtectedRoute>
       </Route>
+      <Route path="/admin/analytics">
+        <AdminProtectedRoute>
+          <AnalyticsPage />
+        </AdminProtectedRoute>
+      </Route>
       <Route path="/admin/welcome-email">
         <AdminProtectedRoute>
           <WelcomeEmailTestPage />
@@ -206,12 +213,13 @@ function AppRouter() {
 }
 
 function App() {
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <LocationProvider>
           <GlobalProvider>
+            <AuthTransitionLoader />
             <Toaster />
             <Layout>
               <Router>
@@ -222,6 +230,23 @@ function App() {
         </LocationProvider>
       </TooltipProvider>
     </QueryClientProvider>
+  );
+}
+
+function AuthTransitionLoader() {
+  const { isAuthTransitioning } = useGlobalContext();
+
+  if (!isAuthTransitioning) return null;
+
+  return (
+    <div className="fixed inset-0 bg-transparent backdrop-blur-sm z-[9999] flex items-center justify-center">
+      <div className="text-center">
+        <div className="flex items-center justify-center gap-6">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-lg font-semibold text-secondary-black">Please Wait</p>
+        </div>
+      </div>
+    </div>
   );
 }
 

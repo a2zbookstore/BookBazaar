@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const params = new URLSearchParams(window.location.search);
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { setIsAuthTransitioning } = useGlobalContext();
   const [showEmailPassword, setShowEmailPassword] = useState(false);
   const [showPhonePassword, setShowPhonePassword] = useState(false);
   const [loginType, setLoginType] = useState("email");
@@ -65,14 +67,24 @@ export default function LoginPage() {
     mutationFn: async (data: { email?: string; phone?: string; password: string }) => {
       return await apiRequest("POST", "/api/auth/login", data);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Set transitioning state before any redirects
+      setIsAuthTransitioning(true);
+      
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-      // Invalidate auth queries and redirect
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/");
+      
+      // Wait for auth to refresh
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Small delay to ensure everything is loaded
+      setTimeout(() => {
+        setIsAuthTransitioning(false);
+        setLocation("/");
+      }, 500);
     },
     onError: (error: any) => {
       toast({
@@ -245,7 +257,7 @@ export default function LoginPage() {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="email" className="space-y-4 sm:space-y-5">
+                  <TabsContent value="email" className="mt-16 sm:mt-0 space-y-4 sm:space-y-5">
                     <form onSubmit={handleEmailSubmit} className="space-y-4 sm:space-y-5">
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email Address</Label>
@@ -306,7 +318,7 @@ export default function LoginPage() {
                     </form>
                   </TabsContent>
 
-                  <TabsContent value="phone" className="space-y-4 sm:space-y-5">
+                  <TabsContent value="phone" className="mt-16 sm:mt-0 space-y-4 sm:space-y-5">
                     <form onSubmit={handlePhoneSubmit} className="space-y-4 sm:space-y-5">
                       <div className="space-y-2">
                         <Label htmlFor="phoneLogin" className="text-sm font-semibold text-gray-700">Phone Number</Label>
