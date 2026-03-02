@@ -15,6 +15,7 @@ import {
   Gift,
   Percent,
   X,
+  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const sidebarItems = [
   { href: "/admin/inventory", icon: BookOpen, label: "Inventory" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
   { href: "/admin/customers", icon: Users, label: "Customers" },
+  { href: "/admin/analytics", icon: TrendingUp, label: "Analytics" },
   { href: "/admin/messages", icon: Mail, label: "Messages" },
   { href: "/admin/returns", icon: RotateCcw, label: "Returns" },
   { href: "/admin/coupons", icon: Percent, label: "Coupons" },

@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { cleanupOldAnalytics } from "./analyticsCleanup";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -144,6 +145,36 @@ process.on('SIGINT', () => {
     server.on('listening', () => {
       const address = server.address();
       log(`Server is listening on ${JSON.stringify(address)}`);
+      
+      // Schedule analytics cleanup to run daily at 3 AM
+      const scheduleCleanup = () => {
+        const now = new Date();
+        const scheduledTime = new Date();
+        scheduledTime.setHours(3, 0, 0, 0); // 3 AM
+        
+        if (scheduledTime <= now) {
+          // If 3 AM has passed today, schedule for tomorrow
+          scheduledTime.setDate(scheduledTime.getDate() + 1);
+        }
+        
+        const timeUntilCleanup = scheduledTime.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          log('Running scheduled analytics cleanup...');
+          try {
+            await cleanupOldAnalytics();
+            log('✓ Scheduled analytics cleanup completed');
+          } catch (error) {
+            console.error('Error in scheduled cleanup:', error);
+          }
+          // Schedule next cleanup
+          scheduleCleanup();
+        }, timeUntilCleanup);
+        
+        log(`Analytics cleanup scheduled for ${scheduledTime.toLocaleString()}`);
+      };
+      
+      scheduleCleanup();
     });
 
   } catch (error) {
