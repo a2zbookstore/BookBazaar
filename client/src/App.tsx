@@ -206,8 +206,10 @@ function AppRouter() {
           <AdminAccountPage />
         </AdminProtectedRoute>
       </Route>
+      
       <Route path="/admin/audit-trail">
         <AdminProtectedRoute>
+          //Admin Access Only: View detailed logs of all admin actions for security and accountability.
           <AuditLogPage />
         </AdminProtectedRoute>
       </Route>

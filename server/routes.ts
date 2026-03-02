@@ -10,7 +10,7 @@ import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
 import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
-import { generateSitemap, generateRobotsTxt } from "./seo";
+import { generateSitemap, generateRobotsTxt } from "./seo"; 
 import { 
   getOrCreateSession, 
   trackPageView, 
