@@ -33,7 +33,6 @@ import BookRequestsPage from "@/pages/admin/BookRequestsPage";
 import AnalyticsPage from "@/pages/admin/AnalyticsPage";
 import GiftItemsPage from "@/pages/GiftItemsPage";
 import GiftManagementPage from "@/pages/admin/GiftManagementPage";
-import AuditLogPage from "@/pages/admin/AuditLogPage";
 import TrackOrderPage from "@/pages/TrackOrderPage";
 import MyOrdersPage from "@/pages/MyOrdersPage";
 import CheckoutPage from "@/pages/CheckoutPage";
@@ -204,11 +203,6 @@ function AppRouter() {
       <Route path="/admin/account">
         <AdminProtectedRoute>
           <AdminAccountPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/audit-trail">
-        <AdminProtectedRoute>
-          <AuditLogPage />
         </AdminProtectedRoute>
       </Route>
 

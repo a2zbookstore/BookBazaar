@@ -63,7 +63,6 @@ import {
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
 import { fuzzyMatch, getFuzzyMatchScore, findBestFuzzyMatches, normalizeText } from "./fuzzySearch";
-import { logAudit } from "./auditLog";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -77,7 +76,7 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
-  deleteCategory(id: number, adminId?: number, ipAddress?: string): Promise<void>;
+  deleteCategory(id: number): Promise<void>;
 
   // Book operations
   getBooks(options?: {
@@ -97,7 +96,7 @@ export interface IStorage {
   getBookById(id: number): Promise<(Book & { category?: Category }) | undefined>;
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: number, book: Partial<InsertBook>): Promise<Book>;
-  deleteBook(id: number, adminId?: number, ipAddress?: string): Promise<void>;
+  deleteBook(id: number): Promise<void>;
   updateBookStock(id: number, quantity: number): Promise<void>;
   getSearchSuggestions(query: string): Promise<string[]>;
 
@@ -208,7 +207,7 @@ export interface IStorage {
   getCouponByCode(code: string): Promise<Coupon | undefined>;
   createCoupon(coupon: InsertCoupon): Promise<Coupon>;
   updateCoupon(id: number, coupon: Partial<InsertCoupon>): Promise<Coupon>;
-  deleteCoupon(id: number, adminId?: number, ipAddress?: string): Promise<void>;
+  deleteCoupon(id: number): Promise<void>;
   validateCoupon(code: string, customerEmail: string, orderAmount: number): Promise<{
     valid: boolean;
     coupon?: Coupon;
@@ -338,27 +337,8 @@ export class DatabaseStorage implements IStorage {
     return updatedCategory;
   }
 
-  async deleteCategory(id: number, adminId?: number, ipAddress?: string): Promise<void> {
-    // Fetch category before deletion for audit trail
-    const category = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
-    const categoryData = category[0];
-
-    if (!categoryData) {
-      throw new Error("Category not found");
-    }
-
+  async deleteCategory(id: number): Promise<void> {
     await db.delete(categories).where(eq(categories.id, id));
-
-    // Log deletion to audit trail
-    await logAudit({
-      tableName: 'categories',
-      recordId: id,
-      action: 'DELETE',
-      adminId,
-      oldData: categoryData,
-      ipAddress,
-      notes: `Deleted category: ${categoryData.name}`,
-    });
   }
 
   // Book operations
@@ -589,34 +569,15 @@ export class DatabaseStorage implements IStorage {
     return updatedBook;
   }
 
-  async deleteBook(id: number, adminId?: number, ipAddress?: string): Promise<void> {
+  async deleteBook(id: number): Promise<void> {
     try {
-      // Fetch book data before deletion for audit trail
-      const book = await this.getBookById(id);
-      if (!book) {
-        throw new Error("Book not found");
-      }
-
-      // Delete related cart items
       await db.delete(cartItems).where(eq(cartItems.bookId, id));
 
-      // Delete the book
       const result = await db.delete(books).where(eq(books.id, id));
 
       if (result.rowCount === 0) {
         throw new Error("Book not found");
       }
-
-      // Log deletion to audit trail
-      await logAudit({
-        tableName: 'books',
-        recordId: id,
-        action: 'DELETE',
-        adminId,
-        oldData: book,
-        ipAddress,
-        notes: `Deleted book: ${book.title}`,
-      });
     } catch (error) {
       console.error("Error in deleteBook:", error);
       if (error instanceof Error) {
@@ -1621,29 +1582,11 @@ export class DatabaseStorage implements IStorage {
     return coupon;
   }
 
-  async deleteCoupon(id: number, adminId?: number, ipAddress?: string): Promise<void> {
-    // Fetch coupon before deletion for audit trail
-    const [coupon] = await db.select().from(coupons).where(eq(coupons.id, id));
-    
-    if (!coupon) {
-      throw new Error("Coupon not found");
-    }
-
+  async deleteCoupon(id: number): Promise<void> {
     // First delete all usages
     await db.delete(couponUsages).where(eq(couponUsages.couponId, id));
     // Then delete the coupon
     await db.delete(coupons).where(eq(coupons.id, id));
-
-    // Log deletion to audit trail
-    await logAudit({
-      tableName: 'coupons',
-      recordId: id,
-      action: 'DELETE',
-      adminId,
-      oldData: coupon,
-      ipAddress,
-      notes: `Deleted coupon: ${coupon.code}`,
-    });
   }
 
   async validateCoupon(code: string, customerEmail: string, orderAmount: number): Promise<{
