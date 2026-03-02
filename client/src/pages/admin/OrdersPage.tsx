@@ -376,14 +376,14 @@ export default function OrdersPage() {
     : orders.filter((order: Order) => order.status === statusFilter);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-base-black">Order Management</h2>
-        <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
+        <h2 className="text-2xl sm:text-3xl font-bold text-base-black">Order Management</h2>
+        <div className="flex items-center gap-2 sm:gap-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
+            className="flex-1 sm:flex-none px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-aqua focus:border-transparent text-sm"
           >
             <option value="all">All Orders</option>
             <option value="pending">Pending</option>
@@ -406,15 +406,15 @@ export default function OrdersPage() {
           {filteredOrders.map((order: Order) => {
             return (
               <Card key={order.id} className="overflow-hidden">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
+                <CardContent className="p-3 sm:p-4 md:p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-4">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(order.status)}
                           <button
                             onClick={() => handleOrderNumberClick(order.id)}
-                            className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                            className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-sm sm:text-base"
                           >
                             Order #{order.id}
                           </button>
@@ -425,10 +425,10 @@ export default function OrdersPage() {
                         <Badge variant="outline">{order.paymentStatus}</Badge>
                       </div>
 
-                      <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm">
                         <div>
-                          <p><strong>Customer:</strong> {order.customerName}</p>
-                          <p><strong>Email:</strong> {order.customerEmail}</p>
+                          <p className="break-words"><strong>Customer:</strong> {order.customerName}</p>
+                          <p className="break-all"><strong>Email:</strong> {order.customerEmail}</p>
                           <p><strong>Phone:</strong> {order.customerPhone}</p>
                         </div>
                         <div>
@@ -445,9 +445,10 @@ export default function OrdersPage() {
                       )}
                     </div>
 
-                    <div className="flex gap-2 flex-wrap ml-4">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
+                        size="sm"
                         size="sm"
                         onClick={() => handleOpenDialog(order)}
                         className="flex items-center gap-1"

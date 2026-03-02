@@ -58,16 +58,16 @@ export default function SalesPage() {
   };
 
   return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-start">
           <div>
-            <h1 className="text-3xl font-bookerly font-bold text-base-black">Sales Reports</h1>
-            <p className="text-secondary-black">Track your bookshop's performance and growth.</p>
+            <h1 className="text-2xl sm:text-3xl font-bookerly font-bold text-base-black">Sales Reports</h1>
+            <p className="text-sm text-secondary-black">Track your bookshop's performance and growth.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

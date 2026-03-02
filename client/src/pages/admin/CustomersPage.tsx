@@ -113,23 +113,21 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Customer Management</h1>
-          <p className="text-gray-600">View and manage registered customers</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Customer Management</h1>
+          <p className="text-sm text-gray-600">View and manage registered customers</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="outline" className="text-lg px-3 py-1">
-            Total: {customers.length} customers
-          </Badge>
-        </div>
+        <Badge variant="outline" className="text-base sm:text-lg px-3 py-1 w-fit">
+          Total: {customers.length} customers
+        </Badge>
       </div>
 
       {/* Search and Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -139,7 +137,7 @@ export default function CustomersPage() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>

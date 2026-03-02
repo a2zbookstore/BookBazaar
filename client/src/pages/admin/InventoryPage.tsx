@@ -210,7 +210,7 @@ export default function InventoryPage() {
   /* ===================== UI ===================== */
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden space-y-4">
+    <div className="space-y-4">
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row gap-4 justify-between">
         <div>

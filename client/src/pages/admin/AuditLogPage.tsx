@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Filter, Search, User, Clock, Database, AlertCircle, Eye, RotateCcw } from "lucide-react";
+import { Calendar, Filter, Search, User, Clock, Database, AlertCircle, Eye, RotateCcw, LoaderIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -161,15 +154,22 @@ export default function AuditLogPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Audit Trail</h1>
-        <p className="text-gray-600">Track all deletions and changes made in your system</p>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Audit Trail</h1>
+          <Button onClick={() => refetch()} className="mt-4 rounded-2xl">
+            <LoaderIcon className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+
+        <p className="text-sm text-gray-600">Track all deletions and changes made in your system</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -228,60 +228,54 @@ export default function AuditLogPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Time Period</label>
-              <Select value={days.toString()} onValueChange={(v) => setDays(parseInt(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="60">Last 60 days</SelectItem>
-                  <SelectItem value="90">Last 90 days</SelectItem>
-                  <SelectItem value="365">Last year</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={days}
+                onChange={(e) => setDays(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="60">Last 60 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+              </select>
             </div>
 
             <div>
               <label className="text-sm font-medium mb-2 block">Table</label>
-              <Select value={tableFilter} onValueChange={setTableFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tables</SelectItem>
-                  <SelectItem value="books">Books</SelectItem>
-                  <SelectItem value="categories">Categories</SelectItem>
-                  <SelectItem value="coupons">Coupons</SelectItem>
-                  <SelectItem value="gift_items">Gift Items</SelectItem>
-                  <SelectItem value="gift_categories">Gift Categories</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={tableFilter}
+                onChange={(e) => setTableFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Tables</option>
+                <option value="books">Books</option>
+                <option value="categories">Categories</option>
+                <option value="coupons">Coupons</option>
+                <option value="gift_items">Gift Items</option>
+                <option value="gift_categories">Gift Categories</option>
+              </select>
             </div>
 
             <div>
               <label className="text-sm font-medium mb-2 block">Action</label>
-              <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Actions</SelectItem>
-                  <SelectItem value="DELETE">Delete</SelectItem>
-                  <SelectItem value="UPDATE">Update</SelectItem>
-                  <SelectItem value="CREATE">Create</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Actions</option>
+                <option value="DELETE">Delete</option>
+                <option value="UPDATE">Update</option>
+                <option value="CREATE">Create</option>
+              </select>
             </div>
           </div>
-          
-          <Button onClick={() => refetch()} className="mt-4">
-            <Search className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+
+
         </CardContent>
       </Card>
 
@@ -469,7 +463,7 @@ export default function AuditLogPage() {
                       {JSON.stringify(selectedLog.oldData, null, 2)}
                     </pre>
                   </div>
-                  
+
                   {/* Human-readable summary for books */}
                   {selectedLog.tableName === 'books' && selectedLog.oldData && (
                     <div className="mt-3 p-4 bg-white border rounded">

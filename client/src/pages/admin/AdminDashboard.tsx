@@ -61,15 +61,15 @@ export default function AdminDashboard() {
   };
 
   return (
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Welcome Section */}
         <div>
-          <h1 className="text-3xl font-bookerly font-bold text-base-black mb-2">Dashboard Overview</h1>
-          <p className="text-secondary-black">Welcome back! Here's what's happening with your bookshop.</p>
+          <h1 className="text-2xl sm:text-3xl font-bookerly font-bold text-base-black mb-2">Dashboard Overview</h1>
+          <p className="text-sm sm:text-base text-secondary-black">Welcome back! Here's what's happening with your bookshop.</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

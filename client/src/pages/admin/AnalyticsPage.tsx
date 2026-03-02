@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
-import { Users, Eye, TrendingUp, Globe, Monitor, Smartphone, Tablet, Clock, MousePointer, Database, Trash2 } from "lucide-react";
+import { Users, Eye, TrendingUp, Globe, Monitor, Smartphone, Tablet, Clock, MousePointer, Database, Trash2, RefreshCw } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -133,31 +133,32 @@ export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState(30); // days
   const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
   const startDate = useMemo(() => subDays(new Date(), dateRange), [dateRange]);
   const endDate = useMemo(() => new Date(), []);
 
   // Fetch analytics overview
-  const { data: overview, isLoading: overviewLoading } = useQuery<AnalyticsOverview>({
+  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery<AnalyticsOverview>({
     queryKey: [`/api/analytics/overview?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`],
     refetchInterval: 60000, // Refresh every minute
   });
 
   // Fetch realtime data
-  const { data: realtime, isLoading: realtimeLoading } = useQuery<RealtimeData>({
+  const { data: realtime, isLoading: realtimeLoading, refetch: refetchRealtime } = useQuery<RealtimeData>({
     queryKey: ['/api/analytics/realtime'],
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
   // Fetch daily stats
-  const { data: dailyStats, isLoading: dailyStatsLoading } = useQuery<DailyStats[]>({
+  const { data: dailyStats, isLoading: dailyStatsLoading, refetch: refetchDailyStats } = useQuery<DailyStats[]>({
     queryKey: [`/api/analytics/daily?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`],
     refetchInterval: 60000,
   });
 
   // Fetch visitors list
-  const { data: visitors, isLoading: visitorsLoading } = useQuery<Visitor[]>({
+  const { data: visitors, isLoading: visitorsLoading, refetch: refetchVisitors } = useQuery<Visitor[]>({
     queryKey: [`/api/analytics/visitors?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&limit=50`],
     refetchInterval: 60000,
   });
@@ -175,6 +176,32 @@ export default function AnalyticsPage() {
   });
 
   const isLoading = overviewLoading || realtimeLoading || dailyStatsLoading;
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        refetchOverview(),
+        refetchRealtime(),
+        refetchDailyStats(),
+        refetchVisitors(),
+        refetchDbStats(),
+      ]);
+      toast({
+        title: "Data Refreshed",
+        description: "All analytics data has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Failed to refresh analytics data.",
+        variant: "destructive" as const,
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Handle manual cleanup
   const handleCleanup = async () => {
@@ -258,7 +285,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Visitor Detail Modal */}
       <Dialog open={!!selectedVisitor} onOpenChange={() => setSelectedVisitor(null)}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -395,28 +422,41 @@ export default function AnalyticsPage() {
           )}
         </DialogContent>
       </Dialog>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Analytics Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Track visitor behavior and site performance
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </Button>
           <Button
             variant={dateRange === 7 ? "default" : "outline"}
+            size="sm"
             onClick={() => setDateRange(7)}
           >
             Last 7 Days
           </Button>
           <Button
             variant={dateRange === 30 ? "default" : "outline"}
+            size="sm"
             onClick={() => setDateRange(30)}
           >
             Last 30 Days
           </Button>
           <Button
             variant={dateRange === 90 ? "default" : "outline"}
+            size="sm"
             onClick={() => setDateRange(90)}
           >
             Last 90 Days
@@ -433,10 +473,18 @@ export default function AnalyticsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-bold">
-            {realtime?.activeVisitors || 0}
-          </div>
-          <p className="text-muted-foreground mt-1">Active visitors right now</p>
+          {realtimeLoading && !realtime ? (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              <div className="text-4xl font-bold">
+                {realtime?.activeVisitors || 0}
+              </div>
+              <p className="text-muted-foreground mt-1">Active visitors right now</p>
+            </>
+          )}
           
           {realtime && realtime.activePages.length > 0 && (
             <div className="mt-4">
@@ -462,12 +510,21 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : (overview?.totalVisitors || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Last {dateRange} days
-            </p>
+            {isLoading && !overview ? (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {(overview?.totalVisitors || 0).toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Last {dateRange} days
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -477,12 +534,21 @@ export default function AnalyticsPage() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : (overview?.totalPageViews || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Last {dateRange} days
-            </p>
+            {isLoading && !overview ? (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {(overview?.totalPageViews || 0).toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Last {dateRange} days
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -492,14 +558,23 @@ export default function AnalyticsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : (overview?.newVisitors || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {overview && overview.totalVisitors > 0
-                ? `${Math.round((overview.newVisitors / overview.totalVisitors) * 100)}% of total`
-                : "Last " + dateRange + " days"}
-            </p>
+            {isLoading && !overview ? (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {(overview?.newVisitors || 0).toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {overview && overview.totalVisitors > 0
+                    ? `${Math.round((overview.newVisitors / overview.totalVisitors) * 100)}% of total`
+                    : "Last " + dateRange + " days"}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -509,14 +584,23 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : (overview?.returningVisitors || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {overview && overview.totalVisitors > 0
-                ? `${Math.round((overview.returningVisitors / overview.totalVisitors) * 100)}% of total`
-                : "Last " + dateRange + " days"}
-            </p>
+            {isLoading && !overview ? (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {(overview?.returningVisitors || 0).toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {overview && overview.totalVisitors > 0
+                    ? `${Math.round((overview.returningVisitors / overview.totalVisitors) * 100)}% of total`
+                    : "Last " + dateRange + " days"}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

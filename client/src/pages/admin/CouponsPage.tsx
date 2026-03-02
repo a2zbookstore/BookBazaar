@@ -181,13 +181,13 @@ export default function CouponsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Coupon Management</h1>
-          <p className="text-gray-600 mt-1">Create and manage discount coupons for your store</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Coupon Management</h1>
+          <p className="text-sm text-gray-600 mt-1">Create and manage discount coupons for your store</p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Create Coupon
         </Button>
@@ -320,14 +320,12 @@ export default function CouponsPage() {
               Create a new discount coupon for your customers
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
-            <CouponForm
-              onSubmit={handleCreate}
-              onCancel={() => setIsCreateDialogOpen(false)}
-              isLoading={createMutation.isPending}
-              generateRandomCode={generateRandomCode}
-            />
-          </div>
+          <CouponForm
+            onSubmit={handleCreate}
+            onCancel={() => setIsCreateDialogOpen(false)}
+            isLoading={createMutation.isPending}
+            generateRandomCode={generateRandomCode}
+          />
         </DialogContent>
       </Dialog>
 
@@ -340,20 +338,18 @@ export default function CouponsPage() {
               Update the coupon details
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
-            {selectedCoupon && (
-              <CouponForm
-                coupon={selectedCoupon}
-                onSubmit={handleEdit}
-                onCancel={() => {
-                  setIsEditDialogOpen(false);
-                  setSelectedCoupon(null);
-                }}
-                isLoading={updateMutation.isPending}
-                generateRandomCode={generateRandomCode}
-              />
-            )}
-          </div>
+          {selectedCoupon && (
+            <CouponForm
+              coupon={selectedCoupon}
+              onSubmit={handleEdit}
+              onCancel={() => {
+                setIsEditDialogOpen(false);
+                setSelectedCoupon(null);
+              }}
+              isLoading={updateMutation.isPending}
+              generateRandomCode={generateRandomCode}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
