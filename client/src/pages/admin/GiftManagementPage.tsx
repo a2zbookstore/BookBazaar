@@ -303,31 +303,31 @@ export default function GiftManagementPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gift Management</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Gift Management</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
           Manage gift items and homepage content for the Gift with Purchase feature
         </p>
       </div>
 
-      <Tabs defaultValue="gifts" className="space-y-6">
+      <Tabs defaultValue="gifts" className="space-y-4 sm:space-y-6">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="gifts" className="flex items-center gap-2">
+          <TabsTrigger value="gifts" className="flex items-center gap-2 text-sm">
             <Gift className="w-4 h-4" />
             Gift Items
           </TabsTrigger>
-          <TabsTrigger value="content" className="flex items-center gap-2">
+          <TabsTrigger value="content" className="flex items-center gap-2 text-sm">
             <Settings className="w-4 h-4" />
             Homepage Content
           </TabsTrigger>
         </TabsList>
 
         {/* Gift Items Tab */}
-        <TabsContent value="gifts" className="space-y-6">
-          <div className="flex justify-between items-center">
+        <TabsContent value="gifts" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
             <div>
-              <h2 className="text-xl font-semibold">Gift Items ({giftItems.length})</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Gift Items ({giftItems.length})</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Manage the gift items available for customers
               </p>

@@ -24,14 +24,14 @@ export const staticCoupons: Coupon[] = [
     discountValue: 10,
   },
   {
-    code: "FIFTEENOF-$999",
+    code: "FIFTEENOFF-$999",
     minSubtotal: 999,
     description: "15% off shopping above $999",
     discountType: "percentage",
     discountValue: 15,
   },
   {
-    code: "TWENTYOF-$1499",
+    code: "TWENTYOFF-$1499",
     minSubtotal: 1499,
     description: "20% off shopping above $1499",
     discountType: "percentage",

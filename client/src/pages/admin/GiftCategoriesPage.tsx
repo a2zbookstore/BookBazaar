@@ -374,17 +374,17 @@ export default function GiftCategoriesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gift Categories Management</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Gift Categories Management</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
           Manage gift categories like Classic Novel, Mystery Novel, Premium Notebook, etc.
         </p>
       </div>
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-start mb-4 sm:mb-6">
         <div>
-          <h2 className="text-xl font-semibold">Categories ({categories.length})</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Categories ({categories.length})</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Organize your gift items into categories
           </p>

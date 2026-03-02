@@ -398,12 +398,12 @@ export default function ShippingPage() {
   const defaultRate = shippingRates.find(rate => rate.isDefault);
 
   return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-start">
           <div>
-            <h1 className="text-3xl font-bookerly font-bold text-base-black">Shipping Management</h1>
-            <p className="text-secondary-black">Manage shipping rates and delivery times by country</p>
+            <h1 className="text-2xl sm:text-3xl font-bookerly font-bold text-base-black">Shipping Management</h1>
+            <p className="text-sm text-secondary-black">Manage shipping rates and delivery times by country</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
