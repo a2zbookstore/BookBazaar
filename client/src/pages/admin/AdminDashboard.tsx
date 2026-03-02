@@ -296,6 +296,14 @@ export default function AdminDashboard() {
                   <p className="text-sm text-secondary-black">Manage customer requests</p>
                 </div>
               </a>
+              
+              <a href="/admin/audit-trail" className="block">
+                <div className="p-4 border border-red-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition-colors cursor-pointer">
+                  <AlertTriangle className="h-8 w-8 text-red-500 mb-2" />
+                  <h3 className="font-semibold text-base-black">Audit Trail</h3>
+                  <p className="text-sm text-secondary-black">Track & restore deletions</p>
+                </div>
+              </a>
             </div>
           </CardContent>
         </Card> */}

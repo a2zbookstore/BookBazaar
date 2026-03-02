@@ -15,6 +15,7 @@ import {
   Gift,
   Percent,
   X,
+  FileText,
   TrendingUp,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +39,7 @@ const sidebarItems = [
   { href: "/admin/gift-categories", icon: Gift, label: "Gift Categories" },
   { href: "/admin/gift-management", icon: Gift, label: "Gift Management" },
   { href: "/admin/welcome-email", icon: Mail, label: "Welcome Email" },
+  { href: "/admin/audit-trail", icon: FileText, label: "Audit Trail" },
   { href: "/admin/shipping", icon: Truck, label: "Shipping" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
   { href: "/admin/account", icon: User, label: "Account" },
