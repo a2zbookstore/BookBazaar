@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { useAnalyticsHeartbeat } from "@/hooks/useAnalyticsHeartbeat";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import { GlobalProvider, useGlobalContext } from "@/contexts/GlobalContext";
 import { LocationProvider } from "@/contexts/userLocationContext";
@@ -62,6 +63,9 @@ function AppRouter() {
 
   // Auto scroll to top on page navigation
   useScrollToTop();
+
+  // Keep analytics session alive and backfill userId as user navigates (SPA)
+  useAnalyticsHeartbeat();
 
   if (isLoading) {
     return (

@@ -23,15 +23,10 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
-  Edit,
-  FileText,
-  Download,
-  Printer,
-  Package,
+  Edit, Download, Package,
   Truck,
   CheckCircle,
   XCircle,
@@ -69,7 +64,7 @@ export default function OrdersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBillDialogOpen, setIsBillDialogOpen] = useState(false);
   const [selectedBillOrderId, setSelectedBillOrderId] = useState<number | null>(null);
-  const [newStatus, setNewStatus] = useState("");
+  const [newStatus, setNewStatus] = useState<string | undefined>(undefined);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
   const [notes, setNotes] = useState("");
@@ -108,7 +103,7 @@ export default function OrdersPage() {
     enabled: isAuthenticated,
   });
 
-  const { data: selectedOrderDetails, isLoading: isLoadingOrderDetails } = useQuery({
+  const { data: selectedOrderDetails, isLoading: isLoadingOrderDetails } = useQuery<Order>({
     queryKey: [`/api/orders/${selectedBillOrderId}`],
     enabled: isAuthenticated && selectedBillOrderId !== null,
   });
@@ -146,7 +141,7 @@ export default function OrdersPage() {
       });
       setIsDialogOpen(false);
       setSelectedOrderId(null);
-      setNewStatus("");
+      setNewStatus(undefined);
       setTrackingNumber("");
       setShippingCarrier("no-carrier");
       setNotes("");
@@ -303,7 +298,7 @@ export default function OrdersPage() {
   };
 
   const handleUpdateOrder = () => {
-    if (!selectedOrderId || !newStatus) {
+    if (!selectedOrderId || !newStatus || newStatus === "") {
       toast({
         title: "Error",
         description: "Please select a status",
@@ -340,20 +335,27 @@ export default function OrdersPage() {
     }
   };
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'pending': return 'secondary';
-      case 'confirmed': return 'default';
-      case 'processing': return 'default';
-      case 'shipped': return 'default';
-      case 'delivered': return 'default';
-      case 'cancelled': return 'destructive';
-      case 'refunded': return 'destructive';
-      default: return 'secondary';
-    }
+  const statusColors: Record<string, string> = {
+    pending:    "bg-yellow-100 text-yellow-800",
+    confirmed:  "bg-blue-100   text-blue-800",
+    processing: "bg-orange-100 text-orange-800",
+    shipped:    "bg-purple-100 text-purple-800",
+    delivered:  "bg-green-100  text-green-800",
+    cancelled:  "bg-red-100    text-red-800",
+    refunded:   "bg-orange-100   text-orange-800",
   };
+  const getStatusColor = (status: string) => statusColors[status] ?? "bg-gray-100 text-gray-800";
 
-  if (authLoading || isLoading) {
+  const paymentStatusColors: Record<string, string> = {
+    paid:       "bg-green-100  text-green-800",
+    pending:    "bg-yellow-100 text-yellow-800",
+    failed:     "bg-red-100    text-red-800",
+    refunded:   "bg-teal-100   text-teal-800",
+    partially_refunded: "bg-cyan-100 text-cyan-800",
+  };
+  const getPaymentColor = (ps: string) => paymentStatusColors[ps?.toLowerCase()] ?? "bg-gray-100 text-gray-800";
+
+  if (authLoading || isLoading || (isAuthenticated && ordersData === undefined)) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
@@ -419,10 +421,16 @@ export default function OrdersPage() {
                             Order #{order.id}
                           </button>
                         </div>
-                        <Badge variant={getStatusVariant(order.status)}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        <Badge className={`${getStatusColor(order.status)} px-3 py-1 text-xs font-semibold rounded-full`}>
+                          {order.status
+                            ? order.status.charAt(0).toUpperCase() + order.status.slice(1)
+                            : "Unknown"}
                         </Badge>
-                        <Badge variant="outline">{order.paymentStatus}</Badge>
+                        <Badge className={`${getPaymentColor(order.paymentStatus)} px-3 py-1 text-xs font-semibold rounded-full`}>
+                          {order.paymentStatus
+                            ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)
+                            : "Unknown"}
+                        </Badge>
                       </div>
 
                       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm">
@@ -449,7 +457,6 @@ export default function OrdersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        size="sm"
                         onClick={() => handleOpenDialog(order)}
                         className="flex items-center gap-1"
                       >
@@ -475,7 +482,7 @@ export default function OrdersPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="status">Order Status</Label>
-              <Select value={newStatus} onValueChange={setNewStatus}>
+              <Select value={newStatus || undefined} onValueChange={setNewStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -587,7 +594,7 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Status</p>
-                    <Badge variant={getStatusVariant(selectedOrderDetails.status || 'pending')}>
+                    <Badge className={`${getStatusColor(selectedOrderDetails.status || 'pending')} px-3 py-1 text-xs font-semibold rounded-full`}>
                       {selectedOrderDetails.status
                         ? selectedOrderDetails.status.charAt(0).toUpperCase() + selectedOrderDetails.status.slice(1)
                         : 'Pending'
@@ -596,7 +603,11 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Payment</p>
-                    <Badge variant="outline">{selectedOrderDetails.paymentStatus || 'N/A'}</Badge>
+                    <Badge className={`${getPaymentColor(selectedOrderDetails.paymentStatus || '')} px-3 py-1 text-xs font-semibold rounded-full`}>
+                      {selectedOrderDetails.paymentStatus
+                        ? selectedOrderDetails.paymentStatus.charAt(0).toUpperCase() + selectedOrderDetails.paymentStatus.slice(1)
+                        : 'N/A'}
+                    </Badge>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total Amount</p>

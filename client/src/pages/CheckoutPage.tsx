@@ -123,6 +123,7 @@ export default function CheckoutPage() {
   const [sameBillingAddress, setSameBillingAddress] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState("stripe");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [spinnerMessage, setSpinnerMessage] = useState("Processing payment...");
   const [giftItem, setGiftItem] = useState<any>(null);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
@@ -627,7 +628,9 @@ export default function CheckoutPage() {
     }
 
     setIsProcessing(true);
+    setSpinnerMessage("Preparing your payment...");
     setPaymentMethod("razorpay");
+    let modalOpened = false;
 
     try {
       let finalAmount;
@@ -669,6 +672,8 @@ export default function CheckoutPage() {
         order_id: orderData.id,
         handler: async (response: any) => {
           console.log("Razorpay payment response:", response);
+          setIsProcessing(true);
+          setSpinnerMessage("Verifying your payment...");
 
           try {
             const verifyResult = await apiRequest("POST", "/api/razorpay/verify", {
@@ -700,7 +705,7 @@ export default function CheckoutPage() {
             console.log("Payment verification result:", verifyData);
 
             if (verifyData.status === "success") {
-              setIsProcessing(false);
+              setSpinnerMessage("Completing your order...");
               clearCart();
               // Invalidate pending orders cache for admin dashboard
               queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
@@ -718,6 +723,8 @@ export default function CheckoutPage() {
             }
           } catch (error) {
             console.error("Payment verification error:", error);
+            setIsProcessing(false);
+            setSpinnerMessage("Processing payment...");
 
             // Check if it's a network error or parsing error
             if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -790,6 +797,7 @@ export default function CheckoutPage() {
         });
       });
 
+      modalOpened = true;
       razorpay.open();
     } catch (error) {
       console.error("Razorpay payment error:", error);
@@ -798,8 +806,14 @@ export default function CheckoutPage() {
         description: error instanceof Error ? error.message : "Failed to initialize payment",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
+      setSpinnerMessage("Processing payment...");
+    } finally {
+      // Only kill the spinner here if the modal never opened (error before open)
+      if (!modalOpened) {
+        setIsProcessing(false);
+        setSpinnerMessage("Processing payment...");
+      }
     }
   };
 
@@ -1452,7 +1466,7 @@ export default function CheckoutPage() {
       {/* Payment Loading Spinner */}
       {isProcessing && (
         <PaymentSpinner
-          message={paymentMethod === 'paypal' ? 'Redirecting to PayPal...' : 'Processing payment...'}
+          message={paymentMethod === 'paypal' ? 'Redirecting to PayPal...' : spinnerMessage}
           paymentMethod={paymentMethod === 'paypal' ? 'paypal' : 'razorpay'}
         />
       )}

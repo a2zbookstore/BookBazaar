@@ -1399,6 +1399,7 @@ export class DatabaseStorage implements IStorage {
             price: orderItems.price,
             title: books.title,
             author: books.author,
+            imageUrl: books.imageUrl,
           })
           .from(orderItems)
           .innerJoin(books, eq(orderItems.bookId, books.id))
@@ -1437,6 +1438,7 @@ export class DatabaseStorage implements IStorage {
             price: orderItems.price,
             title: books.title,
             author: books.author,
+            imageUrl: books.imageUrl,
           })
           .from(orderItems)
           .innerJoin(books, eq(orderItems.bookId, books.id))
