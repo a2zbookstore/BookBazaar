@@ -96,6 +96,8 @@ export default function InventoryPageNew() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [deletingBookId, setDeletingBookId] = useState<number | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [bookForm, setBookForm] = useState<BookForm>({
     title: "",
@@ -257,13 +259,18 @@ export default function InventoryPageNew() {
 
   const deleteBookMutation = useMutation({
     mutationFn: async (id: number) => {
+      setDeletingBookId(id);
       return apiRequest('DELETE', `/api/books/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      setIsRefreshing(true);
+      await queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+      setIsRefreshing(false);
+      setDeletingBookId(null);
       toast({ title: "Success", description: "Book deleted successfully!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/books"] });
     },
     onError: (error: Error) => {
+      setDeletingBookId(null);
       toast({
         title: "Error",
         description: error.message,
@@ -583,7 +590,7 @@ export default function InventoryPageNew() {
           <Button
             onClick={downloadTemplate}
             variant="outline"
-            className="border-primary-aqua text-primary-aqua hover:bg-primary-aqua hover:text-white"
+            className="border-primary-aqua rounded-full text-primary-aqua hover:bg-primary-aqua hover:text-white"
           >
             <FileText className="h-4 w-4 mr-2" />
             Template
@@ -593,7 +600,7 @@ export default function InventoryPageNew() {
             onClick={() => fileInputRef.current?.click()}
             variant="outline"
             disabled={isUploading}
-            className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+            className="border-green-600 rounded-full text-green-600 hover:bg-green-600 hover:text-white"
           >
             <Upload className="h-4 w-4 mr-2" />
             {isUploading ? "Importing..." : "Import"}
@@ -602,7 +609,7 @@ export default function InventoryPageNew() {
           <Button
             onClick={exportBooks}
             variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+            className="border-blue-600 rounded-full text-blue-600 hover:bg-blue-600 hover:text-white"
           >
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -612,7 +619,7 @@ export default function InventoryPageNew() {
             onClick={migrateImages}
             variant="outline"
             disabled={isMigrating}
-            className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
+            className="border-purple-600 rounded-full text-purple-600 hover:bg-purple-600 hover:text-white"
           >
             <CloudUpload className="h-4 w-4 mr-2" />
             {isMigrating ? "Migrating..." : "Migrate Images"}
@@ -628,12 +635,12 @@ export default function InventoryPageNew() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm} className="bg-primary-aqua hover:bg-secondary-aqua">
+              <Button onClick={resetForm} className="rounded-full bg-primary-aqua hover:bg-secondary-aqua">
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Book
               </Button>
             </DialogTrigger>
-            <Button variant="outline" className="bg-green-600 hover:bg-green-200" onClick={() => setIsBannerDialogOpen(true)}>
+            <Button variant="outline" className="rounded-full bg-green-500 text-white hover:bg-green-700 hover:text-white" onClick={() => setIsBannerDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Banners
             </Button>
@@ -1081,6 +1088,7 @@ export default function InventoryPageNew() {
                   <Button
                     type="button"
                     variant="outline"
+                    className="rounded-full"
                     onClick={() => setIsDialogOpen(false)}
                   >
                     Cancel
@@ -1088,7 +1096,7 @@ export default function InventoryPageNew() {
                   <Button
                     type="submit"
                     disabled={createBookMutation.isPending || updateBookMutation.isPending}
-                    className="bg-primary-aqua hover:bg-secondary-aqua"
+                    className="bg-primary-aqua hover:bg-secondary-aqua rounded-full"
                   >
                     {editingBook ? "Update" : "Create"} Book
                   </Button>
@@ -1166,7 +1174,7 @@ export default function InventoryPageNew() {
         </CardHeader>
         <CardContent>
           {error ? (
-            <div className="text-center py-8">
+            <div className="text-center py-8 ">
               <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Books</h3>
               <p className="text-gray-600 mb-4">
                 {error instanceof Error ? error.message : 'Failed to load books'}
@@ -1178,7 +1186,7 @@ export default function InventoryPageNew() {
                 Reload Page
               </Button>
             </div>
-          ) : isLoading ? (
+          ) : isLoading || isRefreshing ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="animate-pulse flex gap-4 p-4 border rounded">
@@ -1224,15 +1232,15 @@ export default function InventoryPageNew() {
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-base-black truncate w-60">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="truncate">{book.title}</span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                {book.title}
-                              </TooltipContent>
-                            </Tooltip>
-                          </h3>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="truncate">{book.title}</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              {book.title}
+                            </TooltipContent>
+                          </Tooltip>
+                        </h3>
                         <p className="text-secondary-black text-sm">{book.author}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge className={`text-xs ${getConditionColor(book.condition)}`}>
@@ -1260,6 +1268,7 @@ export default function InventoryPageNew() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="rounded-full hover:bg-primary-aqua hover:text-white"
                           onClick={() => handleEdit(book)}
                         >
                           <Edit className="h-4 w-4" />
@@ -1267,9 +1276,15 @@ export default function InventoryPageNew() {
                         <Button
                           size="sm"
                           variant="destructive"
+                          className="rounded-full hover:bg-red-600 hover:text-white"
                           onClick={() => deleteBookMutation.mutate(book.id)}
+                          disabled={deletingBookId === book.id || isRefreshing}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deletingBookId === book.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>

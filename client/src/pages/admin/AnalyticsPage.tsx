@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
-import { Users, Eye, TrendingUp, Globe, Monitor, Smartphone, Tablet, Clock, MousePointer, Database, Trash2, RefreshCw } from "lucide-react";
+import { Users, Eye, TrendingUp, Globe, Monitor, Smartphone, Tablet, Clock, MousePointer, Database, Trash2, RefreshCw, UserCheck, UserX } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +76,9 @@ interface DailyStats {
 interface Visitor {
   sessionId: string;
   userId: string | null;
+  userEmail: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
   firstVisit: string;
   lastActivity: string;
   pageViewCount: number;
@@ -129,12 +133,81 @@ interface DbStats {
   };
 }
 
+interface GroupedVisitorSession {
+  sessionId: string;
+  firstVisit: string;
+  lastActivity: string;
+  pageViewCount: number;
+  landingPage: string | null;
+  referrer: string | null;
+  country: string | null;
+  city: string | null;
+  deviceType: string | null;
+  browser: string | null;
+  os: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+}
+
+interface GroupedVisitor {
+  identityKey: string;
+  isLoggedIn: boolean;
+  userId: string | null;
+  userEmail: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
+  ipAddress: string | null;
+  totalSessions: number;
+  totalPageViews: number;
+  firstSeen: string;
+  lastSeen: string;
+  country: string | null;
+  city: string | null;
+  deviceType: string | null;
+  browser: string | null;
+  os: string | null;
+  sessions: GroupedVisitorSession[];
+}
+
+interface UserAnalytics {
+  userId: string | null;
+  userEmail: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
+  totalSessions: number;
+  totalPageViews: number;
+  firstSeen: string;
+  lastSeen: string;
+  country: string | null;
+  deviceType: string | null;
+  browser: string | null;
+}
+
+interface ActiveUser {
+  userId: string | null;
+  userEmail: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
+  lastActivity: string;
+  currentPage: string | null;
+}
+
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState(30); // days
   const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   const startDate = useMemo(() => subDays(new Date(), dateRange), [dateRange]);
   const endDate = useMemo(() => new Date(), []);
@@ -163,10 +236,28 @@ export default function AnalyticsPage() {
     refetchInterval: 60000,
   });
 
+  // Fetch grouped visitors (one row per identity)
+  const { data: groupedVisitors, isLoading: groupedLoading, refetch: refetchGrouped } = useQuery<GroupedVisitor[]>({
+    queryKey: [`/api/analytics/grouped-visitors?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`],
+    refetchInterval: 60000,
+  });
+
   // Fetch visitor detail when selected
   const { data: visitorDetail } = useQuery<VisitorDetail>({
     queryKey: [`/api/analytics/visitors/${selectedVisitor}`],
     enabled: !!selectedVisitor,
+  });
+
+  // Fetch user analytics (grouped by logged-in user)
+  const { data: userAnalytics, isLoading: userAnalyticsLoading, refetch: refetchUserAnalytics } = useQuery<UserAnalytics[]>({
+    queryKey: [`/api/analytics/users?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`],
+    refetchInterval: 60000,
+  });
+
+  // Fetch currently active logged-in users
+  const { data: activeUsers, refetch: refetchActiveUsers } = useQuery<ActiveUser[]>({
+    queryKey: ['/api/analytics/active-users'],
+    refetchInterval: 15000, // Refresh every 15 seconds
   });
 
   // Fetch database stats
@@ -187,6 +278,9 @@ export default function AnalyticsPage() {
         refetchDailyStats(),
         refetchVisitors(),
         refetchDbStats(),
+        refetchUserAnalytics(),
+        refetchActiveUsers(),
+        refetchGrouped(),
       ]);
       toast({
         title: "Data Refreshed",
@@ -278,6 +372,13 @@ export default function AnalyticsPage() {
     }
   };
 
+  const getUserDisplayName = (firstName: string | null, lastName: string | null, email: string | null) => {
+    if (firstName || lastName) {
+      return [firstName, lastName].filter(Boolean).join(' ');
+    }
+    return email || 'Anonymous';
+  };
+
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -298,6 +399,26 @@ export default function AnalyticsPage() {
           
           {visitorDetail && (
             <div className="space-y-6">
+              {/* User Identity (if logged in) */}
+              {visitorDetail.session.userId && (
+                <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg">
+                  <UserCheck className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-sm">
+                      {getUserDisplayName(
+                        (visitorDetail.session as any).userFirstName,
+                        (visitorDetail.session as any).userLastName,
+                        (visitorDetail.session as any).userEmail
+                      )}
+                    </p>
+                    {(visitorDetail.session as any).userEmail && (
+                      <p className="text-xs text-muted-foreground">{(visitorDetail.session as any).userEmail}</p>
+                    )}
+                  </div>
+                  <Badge variant="outline" className="ml-auto">Logged-in User</Badge>
+                </div>
+              )}
+
               {/* Session Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -478,24 +599,53 @@ export default function AnalyticsPage() {
               <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <>
-              <div className="text-4xl font-bold">
-                {realtime?.activeVisitors || 0}
-              </div>
-              <p className="text-muted-foreground mt-1">Active visitors right now</p>
-            </>
-          )}
-          
-          {realtime && realtime.activePages.length > 0 && (
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Currently viewing:</p>
-              <div className="space-y-1">
-                {realtime.activePages.slice(0, 3).map((page, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground truncate">{page.path}</span>
-                    <span className="font-medium">{page.count}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="text-4xl font-bold">
+                  {realtime?.activeVisitors || 0}
+                </div>
+                <p className="text-muted-foreground mt-1">Active visitors right now</p>
+                {realtime && realtime.activePages.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-2">Currently viewing:</p>
+                    <div className="space-y-1">
+                      {realtime.activePages.slice(0, 3).map((page, index) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground truncate">{page.path}</span>
+                          <span className="font-medium">{page.count}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <UserCheck className="h-5 w-5 text-green-500" />
+                  <span className="font-semibold">Active Logged-in Users ({activeUsers?.length || 0})</span>
+                </div>
+                {activeUsers && activeUsers.length > 0 ? (
+                  <div className="space-y-2">
+                    {activeUsers.slice(0, 5).map((user, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm p-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 animate-pulse" />
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{getUserDisplayName(user.userFirstName, user.userLastName, user.userEmail)}</p>
+                            {user.userEmail && (
+                              <p className="text-xs text-muted-foreground truncate">{user.userEmail}</p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground truncate ml-2 max-w-[120px]" title={user.currentPage || ''}>
+                          {user.currentPage || '/'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No logged-in users active right now</p>
+                )}
               </div>
             </div>
           )}
@@ -848,7 +998,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  🤖 Automatic cleanup runs daily at 3:00 AM
+                   Automatic cleanup runs daily at 3:00 AM
                 </p>
               </div>
             </div>
@@ -860,77 +1010,254 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* Recent Visitors Table */}
+      {/* Recent Visitors — Grouped by Identity */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Recent Visitors
+            <Badge variant="secondary" className="ml-auto">
+              {groupedVisitors?.length || 0} identities
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {visitors && visitors.length > 0 ? (
+          {groupedLoading && !groupedVisitors ? (
+            <div className="flex items-center gap-2 py-4">
+              <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Loading visitors...</span>
+            </div>
+          ) : groupedVisitors && groupedVisitors.length > 0 ? (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Time</TableHead>
+                    <TableHead className="w-8" />
+                    <TableHead>Identity</TableHead>
+                    <TableHead>Sessions</TableHead>
+                    <TableHead>Page Views</TableHead>
+                    <TableHead>First Seen</TableHead>
+                    <TableHead>Last Seen</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Device</TableHead>
                     <TableHead>Browser</TableHead>
-                    <TableHead>Pages</TableHead>
-                    <TableHead>Landing Page</TableHead>
-                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visitors.map((visitor) => (
-                    <TableRow key={visitor.sessionId}>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {format(new Date(visitor.firstVisit), 'MMM dd, HH:mm')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(visitor.lastActivity), 'HH:mm')}
-                          </p>
-                        </div>
-                      </TableCell>
+                  {groupedVisitors.map((group) => (
+                    <>
+                      {/* Identity row */}
+                      <TableRow
+                        key={group.identityKey}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => toggleGroup(group.identityKey)}
+                      >
+                        <TableCell className="pr-0">
+                          {expandedGroups.has(group.identityKey)
+                            ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        </TableCell>
+                        <TableCell>
+                          {group.isLoggedIn ? (
+                            <div className="flex items-center gap-2">
+                              <UserCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate max-w-[160px]">
+                                  {getUserDisplayName(group.userFirstName, group.userLastName, group.userEmail)}
+                                </p>
+                                {group.userEmail && (
+                                  <p className="text-xs text-muted-foreground truncate max-w-[160px]">{group.userEmail}</p>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <UserX className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium">Guest</p>
+                                {group.ipAddress && (
+                                  <p className="text-xs text-muted-foreground font-mono">{group.ipAddress}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={group.totalSessions > 1 ? 'default' : 'secondary'}>
+                            {group.totalSessions}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{group.totalPageViews}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{format(new Date(group.firstSeen), 'MMM dd, HH:mm')}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{format(new Date(group.lastSeen), 'MMM dd, HH:mm')}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Globe className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">
+                              {group.city && group.country
+                                ? `${group.city}, ${group.country}`
+                                : group.country || 'Unknown'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {getDeviceIcon(group.deviceType || '')}
+                            <span className="text-sm capitalize">{group.deviceType || 'Unknown'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{group.browser || 'Unknown'}</span>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Expanded sessions sub-rows */}
+                      {expandedGroups.has(group.identityKey) && group.sessions.map((session, si) => (
+                        <TableRow key={session.sessionId} className="bg-muted/30 hover:bg-muted/50">
+                          <TableCell />
+                          <TableCell className="pl-8">
+                            <div className="flex items-center gap-2">
+                              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                                {si + 1}
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground font-mono truncate max-w-[120px]">
+                                  {session.sessionId.slice(0, 12)}…
+                                </p>
+                                {session.landingPage && (
+                                  <p className="text-xs text-muted-foreground truncate max-w-[120px]">{session.landingPage}</p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell />
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">{session.pageViewCount} views</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs">{format(new Date(session.firstVisit), 'MMM dd, HH:mm')}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs">{format(new Date(session.lastActivity), 'HH:mm')}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs">
+                              {session.city && session.country
+                                ? `${session.city}, ${session.country}`
+                                : session.country || '—'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {getDeviceIcon(session.deviceType || '')}
+                              <span className="text-xs capitalize">{session.deviceType || '—'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs">{session.browser || '—'}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 text-xs ml-auto"
+                                onClick={(e) => { e.stopPropagation(); setSelectedVisitor(session.sessionId); }}
+                              >
+                                Detail
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              {groupedLoading ? 'Loading visitors...' : 'No visitors yet'}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Logged-in User Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-green-500" />
+            Logged-in User Activity
+            <Badge variant="secondary" className="ml-auto">
+              {userAnalytics?.length || 0} users
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {userAnalyticsLoading && !userAnalytics ? (
+            <div className="flex items-center gap-2 py-4">
+              <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Loading user data...</span>
+            </div>
+          ) : userAnalytics && userAnalytics.length > 0 ? (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Sessions</TableHead>
+                    <TableHead>Page Views</TableHead>
+                    <TableHead>First Seen</TableHead>
+                    <TableHead>Last Seen</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Device</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userAnalytics.map((user, index) => (
+                    <TableRow key={user.userId || index}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">
-                            {visitor.city && visitor.country
-                              ? `${visitor.city}, ${visitor.country}`
-                              : visitor.country || 'Unknown'}
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary uppercase">
+                            {user.userFirstName?.[0] || user.userEmail?.[0] || '?'}
+                          </div>
+                          <span className="font-medium text-sm">
+                            {getUserDisplayName(user.userFirstName, user.userLastName, user.userEmail)}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getDeviceIcon(visitor.deviceType || '')}
-                          <span className="text-sm capitalize">{visitor.deviceType || 'Unknown'}</span>
+                        <span className="text-sm text-muted-foreground">{user.userEmail || '—'}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{Number(user.totalSessions)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{Number(user.totalPageViews) || 0}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{format(new Date(user.firstSeen), 'MMM dd, HH:mm')}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{format(new Date(user.lastSeen), 'MMM dd, HH:mm')}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Globe className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">{user.country || 'Unknown'}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">{visitor.browser || 'Unknown'}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{visitor.pageViewCount}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm truncate max-w-[200px] block">
-                          {visitor.landingPage || '/'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedVisitor(visitor.sessionId)}
-                        >
-                          View Details
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {getDeviceIcon(user.deviceType || '')}
+                          <span className="text-sm capitalize">{user.deviceType || 'Unknown'}</span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -939,7 +1266,7 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <div className="text-center text-muted-foreground py-8">
-              {visitorsLoading ? "Loading visitors..." : "No visitors yet"}
+              No logged-in user activity in this date range
             </div>
           )}
         </CardContent>
