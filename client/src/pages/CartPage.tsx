@@ -526,9 +526,9 @@ export default function CartPage() {
       <SEO
         title="Shopping Cart"
         description="Review your cart and proceed to checkout. Buy books online at A2Z BOOKSHOP with secure payment and fast shipping."
-        keywords="shopping cart, book checkout, buy books, online bookstore"
         url="https://a2zbookshop.com/cart"
         type="website"
+        noindex
       />
       <div className="container mx-auto px-4">
         <Breadcrumb items={[{ label: "Cart" }]} />

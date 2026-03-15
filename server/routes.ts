@@ -4,6 +4,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import bcrypt from "bcrypt";
+import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
@@ -42,6 +44,7 @@ import {
   insertBannerSchemaDrizzle
 } from "@shared/schema";
 import { z } from "zod";
+import { is } from "drizzle-orm";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -193,6 +196,23 @@ async function sendRefundConfirmationEmail(data: {
     return false;
   }
 }
+
+// Rate limiters for sensitive auth endpoints
+const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many attempts, please try again later" },
+});
+
+const adminLoginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many admin login attempts, please try again later" },
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Test Cloudinary connection on startup
@@ -352,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-      const limit = req.query.limit ? parseInt(req.query.limit) : 200;
+      const limit = req.query.limit ? (parseInt(req.query.limit as string) || 200) : 200;
 
       const grouped = await getGroupedVisitors(startDate, endDate, limit);
       res.json(grouped);
@@ -392,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-      const limit = req.query.limit ? parseInt(req.query.limit) : 100;
+      const limit = req.query.limit ? (parseInt(req.query.limit as string) || 100) : 100;
 
       const visitors = await getVisitorsList(startDate, endDate, limit);
       res.json(visitors);
@@ -460,6 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lastName: user.lastName,
             profileImageUrl: user.profileImageUrl,
             role: user.role,
+            isEmailVerified: user.isEmailVerified,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
           };
@@ -669,14 +690,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Password change is not available for this account type" });
       }
 
-      // Verify current password (SHA-256 as used in registration)
-      const currentHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
-      if (currentHash !== currentUser.passwordHash) {
+      // Verify current password
+      const currentPasswordValid = currentUser.passwordHash.startsWith('$2')
+        ? await bcrypt.compare(currentPassword, currentUser.passwordHash)
+        : crypto.createHash('sha256').update(currentPassword).digest('hex') === currentUser.passwordHash;
+      if (!currentPasswordValid) {
         return res.status(400).json({ message: "Current password is incorrect" });
       }
 
-      // Hash new password
-      const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+      // Hash new password with bcrypt
+      const newHash = await bcrypt.hash(newPassword, 12);
 
       await storage.upsertUser({
         id: userId,
@@ -695,6 +718,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error changing password:", error);
       res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // Send OTP to logged-in user's email for inline password reset
+  app.post('/api/auth/send-password-otp', async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      if (!userId || !isCustomerAuth) return res.status(401).json({ message: "Unauthorized" });
+
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser?.email) return res.status(400).json({ message: "No email address on your account" });
+      if (!currentUser.passwordHash) return res.status(400).json({ message: "Password reset is not available for this account type" });
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      await storage.upsertUser({
+        id: currentUser.id,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        email: currentUser.email,
+        phone: currentUser.phone,
+        profileImageUrl: currentUser.profileImageUrl,
+        role: currentUser.role,
+        passwordHash: currentUser.passwordHash,
+        authProvider: currentUser.authProvider,
+        isEmailVerified: currentUser.isEmailVerified,
+        resetToken: otp,
+        resetTokenExpiry: expiry,
+      });
+
+      await sendEmail({
+        to: currentUser.email,
+        from: '"A2Z BOOKSHOP — No Reply" <support@a2zbookshop.com>',
+        subject: '[A2Z BOOKSHOP] Your Password Reset Code',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+            <h2 style="color:#1e1b4b;margin:0 0 8px 0;">Password Reset Code</h2>
+            <p style="color:#6b7280;margin:0 0 24px 0;">Use the code below to reset your A2Z Bookshop password. It expires in <strong>10 minutes</strong>.</p>
+            <div style="background:#f5f3ff;border:2px dashed #7c3aed;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px 0;">
+              <span style="font-size:40px;font-weight:700;letter-spacing:12px;color:#7c3aed;">${otp}</span>
+            </div>
+            <p style="color:#9ca3af;font-size:13px;margin:0;">If you didn't request this, you can safely ignore this email. Your password won't be changed.</p>
+          </div>
+        `,
+        text: `Your A2Z Bookshop password reset code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, ignore this email.`,
+      });
+
+      const maskedEmail = currentUser.email.replace(/^(.{2}).*(@.*)$/, '$1***$2');
+      res.json({ success: true, maskedEmail });
+    } catch (error) {
+      console.error("Error sending password OTP:", error);
+      res.status(500).json({ message: "Failed to send verification code" });
+    }
+  });
+
+  // Verify OTP and reset password (for logged-in users)
+  app.post('/api/auth/verify-otp-reset', async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      if (!userId || !isCustomerAuth) return res.status(401).json({ message: "Unauthorized" });
+
+      const { otp, newPassword, confirmPassword } = req.body;
+      if (!otp || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "New password must be at least 6 characters" });
+      }
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+      }
+
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser?.passwordHash) {
+        return res.status(400).json({ message: "Password reset is not available for this account type" });
+      }
+      if (!currentUser.resetToken || !currentUser.resetTokenExpiry) {
+        return res.status(400).json({ message: "No verification code found. Please request a new code." });
+      }
+      if (new Date() > new Date(currentUser.resetTokenExpiry)) {
+        return res.status(400).json({ message: "Verification code has expired. Please request a new one." });
+      }
+      if (currentUser.resetToken !== otp.trim()) {
+        return res.status(400).json({ message: "Invalid verification code" });
+      }
+
+      const newHash = await bcrypt.hash(newPassword, 12);
+
+      await storage.upsertUser({
+        id: currentUser.id,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        email: currentUser.email,
+        phone: currentUser.phone,
+        profileImageUrl: currentUser.profileImageUrl,
+        role: currentUser.role,
+        passwordHash: newHash,
+        authProvider: currentUser.authProvider,
+        isEmailVerified: currentUser.isEmailVerified,
+        resetToken: null,
+        resetTokenExpiry: null,
+      });
+
+      res.json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error verifying OTP reset:", error);
+      res.status(500).json({ message: "Failed to reset password" });
     }
   });
 
@@ -1269,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Password reset routes
   const { requestPasswordReset, resetPassword } = await import('./passwordReset');
-  app.post('/api/forgot-password', requestPasswordReset);
+  app.post('/api/forgot-password', authRateLimit, requestPasswordReset);
   app.post('/api/reset-password', resetPassword);
 
   // Payment routes - conditionally loaded based on environment variables
@@ -1673,7 +1806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customer authentication routes
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", authRateLimit, async (req, res) => {
     try {
       const { firstName, lastName, email, phone, password } = req.body;
 
@@ -1700,8 +1833,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Hash password
-      const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+      // Hash password with bcrypt (cost factor 12)
+      const passwordHash = await bcrypt.hash(password, 12);
 
       // Create user
       const user = await storage.createEmailUser({
@@ -1745,7 +1878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authRateLimit, async (req, res) => {
     try {
       const { email, phone, password } = req.body;
 
@@ -1765,10 +1898,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Verify password
-      const inputPasswordHash = crypto.createHash('sha256').update(password).digest('hex');
-      if (user.passwordHash !== inputPasswordHash) {
+      if (!user.passwordHash) {
         return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Verify password with bcrypt (supports both bcrypt and legacy SHA-256 hashes)
+      const isPasswordValid = user.passwordHash.startsWith('$2')
+        ? await bcrypt.compare(password, user.passwordHash)
+        : crypto.createHash('sha256').update(password).digest('hex') === user.passwordHash;
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      // Upgrade legacy SHA-256 hash to bcrypt on successful login
+      if (!user.passwordHash.startsWith('$2')) {
+        const upgraded = await bcrypt.hash(password, 12);
+        await storage.upsertUser({ ...user, passwordHash: upgraded });
       }
 
       // Get guest cart items before login
@@ -1834,7 +1978,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin authentication routes
-  app.post("/api/admin/login", async (req, res) => {
+  app.post("/api/admin/login", adminLoginRateLimit, async (req, res) => {
     try {
       const { username, password } = req.body;
 
@@ -1847,11 +1991,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Simple password hash check (SHA256)
-      const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+      // Verify password with bcrypt (supports both bcrypt and legacy SHA-256 hashes)
+      const isAdminPasswordValid = admin.passwordHash.startsWith('$2')
+        ? await bcrypt.compare(password, admin.passwordHash)
+        : crypto.createHash('sha256').update(password).digest('hex') === admin.passwordHash;
 
-      if (admin.passwordHash !== passwordHash) {
+      if (!isAdminPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
+      }
+      // Upgrade legacy SHA-256 hash to bcrypt on successful login
+      if (!admin.passwordHash.startsWith('$2')) {
+        const upgradedHash = await bcrypt.hash(password, 12);
+        await storage.updateAdminPassword(admin.id, upgradedHash);
       }
 
       // Update last login
@@ -1914,14 +2065,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify current password
-      const currentPasswordHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
+      const currentAdminPasswordValid = admin.passwordHash.startsWith('$2')
+        ? await bcrypt.compare(currentPassword, admin.passwordHash)
+        : crypto.createHash('sha256').update(currentPassword).digest('hex') === admin.passwordHash;
 
-      if (admin.passwordHash !== currentPasswordHash) {
+      if (!currentAdminPasswordValid) {
         return res.status(401).json({ message: "Current password is incorrect" });
       }
 
-      // Update password
-      const newPasswordHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+      // Update password with bcrypt
+      const newPasswordHash = await bcrypt.hash(newPassword, 12);
       await storage.updateAdminPassword(adminId, newPasswordHash);
 
       res.json({ success: true, message: "Password updated successfully" });
@@ -3346,101 +3499,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Gift cart management routes
-  // app.post("/api/cart/gift", async (req: any, res) => {
-  //   try {
-  //     const { giftId, name, type, imageUrl, price, quantity, giftCategoryId } = req.body;
-
-  //     console.log("Gift cart request received:", {
-  //       giftId, name, type, giftCategoryId,
-  //       hasGiftId: !!giftId,
-  //       hasGiftCategoryId: !!giftCategoryId
-  //     });
-
-  //     // Check for authenticated user first
-  //     const sessionUserId = (req.session as any).userId;
-  //     const isCustomerAuth = (req.session as any).isCustomerAuth;
-  //     let userId = null;
-
-  //     if (sessionUserId && isCustomerAuth) {
-  //       userId = sessionUserId;
-  //     } else if (req.isAuthenticated && req.isAuthenticated()) {
-  //       userId = req.user.claims.sub;
-  //     }
-
-  //     // Check if user has any books in cart before allowing gift
-  //     let hasBooks = false;
-  //     if (userId) {
-  //       const cartItems = await storage.getCartItems(userId);
-  //       hasBooks = hasNonGiftBooks(cartItems);
-  //     } else {
-  //       const guestCart = (req.session as any).guestCart || [];
-  //       hasBooks = hasNonGiftBooks(guestCart);
-  //     }
-
-  //     if (!hasBooks) {
-  //       return res.status(400).json({ message: "You must have at least one book in your cart to select a gift" });
-  //     }
-
-  //     let giftItem;
-
-  //     // Handle gift category selection
-  //     if (giftCategoryId) {
-  //       console.log("Processing gift category selection:", giftCategoryId);
-
-  //       // Debug: Check if method exists
-  //       console.log("Storage methods available:", Object.getOwnPropertyNames(storage));
-  //       console.log("getGiftCategoryById exists:", typeof storage.getGiftCategoryById);
-
-  //       // Get the gift category details
-  //       const giftCategory = await storage.getGiftCategoryById(giftCategoryId);
-  //       if (!giftCategory) {
-  //         return res.status(404).json({ message: "Gift category not found" });
-  //       }
-
-  //       giftItem = {
-  //         giftId: giftCategory.id,
-  //         name: giftCategory.name,
-  //         type: giftCategory.type,
-  //         imageUrl: giftCategory.imageUrl,
-  //         price: 0, // Always free
-  //         quantity: 1, // Always 1
-  //         isGift: true
-  //       };
-  //     } else {
-  //       // Handle individual gift item selection
-  //       giftItem = {
-  //         giftId,
-  //         name,
-  //         type,
-  //         imageUrl,
-  //         price: 0, // Always free
-  //         quantity: 1, // Always 1
-  //         isGift: true
-  //       };
-  //     }
-
-  //     console.log("Gift item created:", giftItem);
-
-  //     if (userId) {
-  //       // For authenticated users, store in database session or custom field
-  //       // For now, use session storage
-  //       (req.session as any).giftItem = giftItem;
-  //     } else {
-  //       // For guest users, store in session
-  //       (req.session as any).giftItem = giftItem;
-  //     }
-
-  //     res.json({ message: "Gift added to cart", gift: giftItem });
-  //   } catch (error) {
-  //     console.error("Error adding gift to cart:", error);
-  //     res.status(500).json({ message: "Failed to add gift to cart" });
-  //   }
-  // });
-
-
-
-
   app.post("/api/cart/gift", async (req: any, res) => {
     try {
       const { giftId, giftCategoryId, quantity, engrave, engravingMessage } = req.body;
@@ -3487,35 +3545,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to add gift to cart" });
     }
   });
-
-  // app.delete("/api/cart/gift", async (req: any, res) => {
-  //   try {
-  //     // Check for authenticated user first
-  //     const sessionUserId = (req.session as any).userId;
-  //     const isCustomerAuth = (req.session as any).isCustomerAuth;
-  //     let userId = null;
-
-  //     if (sessionUserId && isCustomerAuth) {
-  //       userId = sessionUserId;
-  //     } else if (req.isAuthenticated && req.isAuthenticated()) {
-  //       userId = req.user.claims.sub;
-  //     }
-
-  //     if (userId) {
-  //       // Remove gift from authenticated user's session
-  //       (req.session as any).giftItem = null;
-  //     } else {
-  //       // Remove gift from guest session
-  //       (req.session as any).giftItem = null;
-  //     }
-
-  //     res.json({ message: "Gift removed from cart" });
-  //   } catch (error) {
-  //     console.error("Error removing gift from cart:", error);
-  //     res.status(500).json({ message: "Failed to remove gift from cart" });
-  //   }
-  // });
-
 
   app.delete("/api/removeGift", async (req: any, res) => {
     try {

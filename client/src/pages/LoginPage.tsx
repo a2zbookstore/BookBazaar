@@ -196,9 +196,9 @@ export default function LoginPage() {
       <SEO
         title="Login"
         description="Sign in to your A2Z BOOKSHOP account. Access your orders, wishlist, and personalized recommendations."
-        keywords="login, sign in, customer account, user login"
         url="https://a2zbookshop.com/login"
         type="website"
+        noindex
       />
       <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md z-50 overflow-y-auto">
         <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6">

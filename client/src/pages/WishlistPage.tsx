@@ -102,9 +102,9 @@ export default function WishlistPage() {
       <SEO
         title="My Wishlist"
         description="Save your favorite books to your wishlist. Keep track of books you want to buy later at A2Z BOOKSHOP."
-        keywords="book wishlist, saved books, favorite books, book list"
         url="https://a2zbookshop.com/wishlist"
         type="website"
+        noindex
       />
       <div className="container-custom py-8">
         <Breadcrumb items={[{ label: "Wishlist" }]} />

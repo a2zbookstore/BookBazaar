@@ -350,9 +350,9 @@ export default function TrackOrderPage() {
       <SEO
         title="Track Your Orders"
         description="Track your book orders from A2Z BOOKSHOP. Check shipping status, delivery updates, and tracking information."
-        keywords="track order, order status, shipping tracking, delivery status"
         url="https://a2zbookshop.com/track-order"
         type="website"
+        noindex
       />
       <div className="container-custom">
         <Breadcrumb items={[{ label: "Track Orders" }]} className="mb-6" />

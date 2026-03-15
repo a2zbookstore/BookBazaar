@@ -130,9 +130,9 @@ export default function MyOrdersPage() {
         <SEO
           title="My Orders"
           description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
-          keywords="my orders, order tracking, order history, purchase history"
           url="https://a2zbookshop.com/my-orders"
           type="website"
+          noindex
         />
         <div className="min-h-screen ">
           <div className="container-custom">
@@ -286,9 +286,9 @@ export default function MyOrdersPage() {
       <SEO
         title="My Orders"
         description="View and track your book orders at A2Z BOOKSHOP. Check order status, tracking information, and order history."
-        keywords="my orders, order tracking, order history, purchase history"
         url="https://a2zbookshop.com/my-orders"
         type="website"
+        noindex
       />
       <div className="min-h-screen ">
         <div className="container-custom">

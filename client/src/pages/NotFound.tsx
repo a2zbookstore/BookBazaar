@@ -19,7 +19,7 @@ export default function NotFound() {
           </div>
 
           <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
+            Browse our catalog or use the search to find the book you're looking for.
           </p>
         </CardContent>
       </Card>

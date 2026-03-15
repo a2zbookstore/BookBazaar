@@ -153,9 +153,9 @@ export default function RegisterPage() {
       <SEO
         title="Create Account"
         description="Create your A2Z BOOKSHOP account. Join our community of book lovers and enjoy exclusive benefits, personalized recommendations, and more."
-        keywords="register, sign up, create account, new account"
         url="https://a2zbookshop.com/register"
         type="website"
+        noindex
       />
       <div className="fixed inset-0 bg-gradient-to-br from-primary-aqua/10 via-blue-50/50 to-purple-100/30 backdrop-blur-md z-50 overflow-y-auto">
         <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6">

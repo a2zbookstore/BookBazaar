@@ -209,9 +209,9 @@ export default function ReturnRequestPage() {
       <SEO
         title="Return & Refund Request - A2Z BOOKSHOP"
         description="Easily request a return and refund for your orders within 30 days of delivery at A2Z BOOKSHOP."
-        keywords="return request, refund request, book return, book refund"
         url="https://a2zbookshop.com/return-request"
         type="website"
+        noindex
       />
       <div className="container-custom">
         <Breadcrumb items={[{ label: "Return & Refund" }]} className="mb-6" />

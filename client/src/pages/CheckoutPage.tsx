@@ -867,9 +867,9 @@ export default function CheckoutPage() {
       <SEO
         title="Checkout"
         description="Complete your book purchase securely at A2Z BOOKSHOP. Multiple payment options including PayPal, credit cards, and Razorpay."
-        keywords="checkout, secure payment, buy books, online payment, book purchase"
         url="https://a2zbookshop.com/checkout"
         type="website"
+        noindex
       />
       <div className="container-custom mt-6">
         <h1 className="text-3xl font-bold text-base-black mb-8">Checkout</h1>

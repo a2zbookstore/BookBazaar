@@ -33,7 +33,7 @@ export default function ProfileMenu(user?: any) {
     useEffect(() => {
         setCustomerName(user && (user.user.firstName || user.user.lastName)
             ? `${user.user.firstName.charAt(0).toUpperCase()}${user.user.lastName.charAt(0).toUpperCase()}`
-            : "User"); 
+            : "User");
     }, [user]);
 
     return (
@@ -58,7 +58,11 @@ export default function ProfileMenu(user?: any) {
                                 bg-primary-aqua
                                 text-[15px] font-bold text-white"
                         >
-                            {customerName}
+                            {user.user.profileImageUrl ? (
+                                <img src={user.user.profileImageUrl} alt={customerName} className="w-full h-full object-cover" />
+                            ) : (
+                                customerName
+                            )}
                         </AvatarFallback>
                     </Avatar>
                 </button>

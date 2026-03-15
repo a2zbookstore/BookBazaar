@@ -37,7 +37,7 @@ export function getSession() {
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
-    resave: true,
+    resave: false,
     saveUninitialized: false,
     name: 'connect.sid',
     cookie: {

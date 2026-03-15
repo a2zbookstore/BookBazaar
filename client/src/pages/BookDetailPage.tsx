@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Star, ShoppingCart, Truck, Shield, RotateCcw, BadgeDollarSign, Minus, Plus, Clock, Pen } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
-import SEO, { generateBookStructuredData } from "@/components/SEO";
+import SEO, { generateBookStructuredData, generateBreadcrumbStructuredData } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -208,7 +208,15 @@ export default function BookDetailPage() {
         image={getImageSrc(book.imageUrl)}
         url={`https://a2zbookshop.com/book/${book.id}`}
         type="product"
-        structuredData={generateBookStructuredData(book)}
+        structuredData={[
+          generateBookStructuredData(book),
+          generateBreadcrumbStructuredData([
+            { name: "Home", url: "https://a2zbookshop.com" },
+            { name: "Catalog", url: "https://a2zbookshop.com/catalog" },
+            ...(book.category?.name ? [{ name: book.category.name, url: `https://a2zbookshop.com/catalog?categoryId=${book.category.id}` }] : []),
+            { name: book.title, url: `https://a2zbookshop.com/book/${book.id}` },
+          ]),
+        ]}
       />
       <div className="container-custom py-8">
         <Breadcrumb
