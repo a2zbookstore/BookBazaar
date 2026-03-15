@@ -8,7 +8,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
 import {
@@ -519,7 +519,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update profile for session-based (email/phone) customers
+  app.put('/api/auth/profile', async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
 
+      if (!userId || !isCustomerAuth) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { firstName, lastName, email, phone } = req.body;
+
+      // Validate inputs
+      if (!firstName || !lastName) {
+        return res.status(400).json({ message: "First name and last name are required" });
+      }
+
+      // Validate email format if provided
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // If email is changing, check it's not taken
+      if (email && email !== currentUser.email) {
+        const existing = await storage.getUserByEmail(email);
+        if (existing && existing.id !== userId) {
+          return res.status(409).json({ message: "Email already in use by another account" });
+        }
+      }
+
+      const updatedUser = await storage.upsertUser({
+        id: userId,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email ? email.trim() : currentUser.email,
+        phone: phone ? phone.trim() : currentUser.phone,
+        profileImageUrl: currentUser.profileImageUrl,
+        role: currentUser.role,
+        passwordHash: currentUser.passwordHash,
+        authProvider: currentUser.authProvider,
+        isEmailVerified: currentUser.isEmailVerified,
+      });
+
+      const safeUser = {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        profileImageUrl: updatedUser.profileImageUrl,
+        role: updatedUser.role,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
+      };
+
+      res.json({ success: true, user: safeUser });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Upload profile avatar for session-based customers
+  app.post('/api/auth/avatar', imageUpload.single('avatar'), async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+
+      // Also allow Replit auth
+      let resolvedUserId = userId;
+      if (!resolvedUserId && req.isAuthenticated && req.isAuthenticated()) {
+        resolvedUserId = req.user.claims.sub;
+      }
+
+      if (!resolvedUserId || (!isCustomerAuth && !(req.isAuthenticated && req.isAuthenticated()))) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      const currentUser = await storage.getUser(resolvedUserId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Upload to Cloudinary in avatar folder
+      const publicId = `user-${resolvedUserId}-avatar`;
+      const result = await CloudinaryService.uploadImage(
+        req.file.buffer,
+        'a2z-bookshop/avatars',
+        publicId
+      );
+
+      // Save new image URL to user record
+      await storage.upsertUser({
+        id: resolvedUserId,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        email: currentUser.email,
+        phone: currentUser.phone,
+        profileImageUrl: result.secure_url,
+        role: currentUser.role,
+        passwordHash: currentUser.passwordHash,
+        authProvider: currentUser.authProvider,
+        isEmailVerified: currentUser.isEmailVerified,
+      });
+
+      res.json({ success: true, profileImageUrl: result.secure_url });
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      res.status(500).json({ message: "Failed to upload avatar" });
+    }
+  });
+
+  // Change password for session-based (email) customers
+  app.post('/api/auth/change-password', async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+
+      if (!userId || !isCustomerAuth) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: "All password fields are required" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "New password must be at least 6 characters" });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "New passwords do not match" });
+      }
+
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser || !currentUser.passwordHash) {
+        return res.status(400).json({ message: "Password change is not available for this account type" });
+      }
+
+      // Verify current password (SHA-256 as used in registration)
+      const currentHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
+      if (currentHash !== currentUser.passwordHash) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+
+      await storage.upsertUser({
+        id: userId,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        email: currentUser.email,
+        phone: currentUser.phone,
+        profileImageUrl: currentUser.profileImageUrl,
+        role: currentUser.role,
+        passwordHash: newHash,
+        authProvider: currentUser.authProvider,
+        isEmailVerified: currentUser.isEmailVerified,
+      });
+
+      res.json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
 
   // Get individual order (accessible to admins, authenticated users, and guests with email)
   app.get('/api/orders/:id', async (req, res) => {
@@ -1460,6 +1637,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error confirming Stripe order:", error);
       res.status(500).json({ error: error.message || "Failed to confirm order" });
+    }
+  });
+
+  // Send payment failed notification email
+  app.post("/api/stripe/payment-failed-email", async (req, res) => {
+    try {
+      const { customerEmail, customerName, amount, currency, paymentMethod, errorMessage } = req.body;
+
+      if (!customerEmail || !amount || !paymentMethod) {
+        return res.status(400).json({ error: "customerEmail, amount, and paymentMethod are required" });
+      }
+
+      // Basic email validation to prevent abuse
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerEmail)) {
+        return res.status(400).json({ error: "Invalid email address" });
+      }
+
+      await sendPaymentFailedEmail({
+        customerEmail,
+        customerName: customerName || 'Customer',
+        amount: String(amount),
+        currency: currency || 'USD',
+        paymentMethod,
+        errorMessage,
+        retryUrl: 'https://a2zbookshop.com/checkout',
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error sending payment failed email:", error);
+      res.status(500).json({ error: "Failed to send email" });
     }
   });
 

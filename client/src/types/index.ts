@@ -86,10 +86,13 @@ export interface Address {
 export interface User {
   id: string;
   email?: string;
+  phone?: string;
   firstName?: string;
   lastName?: string;
   profileImageUrl?: string;
   role?: string;
+  isEmailVerified?: boolean;
+  authProvider?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -587,6 +587,8 @@ export default function CheckoutPage() {
       // Invalidate pending orders cache for admin dashboard
       queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      // Invalidate customer-facing order pages so they show the new order
+      queryClient.invalidateQueries({ queryKey: ["/api/my-orders"] });
       toast({
         title: "Order Placed Successfully!",
         description: `Your order #${data.orderId} has been confirmed.`,
@@ -710,6 +712,8 @@ export default function CheckoutPage() {
               // Invalidate pending orders cache for admin dashboard
               queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
               queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+              // Invalidate customer-facing order pages so they show the new order
+              queryClient.invalidateQueries({ queryKey: ["/api/my-orders"] });
               toast({
                 title: "Payment Successful!",
                 description: `Your order #${verifyData.orderId} has been placed successfully.`,
@@ -795,6 +799,18 @@ export default function CheckoutPage() {
           description: errorMessage,
           variant: "destructive",
         });
+
+        // Send payment failed email to customer
+        if (customerEmail) {
+          apiRequest("POST", "/api/stripe/payment-failed-email", {
+            customerEmail,
+            customerName,
+            amount: String(total),
+            currency: "USD",
+            paymentMethod: "International Card (Razorpay)",
+            errorMessage: response.error?.description || response.error?.reason || "Payment could not be processed",
+          }).catch(() => { /* Non-critical */ });
+        }
       });
 
       modalOpened = true;
@@ -1142,6 +1158,10 @@ export default function CheckoutPage() {
                           clearCart();
                           queryClient.invalidateQueries({
                             queryKey: ["/api/orders"],
+                          });
+                          // Invalidate customer-facing order pages so they show the new order
+                          queryClient.invalidateQueries({
+                            queryKey: ["/api/my-orders"],
                           });
                           setLocation(
                             `/orders/${orderId}?email=${encodeURIComponent(

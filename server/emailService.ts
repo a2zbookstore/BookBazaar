@@ -1349,6 +1349,210 @@ export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<boolean>
   }
 };
 
+// Send payment failed email to customer
+export const sendPaymentFailedEmail = async (data: {
+  customerEmail: string;
+  customerName: string;
+  amount: string;
+  currency?: string;
+  paymentMethod: string;
+  errorMessage?: string;
+  retryUrl?: string;
+}): Promise<boolean> => {
+  try {
+    const transporter = createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not available - skipping payment failed email');
+      return false;
+    }
+
+    const { customerEmail, customerName, amount, currency = 'USD', paymentMethod, errorMessage, retryUrl = 'https://a2zbookshop.com/checkout' } = data;
+    const displayName = customerName || 'Valued Customer';
+    const displayAmount = `${currency} ${parseFloat(amount).toFixed(2)}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Payment Failed – A2Z BOOKSHOP</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; padding: 0; background: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+          img { border: 0; display: block; max-width: 100%; }
+          .email-wrapper { width: 100%; background: #f1f5f9; padding: 24px 0; }
+          .email-card {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 6px 32px rgba(0,0,0,0.10);
+          }
+          .email-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #7f1d1d 100%);
+            padding: 48px 32px 36px;
+            text-align: center;
+          }
+          .email-header .brand {
+            margin: 0 0 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #94a3b8;
+          }
+          .email-header h1 { margin: 0 0 12px; font-size: 30px; font-weight: 800; color: #ffffff; line-height: 1.2; }
+          .email-header .tagline { margin: 0; font-size: 15px; color: #fca5a5; line-height: 1.6; }
+          .gradient-bar { height: 4px; background: linear-gradient(90deg, #dc2626, #f97316, #facc15); }
+          .email-body { padding: 36px 32px 28px; }
+          .email-body .greeting { margin: 0 0 16px; font-size: 17px; font-weight: 600; color: #1e293b; }
+          .email-body .intro { margin: 0 0 24px; font-size: 15px; color: #475569; line-height: 1.75; }
+          .info-box {
+            background: #fff7f7;
+            border: 1px solid #fecaca;
+            border-radius: 14px;
+            padding: 24px;
+            margin: 0 0 28px;
+          }
+          .info-box .info-title {
+            margin: 0 0 16px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #dc2626;
+          }
+          .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+          .info-row:last-child { margin-bottom: 0; }
+          .info-key { color: #64748b; }
+          .info-val { color: #0f172a; font-weight: 600; text-align: right; max-width: 65%; }
+          .help-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin: 0 0 28px;
+          }
+          .help-box .help-title { margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #166534; }
+          .help-box ul { margin: 0; padding: 0 0 0 18px; }
+          .help-box li { font-size: 13px; color: #374151; line-height: 1.7; }
+          .cta-wrapper { text-align: center; margin: 0 0 8px; }
+          .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 16px 44px;
+            border-radius: 50px;
+            letter-spacing: 0.4px;
+          }
+          .divider { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+          .footer-note { padding: 0 0 28px; text-align: center; }
+          .footer-note p { margin: 0 0 8px; font-size: 13px; color: #94a3b8; line-height: 1.6; }
+          .footer-note a { color: #0891b2; text-decoration: none; }
+          .bottom-bar { background: #1e293b; padding: 22px 32px; text-align: center; }
+          .bottom-bar .brand-name { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: #e2e8f0; letter-spacing: 1px; }
+          .bottom-bar .copy { margin: 0; font-size: 12px; color: #64748b; }
+          @media only screen and (max-width: 640px) {
+            .email-card { border-radius: 0 !important; }
+            .email-header { padding: 36px 20px 28px !important; }
+            .email-body { padding: 28px 20px 20px !important; }
+            .email-header h1 { font-size: 24px !important; }
+            .info-row { flex-direction: column; gap: 2px; }
+            .info-val { text-align: left !important; max-width: 100% !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-wrapper">
+          <div class="email-card">
+            <div class="email-header">
+              <p class="brand">A2Z BOOKSHOP</p>
+              <h1>Payment Unsuccessful</h1>
+              <p class="tagline">We were unable to process your payment</p>
+            </div>
+            <div class="gradient-bar"></div>
+            <div class="email-body">
+              <p class="greeting">Hi ${displayName},</p>
+              <p class="intro">
+                Unfortunately, your recent payment attempt at <strong>A2Z BOOKSHOP</strong> could not be completed.
+                Your cart is saved and your books are still waiting for you — simply retry when you're ready.
+              </p>
+
+              <div class="info-box">
+                <p class="info-title">Payment Details</p>
+                <div class="info-row">
+                  <span class="info-key">Amount</span>
+                  <span class="info-val">${displayAmount}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-key">Payment Method</span>
+                  <span class="info-val">${paymentMethod}</span>
+                </div>
+                ${errorMessage ? `
+                <div class="info-row">
+                  <span class="info-key">Reason</span>
+                  <span class="info-val">${errorMessage}</span>
+                </div>` : ''}
+              </div>
+
+              <div class="help-box">
+                <p class="help-title">Common reasons &amp; fixes</p>
+                <ul>
+                  <li>Insufficient funds — please check your balance</li>
+                  <li>Card details were entered incorrectly — try again carefully</li>
+                  <li>Card declined by issuing bank — contact your bank</li>
+                  <li>3D Secure authentication was not completed</li>
+                  <li>Try a different card or payment method</li>
+                </ul>
+              </div>
+
+              <div class="cta-wrapper">
+                <a href="${retryUrl}" class="cta-button">Retry Payment</a>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="footer-note">
+                <p>Need help? Email us at <a href="mailto:support@a2zbookshop.com">support@a2zbookshop.com</a></p>
+                <p>No charge was made to your account for this failed attempt.</p>
+              </div>
+            </div>
+            <div class="bottom-bar">
+              <p class="brand-name">A2Z BOOKSHOP</p>
+              <p class="copy">&copy; ${new Date().getFullYear()} A2Z BOOKSHOP. All rights reserved.</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const mailOptions = {
+      from: {
+        name: 'A2Z BOOKSHOP Support',
+        address: getZohoEmail('support')
+      },
+      to: customerEmail,
+      subject: 'Payment Unsuccessful – A2Z BOOKSHOP',
+      html,
+      text: `Hi ${displayName}, your payment of ${displayAmount} via ${paymentMethod} could not be processed. ${errorMessage ? `Reason: ${errorMessage}.` : ''} Please retry at ${retryUrl} or contact support@a2zbookshop.com for help.`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Payment failed email sent to ${customerEmail}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending payment failed email:', error);
+    return false;
+  }
+};
+
 // Generic email sending function
 export const sendEmail = async (params: {
   to: string;

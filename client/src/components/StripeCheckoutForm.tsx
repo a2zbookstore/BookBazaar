@@ -92,6 +92,19 @@ function CheckoutForm({
           description: error.message || "An error occurred during payment",
           variant: "destructive",
         });
+        // Notify the customer by email about the failed payment
+        try {
+          await apiRequest("POST", "/api/stripe/payment-failed-email", {
+            customerEmail,
+            customerName,
+            amount: String(amount),
+            currency: "USD",
+            paymentMethod: "Stripe (Credit/Debit Card)",
+            errorMessage: error.message || "Payment could not be processed",
+          });
+        } catch {
+          // Non-critical: do not block UI if email fails
+        }
         setIsProcessing(false);
         return;
       }
