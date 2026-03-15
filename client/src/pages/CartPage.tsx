@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
-import { useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 // Image helper function
@@ -74,7 +74,6 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 export default function CartPage() {
   const { cartItems, updateCartItem, removeFromCart, isLoading, cartCount } = useGlobalContext();
   const queryClient = useQueryClient();
-  const isFetchingCart = useIsFetching({ queryKey: ["/api/cart"] }) > 0;
   const [optimisticCartItems, setOptimisticCartItems] = useState<CartItem[] | null>(null);
   const [optimisticallyRemovedId, setOptimisticallyRemovedId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -379,117 +378,11 @@ export default function CartPage() {
     }
   }, [cartItems, optimisticCartItems, optimisticallyRemovedId]);
 
-  if (isLoading || isFetchingCart) {
+  if (isLoading) {
     return (
       <>
-        <div className="container mx-auto px-4">
-          {/* Breadcrumb skeleton */}
-          <div className="animate-pulse py-3 mb-2">
-            <div className="h-3 bg-gray-200 rounded w-32"></div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
-            {/* ── LEFT: Cart Items ── */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* Title */}
-              <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
-
-              {/* Item cards — mirror Card p-2 sm:p-4 rounded-xl */}
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="p-2 sm:p-4 rounded-xl border border-gray-100 bg-white shadow-sm">
-                  <div className="flex items-center gap-4">
-                    {/* Book cover: w-16 h-20 sm:w-20 sm:h-24 */}
-                    <div className="w-16 h-20 sm:w-20 sm:h-24 bg-gray-200 rounded flex-shrink-0"></div>
-
-                    <div className="flex-1 min-w-0">
-                      {/* Title row + trash button */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1 space-y-2">
-                          <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-                          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                        </div>
-                        {/* Ghost trash button */}
-                        <div className="h-8 w-8 bg-gray-200 rounded flex-shrink-0"></div>
-                      </div>
-
-                      {/* Quantity controls + price row */}
-                      <div className="flex justify-between items-center mt-2">
-                        {/* Qty: [−] [input] [+] */}
-                        <div className="flex items-center gap-1">
-                          <div className="h-7 w-7 sm:h-8 sm:w-8 bg-gray-200 rounded"></div>
-                          <div className="h-7 w-12 bg-gray-200 rounded"></div>
-                          <div className="h-7 w-7 sm:h-8 sm:w-8 bg-gray-200 rounded"></div>
-                        </div>
-                        {/* Price */}
-                        <div className="h-7 bg-gray-200 rounded w-20"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ── RIGHT: Order Summary ── */}
-            <div className="lg:col-span-1">
-              {/* sticky top-4 rounded-xl shadow-lg border-2 */}
-              <div className="rounded-xl border-2 border-gray-100 shadow-lg overflow-hidden">
-                {/* Gradient header */}
-                <div className="h-14 bg-gray-200 rounded-t-xl"></div>
-
-                <div className="space-y-4 px-6 pb-6 pt-4">
-                  {/* Subtotal row */}
-                  <div className="flex justify-between">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
-                  </div>
-                  {/* Shipping row */}
-                  <div className="flex justify-between">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
-                  </div>
-                  {/* Tax row */}
-                  <div className="flex justify-between">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
-                  </div>
-
-                  {/* Separator */}
-                  <div className="h-px bg-gray-200 my-4"></div>
-
-                  {/* Total row — p-3 bg-gray-50 rounded-lg */}
-                  <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
-                    <div className="h-6 bg-gray-200 rounded w-16"></div>
-                    <div className="h-8 bg-gray-200 rounded w-24"></div>
-                  </div>
-
-                  {/* Delivery date card */}
-                  <div className="p-4 bg-gray-100 rounded-lg border-2 border-gray-200 mt-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full flex-shrink-0 mt-1"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-32"></div>
-                        <div className="h-3 bg-gray-200 rounded w-48"></div>
-                        <div className="h-3 bg-gray-200 rounded w-24"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Checkout button */}
-                  <div className="h-12 bg-gray-200 rounded-full mt-2"></div>
-
-                  {/* Trust badges */}
-                  <div className="pt-4 border-t space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="h-4 w-4 bg-gray-200 rounded-full flex-shrink-0"></div>
-                        <div className="h-3 bg-gray-200 rounded w-32"></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Loading cart...</div>
         </div>
       </>
     );

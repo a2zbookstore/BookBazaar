@@ -8,23 +8,19 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
-import { generateSitemap, generateRobotsTxt } from "./seo";
-import {
-  getOrCreateSession,
-  trackPageView,
+import { generateSitemap, generateRobotsTxt } from "./seo"; 
+import { 
+  getOrCreateSession, 
+  trackPageView, 
   trackEvent,
-  updateSessionHeartbeat,
   getAnalyticsOverview,
   getRealTimeVisitors,
   getDailyStats,
   getEventAnalytics,
   getVisitorsList,
-  getVisitorDetail,
-  getUserAnalytics,
-  getActiveLoggedInUsers,
-  getGroupedVisitors
+  getVisitorDetail
 } from "./analyticsService";
 import { cleanupOldAnalytics, getAnalyticsDbStats } from "./analyticsCleanup";
 import * as XLSX from "xlsx";
@@ -206,11 +202,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.error('Cloudinary test failed:', error);
   });
 
-  // Test Zoho Mail connection on startup
-  testZohoConnection().catch((error) => {
-    console.error('Zoho Mail startup check failed:', error);
-  });
-
   // SEO Routes - Should be before auth middleware
   app.get('/sitemap.xml', async (req, res) => {
     try {
@@ -235,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analytics tracking middleware - tracks only actual page routes
   app.use(async (req: any, res, next) => {
     // Only track actual user-facing pages, not development/build files or assets
-    const shouldTrack =
+    const shouldTrack = 
       !req.path.startsWith('/api') &&
       !req.path.startsWith('/uploads') &&
       !req.path.startsWith('/attached_assets') &&
@@ -246,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       !req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|map|json|txt|xml)$/) &&
       req.method === 'GET' && // Only track GET requests (page views)
       req.headers.accept?.includes('text/html'); // Only track HTML page requests
-
+    
     if (shouldTrack) {
       try {
         const sessionId = await getOrCreateSession(req);
@@ -264,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-
+      
       const overview = await getAnalyticsOverview(startDate, endDate);
       res.json(overview);
     } catch (error) {
@@ -287,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-
+      
       const daily = await getDailyStats(startDate, endDate);
       res.json(daily);
     } catch (error) {
@@ -300,35 +291,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-
+      
       const events = await getEventAnalytics(startDate, endDate);
       res.json(events);
     } catch (error) {
       console.error('Error fetching event analytics:', error);
       res.status(500).json({ message: 'Failed to fetch event analytics' });
-    }
-  });
-
-  // Heartbeat: SPA clients call this periodically to keep session alive & backfill userId
-  app.post('/api/analytics/heartbeat', async (req: any, res) => {
-    try {
-      const { currentPage } = req.body || {};
-      await updateSessionHeartbeat(req, currentPage);
-      res.json({ ok: true });
-    } catch (error) {
-      // Silently ignore — never block the client
-      res.json({ ok: false });
-    }
-  });
-
-  // Heartbeat: SPA clients call this periodically to keep session alive & backfill userId
-  app.post('/api/analytics/heartbeat', async (req: any, res) => {
-    try {
-      const { currentPage } = req.body || {};
-      await updateSessionHeartbeat(req, currentPage);
-      res.json({ ok: true });
-    } catch (error) {
-      res.json({ ok: false });
     }
   });
 
@@ -338,52 +306,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { eventType, eventCategory, eventData, pagePath } = req.body;
       const sessionId = await getOrCreateSession(req);
       const userId = req.user?.id || (req.session as any).userId;
-
+      
       await trackEvent(sessionId, eventType, eventCategory, eventData, userId, pagePath);
       res.json({ success: true });
     } catch (error) {
       console.error('Error tracking event:', error);
       res.status(500).json({ message: 'Failed to track event' });
-    }
-  });
-
-  // Get visitors grouped by identity (user or guest IP)
-  app.get('/api/analytics/grouped-visitors', requireAdminAuth, async (req: any, res) => {
-    try {
-      const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-      const limit = req.query.limit ? parseInt(req.query.limit) : 200;
-
-      const grouped = await getGroupedVisitors(startDate, endDate, limit);
-      res.json(grouped);
-    } catch (error) {
-      console.error('Error fetching grouped visitors:', error);
-      res.status(500).json({ message: 'Failed to fetch grouped visitors' });
-    }
-  });
-
-  // Get analytics grouped by logged-in user
-  app.get('/api/analytics/users', requireAdminAuth, async (req: any, res) => {
-    try {
-      const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-
-      const userStats = await getUserAnalytics(startDate, endDate);
-      res.json(userStats);
-    } catch (error) {
-      console.error('Error fetching user analytics:', error);
-      res.status(500).json({ message: 'Failed to fetch user analytics' });
-    }
-  });
-
-  // Get active logged-in users (last 5 minutes)
-  app.get('/api/analytics/active-users', requireAdminAuth, async (req: any, res) => {
-    try {
-      const activeUsers = await getActiveLoggedInUsers();
-      res.json(activeUsers);
-    } catch (error) {
-      console.error('Error fetching active users:', error);
-      res.status(500).json({ message: 'Failed to fetch active users' });
     }
   });
 
@@ -393,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
       const limit = req.query.limit ? parseInt(req.query.limit) : 100;
-
+      
       const visitors = await getVisitorsList(startDate, endDate, limit);
       res.json(visitors);
     } catch (error) {
@@ -407,11 +335,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.params;
       const visitorDetail = await getVisitorDetail(sessionId);
-
+      
       if (!visitorDetail) {
         return res.status(404).json({ message: 'Visitor not found' });
       }
-
+      
       res.json(visitorDetail);
     } catch (error) {
       console.error('Error fetching visitor detail:', error);
@@ -691,353 +619,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // Generate professional HTML invoice optimised for print-to-PDF
-      const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      const addr = order.shippingAddress as any;
-      const shippingLines = addr
-        ? [
-          addr.street || addr.address,
-          [addr.city, addr.state || addr.region].filter(Boolean).join(', '),
-          [addr.postalCode || addr.zip, addr.country].filter(Boolean).join(' ')
-        ].filter(Boolean)
-        : [];
-
+      // Generate HTML invoice that can be printed as PDF
       const invoiceHtml = `<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice #${order.id} — A2Z Bookshop</title>
+  <title>Invoice #${order.id}</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 13px;
-      color: #1a1a2e;
-      background: #f4f6f9;
-      padding: 32px 24px;
-    }
-
-    .page {
-      max-width: 760px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-    }
-
-    /* ── TOP BANNER ── */
-    .banner {
-      background: linear-gradient(135deg, #0d2137 0%, #1b4f72 100%);
-      padding: 32px 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      color: #fff;
-    }
-    .brand-name {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
-    .brand-name .two { color: #e74c3c; }
-    .brand-name .az { color: #ffffff; }
-    .brand-tagline { font-size: 11px; color: #a9cce3; margin-top: 4px; letter-spacing: 0.5px; }
-    .brand-contact { font-size: 11px; color: #a9cce3; margin-top: 10px; line-height: 1.8; }
-
-    .invoice-meta { text-align: right; }
-    .invoice-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #5dade2;
-      margin-bottom: 6px;
-    }
-    .invoice-number { font-size: 22px; font-weight: 800; }
-    .invoice-date { font-size: 12px; color: #a9cce3; margin-top: 6px; }
-    .status-pill {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 4px 14px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      background: #27ae60;
-      color: #fff;
-    }
-
-    /* ── BODY ── */
-    .body { padding: 36px 40px; }
-
-    /* ── INFO GRID ── */
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-    .info-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 18px 20px;
-    }
-    .info-box-title {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: #7f8c8d;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-    }
-    .info-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 12.5px; }
-    .info-key { color: #7f8c8d; min-width: 56px; flex-shrink: 0; }
-    .info-val { color: #1a1a2e; font-weight: 500; word-break: break-word; }
-
-    /* ── ITEMS TABLE ── */
-    .section-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: #7f8c8d;
-      margin-bottom: 12px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 28px;
-    }
-    thead tr {
-      background: #0d2137;
-      color: #fff;
-    }
-    thead th {
-      padding: 11px 14px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    thead th:last-child { text-align: right; }
-    tbody tr { border-bottom: 1px solid #eef2f7; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:nth-child(even) { background: #f8fafc; }
-    tbody td {
-      padding: 12px 14px;
-      font-size: 13px;
-      color: #2c3e50;
-      vertical-align: middle;
-    }
-    tbody td:last-child { text-align: right; font-weight: 600; }
-    .book-title { font-weight: 600; color: #1a1a2e; }
-    .book-author { font-size: 11px; color: #7f8c8d; margin-top: 2px; }
-    .qty-unit { font-size: 11px; color: #7f8c8d; }
-
-    /* ── TOTALS ── */
-    .totals-wrap {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 32px;
-    }
-    .totals-box {
-      width: 280px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .totals-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 18px;
-      font-size: 13px;
-      color: #4a5568;
-      border-bottom: 1px solid #eef2f7;
-    }
-    .totals-row:last-child { border-bottom: none; }
-    .totals-row.grand {
-      background: #0d2137;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 14px 18px;
-    }
-
-    /* ── TRACKING ── */
-    .tracking-box {
-      background: #eaf4fb;
-      border: 1px solid #aed6f1;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-bottom: 32px;
-    }
-    .tracking-box .info-box-title { border-color: #aed6f1; color: #1f618d; }
-
-    /* ── FOOTER ── */
-    .footer {
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-      padding: 22px 40px;
-      text-align: center;
-    }
-    .footer-thank { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
-    .footer-sub { font-size: 11px; color: #95a5a6; line-height: 1.8; }
-
-    /* ── PRINT BUTTON (hidden on print) ── */
-    .print-bar {
-      text-align: center;
-      padding: 16px;
-      background: #fff;
-    }
-    .print-btn {
-      background: #0d2137;
-      color: #fff;
-      border: none;
-      padding: 11px 28px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      letter-spacing: 0.3px;
-    }
-    .print-btn:hover { background: #1b4f72; }
-
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+    .order-info { margin-bottom: 20px; }
+    .items { border-collapse: collapse; width: 100%; margin: 20px 0; }
+    .items th, .items td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .items th { background-color: #f2f2f2; font-weight: bold; }
+    .total-section { margin-top: 20px; text-align: right; }
+    .total-line { margin: 5px 0; }
+    .final-total { font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; }
+    .customer-info { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
     @media print {
-      body { background: #fff; padding: 0; }
-      .page { box-shadow: none; border-radius: 0; }
-      .print-bar { display: none; }
-      /* Force background colours & images to print */
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
+      body { margin: 0; }
+      .header { page-break-after: avoid; }
     }
   </style>
 </head>
 <body>
-
-<div class="print-bar">
-  <button class="print-btn" onclick="window.print()">Save as PDF / Print</button>
-</div>
-
-<div class="page">
-
-  <!-- Banner -->
-  <div class="banner">
-    <div>
-      <div class="brand-name"><span class="az">A</span><span class="two">2</span><span class="az">Z</span> <span class="az">BOOKSHOP</span></div>
-      <div class="brand-tagline">Your Global Book Destination</div>
-      <div class="brand-contact">
-        a2zbookshop.com<br>
-        support@a2zbookshop.com
-      </div>
-    </div>
-    <div class="invoice-meta">
-      <div class="invoice-label">Invoice</div>
-      <div class="invoice-number">#${order.id}</div>
-      <div class="invoice-date">Issued: ${invoiceDate}</div>
-      <div class="status-pill">${order.status.toUpperCase()}</div>
-    </div>
+  <div class="header">
+    <h1>A<span style="color: red;">2</span>Z BOOKSHOP</h1>
+    <h2>Invoice #${order.id}</h2>
+    <p>Date: ${new Date(order.createdAt).toLocaleDateString()}</p>
   </div>
-
-  <!-- Body -->
-  <div class="body">
-
-    <!-- Bill To / Ship To -->
-    <div class="info-grid">
-      <div class="info-box">
-        <div class="info-box-title">Bill To</div>
-        <div class="info-row"><span class="info-key">Name</span><span class="info-val">${order.customerName || '—'}</span></div>
-        <div class="info-row"><span class="info-key">Email</span><span class="info-val">${order.customerEmail || '—'}</span></div>
-        ${order.customerPhone ? `<div class="info-row"><span class="info-key">Phone</span><span class="info-val">${order.customerPhone}</span></div>` : ''}
-        ${order.paymentMethod ? `<div class="info-row"><span class="info-key">Payment</span><span class="info-val">${order.paymentMethod}</span></div>` : ''}
-        ${order.paymentId ? `<div class="info-row"><span class="info-key">Ref</span><span class="info-val" style="font-size:11px;font-family:monospace">${order.paymentId}</span></div>` : ''}
-      </div>
-      <div class="info-box">
-        <div class="info-box-title">Ship To</div>
-        ${shippingLines.length > 0
-          ? shippingLines.map(line => `<div class="info-row"><span class="info-val">${line}</span></div>`).join('')
-          : '<div class="info-row"><span class="info-val" style="color:#95a5a6">No shipping address on record</span></div>'
-        }
-      </div>
-    </div>
-
-    <!-- Items -->
-    <div class="section-title">Items Ordered</div>
-    <table>
-      <thead>
+  
+  <div class="customer-info">
+    <h3>Customer Information</h3>
+    <p><strong>Name:</strong> ${order.customerName}</p>
+    <p><strong>Email:</strong> ${order.customerEmail}</p>
+    ${order.customerPhone ? `<p><strong>Phone:</strong> ${order.customerPhone}</p>` : ''}
+    <p><strong>Order Status:</strong> ${order.status}</p>
+    ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${order.trackingNumber}</p>` : ''}
+    ${order.paymentMethod ? `<p><strong>Payment Method:</strong> ${order.paymentMethod}</p>` : ''}
+    ${order.paymentId ? `<p><strong>Payment ID:</strong> ${order.paymentId}</p>` : ''}
+  </div>
+  
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Book Title</th>
+        <th>Author</th>
+        <th>Quantity</th>
+        <th>Unit Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${order.items?.map(item => `
         <tr>
-          <th style="width:50%">Book</th>
-          <th>Author</th>
-          <th style="text-align:center">Qty</th>
-          <th style="text-align:right">Unit Price</th>
-          <th>Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${order.items?.map(item => `
-        <tr>
-          <td>
-            <div class="book-title">${item.book?.title || 'Unknown Book'}</div>
-          </td>
-          <td><span class="book-author">${item.book?.author || '—'}</span></td>
-          <td style="text-align:center">${item.quantity}</td>
-          <td style="text-align:right">$${parseFloat(item.price).toFixed(2)}</td>
+          <td>${item.book?.title || 'Unknown Book'}</td>
+          <td>${item.book?.author || 'Unknown Author'}</td>
+          <td>${item.quantity}</td>
+          <td>$${parseFloat(item.price).toFixed(2)}</td>
           <td>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
         </tr>
-        `).join('') || '<tr><td colspan="5" style="text-align:center;color:#95a5a6;padding:20px">No items found</td></tr>'}
-      </tbody>
-    </table>
-
-    <!-- Totals -->
-    <div class="totals-wrap">
-      <div class="totals-box">
-        <div class="totals-row"><span>Subtotal</span><span>$${parseFloat(order.subtotal || '0').toFixed(2)}</span></div>
-        <div class="totals-row"><span>Shipping</span><span>$${parseFloat(order.shipping || '0').toFixed(2)}</span></div>
-        <div class="totals-row"><span>Tax</span><span>$${parseFloat(order.tax || '0').toFixed(2)}</span></div>
-        <div class="totals-row grand"><span>Total</span><span>$${parseFloat(order.total).toFixed(2)}</span></div>
-      </div>
-    </div>
-
-    <!-- Tracking -->
-    ${order.trackingNumber ? `
-    <div class="tracking-box">
-      <div class="info-box-title">Tracking Information</div>
-      <div class="info-row"><span class="info-key">Number</span><span class="info-val" style="font-family:monospace">${order.trackingNumber}</span></div>
-      ${order.shippingCarrier ? `<div class="info-row"><span class="info-key">Carrier</span><span class="info-val">${order.shippingCarrier}</span></div>` : ''}
-      ${order.notes ? `<div class="info-row"><span class="info-key">Notes</span><span class="info-val">${order.notes}</span></div>` : ''}
-    </div>
-    ` : ''}
-
-  </div><!-- /body -->
-
-  <!-- Footer -->
-  <div class="footer">
-    <div class="footer-thank">Thank you for your order!</div>
-    <div class="footer-sub">
-      A2Z Bookshop &nbsp;|&nbsp; a2zbookshop.com &nbsp;|&nbsp; support@a2zbookshop.com<br>
-      This document was generated on ${invoiceDate}. Please keep it for your records.
-    </div>
+      `).join('') || '<tr><td colspan="5">No items found</td></tr>'}
+    </tbody>
+  </table>
+  
+  <div class="total-section">
+    <div class="total-line">Subtotal: $${parseFloat(order.subtotal || '0').toFixed(2)}</div>
+    <div class="total-line">Shipping: $${parseFloat(order.shipping || '0').toFixed(2)}</div>
+    <div class="total-line">Tax: $${parseFloat(order.tax || '0').toFixed(2)}</div>
+    <div class="final-total">Total: $${parseFloat(order.total).toFixed(2)}</div>
   </div>
-
-</div><!-- /page -->
-
-<script>
-  // Auto-open print dialog so user can Save as PDF
-  window.addEventListener('load', function () {
-    setTimeout(function () { window.print(); }, 600);
-  });
-</script>
-
+  
+  <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+    <p>Thank you for your business!</p>
+    <p>A2Z BOOKSHOP - Your Global Book Destination</p>
+    <p>Visit us at: https://a2zbookshop.com</p>
+  </div>
 </body>
 </html>`;
 
@@ -2472,7 +2129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get IP address for audit logging
       const ipAddress = req.ip || req.connection?.remoteAddress;
-
+      
       await storage.deleteCategory(id, undefined, ipAddress);
       res.json({ success: true, message: "Category deleted successfully" });
     } catch (error) {
@@ -2661,7 +2318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get IP address for audit logging
       const ipAddress = req.ip || req.connection?.remoteAddress;
-
+      
       await storage.deleteBook(id, adminId, ipAddress);
       res.json({ message: "Book deleted successfully" });
     } catch (error) {
@@ -3443,21 +3100,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Send status update email to customer
-        try {
-          await sendStatusUpdateEmail({
-            order: updatedOrder,
-            customerEmail: updatedOrder.customerEmail,
-            customerName: updatedOrder.customerName,
-            newStatus: status,
-            trackingNumber,
-            shippingCarrier,
-            notes
-          });
-          console.log(`Status update email sent for order #${id}, new status: ${status}`);
-        } catch (emailError) {
-          console.error("Failed to send status update email:", emailError);
-          // Don't fail the status update if email fails
-        }
+        // try {
+        //   // Email already imported at top of file
+        //   await sendStatusUpdateEmail({
+        //     order: updatedOrder,
+        //     customerEmail: updatedOrder.customerEmail,
+        //     customerName: updatedOrder.customerName,
+        //     newStatus: status,
+        //     trackingNumber,
+        //     shippingCarrier,
+        //     notes
+        //   });
+        //   console.log(`Status update email sent for order #${id}, new status: ${status}`);
+        // } catch (emailError) {
+        //   console.error("Failed to send status update email:", emailError);
+        //   // Don't fail the status update if email fails
+        // }
 
         return res.json(updatedOrder);
       }
@@ -4855,7 +4513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const adminId = (req.session as any)?.adminId;
       const ipAddress = req.ip || req.connection?.remoteAddress;
-
+      
       await storage.deleteCoupon(id, adminId, ipAddress);
       res.json({ message: "Coupon deleted successfully" });
     } catch (error) {
@@ -5215,21 +4873,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Audit Log Routes (Admin only)
-
+  
   // Get recent deletions
   app.get("/api/admin/audit/deletions", requireAdminAuth, async (req: any, res) => {
     try {
       const days = parseInt(req.query.days || "30");
       const { getRecentDeletions } = await import("./auditLog");
       const deletions = await getRecentDeletions(days);
-
+      
       // Parse JSON data for easier consumption
       const parsedDeletions = deletions.map((log: any) => ({
         ...log,
         oldData: log.oldData ? JSON.parse(log.oldData) : null,
         newData: log.newData ? JSON.parse(log.newData) : null,
       }));
-
+      
       res.json(parsedDeletions);
     } catch (error) {
       console.error("Error fetching deletion audit logs:", error);
@@ -5243,14 +4901,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tableName, recordId } = req.params;
       const { getAuditLogsForRecord } = await import("./auditLog");
       const logs = await getAuditLogsForRecord(tableName, recordId);
-
+      
       // Parse JSON data
       const parsedLogs = logs.map((log: any) => ({
         ...log,
         oldData: log.oldData ? JSON.parse(log.oldData) : null,
         newData: log.newData ? JSON.parse(log.newData) : null,
       }));
-
+      
       res.json(parsedLogs);
     } catch (error) {
       console.error("Error fetching audit logs for record:", error);
@@ -5262,7 +4920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/audit/search", requireAdminAuth, async (req: any, res) => {
     try {
       const filters: any = {};
-
+      
       if (req.query.tableName) filters.tableName = req.query.tableName;
       if (req.query.action) filters.action = req.query.action;
       if (req.query.adminId) filters.adminId = parseInt(req.query.adminId);
@@ -5270,17 +4928,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.query.startDate) filters.startDate = new Date(req.query.startDate);
       if (req.query.endDate) filters.endDate = new Date(req.query.endDate);
       if (req.query.limit) filters.limit = parseInt(req.query.limit);
-
+      
       const { searchAuditLogs } = await import("./auditLog");
       const logs = await searchAuditLogs(filters);
-
+      
       // Parse JSON data
       const parsedLogs = logs.map((log: any) => ({
         ...log,
         oldData: log.oldData ? JSON.parse(log.oldData) : null,
         newData: log.newData ? JSON.parse(log.newData) : null,
       }));
-
+      
       res.json(parsedLogs);
     } catch (error) {
       console.error("Error searching audit logs:", error);
@@ -5293,17 +4951,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminId = parseInt(req.params.adminId);
       const limit = parseInt(req.query.limit || "100");
-
+      
       const { getAuditLogsByAdmin } = await import("./auditLog");
       const logs = await getAuditLogsByAdmin(adminId, limit);
-
+      
       // Parse JSON data
       const parsedLogs = logs.map((log: any) => ({
         ...log,
         oldData: log.oldData ? JSON.parse(log.oldData) : null,
         newData: log.newData ? JSON.parse(log.newData) : null,
       }));
-
+      
       res.json(parsedLogs);
     } catch (error) {
       console.error("Error fetching admin audit logs:", error);
@@ -5335,8 +4993,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Error restoring from audit log:", error);
-      res.status(500).json({
-        message: error instanceof Error ? error.message : "Failed to restore record"
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to restore record" 
       });
     }
   });

@@ -10,8 +10,6 @@ export interface Book {
   price: string;
   stock: number;
   imageUrl?: string;
-  imageUrl2?: string;
-  imageUrl3?: string;
   publishedYear?: number;
   publisher?: string;
   pages?: number;

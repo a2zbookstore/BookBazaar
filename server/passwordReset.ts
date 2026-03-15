@@ -17,7 +17,7 @@ export async function requestPasswordReset(req: Request, res: Response) {
 
     // Find user by email
     const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
+    
     if (user.length === 0) {
       // Don't reveal if email exists or not for security
       return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
@@ -29,16 +29,16 @@ export async function requestPasswordReset(req: Request, res: Response) {
 
     // Save reset token to database
     await db.update(users)
-      .set({
+      .set({ 
         resetToken,
-        resetTokenExpiry
+        resetTokenExpiry 
       })
       .where(eq(users.id, user[0].id));
 
     // Create reset URL with production domain
     const resetUrl = `https://a2zbookshop.com/reset-password?token=${resetToken}`;
 
-    // Send password reset email using Zoho Mail
+    // Send password reset email using Brevo
     const emailSent = await sendPasswordResetEmail({
       to: email,
       name: `${user[0].firstName} ${user[0].lastName}`,
@@ -73,7 +73,7 @@ export async function resetPassword(req: Request, res: Response) {
 
     // Find user by reset token
     const user = await db.select().from(users).where(eq(users.resetToken, token)).limit(1);
-
+    
     if (user.length === 0) {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
@@ -88,7 +88,7 @@ export async function resetPassword(req: Request, res: Response) {
 
     // Update user password and clear reset token using correct field name
     await db.update(users)
-      .set({
+      .set({ 
         passwordHash: hashedPassword,  // Use passwordHash field like registration
         resetToken: null,
         resetTokenExpiry: null,
@@ -105,19 +105,19 @@ export async function resetPassword(req: Request, res: Response) {
   }
 }
 
-// Send password reset email using Zoho Mail
+// Send password reset email using working Brevo configuration
 async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl: string }): Promise<boolean> {
   try {
     console.log('Attempting to send password reset email to:', data.to);
-
-    // Create transporter using Zoho Mail SMTP - India datacenter
+    
+    // Create transporter using working Brevo credentials from existing email service
     const transporter = nodemailer.createTransport({
-      host: 'smtp.zoho.in',
-      port: 465,
-      secure: true,
+      host: 'smtp-relay.brevo.com',
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.ZOHO_EMAIL || 'info@a2zbookshop.com',
-        pass: (process.env.ZOHO_PASSWORD || '').replace(/\s/g, '')
+        user: '8ffc43003@smtp-brevo.com',
+        pass: 'AW6v3Nmy2CrYs8kV'
       },
       tls: {
         rejectUnauthorized: false
@@ -128,7 +128,7 @@ async function sendPasswordResetEmail(data: { to: string; name: string; resetUrl
     });
 
     const mailOptions = {
-      from: '"A2Z BOOKSHOP — No Reply" <support@a2zbookshop.com>',
+      from: '"A2Z BOOKSHOP Password Reset" <orders@a2zbookshop.com>',
       to: data.to,
       subject: '[A2Z BOOKSHOP] Reset Your Password',
       html: generatePasswordResetHTML({ name: data.name, resetUrl: data.resetUrl }),
@@ -145,10 +145,12 @@ If you didn't request this, please ignore this email.
 
 Best regards,
 A2Z BOOKSHOP Team
-Website: https://a2zbookshop.com
-
-(This is an automated email — please do not reply)`,
+Email: orders@a2zbookshop.com
+Website: https://a2zbookshop.com`,
       headers: {
+        'Reply-To': 'orders@a2zbookshop.com',
+        'Return-Path': 'orders@a2zbookshop.com',
+        'List-Unsubscribe': '<mailto:orders@a2zbookshop.com>',
         'X-Entity-ID': 'a2zbookshop-password-reset'
       }
     };
@@ -160,14 +162,14 @@ Website: https://a2zbookshop.com
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
     }
-
+    
     const result = await transporter.sendMail(mailOptions);
     console.log('Password reset email sent successfully. Message ID:', result.messageId);
     return true;
   } catch (error) {
     console.error('Failed to send password reset email:', error);
-    console.error('Error details:', error instanceof Error ? error.message : String(error));
-
+    console.error('Error details:', error.message);
+    
     // If email fails, still return true to not block the reset process
     // User experience should not be degraded due to email issues
     console.log('Continuing with password reset despite email failure');
@@ -177,158 +179,61 @@ Website: https://a2zbookshop.com
 
 // Generate password reset email HTML
 function generatePasswordResetHTML(data: { name: string; resetUrl: string }) {
-  const year = new Date().getFullYear();
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Reset Your Password — A2Z BOOKSHOP</title>
-  <!--[if mso]>
-  <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-  <![endif]-->
-</head>
-<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
-
-  <!-- Preheader (hidden preview text) -->
-  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
-    Reset your A2Z BOOKSHOP password — this link expires in 1 hour.
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-  </div>
-
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f4f6;">
-    <tr>
-      <td align="center" style="padding:40px 16px;">
-
-        <!-- Outer card -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:580px;">
-
-          <!-- ── HEADER / LOGO ── -->
-          <tr>
-            <td align="center" style="background-color:#dc2626;border-radius:12px 12px 0 0;padding:32px 24px 24px;">
-              <!-- Logo badge -->
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center">
-                    <div style="display:inline-block;background:#fff;border-radius:50%;width:72px;height:72px;line-height:72px;text-align:center;font-size:28px;font-weight:900;color:#dc2626;letter-spacing:-1px;vertical-align:middle;">
-                      <img src="https://a2zbookshop.com/favicon.jpeg" alt="A2Z" width="60" height="60" style="border-radius:50%;display:block;margin:6px auto;" onerror="this.style.display='none'">
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-top:12px;">
-                    <span style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:1px;text-transform:uppercase;">A2Z BOOKSHOP</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-top:4px;">
-                    <span style="font-size:12px;color:#fca5a5;letter-spacing:2px;text-transform:uppercase;">Your Trusted Book Store</span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- ── BODY ── -->
-          <tr>
-            <td style="background-color:#ffffff;padding:40px 40px 32px;">
-
-              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;text-align:center;">Password Reset Request</h1>
-              <p style="margin:0 0 28px;font-size:14px;color:#6b7280;text-align:center;">We received a request to reset the password for your account.</p>
-
-              <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
-                Hi <strong style="color:#111827;">${data.name}</strong>,
-              </p>
-              <p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.6;">
-                Someone (hopefully you!) requested a password reset for your <strong>A2Z BOOKSHOP</strong> account linked to this email address. Click the button below to choose a new password.
-              </p>
-
-              <!-- CTA Button -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center" style="padding-bottom:32px;">
-                    <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${data.resetUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="12%" stroke="f" fillcolor="#dc2626">
-                    <w:anchorlock/>
-                    <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:700;">Reset My Password</center>
-                    </v:roundrect>
-                    <![endif]-->
-                    <!--[if !mso]><!-->
-                    <a href="${data.resetUrl}"
-                       style="display:inline-block;background-color:#dc2626;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;letter-spacing:0.3px;mso-hide:all;">
-                      Reset My Password
-                    </a>
-                    <!--<![endif]-->
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Divider -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="border-top:1px solid #e5e7eb;padding-top:28px;"></td>
-                </tr>
-              </table>
-
-              <!-- Warning box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
-                <tr>
-                  <td style="padding:16px 20px;">
-                    <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;">⚠️ Important security notes</p>
-                    <ul style="margin:0;padding-left:20px;font-size:13px;color:#78350f;line-height:1.8;">
-                      <li>This link expires in <strong>1 hour</strong></li>
-                      <li>It can only be used <strong>once</strong></li>
-                      <li>If you didn't request this, you can safely ignore this email</li>
-                      <li>Never share this link with anyone</li>
-                    </ul>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Fallback URL -->
-              <p style="margin:24px 0 4px;font-size:13px;color:#6b7280;">Button not working? Copy and paste this link into your browser:</p>
-              <p style="margin:0;font-size:12px;color:#dc2626;word-break:break-all;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;">${data.resetUrl}</p>
-
-            </td>
-          </tr>
-
-          <!-- ── FOOTER ── -->
-          <tr>
-            <td style="background-color:#1f2937;border-radius:0 0 12px 12px;padding:28px 40px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center" style="padding-bottom:12px;">
-                    <span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:1px;">A2Z BOOKSHOP</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-bottom:16px;">
-                    <a href="https://a2zbookshop.com" style="color:#93c5fd;font-size:13px;text-decoration:none;">a2zbookshop.com</a>
-                    &nbsp;·&nbsp;
-                    <a href="mailto:support@a2zbookshop.com" style="color:#93c5fd;font-size:13px;text-decoration:none;">support@a2zbookshop.com</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center">
-                    <p style="margin:0;font-size:11px;color:#6b7280;line-height:1.6;">
-                      This is an automated email — please do not reply to this message.<br>
-                      © ${year} A2Z BOOKSHOP. All rights reserved.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Bottom spacing -->
-          <tr><td style="height:24px;"></td></tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-
-</body>
-</html>`;
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Password Reset - A2Z BOOKSHOP</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #dc2626; color: white; padding: 20px; text-align: center; }
+        .content { padding: 30px 20px; background-color: #f9f9f9; }
+        .button { display: inline-block; background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { background-color: #333; color: white; padding: 20px; text-align: center; font-size: 14px; }
+        .warning { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>A<span style="color: #dc2626; background-color: white; padding: 2px 6px; border-radius: 3px;">2</span>Z BOOKSHOP</h1>
+          <h2>Password Reset Request</h2>
+        </div>
+        
+        <div class="content">
+          <p>Hello ${data.name},</p>
+          
+          <p>You have requested to reset your password for your A2Z BOOKSHOP account. Click the button below to reset your password:</p>
+          
+          <div style="text-align: center;">
+            <a href="${data.resetUrl}" class="button">Reset Password</a>
+          </div>
+          
+          <div class="warning">
+            <strong>⚠️ Important:</strong>
+            <ul>
+              <li>This link will expire in 1 hour</li>
+              <li>If you didn't request this reset, please ignore this email</li>
+              <li>For security, never share this link with anyone</li>
+            </ul>
+          </div>
+          
+          <p>If the button doesn't work, copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; background-color: #e5e7eb; padding: 10px; border-radius: 5px;">${data.resetUrl}</p>
+          
+          <p>Best regards,<br>The A2Z BOOKSHOP Team</p>
+        </div>
+        
+        <div class="footer">
+          <p><strong>A2Z BOOKSHOP - Your Trusted Online Bookstore</strong></p>
+          <p>Website: <a href="https://a2zbookshop.com" style="color: #60a5fa;">https://a2zbookshop.com</a></p>
+          <p>Support: support@a2zbookshop.com | Store: a2zbookshopglobal@gmail.com</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
