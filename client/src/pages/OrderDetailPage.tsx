@@ -158,9 +158,9 @@ export default function OrderDetailPage() {
       <SEO
         title={`Order #${(order as any).id} - Order Details`}
         description="View your order details, track shipment, and download invoice from A2Z BOOKSHOP."
-        keywords="order details, order status, invoice, shipment tracking"
         url={`https://a2zbookshop.com/orders/${(order as any).id}`}
         type="website"
+        noindex
       />
       <div className="max-w-6xl mx-auto py-8 px-4">
 

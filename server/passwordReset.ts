@@ -83,8 +83,8 @@ export async function resetPassword(req: Request, res: Response) {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
 
-    // Hash password using same method as registration (SHA256)
-    const hashedPassword = crypto.createHash('sha256').update(newPassword).digest('hex');
+    // Hash password with bcrypt (cost factor 12)
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // Update user password and clear reset token using correct field name
     await db.update(users)

@@ -5,7 +5,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import BookCard from "@/components/BookCard";
 import FiltersSidebar from "@/components/FiltersSidebar";
 import SortFilterHeader from "@/components/SortFilterHeader";
-import { useSEO } from "@/hooks/useSEO";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Book, Category } from "@/types";
 import { ArrowLeft, ArrowRight, Filter } from "lucide-react";
@@ -188,14 +188,32 @@ export default function CatalogPage() {
     return `${baseKeywords}, fiction, non-fiction, bestsellers`;
   };
 
-  useSEO({
-    title: getPageTitle(),
-    description: getPageDescription(),
-    keywords: getPageKeywords()
-  });
+  const getCanonicalUrl = () => {
+    const base = 'https://a2zbookshop.com/catalog';
+    if (search) return `${base}?search=${encodeURIComponent(search)}`;
+    const featured = urlParams.get('featured');
+    const bestseller = urlParams.get('bestseller');
+    const trending = urlParams.get('trending');
+    const newArrival = urlParams.get('newArrival');
+    const boxSet = urlParams.get('boxSet');
+    if (featured === 'true') return `${base}?featured=true`;
+    if (bestseller === 'true') return `${base}?bestseller=true`;
+    if (trending === 'true') return `${base}?trending=true`;
+    if (newArrival === 'true') return `${base}?newArrival=true`;
+    if (boxSet === 'true') return `${base}?boxSet=true`;
+    if (selectedCategories.length > 0) return `${base}?categoryId=${selectedCategories[0]}`;
+    return base;
+  };
 
   return (
     <>
+      <SEO
+        title={getPageTitle()}
+        description={getPageDescription()}
+        keywords={getPageKeywords()}
+        url={getCanonicalUrl()}
+        type="website"
+      />
       <div className="container-custom">
         <Breadcrumb items={[{ label: "Catalog" }]} />
 

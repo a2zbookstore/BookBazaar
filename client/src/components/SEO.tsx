@@ -10,7 +10,8 @@ interface SEOProps {
   author?: string;
   publishedTime?: string;
   modifiedTime?: string;
-  structuredData?: object;
+  structuredData?: object | object[];
+  noindex?: boolean;
 }
 
 export default function SEO({
@@ -23,21 +24,29 @@ export default function SEO({
   author,
   publishedTime,
   modifiedTime,
-  structuredData
+  structuredData,
+  noindex = false,
 }: SEOProps) {
   const fullTitle = title.includes('A2Z BOOKSHOP') ? title : `${title} | A2Z BOOKSHOP`;
-  
+  const robotsContent = noindex
+    ? 'noindex, nofollow'
+    : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+
+  const structuredDataArray = structuredData
+    ? Array.isArray(structuredData) ? structuredData : [structuredData]
+    : [];
+
   return (
     <Helmet>
       {/* Primary Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
-      
+      {keywords && <meta name="keywords" content={keywords} />}
+
       {/* Canonical URL */}
-      <link rel="canonical" href={url} />
-      
+      {!noindex && <link rel="canonical" href={url} />}
+
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
       <meta property="og:url" content={url} />
@@ -45,43 +54,41 @@ export default function SEO({
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
       <meta property="og:site_name" content="A2Z BOOKSHOP" />
-      
+
       {author && <meta property="article:author" content={author} />}
       {publishedTime && <meta property="article:published_time" content={publishedTime} />}
       {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
-      
+
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />
       <meta property="twitter:url" content={url} />
       <meta property="twitter:title" content={fullTitle} />
       <meta property="twitter:description" content={description} />
       <meta property="twitter:image" content={image} />
-      
-      {/* Additional SEO Tags */}
-      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+      {/* Robots */}
+      <meta name="robots" content={robotsContent} />
       <meta name="language" content="English" />
-      <meta name="revisit-after" content="7 days" />
       <meta name="author" content="A2Z BOOKSHOP" />
-      
-      {/* Structured Data */}
-      {structuredData && (
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
+
+      {/* Structured Data — one <script> block per schema object */}
+      {structuredDataArray.map((schema, i) => (
+        <script key={i} type="application/ld+json">
+          {JSON.stringify(schema)}
         </script>
-      )}
+      ))}
     </Helmet>
   );
 }
 
-// Helper function to generate book structured data
+// Helper function to generate book structured data (Book schema for richer results)
 export function generateBookStructuredData(book: any) {
-  return {
+  const schema: any = {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": "Book",
     "name": book.title,
     "description": book.description || `${book.title} by ${book.author}`,
     "image": book.imageUrl,
-    "isbn": book.isbn,
     "author": {
       "@type": "Person",
       "name": book.author
@@ -92,14 +99,23 @@ export function generateBookStructuredData(book: any) {
       "priceCurrency": "INR",
       "availability": book.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "url": `https://a2zbookshop.com/book/${book.id}`,
-      "itemCondition": book.condition === 'New' ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition"
+      "itemCondition": book.condition === 'New' ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "A2Z BOOKSHOP"
+      }
     },
-    "aggregateRating": book.rating ? {
+  };
+  if (book.isbn) schema.isbn = book.isbn;
+  if (book.category?.name) schema.genre = book.category.name;
+  if (book.rating) {
+    schema.aggregateRating = {
       "@type": "AggregateRating",
       "ratingValue": book.rating,
-      "reviewCount": book.reviewCount || 1
-    } : undefined
-  };
+      "reviewCount": book.reviewCount || 1,
+    };
+  }
+  return schema;
 }
 
 // Helper for breadcrumb structured data
