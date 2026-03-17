@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 
-
 export interface BannerItem {
   id: string | number;
   image: string;
@@ -15,21 +14,19 @@ export interface BannerItem {
   buttonText?: string;
 }
 
-
 interface BannerCarouselProps {
   pageName: string;
   autoPlayInterval?: number;
   showIndicators?: boolean;
   showNavigation?: boolean;
-  height?: string; // Defaulting to responsive classes
+  height?: string;
   className?: string;
 }
-
 
 const BannerCarousel: React.FC<BannerCarouselProps> = ({
   pageName,
   autoPlayInterval = 5000,
-  showIndicators = true, 
+  showIndicators = true,
   showNavigation = true,
   height = "h-56 sm:h-72 md:h-96",
   className = "",
@@ -37,14 +34,11 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [hovering, setHovering] = useState(false);
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: true,
-      dragFree: false,
-      containScroll: "trimSnaps",
-    },
-    autoPlayInterval > 0 ? [Autoplay({ delay: autoPlayInterval })] : []
+    { loop: true, dragFree: false, containScroll: "trimSnaps" },
+    autoPlayInterval > 0 ? [Autoplay({ delay: autoPlayInterval, stopOnInteraction: false })] : []
   );
 
   const onSelect = useCallback(() => {
@@ -59,7 +53,6 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
     emblaApi.on("reInit", onSelect);
   }, [emblaApi, onSelect]);
 
-  // Fetch banners from API
   useEffect(() => {
     setIsLoading(true);
     fetch(`/api/bannersbyName?page_type=${encodeURIComponent(pageName)}`)
@@ -83,109 +76,134 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
       });
   }, [pageName]);
 
-  const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+  const scrollTo = useCallback((i: number) => emblaApi?.scrollTo(i), [emblaApi]);
 
-  const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
-
-  const scrollTo = useCallback(
-    (index: number) => {
-      if (emblaApi) emblaApi.scrollTo(index);
-    },
-    [emblaApi]
-  );
-
+  /* ── Skeleton ── */
   if (isLoading) {
     return (
-      <div className={`relative ${height} overflow-hidden rounded-lg shadow-md ${className}`}>
-        <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
-          <div className="text-gray-400 text-lg">Loading...</div>
-        </div>
+      <div className={`relative ${height} overflow-hidden rounded-2xl ${className}`}>
+        <div className="w-full h-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse" />
+        {/* shimmer sweep */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_1.6s_infinite] -skew-x-12" />
+        <style>{`@keyframes shimmer{0%{transform:translateX(-100%) skewX(-12deg)}100%{transform:translateX(200%) skewX(-12deg)}}`}</style>
       </div>
     );
   }
+
   if (banners.length === 0) return null;
 
   return (
-    <div className={`relative ${height} overflow-hidden rounded-lg shadow-md ${className}`}>
+    <div
+      className={`relative ${height} overflow-hidden rounded-2xl shadow-xl group ${className}`}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      {/* ── Slides ── */}
       <div className="embla h-full" ref={emblaRef}>
         <div className="embla__container flex h-full">
           {banners.map((banner, index) => (
             <div key={banner.id} className="embla__slide flex-[0_0_100%] relative h-full">
-              <div className="h-full w-full relative">
-                <img
-                  src={banner.image}
-                  alt={banner.alt || banner.title || "Banner"}
-                  className="w-full h-full object-cover object-center block"
-                  style={{ minHeight: '100%' }}
-                  loading={index === 0 ? "eager" : "lazy"}
-                />
-                
-                {(banner.title || banner.subtitle) && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4 md:p-8">
-                    <div className="max-w-[85%] md:max-w-2xl">
+              <img
+                src={banner.image}
+                alt={banner.alt || banner.title || "Banner"}
+                className="w-full h-full object-cover object-center block select-none"
+                loading={index === 0 ? "eager" : "lazy"}
+                draggable={false}
+              />
+
+              {/* Overlay — only when text/button present */}
+              {(banner.title || banner.subtitle || banner.buttonText) && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent">
+                  <div className="absolute bottom-0 left-0 right-0 p-5 md:p-10">
+                    <div className="max-w-xl">
                       {banner.title && (
-                        <h2 className="text-white text-xl md:text-5xl font-bold mb-1 md:mb-2 line-clamp-2">
+                        <h2 className="text-white text-xl sm:text-3xl md:text-5xl font-extrabold leading-tight mb-1 md:mb-2 drop-shadow-lg line-clamp-2">
                           {banner.title}
                         </h2>
                       )}
                       {banner.subtitle && (
-                        <p className="text-white/90 text-sm md:text-xl mb-3 md:mb-4 line-clamp-2">
+                        <p className="text-white/85 text-sm sm:text-base md:text-xl mb-3 md:mb-5 line-clamp-2 font-medium drop-shadow">
                           {banner.subtitle}
                         </p>
                       )}
                       {banner.buttonText && (
                         <Link href={banner.link || "#"}>
-                          <button className="bg-primary-aqua hover:bg-secondary-aqua text-white text-sm md:text-base px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold w-fit transition-colors">
+                          <button className="inline-flex items-center gap-1.5 bg-white text-slate-900 hover:bg-slate-100 active:scale-95 text-sm md:text-base px-5 py-2.5 md:px-7 md:py-3 rounded-full font-semibold shadow-lg transition-all duration-200">
                             {banner.buttonText}
+                            <ChevronRight className="h-4 w-4" />
                           </button>
                         </Link>
                       )}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Navigation arrows - Hidden/Smaller on mobile */}
+      {/* ── Navigation arrows ── */}
       {showNavigation && banners.length > 1 && (
         <>
           <button
             onClick={scrollPrev}
-            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/80 md:bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-all"
+            className={`absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-10
+              w-9 h-9 md:w-11 md:h-11 rounded-full
+              bg-white/20 backdrop-blur-md border border-white/30
+              flex items-center justify-center
+              text-white shadow-lg
+              hover:bg-white/35 active:scale-90
+              transition-all duration-200
+              ${hovering ? "opacity-100" : "opacity-0 md:opacity-0"}
+              group-hover:opacity-100`}
             aria-label="Previous banner"
           >
-            <ChevronLeft className="h-5 w-5 md:h-8 md:w-8 text-primary-aqua" />
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" strokeWidth={2.5} />
           </button>
+
           <button
             onClick={scrollNext}
-            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/80 md:bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-all"
+            className={`absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-10
+              w-9 h-9 md:w-11 md:h-11 rounded-full
+              bg-white/20 backdrop-blur-md border border-white/30
+              flex items-center justify-center
+              text-white shadow-lg
+              hover:bg-white/35 active:scale-90
+              transition-all duration-200
+              ${hovering ? "opacity-100" : "opacity-0 md:opacity-0"}
+              group-hover:opacity-100`}
             aria-label="Next banner"
           >
-            <ChevronRight className="h-5 w-5 md:h-8 md:w-8 text-primary-aqua" />
+            <ChevronRight className="h-5 w-5 md:h-6 md:w-6" strokeWidth={2.5} />
           </button>
         </>
       )}
 
-      {/* Indicator dots - Scaled for mobile */}
+      {/* ── Pill indicators ── */}
       {showIndicators && banners.length > 1 && (
-        <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2 z-10">
+        <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
           {banners.map((_, index) => (
             <button
               key={index}
               onClick={() => scrollTo(index)}
-              className={`h-1.5 md:h-2 rounded-full transition-all ${
-                index === selectedIndex ? "bg-white w-4 md:w-8" : "bg-white/50 w-1.5 md:w-2"
-              }`}
               aria-label={`Go to banner ${index + 1}`}
+              className={`rounded-full transition-all duration-300 ease-out
+                ${index === selectedIndex
+                  ? "bg-white w-6 md:w-8 h-2 shadow-md"
+                  : "bg-white/45 hover:bg-white/70 w-2 h-2"
+                }`}
             />
           ))}
+        </div>
+      )}
+
+      {/* ── Slide counter badge (top-right) ── */}
+      {banners.length > 1 && (
+        <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 text-white text-xs font-semibold tabular-nums select-none">
+          {selectedIndex + 1} / {banners.length}
         </div>
       )}
     </div>

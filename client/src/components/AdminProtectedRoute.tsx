@@ -2,6 +2,8 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
+import Header from "./Header";
+import SubHeader from "./SubHeader";
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
@@ -33,8 +35,13 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
   }
 
   return (
-    <AdminLayout>
-      {children}
-    </AdminLayout>
+    <div>
+      <div className="fixed top-0 left-0 right-0 z-40">
+        <Header />
+      </div>
+      <AdminLayout>
+        {children}
+      </AdminLayout>
+    </div>
   );
 }

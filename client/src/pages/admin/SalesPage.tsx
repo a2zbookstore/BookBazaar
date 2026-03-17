@@ -18,10 +18,10 @@ const AQUA = "hsl(188,100%,29%)";
 const AQUA_LIGHT = "hsl(188,79%,38%)";
 
 const TIME_RANGES = [
-  { label: "Last 7 days",  value: "7"   },
-  { label: "Last 30 days", value: "30"  },
-  { label: "Last 90 days", value: "90"  },
-  { label: "Last year",    value: "365" },
+  { label: "Last 7 days", value: "7" },
+  { label: "Last 30 days", value: "30" },
+  { label: "Last 90 days", value: "90" },
+  { label: "Last year", value: "365" },
 ];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -113,10 +113,6 @@ export default function SalesPage() {
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-      
-              <span className="text-white/70 text-sm font-medium uppercase tracking-wide">Reports</span>
-            </div>
             <h1 className="text-2xl sm:text-3xl font-bold">Sales Reports</h1>
             <p className="text-white/70 mt-1 text-sm sm:text-base">Track your bookshop's performance and growth.</p>
           </div>
@@ -265,7 +261,7 @@ export default function SalesPage() {
                   <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 50 }}>
                     <defs>
                       <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={AQUA} stopOpacity={0.18} />
+                        <stop offset="5%" stopColor={AQUA} stopOpacity={0.18} />
                         <stop offset="95%" stopColor={AQUA} stopOpacity={0.01} />
                       </linearGradient>
                     </defs>

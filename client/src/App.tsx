@@ -9,6 +9,7 @@ import { useAnalyticsHeartbeat } from "@/hooks/useAnalyticsHeartbeat";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import { GlobalProvider, useGlobalContext } from "@/contexts/GlobalContext";
 import { LocationProvider } from "@/contexts/userLocationContext";
+import Layout from "./components/Layout";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -21,7 +22,6 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import InventoryPageNew from "@/pages/admin/InventoryPageNew";
 import OrdersPage from "@/pages/admin/OrdersPage";
 import CustomersPage from "@/pages/admin/CustomersPage";
-import WelcomeEmailTestPage from "@/pages/admin/WelcomeEmailTestPage";
 import SalesPage from "@/pages/admin/SalesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import ShippingPage from "@/pages/admin/ShippingPage";
@@ -55,7 +55,6 @@ import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import RequestBookPage from "@/pages/RequestBookPage";
 import NotFound from "@/pages/NotFound";
 import MyProfile from "./pages/MyProfile";
-import Layout from "./components/Layout";
 import { Loader2 } from "lucide-react";
 
 function AppRouter() {
@@ -80,29 +79,29 @@ function AppRouter() {
 
   return (
     <Switch>
-      {/* Public routes - accessible to all users including guests */}
-      <Route path="/" component={HomePage} />
-      <Route path="/catalog" component={CatalogPage} />
-      <Route path="/books/:id" component={BookDetailPage} />
-      <Route path="/about" component={AboutPage} />
-      <Route path="/contact" component={ContactPage} />
-      <Route path="/request-book" component={RequestBookPage} />
-      <Route path="/track-order" component={TrackOrderPage} />
-      <Route path="/my-orders" component={MyOrdersPage} />
-      <Route path="/cart" component={CartPage} />
-      <Route path="/checkout/:mode/:bookId/:quantity" component={CheckoutPage} />
-      <Route path="/profile" component={MyProfile} />
-      <Route path="/paypal-complete" component={PayPalCompletePage} />
-      <Route path="/orders/:id" component={OrderDetailPage} />
-      <Route path="/returns" component={ReturnRequestPage} />
-      <Route path="/wishlist" component={WishlistPage} />
-      <Route path="/shipping-info" component={ShippingInfoPage} />
-      <Route path="/return-policy" component={ReturnPolicyPage} />
-      <Route path="/cancellation-policy" component={CancellationPolicyPage} />
-      <Route path="/terms-and-conditions" component={TermsAndConditionsPage} />
-      <Route path="/gift-items" component={GiftItemsPage} />
-      <Route path="/faq" component={FAQPage} />
-      <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+      {/* Public routes — wrapped in Layout (Header + SubHeader + Footer) */}
+      <Route path="/" component={() => <Layout><HomePage /></Layout>} />
+      <Route path="/catalog" component={() => <Layout><CatalogPage /></Layout>} />
+      <Route path="/books/:id" component={() => <Layout><BookDetailPage /></Layout>} />
+      <Route path="/about" component={() => <Layout><AboutPage /></Layout>} />
+      <Route path="/contact" component={() => <Layout><ContactPage /></Layout>} />
+      <Route path="/request-book" component={() => <Layout><RequestBookPage /></Layout>} />
+      <Route path="/track-order" component={() => <Layout><TrackOrderPage /></Layout>} />
+      <Route path="/my-orders" component={() => <Layout><MyOrdersPage /></Layout>} />
+      <Route path="/cart" component={() => <Layout><CartPage /></Layout>} />
+      <Route path="/checkout/:mode/:bookId/:quantity" component={() => <Layout><CheckoutPage /></Layout>} />
+      <Route path="/profile" component={() => <Layout><MyProfile /></Layout>} />
+      <Route path="/paypal-complete" component={() => <Layout><PayPalCompletePage /></Layout>} />
+      <Route path="/orders/:id" component={() => <Layout><OrderDetailPage /></Layout>} />
+      <Route path="/returns" component={() => <Layout><ReturnRequestPage /></Layout>} />
+      <Route path="/wishlist" component={() => <Layout><WishlistPage /></Layout>} />
+      <Route path="/shipping-info" component={() => <Layout><ShippingInfoPage /></Layout>} />
+      <Route path="/return-policy" component={() => <Layout><ReturnPolicyPage /></Layout>} />
+      <Route path="/cancellation-policy" component={() => <Layout><CancellationPolicyPage /></Layout>} />
+      <Route path="/terms-and-conditions" component={() => <Layout><TermsAndConditionsPage /></Layout>} />
+      <Route path="/gift-items" component={() => <Layout><GiftItemsPage /></Layout>} />
+      <Route path="/faq" component={() => <Layout><FAQPage /></Layout>} />
+      <Route path="/privacy-policy" component={() => <Layout><PrivacyPolicyPage /></Layout>} />
       <Route path="/admin-login" component={AdminLoginPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
@@ -162,11 +161,6 @@ function AppRouter() {
       <Route path="/admin/analytics">
         <AdminProtectedRoute>
           <AnalyticsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/welcome-email">
-        <AdminProtectedRoute>
-          <WelcomeEmailTestPage />
         </AdminProtectedRoute>
       </Route>
       <Route path="/admin/shipping">
@@ -232,11 +226,9 @@ function App() {
           <GlobalProvider>
             <AuthTransitionLoader />
             <Toaster />
-            <Layout>
-              <Router>
-                <AppRouter />
-              </Router>
-            </Layout>
+            <Router>
+              <AppRouter />
+            </Router>
           </GlobalProvider>
         </LocationProvider>
       </TooltipProvider>

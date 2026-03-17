@@ -432,7 +432,6 @@ export default function InventoryPageNew() {
               </div>
               <h3 className="text-lg font-semibold text-red-600 mb-2">Failed to load books</h3>
               <p className="text-secondary-black text-sm mb-4">{error instanceof Error ? error.message : "Unknown error"}</p>
-              <Button onClick={() => window.location.reload()} className="bg-primary-aqua hover:bg-secondary-aqua rounded-full">Reload</Button>
             </div>
           ) : isLoading || isRefreshing ? (
             <div className="divide-y divide-gray-50">

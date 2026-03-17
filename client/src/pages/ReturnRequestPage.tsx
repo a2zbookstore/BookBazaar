@@ -363,6 +363,13 @@ export default function ReturnRequestPage() {
                       const previewItems = order.items.slice(0, 2);
                       const extraCount = order.items.length - previewItems.length;
                       const isSelected = selectedOrderId === order.id;
+
+                      // Days remaining in the 30-day return window
+                      const windowEnd = new Date(order.createdAt);
+                      windowEnd.setDate(windowEnd.getDate() + 30);
+                      const daysLeft = Math.max(0, Math.ceil((windowEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                      const isUrgent = daysLeft <= 5;
+
                       return (
                         <button
                           key={order.id}
@@ -379,6 +386,15 @@ export default function ReturnRequestPage() {
                                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 flex-shrink-0">Order</p>
                                 <p className="text-base font-bold text-gray-900 flex-shrink-0">#{order.id}</p>
                                 <Badge className="bg-green-100 text-green-800 px-2 py-0.5 text-xs rounded-full flex-shrink-0">Delivered</Badge>
+                                {/* ── Days-left return window badge ── */}
+                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 border ${
+                                  isUrgent
+                                    ? "bg-red-50 text-red-700 border-red-200"
+                                    : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}>
+                                  <Clock className="h-3 w-3" />
+                                  {daysLeft === 1 ? "Last day to return!" : `${daysLeft} days left to return`}
+                                </span>
                                 <span className="text-xs text-gray-400 flex items-center gap-1 flex-shrink-0">
                                   <Calendar className="h-3 w-3" />
                                   {format(new Date(order.createdAt), "dd MMM yyyy")}
