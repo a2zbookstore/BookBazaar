@@ -134,8 +134,24 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
             paymentMethod = "Razorpay",
             items,
             checkoutType,
-            registerPassword
+            registerPassword,
+            notificationEmail: formNotificationEmail
           } = orderData;
+
+          // If the logged-in user provided a different email in the form, always
+          // use the account email as the authoritative owner of the order.
+          // The form email becomes an extra notification address.
+          let primaryCustomerEmail = customerEmail;
+          let notificationEmail: string | undefined = formNotificationEmail;
+
+          if (userId && user && user.email) {
+            const accountEmail = (user.email || '').toLowerCase();
+            const formEmail = (customerEmail || '').toLowerCase();
+            if (accountEmail && formEmail && accountEmail !== formEmail) {
+              primaryCustomerEmail = user.email;
+              if (!notificationEmail) notificationEmail = customerEmail;
+            }
+          }
 
           // Handle guest registration if requested
           if (checkoutType === "register" && registerPassword && !userId) {
@@ -244,7 +260,7 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
           const order = await storage.createOrder({
             userId: userId,
             customerName,
-            customerEmail,
+            customerEmail: primaryCustomerEmail,
             customerPhone,
             shippingAddress: JSON.stringify(shippingAddress),
             billingAddress: JSON.stringify(billingAddress),
@@ -263,6 +279,23 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
             title: item.book.title,
             author: item.book.author
           })));
+
+          // Record coupon usage if a DB coupon was applied
+          const { couponId, couponDiscountAmount } = orderData;
+          if (couponId && couponDiscountAmount != null) {
+            try {
+              await storage.applyCoupon(
+                Number(couponId),
+                order.id,
+                userId,
+                primaryCustomerEmail,
+                parseFloat(couponDiscountAmount)
+              );
+              await storage.incrementCouponUsage(Number(couponId));
+            } catch (couponError) {
+              console.error("Failed to record coupon usage (non-critical):", couponError);
+            }
+          }
 
           // Clear cart after successful order
           if (userId) {
@@ -283,8 +316,9 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
                   book: item.book
                 }))
               },
-              customerEmail,
-              customerName
+              customerEmail: primaryCustomerEmail,
+              customerName,
+              notificationEmail,
             });
             console.log("Order confirmation email sent successfully");
           } catch (emailError) {

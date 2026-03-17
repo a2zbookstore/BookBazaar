@@ -26,6 +26,8 @@ interface StripeCheckoutFormProps {
   onSuccess: (orderId: number) => void;
   onCancel: () => void;
   disabled?: boolean;
+  notificationEmail?: string;
+  appliedCoupon?: { id: number; discountAmount: number };
 }
 
 function CheckoutForm({
@@ -43,6 +45,8 @@ function CheckoutForm({
   onSuccess,
   onCancel,
   disabled,
+  notificationEmail,
+  appliedCoupon,
   paymentIntentId
 }: StripeCheckoutFormProps & { paymentIntentId: string }) {
   const stripe = useStripe();
@@ -72,6 +76,7 @@ function CheckoutForm({
         tax,
         total,
         items,
+        notificationEmail,
         paymentIntentId,
       };
       sessionStorage.setItem("pendingStripeOrder", JSON.stringify(orderData));
@@ -124,6 +129,9 @@ function CheckoutForm({
             tax,
             total,
             items,
+            notificationEmail,
+            couponId: appliedCoupon?.id ?? null,
+            couponDiscountAmount: appliedCoupon?.discountAmount ?? null,
           },
         });
 

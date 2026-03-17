@@ -129,6 +129,8 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [notificationEmail, setNotificationEmail] = useState("");
+  const [notificationEmailError, setNotificationEmailError] = useState("");
   const { mode, bookId, quantity } = useParams();
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
@@ -693,6 +695,9 @@ export default function CheckoutPage() {
                 tax: tax.toFixed(2),
                 total: total.toFixed(2),
                 paymentMethod: "razorpay-international",
+                notificationEmail: notificationEmail || undefined,
+                couponId: appliedCoupon?.id ?? null,
+                couponDiscountAmount: appliedCoupon?.id ? calculateDiscount() : null,
                 items: cartItems.map(item => ({
                   bookId: item.book.id,
                   quantity: item.quantity,
@@ -902,19 +907,63 @@ export default function CheckoutPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="customerEmail">Email Address *</Label>
-                    <Input
-                      id="customerEmail"
-                      type="email"
-                      value={customerEmail}
-                      onChange={(e) => handleEmailChange(e.target.value)}
-                      placeholder="Enter your email address"
-                      required
-                      className={emailError ? "border-red-500" : ""}
-                    />
+                    {isAuthenticated ? (
+                      <div className="relative">
+                        <Input
+                          id="customerEmail"
+                          type="email"
+                          value={customerEmail}
+                          readOnly
+                          className="bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed pr-28"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full select-none">
+                          Account Email
+                        </span>
+                      </div>
+                    ) : (
+                      <Input
+                        id="customerEmail"
+                        type="email"
+                        value={customerEmail}
+                        onChange={(e) => handleEmailChange(e.target.value)}
+                        placeholder="Enter your email address"
+                        required
+                        className={emailError ? "border-red-500" : ""}
+                      />
+                    )}
                     {emailError && <p className="text-sm text-red-600">{emailError}</p>}
                   </div>
-                </div>
-                <div className="space-y-2">
+                  {isAuthenticated && (
+                    <div className="space-y-2">
+                      <Label htmlFor="notificationEmail">
+                        Also notify another email{" "}
+                        <span className="text-gray-400 font-normal">(optional)</span>
+                      </Label>
+                      <Input
+                        id="notificationEmail"
+                        type="email"
+                        value={notificationEmail}
+                        onChange={(e) => {
+                          setNotificationEmail(e.target.value);
+                          if (e.target.value && !validateEmail(e.target.value)) {
+                            setNotificationEmailError("Please enter a valid email address");
+                          } else {
+                            setNotificationEmailError("");
+                          }
+                        }}
+                        placeholder="e.g. work@example.com"
+                        className={notificationEmailError ? "border-red-500" : ""}
+                      />
+                      {notificationEmailError && (
+                        <p className="text-sm text-red-600">{notificationEmailError}</p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        Order confirmation will be sent to both your account email and this address.
+                      </p>
+                    </div>
+                  )}
+
+                   <div className="space-y-2">
                   <Label htmlFor="customerPhone">Phone Number *</Label>
                   <div className="flex flex-row gap-2 w-full">
                     <div className="relative phone-country-dropdown-container w-32">
@@ -993,6 +1042,8 @@ export default function CheckoutPage() {
                   {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
                   <p className="text-xs text-gray-500">Type +1, +91 etc. for manual entry or country letters to search. Phone format: Numbers, spaces, hyphens, and parentheses only</p>
                 </div>
+                </div>
+               
               </CardContent>
             </Card>
 
@@ -1154,6 +1205,8 @@ export default function CheckoutPage() {
                           title: item.book?.title,
                           author: item.book?.author,
                         }))}
+                        notificationEmail={notificationEmail || undefined}
+                        appliedCoupon={appliedCoupon?.id ? { id: appliedCoupon.id, discountAmount: calculateDiscount() } : undefined}
                         onSuccess={(orderId) => {
                           clearCart();
                           queryClient.invalidateQueries({
