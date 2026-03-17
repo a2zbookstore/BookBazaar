@@ -174,7 +174,7 @@ export default function CouponsPage() {
           </div>
           <Button
             onClick={() => setIsCreateDialogOpen(true)}
-            className="bg-white text-amber-600 hover:bg-amber-50 font-semibold shadow-md border-0 w-full sm:w-auto"
+            className="bg-white text-amber-600 hover:bg-amber-50 font-semibold shadow-md border-0 w-full sm:w-auto rounded-full"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create Coupon
@@ -183,13 +183,13 @@ export default function CouponsPage() {
         {/* Stats row */}
         <div className="relative z-10 mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { icon: Ticket,      label: "Total Coupons",  value: coupons.length  },
-            { icon: ShieldCheck, label: "Active",          value: totalActive     },
-            { icon: Calendar,    label: "Scheduled",       value: totalScheduled  },
-            { icon: TrendingUp,  label: "Redemptions",     value: totalRedemptions},
-          ].map(({ icon: Icon, label, value }) => (
+            {  label: "Total Coupons",  value: coupons.length  },
+            {  label: "Active",          value: totalActive     },
+            {  label: "Scheduled",       value: totalScheduled  },
+            {  label: "Redemptions",     value: totalRedemptions},
+          ].map(({ label, value }) => (
             <div key={label} className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 text-center">
-              <Icon className="h-4 w-4 mx-auto mb-1 text-white/80" />
+              {/* <Icon className="h-4 w-4 mx-auto mb-1 text-white/80" /> */}
               <div className="text-xl font-bold">{value}</div>
               <div className="text-xs text-amber-100">{label}</div>
             </div>

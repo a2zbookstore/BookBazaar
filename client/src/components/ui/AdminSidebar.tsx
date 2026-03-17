@@ -28,6 +28,7 @@ interface AdminSidebarProps {
   user?: {
     firstName?: string;
   } | null;
+  onLogout?: () => void;
 }
 
 const menuSections = [
@@ -55,7 +56,6 @@ const menuSections = [
       { href: "/admin/gift-categories", icon: Gift, label: "Gift Categories" },
       { href: "/admin/gift-management", icon: Gift, label: "Gift Management" },
       { href: "/admin/messages", icon: Mail, label: "Messages" },
-      { href: "/admin/welcome-email", icon: Mail, label: "Welcome Email" },
     ],
   },
   {
@@ -69,7 +69,7 @@ const menuSections = [
   },
 ];
 
-function AdminSidebar({ sidebarOpen, setSidebarOpen, user }: AdminSidebarProps) {
+function AdminSidebar({ sidebarOpen, setSidebarOpen, user, onLogout }: AdminSidebarProps) {
   const [location] = useLocation();
 
   const isActive = (href: string, exact = false) =>
@@ -190,7 +190,7 @@ function AdminSidebar({ sidebarOpen, setSidebarOpen, user }: AdminSidebarProps) 
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+      <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm space-y-2">
         <Link href="/">
           <Button
             variant="ghost"
@@ -200,11 +200,26 @@ function AdminSidebar({ sidebarOpen, setSidebarOpen, user }: AdminSidebarProps) 
               "group relative overflow-hidden"
             )}
           >
-            <LogOut className="h-4 w-4 mr-3 transition-transform group-hover:-translate-x-0.5" />
+            <Store className="h-4 w-4 mr-3 transition-transform group-hover:-translate-x-0.5" />
             Back to Store
             <span className="absolute inset-0 bg-gradient-to-r from-slate-700/0 to-slate-700/0 group-hover:from-slate-700/30 group-hover:to-slate-600/30 rounded transition-all duration-200" />
           </Button>
         </Link>
+        {onLogout && (
+          <Button
+            variant="ghost"
+            onClick={onLogout}
+            className={cn(
+              "w-full justify-start text-red-400 hover:text-red-300",
+              "hover:bg-red-900/30 transition-all duration-200",
+              "group relative overflow-hidden"
+            )}
+          >
+            <LogOut className="h-4 w-4 mr-3 transition-transform group-hover:-translate-x-0.5" />
+            Logout
+            <span className="absolute inset-0 bg-gradient-to-r from-red-900/0 to-red-900/0 group-hover:from-red-900/20 group-hover:to-red-800/20 rounded transition-all duration-200" />
+          </Button>
+        )}
       </div>
     </aside>
   );

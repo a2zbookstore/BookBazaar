@@ -110,7 +110,7 @@ export default function AdminDashboard() {
             <p className="text-white/70 text-sm font-medium mb-1 tracking-wide uppercase">
               {getGreeting()} ,{" "}
               <span className="text-xl font-extrabold text-green-400">
-                {user ? `${user.firstName.charAt(0).toUpperCase()}${user.firstName.slice(1)} ${user.lastName.charAt(0).toUpperCase()}${user.lastName.slice(1)}` : "Admin"} 
+                {user ? `${user.firstName.charAt(0).toUpperCase()}${user.firstName.slice(1)} ${user.lastName.charAt(0).toUpperCase()}${user.lastName.slice(1)}` : "Admin"}
               </span>
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold leading-tight">Dashboard Overview</h1>
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
       {/* ── Quick Actions ── */}
       <div>
         <h2 className="text-xs font-semibold text-secondary-black tracking-wide uppercase mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
           {quickActions.map(({ label, desc, icon: Icon, href, accent }) => (
             <button
               key={href}
