@@ -4,6 +4,7 @@ export interface Book {
   author: string;
   isbn?: string;
   categoryId?: number;
+  categories?: Category[];
   description?: string;
   condition: string;
   binding?: string;
@@ -21,6 +22,9 @@ export interface Book {
   dimensions?: string;
   featured: boolean;
   bestseller: boolean;
+  trending?: boolean;
+  newArrival?: boolean;
+  boxSet?: boolean;
   createdAt: string;
   updatedAt: string;
   category?: Category;

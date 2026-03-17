@@ -98,6 +98,13 @@ export const books = pgTable("books", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const bookCategories = pgTable("book_categories", {
+  bookId: integer("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+}, (table) => [
+  unique().on(table.bookId, table.categoryId),
+]);
+
 // Orders table
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
@@ -297,6 +304,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   books: many(books),
+  bookCategories: many(bookCategories),
 }));
 
 export const booksRelations = relations(books, ({ one, many }) => ({
@@ -304,8 +312,14 @@ export const booksRelations = relations(books, ({ one, many }) => ({
     fields: [books.categoryId],
     references: [categories.id],
   }),
+  bookCategories: many(bookCategories),
   orderItems: many(orderItems),
   cartItems: many(cartItems),
+}));
+
+export const bookCategoriesRelations = relations(bookCategories, ({ one }) => ({
+  book: one(books, { fields: [bookCategories.bookId], references: [books.id] }),
+  category: one(categories, { fields: [bookCategories.categoryId], references: [categories.id] }),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
@@ -406,6 +420,9 @@ export const insertBookSchema = createInsertSchema(books).omit({
   updatedAt: true,
 });
 export type InsertBook = z.infer<typeof insertBookSchema>;
+
+export type BookCategory = typeof bookCategories.$inferSelect;
+export type InsertBookCategory = typeof bookCategories.$inferInsert;
 
 export type Order = typeof orders.$inferSelect;
 export const insertOrderSchema = createInsertSchema(orders).omit({
