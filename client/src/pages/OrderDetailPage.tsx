@@ -1,12 +1,23 @@
+import { useState } from "react";
 import { useParams, useSearch, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Clock, Package, Truck, FileDown, ArrowLeft, CreditCard, Calendar } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { CheckCircle, Clock, Package, Truck, FileDown, ArrowLeft, CreditCard, Calendar, XCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
@@ -37,15 +48,46 @@ const statusIcons: Record<string, JSX.Element> = {
   cancelled:  <Clock    className="w-4 h-4" />,
 };
 
+const CANCELABLE_STATUSES = ["pending", "confirmed"];
+
 export default function OrderDetailPage() {
   const { id } = useParams();
   const search = useSearch();
   const urlParams = new URLSearchParams(search);
   const email = urlParams.get("email");
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: order, isLoading } = useQuery({
     queryKey: [`/api/orders/${id}${email ? `?email=${encodeURIComponent(email)}` : ""}`],
     enabled: !!id,
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      const body: Record<string, string> = {};
+      if (email) body.email = email;
+      const res = await fetch(`/api/orders/${id}/cancel`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to cancel order");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
+      queryClient.invalidateQueries({ queryKey: [`/api/orders/${id}${email ? `?email=${encodeURIComponent(email)}` : ""}`] });
+      setShowCancelDialog(false);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Cancellation Failed", description: error.message, variant: "destructive" });
+      setShowCancelDialog(false);
+    },
   });
 
   const downloadInvoice = async () => {
@@ -215,6 +257,17 @@ export default function OrderDetailPage() {
               <FileDown className="h-4 w-4" />
               Download Invoice
             </Button>
+            {CANCELABLE_STATUSES.includes(statusKey) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCancelDialog(true)}
+                className="rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-500 transition-colors flex items-center gap-1.5"
+              >
+                <XCircle className="h-4 w-4" />
+                Cancel Order
+              </Button>
+            )}
           </div>
         </div>
 
@@ -366,6 +419,29 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Order Confirmation */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Order #{(order as any).id}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this order? This action cannot be undone.
+              Once cancelled, you will need to place a new order if you change your mind.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelMutation.isPending}>Keep Order</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => cancelMutation.mutate()}
+              disabled={cancelMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {cancelMutation.isPending ? "Cancelling..." : "Yes, Cancel Order"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -106,6 +106,7 @@ interface OrderEmailData {
   order: Order & { items: (OrderItem & { book: Book })[] };
   customerEmail: string;
   customerName: string;
+  notificationEmail?: string; // Optional extra address (e.g. form email when different from account email)
 }
 
 interface StatusUpdateEmailData {
@@ -116,6 +117,13 @@ interface StatusUpdateEmailData {
   trackingNumber?: string;
   shippingCarrier?: string;
   notes?: string;
+}
+
+interface CancellationEmailData {
+  order: Order & { items?: (OrderItem & { book: Book })[] };
+  customerEmail: string;
+  customerName: string;
+  cancelledByCustomer?: boolean;
 }
 
 interface WelcomeEmailData {
@@ -994,6 +1002,245 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
   `;
 };
 
+// Generate order cancellation email HTML
+const generateOrderCancellationHTML = (data: CancellationEmailData): string => {
+  const { order, customerName, cancelledByCustomer = true } = data;
+
+  const orderDate = order.createdAt
+    ? new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'N/A';
+
+  const total    = (parseFloat(String(order.total    ?? 0)) || 0);
+  const subtotal = (parseFloat(String(order.subtotal ?? 0)) || 0);
+  const shipping = (parseFloat(String(order.shipping ?? 0)) || 0);
+  const tax      = (parseFloat(String(order.tax      ?? 0)) || 0);
+
+  const paymentMethod = (order.paymentMethod || '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Online Payment';
+
+  const itemsHTML = (order.items || []).map((item, idx) => {
+    const book  = item.book || {} as any;
+    const price = parseFloat(String(item.price ?? 0)) || 0;
+    const qty   = item.quantity || 0;
+    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fef2f2';
+    return `
+      <tr style="background:${rowBg};">
+        <td style="padding:12px 16px;border-bottom:1px solid #fee2e2;vertical-align:top;">
+          <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:#0f172a;">${book.title || 'Unknown Title'}</p>
+          <p style="margin:0;font-size:12px;color:#64748b;">by ${book.author || 'Unknown Author'}</p>
+        </td>
+        <td style="padding:12px 12px;border-bottom:1px solid #fee2e2;text-align:center;vertical-align:middle;font-size:14px;color:#334155;white-space:nowrap;">${qty}</td>
+        <td style="padding:12px 12px;border-bottom:1px solid #fee2e2;text-align:right;vertical-align:middle;font-size:14px;color:#334155;white-space:nowrap;">$${price.toFixed(2)}</td>
+        <td style="padding:12px 16px;border-bottom:1px solid #fee2e2;text-align:right;vertical-align:middle;font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;">$${(qty * price).toFixed(2)}</td>
+      </tr>`;
+  }).join('');
+
+  const itemsBlock = (order.items && order.items.length > 0) ? `
+    <!-- Items Cancelled -->
+    <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#64748b;">Items in This Order</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fecaca;border-radius:12px;overflow:hidden;margin-bottom:28px;">
+      <thead>
+        <tr style="background:#fef2f2;">
+          <th style="padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#991b1b;text-align:left;border-bottom:1px solid #fecaca;width:52%;">Book</th>
+          <th style="padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#991b1b;text-align:center;border-bottom:1px solid #fecaca;width:10%;">Qty</th>
+          <th style="padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#991b1b;text-align:right;border-bottom:1px solid #fecaca;width:17%;">Unit</th>
+          <th style="padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#991b1b;text-align:right;border-bottom:1px solid #fecaca;width:21%;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHTML}
+      </tbody>
+    </table>` : '';
+
+  const refundNote = (order.paymentStatus === 'paid')
+    ? 'Since your order was paid, a <strong>full refund of $' + total.toFixed(2) + '</strong> will be processed to your original payment method (' + paymentMethod + ') within <strong>5–7 business days</strong>.'
+    : 'No payment was captured for this order, so no refund is necessary.';
+
+  const cancelContext = cancelledByCustomer
+    ? 'You requested the cancellation of this order.'
+    : 'This order has been cancelled by our team.';
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Order Cancelled #${order.id} — A2Z BOOKSHOP</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 55%,#dc2626 100%);border-radius:16px 16px 0 0;padding:48px 40px 36px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#fca5a5;">A2Z BOOKSHOP</p>
+              <h1 style="margin:0 0 10px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.25;">Order Cancelled</h1>
+              <p style="margin:0;font-size:15px;color:#fecaca;line-height:1.55;">Your order has been successfully cancelled.</p>
+            </td>
+          </tr>
+
+          <!-- COLOUR BAR -->
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg,#ef4444,#f97316,#eab308);"></td>
+          </tr>
+
+          <!-- ORDER META BADGES -->
+          <tr>
+            <td style="background:#ffffff;padding:24px 40px;border-bottom:1px solid #fee2e2;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Order ID</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">#${order.id}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Placed On</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">${orderDate}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Status</span>
+                    <span style="display:inline-block;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;padding:5px 16px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">CANCELLED</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Order Total</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">$${total.toFixed(2)}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="background:#ffffff;padding:32px 40px 8px;">
+              <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#0f172a;">Hi, ${customerName}!</p>
+              <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.75;">
+                ${cancelContext} We want to make sure this process is smooth for you — all the details are below.
+              </p>
+
+              ${itemsBlock}
+
+              <!-- ORDER SUMMARY -->
+              <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#64748b;">Order Summary</p>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:4px 24px;margin-bottom:28px;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:11px 0;font-size:14px;color:#64748b;border-bottom:1px solid #e2e8f0;">Subtotal</td>
+                    <td style="padding:11px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;border-bottom:1px solid #e2e8f0;">$${subtotal.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:11px 0;font-size:14px;color:#64748b;border-bottom:1px solid #e2e8f0;">Shipping</td>
+                    <td style="padding:11px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;border-bottom:1px solid #e2e8f0;">${shipping === 0 ? '<span style="color:#0f766e;font-weight:700;">Free</span>' : '$' + shipping.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:11px 0;font-size:14px;color:#64748b;border-bottom:1px solid #e2e8f0;">Tax</td>
+                    <td style="padding:11px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;border-bottom:1px solid #e2e8f0;">$${tax.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:14px 0 11px;font-size:16px;font-weight:800;color:#0f172a;">Total</td>
+                    <td style="padding:14px 0 11px;font-size:16px;font-weight:800;color:#ef4444;text-align:right;">$${total.toFixed(2)}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- REFUND INFO -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border-left:4px solid #f97316;border-radius:0 12px 12px 0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#c2410c;">Refund Information</p>
+                    <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">${refundNote}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- HELP -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 12px 12px 0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#1e40af;">Need Help?</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; If you didn't request this cancellation, please contact us immediately.</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; For refund queries, reach us at <a href="mailto:support@a2zbookshop.com" style="color:#1d4ed8;text-decoration:none;">support@a2zbookshop.com</a></p>
+                    <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; We'd love to help you place a new order anytime.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <div style="text-align:center;margin:0 0 28px;">
+                <a href="https://a2zbookshop.com" style="display:inline-block;background:linear-gradient(135deg,#0f766e 0%,#0891b2 100%);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:16px 44px;border-radius:50px;letter-spacing:0.4px;">Browse Books Again →</a>
+              </div>
+
+              <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 24px;">
+
+              <!-- FOOTER NOTE -->
+              <div style="text-align:center;padding-bottom:28px;">
+                <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b;">This is an automated email — please do not reply to this message.</p>
+                <p style="margin:0;font-size:12px;color:#94a3b8;">For help, contact us at <a href="mailto:support@a2zbookshop.com" style="color:#0891b2;text-decoration:none;">support@a2zbookshop.com</a></p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- FOOTER BAR -->
+          <tr>
+            <td style="background:#1e293b;border-radius:0 0 16px 16px;padding:22px 40px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#e2e8f0;letter-spacing:1px;">A2Z BOOKSHOP</p>
+              <p style="margin:0;font-size:12px;color:#64748b;">© ${new Date().getFullYear()} A2Z BOOKSHOP. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+};
+
+// Send order cancellation email
+export const sendOrderCancellationEmail = async (data: CancellationEmailData): Promise<boolean> => {
+  try {
+    const transport = createTransporter();
+    if (!transport) {
+      console.log('Email transporter not available - skipping cancellation email');
+      return false;
+    }
+
+    const htmlContent = generateOrderCancellationHTML(data);
+    const orderId = data.order.id;
+
+    const customerMailOptions = {
+      from: { name: 'A2Z BOOKSHOP Support', address: getZohoEmail('support') },
+      to: data.customerEmail,
+      subject: `Order #${orderId} Has Been Cancelled — A2Z BOOKSHOP`,
+      html: htmlContent,
+      text: `Hi ${data.customerName}, your order #${orderId} has been successfully cancelled. Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}. If payment was made, a refund will be processed within 5–7 business days. For help, contact support@a2zbookshop.com`,
+    };
+
+    const adminMailOptions = {
+      from: { name: 'A2Z BOOKSHOP System', address: getZohoEmail('admin') },
+      to: getZohoEmail('admin'),
+      subject: `Order #${orderId} Cancelled — ${data.cancelledByCustomer ? 'Customer Request' : 'Admin Action'}`,
+      html: htmlContent,
+      text: `Order #${orderId} cancelled for customer: ${data.customerEmail}. Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}.`,
+    };
+
+    await Promise.all([
+      transport.sendMail(customerMailOptions),
+      transport.sendMail(adminMailOptions),
+    ]);
+
+    console.log(`Cancellation emails sent for order #${orderId}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending cancellation email:', error);
+    return false;
+  }
+};
+
 // Send order confirmation email
 export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<boolean> => {
   try {
@@ -1029,13 +1276,19 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
       text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}`
     };
 
-    // Send both emails
+    // Build recipient list: primary account email + optional notification email
+    const customerRecipients: string[] = [data.customerEmail];
+    if (data.notificationEmail && data.notificationEmail.toLowerCase() !== data.customerEmail.toLowerCase()) {
+      customerRecipients.push(data.notificationEmail);
+    }
+
+    // Send to all customer recipients + admin
     await Promise.all([
-      transporter.sendMail(customerMailOptions),
+      ...customerRecipients.map(email => transporter.sendMail({ ...customerMailOptions, to: email })),
       transporter.sendMail(adminMailOptions)
     ]);
 
-    console.log(`Order confirmation emails sent for order #${data.order.id}`);
+    console.log(`Order confirmation emails sent for order #${data.order.id} to: ${customerRecipients.join(', ')}`);
     return true;
   } catch (error) {
     console.error('Error sending order confirmation email:', error);
