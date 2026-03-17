@@ -17,7 +17,6 @@ import {
   FileText,
   TrendingUp,
   Store,
-  BarChart2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,7 +35,6 @@ const menuSections = [
     items: [
       { href: "/admin", icon: BarChart3, label: "Dashboard", exact: true },
       { href: "/admin/analytics", icon: TrendingUp, label: "Analytics" },
-      { href: "/admin/sales", icon: BarChart2, label: "Sales Reports" },
     ],
   },
   {

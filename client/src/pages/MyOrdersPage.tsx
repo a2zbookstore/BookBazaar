@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
@@ -7,16 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
@@ -25,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow } from "date-fns";
-import { Package, Eye, FileDown, Home, Calendar, CreditCard, Mail, XCircle } from "lucide-react";
+import { Package, Eye, FileDown, Home, Calendar, CreditCard, Mail } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "@/hooks/use-toast";
 
@@ -91,8 +81,6 @@ export default function MyOrdersPage() {
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
-  const queryClient = useQueryClient();
 
   // Guest email input for order lookup
   const [guestEmail, setGuestEmail] = useState("");
@@ -123,36 +111,6 @@ export default function MyOrdersPage() {
       refetchGuestOrders();
     }
   };
-
-  const cancelMutation = useMutation({
-    mutationFn: async (orderId: number) => {
-      const body: Record<string, string> = {};
-      if (!isAuthenticated && guestEmail) body.email = guestEmail;
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to cancel order");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
-      queryClient.invalidateQueries({ queryKey: ["/api/my-orders"] });
-      setCancelOrderId(null);
-      setSelectedOrder(null);
-    },
-    onError: (error: Error) => {
-      toast({ title: "Cancellation Failed", description: error.message, variant: "destructive" });
-      setCancelOrderId(null);
-    },
-  });
-
-  const CANCELABLE_STATUSES = ["pending", "confirmed"];
 
   useEffect(() => {
     if (!user) {
@@ -393,7 +351,7 @@ export default function MyOrdersPage() {
                       </div> */}
 
                       {/* Right: Total + Actions */}
-                      <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-3">
                         <Button
                           variant="outline"
                           size="sm"
@@ -412,17 +370,6 @@ export default function MyOrdersPage() {
                           <FileDown className="h-4 w-4" />
                           Invoice
                         </Button>
-                        {CANCELABLE_STATUSES.includes(order.status) && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCancelOrderId(order.id)}
-                            className="flex items-center gap-1.5 rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-500 transition-colors"
-                          >
-                            <XCircle className="h-4 w-4" />
-                            Cancel
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -499,29 +446,6 @@ export default function MyOrdersPage() {
       </div>
 
 
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={cancelOrderId !== null} onOpenChange={(open) => { if (!open) setCancelOrderId(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Order #{cancelOrderId}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this order? This action cannot be undone.
-              Once cancelled, you will need to place a new order if you change your mind.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelMutation.isPending}>Keep Order</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => cancelOrderId !== null && cancelMutation.mutate(cancelOrderId)}
-              disabled={cancelMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {cancelMutation.isPending ? "Cancelling..." : "Yes, Cancel Order"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 rounded-2xl">
 
@@ -554,21 +478,6 @@ export default function MyOrdersPage() {
 
           {selectedOrder && (
             <div className="p-6 space-y-5">
-
-              {/* Cancel button inside dialog */}
-              {CANCELABLE_STATUSES.includes(selectedOrder.status) && (
-                <div className="flex justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setCancelOrderId(selectedOrder.id); }}
-                    className="flex items-center gap-1.5 rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-500 transition-colors"
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Cancel Order
-                  </Button>
-                </div>
-              )}
 
               {/* Customer + Shipping grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

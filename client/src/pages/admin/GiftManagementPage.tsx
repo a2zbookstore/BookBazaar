@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, Gift, Settings, Upload, X, ImagePlus, BookOpen, BookMarked, DollarSign, Hash, AlignLeft, FileText, Barcode, LayoutTemplate, Sparkles, Eye, EyeOff, CalendarDays } from "lucide-react";
+import { Plus, Edit, Trash2, GripVertical, Gift, Settings, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { GiftItem, HomepageContent, GiftCategory } from "@/shared/schema";
@@ -299,261 +302,303 @@ export default function GiftManagementPage() {
     contentMutation.mutate(contentForm);
   };
 
-  // ── Derived stats ──
-  const activeGifts = giftItems.filter(g => g.isActive).length;
-  const activeContent = homepageContent.filter(c => c.isActive).length;
-
-  // ── Reusable image upload zone ──
-  const ImageZone = ({
-    preview,
-    label,
-    inputRef,
-    onUpload,
-    onClear,
-    loading,
-  }: {
-    preview: string;
-    label: string;
-    inputRef: React.RefObject<HTMLInputElement>;
-    onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onClear: () => void;
-    loading?: boolean;
-  }) => (
-    <div className="space-y-1.5">
-      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
-      <div
-        onClick={() => !loading && inputRef.current?.click()}
-        className={`relative cursor-pointer rounded-xl border-2 border-dashed transition-all duration-200 overflow-hidden
-          ${preview ? "border-transparent" : "border-gray-200 hover:border-rose-300 hover:bg-rose-50/40 bg-gray-50/60"}
-          ${loading ? "opacity-60 cursor-wait" : ""}`}
-        style={{ minHeight: "7.5rem" }}
-      >
-        {preview ? (
-          <>
-            <img src={preview} alt="preview" className="w-full h-[7.5rem] object-cover" />
-            <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span className="text-white text-xs font-medium flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" /> Change</span>
-            </div>
-            <button type="button" onClick={(e) => { e.stopPropagation(); onClear(); }}
-              className="absolute top-1.5 right-1.5 bg-white/90 hover:bg-white rounded-full p-0.5 shadow-sm">
-              <X className="w-3.5 h-3.5 text-gray-600" />
-            </button>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[7.5rem] gap-1.5">
-            {loading ? <div className="w-5 h-5 border-2 border-rose-300 border-t-rose-500 rounded-full animate-spin" /> : <ImagePlus className="w-6 h-6 text-gray-300" />}
-            <span className="text-xs text-gray-400">{loading ? "Uploading…" : "Click to upload"}</span>
-          </div>
-        )}
-        <input ref={inputRef} type="file" accept="image/*" onChange={onUpload} className="hidden" />
-      </div>
-    </div>
-  );
-
   return (
-    <div className="space-y-6 sm:space-y-8">
-
-      {/* ── Page Header ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-50 via-white to-orange-50 border border-rose-100 p-6 sm:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-rose-100/50 to-transparent rounded-full -translate-y-1/4 translate-x-1/4 pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Gift Management</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Manage gift items &amp; homepage content for the Gift with Purchase feature</p>
-            </div>
-          </div>
-        </div>
-        <div className="relative mt-5 flex flex-wrap gap-3">
-          {[
-            { label: "Gift Items", value: giftItems.length, color: "bg-rose-100 text-rose-700" },
-            { label: "Active Gifts", value: activeGifts, color: "bg-emerald-100 text-emerald-700" },
-            { label: "Content Sections", value: homepageContent.length, color: "bg-orange-100 text-orange-700" },
-            { label: "Active Content", value: activeContent, color: "bg-sky-100 text-sky-700" },
-          ].map((s) => (
-            <span key={s.label} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${s.color}`}>
-              {s.label} <span className="font-bold">{s.value}</span>
-            </span>
-          ))}
-        </div>
+    <div className="space-y-4 sm:space-y-6">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Gift Management</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          Manage gift items and homepage content for the Gift with Purchase feature
+        </p>
       </div>
 
-      <Tabs defaultValue="gifts" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 rounded-xl bg-gray-100/80 p-1 h-11">
-          <TabsTrigger value="gifts"
-            className="rounded-lg text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-rose-600 flex items-center gap-2">
-            <Gift className="w-4 h-4" /> Gift Items
+      <Tabs defaultValue="gifts" className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="gifts" className="flex items-center gap-2 text-sm">
+            <Gift className="w-4 h-4" />
+            Gift Items
           </TabsTrigger>
-          <TabsTrigger value="content"
-            className="rounded-lg text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-orange-600 flex items-center gap-2">
-            <LayoutTemplate className="w-4 h-4" /> Homepage Content
+          <TabsTrigger value="content" className="flex items-center gap-2 text-sm">
+            <Settings className="w-4 h-4" />
+            Homepage Content
           </TabsTrigger>
         </TabsList>
 
-        {/* ════════ Gift Items Tab ════════ */}
-        <TabsContent value="gifts" className="space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* Gift Items Tab */}
+        <TabsContent value="gifts" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
             <div>
-              <h2 className="text-base font-semibold text-gray-800">Gift Items <span className="text-gray-400 font-normal">({giftItems.length})</span></h2>
-              <p className="text-xs text-gray-400 mt-0.5">Manage the gift items available for customers</p>
+              <h2 className="text-lg sm:text-xl font-semibold">Gift Items ({giftItems.length})</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Manage the gift items available for customers
+              </p>
             </div>
             <Dialog open={isGiftDialogOpen} onOpenChange={setIsGiftDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={resetGiftForm}
-                  className="w-full sm:w-auto bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
-                  <Plus className="w-4 h-4 mr-2" /> Add Gift Item
+                <Button onClick={resetGiftForm}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Gift Item
                 </Button>
               </DialogTrigger>
-
-              {/* ── Gift Dialog ── */}
-              <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl p-0 gap-0">
-                <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100">
-                  <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-rose-100 flex items-center justify-center">
-                      <Gift className="w-4 h-4 text-rose-600" />
-                    </span>
-                    {editingGift ? "Edit Gift Item" : "New Gift Item"}
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingGift ? 'Edit Gift Item' : 'Add New Gift Item'}
                   </DialogTitle>
                 </DialogHeader>
-
-                <form onSubmit={handleGiftSubmit} className="px-6 py-5 space-y-5">
-                  {/* Category + Name */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-medium text-gray-700">Category <span className="text-red-400">*</span></Label>
+                <form onSubmit={handleGiftSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="categoryId">Category</Label>
                       <select
+                        id="categoryId"
                         value={giftForm.categoryId}
                         onChange={(e) => setGiftForm({ ...giftForm, categoryId: parseInt(e.target.value) })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
-                        className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
                       >
-                        <option value="">Select category…</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
+                        <option value="">Select Category</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
                         ))}
                       </select>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="giftName" className="text-sm font-medium text-gray-700">Name <span className="text-red-400">*</span></Label>
-                      <Input id="giftName" value={giftForm.name}
+                    <div>
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        value={giftForm.name}
                         onChange={(e) => setGiftForm({ ...giftForm, name: e.target.value })}
-                        placeholder="e.g., Classic Mystery Book" required
-                        className="rounded-lg border-gray-200 focus-visible:ring-rose-400 h-10" />
+                        placeholder="e.g., Classic Mystery Book"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="type">Type</Label>
+                      <select
+                        id="type"
+                        value={giftForm.type}
+                        onChange={(e) => setGiftForm({ ...giftForm, type: e.target.value as "novel" | "notebook" })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="novel">Novel</option>
+                        <option value="notebook">Notebook</option>
+                      </select>
                     </div>
                   </div>
-
-                  {/* Type toggle */}
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-gray-700">Type</Label>
-                    <div className="flex gap-2">
-                      {(["novel", "notebook"] as const).map((t) => (
-                        <button key={t} type="button"
-                          onClick={() => setGiftForm({ ...giftForm, type: t })}
-                          className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border text-sm font-medium transition-all duration-150
-                            ${giftForm.type === t ? "bg-rose-600 text-white border-rose-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-rose-300 hover:text-rose-600"}`}>
-                          {t === "novel" ? <BookOpen className="w-4 h-4" /> : <BookMarked className="w-4 h-4" />}
-                          {t.charAt(0).toUpperCase() + t.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="giftDesc" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <AlignLeft className="w-3.5 h-3.5 text-gray-400" /> Description
-                    </Label>
-                    <Textarea id="giftDesc" value={giftForm.description}
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={giftForm.description}
                       onChange={(e) => setGiftForm({ ...giftForm, description: e.target.value })}
-                      placeholder="Brief description of the gift item…" rows={2}
-                      className="rounded-lg border-gray-200 focus-visible:ring-rose-400 resize-none text-sm" />
+                      placeholder="Brief description of the gift item"
+                      rows={3}
+                    />
                   </div>
 
-                  {/* Images */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <ImagePlus className="w-3.5 h-3.5 text-gray-400" /> Images
-                    </Label>
-                    <div className="grid grid-cols-3 gap-3">
-                      <ImageZone
-                        preview={giftForm.imageUrl}
-                        label="Image 1"
-                        inputRef={imageInputRef}
-                        loading={isImageUploading}
-                        onUpload={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, 'imageUrl'); }}
-                        onClear={() => setGiftForm(prev => ({ ...prev, imageUrl: "" }))}
-                      />
-                      <ImageZone
-                        preview={giftForm.imageUrl2}
-                        label="Image 2"
-                        inputRef={imageInputRef2}
-                        loading={isImageUploading2}
-                        onUpload={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, 'imageUrl2'); }}
-                        onClear={() => setGiftForm(prev => ({ ...prev, imageUrl2: "" }))}
-                      />
-                      <ImageZone
-                        preview={giftForm.imageUrl3}
-                        label="Image 3"
-                        inputRef={imageInputRef3}
-                        loading={isImageUploading3}
-                        onUpload={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, 'imageUrl3'); }}
-                        onClear={() => setGiftForm(prev => ({ ...prev, imageUrl3: "" }))}
-                      />
+                  {/* Image Upload Sections */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Image 1 */}
+                    <div className="space-y-2">
+                      <Label>Image 1</Label>
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={isImageUploading}
+                          className="w-full"
+                        >
+                          {isImageUploading ? "Uploading..." : "Upload Image 1"}
+                          <Upload className="ml-2 h-4 w-4" />
+                        </Button>
+                        <input
+                          ref={imageInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, 'imageUrl');
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        {giftForm.imageUrl && (
+                          <div className="relative">
+                            <img
+                              src={giftForm.imageUrl}
+                              alt="Preview 1"
+                              className="w-full h-32 object-cover rounded border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setGiftForm(prev => ({ ...prev, imageUrl: "" }))}
+                              className="absolute top-1 right-1 h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Image 2 */}
+                    <div className="space-y-2">
+                      <Label>Image 2 (Optional)</Label>
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => imageInputRef2.current?.click()}
+                          disabled={isImageUploading2}
+                          className="w-full"
+                        >
+                          {isImageUploading2 ? "Uploading..." : "Upload Image 2"}
+                          <Upload className="ml-2 h-4 w-4" />
+                        </Button>
+                        <input
+                          ref={imageInputRef2}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, 'imageUrl2');
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        {giftForm.imageUrl2 && (
+                          <div className="relative">
+                            <img
+                              src={giftForm.imageUrl2}
+                              alt="Preview 2"
+                              className="w-full h-32 object-cover rounded border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setGiftForm(prev => ({ ...prev, imageUrl2: "" }))}
+                              className="absolute top-1 right-1 h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Image 3 */}
+                    <div className="space-y-2">
+                      <Label>Image 3 (Optional)</Label>
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => imageInputRef3.current?.click()}
+                          disabled={isImageUploading3}
+                          className="w-full"
+                        >
+                          {isImageUploading3 ? "Uploading..." : "Upload Image 3"}
+                          <Upload className="ml-2 h-4 w-4" />
+                        </Button>
+                        <input
+                          ref={imageInputRef3}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, 'imageUrl3');
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        {giftForm.imageUrl3 && (
+                          <div className="relative">
+                            <img
+                              src={giftForm.imageUrl3}
+                              alt="Preview 3"
+                              className="w-full h-32 object-cover rounded border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setGiftForm(prev => ({ ...prev, imageUrl3: "" }))}
+                              className="absolute top-1 right-1 h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Price + ISBN */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="giftPrice" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <DollarSign className="w-3.5 h-3.5 text-gray-400" /> Price
-                      </Label>
-                      <Input id="giftPrice" type="number" step="0.01" min="0" value={giftForm.price}
+                    <div>
+                      <Label htmlFor="price">Price ($)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={giftForm.price}
                         onChange={(e) => setGiftForm({ ...giftForm, price: parseFloat(e.target.value) || 0 })}
-                        placeholder="0.00" className="rounded-lg border-gray-200 focus-visible:ring-rose-400 h-10" />
+                        placeholder="0.00"
+                      />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="giftIsbn" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <Barcode className="w-3.5 h-3.5 text-gray-400" /> ISBN
-                      </Label>
-                      <Input id="giftIsbn" value={giftForm.isbn}
+                    <div>
+                      <Label htmlFor="isbn">ISBN (for books)</Label>
+                      <Input
+                        id="isbn"
+                        value={giftForm.isbn}
                         onChange={(e) => setGiftForm({ ...giftForm, isbn: e.target.value })}
-                        placeholder="978-0-123456-78-9" className="rounded-lg border-gray-200 focus-visible:ring-rose-400 h-10" />
+                        placeholder="978-0-123456-78-9"
+                      />
                     </div>
                   </div>
 
-                  {/* Sort Order + Active */}
-                  <div className="rounded-xl border border-gray-100 bg-gray-50/60 divide-y divide-gray-100 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                          <Hash className="w-3.5 h-3.5 text-gray-400" /> Sort Order
-                        </p>
-                        <p className="text-xs text-gray-400">Lower number appears first</p>
-                      </div>
-                      <Input type="number" value={giftForm.sortOrder}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="sortOrder">Sort Order</Label>
+                      <Input
+                        id="sortOrder"
+                        type="number"
+                        value={giftForm.sortOrder}
                         onChange={(e) => setGiftForm({ ...giftForm, sortOrder: parseInt(e.target.value) || 0 })}
-                        placeholder="0" className="w-20 rounded-lg border-gray-200 focus-visible:ring-rose-400 h-9 text-sm text-right" />
+                        placeholder="0"
+                      />
                     </div>
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Active</p>
-                        <p className="text-xs text-gray-400">Show this item to customers</p>
-                      </div>
-                      <Switch id="giftActive" checked={giftForm.isActive}
-                        onCheckedChange={(c) => setGiftForm({ ...giftForm, isActive: c })} />
+                    <div className="flex items-center space-x-2 pt-6">
+                      <Switch
+                        id="isActive"
+                        checked={giftForm.isActive}
+                        onCheckedChange={(checked) => setGiftForm({ ...giftForm, isActive: checked })}
+                      />
+                      <Label htmlFor="isActive">Active</Label>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-1">
-                    <Button type="submit" disabled={giftMutation.isPending}
-                      className="flex-1 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl h-10 font-medium shadow-sm">
-                      {giftMutation.isPending ? "Saving…" : editingGift ? "Update Item" : "Create Item"}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setIsGiftDialogOpen(false)}
-                      className="rounded-xl h-10 border-gray-200 text-gray-600 hover:bg-gray-50">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsGiftDialogOpen(false)}
+                    >
                       Cancel
+                    </Button>
+                    <Button type="submit" disabled={giftMutation.isPending}>
+                      {giftMutation.isPending ? 'Saving...' : (editingGift ? 'Update' : 'Create')}
                     </Button>
                   </div>
                 </form>
@@ -561,224 +606,221 @@ export default function GiftManagementPage() {
             </Dialog>
           </div>
 
-          {/* ── Gift Items Grid ── */}
-          {giftLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="rounded-2xl border border-gray-100 bg-white p-4 animate-pulse space-y-3">
-                  <div className="h-36 rounded-xl bg-gray-100" />
-                  <div className="h-4 w-2/3 rounded bg-gray-100" />
-                  <div className="h-3 w-full rounded bg-gray-100" />
-                </div>
-              ))}
-            </div>
-          ) : giftItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-14 px-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center mb-4">
-                <Sparkles className="w-7 h-7 text-rose-300" />
-              </div>
-              <h3 className="text-sm font-semibold text-gray-800 mb-1">No gift items yet</h3>
-              <p className="text-xs text-gray-400 mb-4 max-w-xs">Add your first gift item to make it available for customers.</p>
-              <Button onClick={() => setIsGiftDialogOpen(true)}
-                className="bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl shadow-sm text-sm">
-                <Plus className="w-4 h-4 mr-2" /> Add First Gift Item
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-              {giftItems.map((gift) => {
-                const cat = categories.find(c => c.id === gift.categoryId);
-                return (
-                  <div key={gift.id}
-                    className="group relative flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
-                    {/* Thumbnail */}
-                    <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-                      {gift.imageUrl ? (
-                        <img src={gift.imageUrl} alt={gift.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Gift className="w-12 h-12 text-gray-200" />
-                        </div>
-                      )}
-                      {/* Type badge */}
-                      <div className="absolute top-3 left-3">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-sm
-                          ${gift.type === "novel" ? "bg-violet-500/90 text-white" : "bg-amber-500/90 text-white"}`}>
-                          {gift.type === "novel" ? <BookOpen className="w-3 h-3" /> : <BookMarked className="w-3 h-3" />}
-                          {gift.type === "novel" ? "Novel" : "Notebook"}
-                        </span>
-                      </div>
-                      {/* Status badge */}
-                      <div className="absolute top-3 right-3">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-sm
-                          ${gift.isActive ? "bg-emerald-500/90 text-white" : "bg-gray-400/80 text-white"}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${gift.isActive ? "bg-white" : "bg-gray-200"}`} />
-                          {gift.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                      {/* Extra image thumbnails */}
-                      {(gift.imageUrl2 || gift.imageUrl3) && (
-                        <div className="absolute bottom-2 right-2 flex gap-1">
-                          {[gift.imageUrl2, gift.imageUrl3].map((url, idx) =>
-                            url ? <img key={idx} src={url} alt="" className="w-8 h-8 rounded-md object-cover border-2 border-white shadow-sm"
-                              onError={(e) => { e.currentTarget.style.display = "none"; }} /> : null
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card body */}
-                    <div className="flex flex-col flex-1 p-4">
-                      <h3 className="font-semibold text-gray-900 text-base line-clamp-1">{gift.name}</h3>
-                      {cat && <p className="text-xs text-rose-500 font-medium mt-0.5">{cat.name}</p>}
-                      {gift.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">{gift.description}</p>}
-                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-500">
-                        {gift.price && (
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="w-3 h-3 text-gray-300" />
-                            <span className="font-semibold text-gray-700">${parseFloat(gift.price).toFixed(2)}</span>
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <Hash className="w-3 h-3 text-gray-300" />
-                          Order <span className="font-semibold text-gray-700">{gift.sortOrder}</span>
-                        </span>
-                        {gift.isbn && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Barcode className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                            <span className="truncate">{gift.isbn}</span>
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <CalendarDays className="w-3 h-3 text-gray-300" />
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {giftLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        Loading gift items...
+                      </TableCell>
+                    </TableRow>
+                  ) : giftItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        No gift items found. Add your first gift item!
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    giftItems.map((gift) => (
+                      <TableRow key={gift.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <GripVertical className="w-4 h-4 text-gray-400" />
+                            {gift.sortOrder}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div>
+                            {gift.name}
+                            {gift.price && (
+                              <div className="text-sm text-green-600 font-medium">
+                                ${parseFloat(gift.price).toFixed(2)}
+                              </div>
+                            )}
+                            {gift.isbn && (
+                              <div className="text-xs text-gray-500">
+                                ISBN: {gift.isbn}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Badge variant={gift.type === 'novel' ? 'default' : 'secondary'}>
+                              {gift.type}
+                            </Badge>
+                            <div className="flex gap-1 flex-wrap">
+                              {gift.imageUrl && (
+                                <img
+                                  src={gift.imageUrl}
+                                  alt={`${gift.name} - Image 1`}
+                                  className="w-8 h-8 object-cover rounded border"
+                                />
+                              )}
+                              {gift.imageUrl2 && (
+                                <img
+                                  src={gift.imageUrl2}
+                                  alt={`${gift.name} - Image 2`}
+                                  className="w-8 h-8 object-cover rounded border"
+                                />
+                              )}
+                              {gift.imageUrl3 && (
+                                <img
+                                  src={gift.imageUrl3}
+                                  alt={`${gift.name} - Image 3`}
+                                  className="w-8 h-8 object-cover rounded border"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={gift.isActive ? 'default' : 'secondary'}>
+                            {gift.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           {new Date(gift.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="px-4 pb-4 pt-0 flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleEditGift(gift)}
-                        className="flex-1 rounded-xl border-gray-200 text-gray-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors h-8 text-xs">
-                        <Edit className="w-3.5 h-3.5 mr-1.5" /> Edit
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => deleteGiftMutation.mutate(gift.id)}
-                        disabled={deleteGiftMutation.isPending}
-                        className="flex-1 rounded-xl border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors h-8 text-xs">
-                        <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditGift(gift)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => deleteGiftMutation.mutate(gift.id)}
+                              disabled={deleteGiftMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* ════════ Homepage Content Tab ════════ */}
-        <TabsContent value="content" className="space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* Homepage Content Tab */}
+        <TabsContent value="content" className="space-y-6">
+          <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-base font-semibold text-gray-800">Content Sections <span className="text-gray-400 font-normal">({homepageContent.length})</span></h2>
-              <p className="text-xs text-gray-400 mt-0.5">Manage content displayed on the homepage</p>
+              <h2 className="text-xl font-semibold">Homepage Content ({homepageContent.length})</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Manage content displayed on the homepage
+              </p>
             </div>
             <Dialog open={isContentDialogOpen} onOpenChange={setIsContentDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={resetContentForm}
-                  className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
-                  <Plus className="w-4 h-4 mr-2" /> Add Content Section
+                <Button onClick={resetContentForm}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Content Section
                 </Button>
               </DialogTrigger>
-
-              {/* ── Content Dialog ── */}
-              <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl p-0 gap-0">
-                <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100">
-                  <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center">
-                      <LayoutTemplate className="w-4 h-4 text-orange-600" />
-                    </span>
-                    {editingContent ? "Edit Content Section" : "New Content Section"}
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingContent ? 'Edit Content Section' : 'Add New Content Section'}
                   </DialogTitle>
                 </DialogHeader>
-
-                <form onSubmit={handleContentSubmit} className="px-6 py-5 space-y-5">
-                  {/* Section selector */}
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-gray-700">Section</Label>
-                    <Select value={contentForm.section} onValueChange={(v) => setContentForm({ ...contentForm, section: v })} defaultValue="gift_offer">
-                      <SelectTrigger className="rounded-lg border-gray-200 focus:ring-orange-400 h-10">
-                        <SelectValue placeholder="Select section" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gift_offer">🎁 Gift Offer</SelectItem>
-                        <SelectItem value="hero">🌟 Hero Section</SelectItem>
-                        <SelectItem value="about">ℹ️ About Section</SelectItem>
-                        <SelectItem value="featured">⭐ Featured Section</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Title + Subtitle */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="contentTitle" className="text-sm font-medium text-gray-700">Title</Label>
-                      <Input id="contentTitle" value={contentForm.title}
-                        onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })}
-                        placeholder="Section title" className="rounded-lg border-gray-200 focus-visible:ring-orange-400 h-10" />
+                <form onSubmit={handleContentSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="section">Section</Label>
+                      <Select
+                        value={contentForm.section}
+                        onValueChange={(value) => setContentForm({ ...contentForm, section: value })}
+                        defaultValue="gift_offer"
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select section" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gift_offer">Gift Offer</SelectItem>
+                          <SelectItem value="hero">Hero Section</SelectItem>
+                          <SelectItem value="about">About Section</SelectItem>
+                          <SelectItem value="featured">Featured Section</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="contentSubtitle" className="text-sm font-medium text-gray-700">Subtitle</Label>
-                      <Input id="contentSubtitle" value={contentForm.subtitle}
-                        onChange={(e) => setContentForm({ ...contentForm, subtitle: e.target.value })}
-                        placeholder="Section subtitle" className="rounded-lg border-gray-200 focus-visible:ring-orange-400 h-10" />
+                    <div className="flex items-center space-x-2 pt-6">
+                      <Switch
+                        id="contentActive"
+                        checked={contentForm.isActive}
+                        onCheckedChange={(checked) => setContentForm({ ...contentForm, isActive: checked })}
+                      />
+                      <Label htmlFor="contentActive">Active</Label>
                     </div>
                   </div>
-
-                  {/* Content body */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="contentBody" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-gray-400" /> Content
-                    </Label>
-                    <Textarea id="contentBody" value={contentForm.content}
+                  <div>
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      value={contentForm.title}
+                      onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })}
+                      placeholder="Section title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="subtitle">Subtitle</Label>
+                    <Input
+                      id="subtitle"
+                      value={contentForm.subtitle}
+                      onChange={(e) => setContentForm({ ...contentForm, subtitle: e.target.value })}
+                      placeholder="Section subtitle"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="content">Content</Label>
+                    <Textarea
+                      id="content"
+                      value={contentForm.content}
                       onChange={(e) => setContentForm({ ...contentForm, content: e.target.value })}
-                      placeholder="Main content text…" rows={3}
-                      className="rounded-lg border-gray-200 focus-visible:ring-orange-400 resize-none text-sm" />
+                      placeholder="Main content text"
+                      rows={4}
+                    />
                   </div>
-
-                  {/* Settings JSON */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="contentSettings" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <Settings className="w-3.5 h-3.5 text-gray-400" /> Settings <span className="text-xs font-normal text-gray-400">(JSON)</span>
-                    </Label>
-                    <Textarea id="contentSettings" value={contentForm.settings}
+                  <div>
+                    <Label htmlFor="settings">Settings (JSON)</Label>
+                    <Textarea
+                      id="settings"
+                      value={contentForm.settings}
                       onChange={(e) => setContentForm({ ...contentForm, settings: e.target.value })}
-                      placeholder='{"color": "blue", "showIcon": true}' rows={2}
-                      className="rounded-lg border-gray-200 focus-visible:ring-orange-400 resize-none text-sm font-mono" />
+                      placeholder='{"color": "blue", "showIcon": true}'
+                      rows={3}
+                    />
                   </div>
-
-                  {/* Active toggle */}
-                  <div className="rounded-xl border border-gray-100 bg-gray-50/60 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Active</p>
-                        <p className="text-xs text-gray-400">Display this section on the homepage</p>
-                      </div>
-                      <Switch id="contentActive" checked={contentForm.isActive}
-                        onCheckedChange={(c) => setContentForm({ ...contentForm, isActive: c })} />
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-1">
-                    <Button type="submit" disabled={contentMutation.isPending}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl h-10 font-medium shadow-sm">
-                      {contentMutation.isPending ? "Saving…" : editingContent ? "Update Section" : "Create Section"}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setIsContentDialogOpen(false)}
-                      className="rounded-xl h-10 border-gray-200 text-gray-600 hover:bg-gray-50">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsContentDialogOpen(false)}
+                    >
                       Cancel
+                    </Button>
+                    <Button type="submit" disabled={contentMutation.isPending}>
+                      {contentMutation.isPending ? 'Saving...' : (editingContent ? 'Update' : 'Create')}
                     </Button>
                   </div>
                 </form>
@@ -786,76 +828,74 @@ export default function GiftManagementPage() {
             </Dialog>
           </div>
 
-          {/* ── Content list ── */}
-          {contentLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="rounded-2xl border border-gray-100 bg-white p-5 animate-pulse flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-1/3 rounded bg-gray-100" />
-                    <div className="h-3 w-2/3 rounded bg-gray-100" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : homepageContent.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-14 px-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
-                <LayoutTemplate className="w-7 h-7 text-orange-300" />
-              </div>
-              <h3 className="text-sm font-semibold text-gray-800 mb-1">No content sections yet</h3>
-              <p className="text-xs text-gray-400 mb-4 max-w-xs">Create homepage content sections to control what customers see.</p>
-              <Button onClick={() => setIsContentDialogOpen(true)}
-                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl shadow-sm text-sm">
-                <Plus className="w-4 h-4 mr-2" /> Add First Section
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {homepageContent.map((content) => (
-                <div key={content.id}
-                  className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm hover:shadow-md transition-all duration-200">
-                  {/* Section icon */}
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                    <LayoutTemplate className="w-5 h-5 text-orange-400" />
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 capitalize">
-                        {content.section.replace(/_/g, " ")}
-                      </span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                        ${content.isActive ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
-                        {content.isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                        {content.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold text-gray-800 mt-1 truncate">{content.title || <span className="text-gray-400 font-normal italic">No title</span>}</p>
-                    {content.subtitle && <p className="text-xs text-gray-400 truncate">{content.subtitle}</p>}
-                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                      <CalendarDays className="w-3 h-3" /> Updated {new Date(content.updatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button size="sm" variant="outline" onClick={() => handleEditContent(content)}
-                      className="rounded-xl border-gray-200 text-gray-600 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors h-8 text-xs px-3">
-                      <Edit className="w-3.5 h-3.5 mr-1" /> Edit
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => deleteContentMutation.mutate(content.id)}
-                      disabled={deleteContentMutation.isPending}
-                      className="rounded-xl border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors h-8 text-xs px-3">
-                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Section</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contentLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        Loading content...
+                      </TableCell>
+                    </TableRow>
+                  ) : homepageContent.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        No content sections found. Add your first content section!
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    homepageContent.map((content) => (
+                      <TableRow key={content.id}>
+                        <TableCell className="font-medium">
+                          <Badge variant="outline">
+                            {content.section.replace('_', ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{content.title || 'No title'}</TableCell>
+                        <TableCell>
+                          <Badge variant={content.isActive ? 'default' : 'secondary'}>
+                            {content.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(content.updatedAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditContent(content)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => deleteContentMutation.mutate(content.id)}
+                              disabled={deleteContentMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,16 +32,7 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  Copy,
-  ShoppingCart,
-  TrendingUp,
-  RefreshCw,
-  MapPin,
-  CreditCard,
-  User,
-  Mail,
-  Phone,
-  FileText,
+  Copy
 } from "lucide-react";
 
 interface Order {
@@ -366,24 +357,17 @@ export default function OrdersPage() {
 
   if (authLoading || isLoading || (isAuthenticated && ordersData === undefined)) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-4 border-teal-100 border-t-teal-500 animate-spin" />
-          <ShoppingCart className="absolute inset-0 m-auto h-6 w-6 text-teal-500" />
-        </div>
-        <p className="text-gray-500 text-sm font-medium">Loading orders…</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <XCircle className="h-12 w-12 text-red-400 mx-auto" />
-          <p className="text-red-600 font-semibold text-lg">Access Denied</p>
-          <p className="text-gray-500 text-sm">You need admin privileges to access this page.</p>
-        </div>
+      <div className="text-center py-8">
+        <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
+        <p className="text-gray-600 mt-2">You need admin privileges to access this page.</p>
       </div>
     );
   }
@@ -393,273 +377,188 @@ export default function OrdersPage() {
     ? orders
     : orders.filter((order: Order) => order.status === statusFilter);
 
-  // Quick stats
-  const totalRevenue = orders.reduce((s: number, o: Order) => s + parseFloat(o.total || "0"), 0);
-  const pendingCount = orders.filter((o: Order) => o.status === "pending").length;
-  const deliveredCount = orders.filter((o: Order) => o.status === "delivered").length;
-
-  const STATUS_TABS = [
-    { value: "all",        label: "All",        color: "bg-gray-600" },
-    { value: "pending",    label: "Pending",    color: "bg-amber-500" },
-    { value: "confirmed",  label: "Confirmed",  color: "bg-blue-500" },
-    { value: "processing", label: "Processing", color: "bg-orange-500" },
-    { value: "shipped",    label: "Shipped",    color: "bg-violet-500" },
-    { value: "delivered",  label: "Delivered",  color: "bg-emerald-500" },
-    { value: "cancelled",  label: "Cancelled",  color: "bg-red-500" },
-    { value: "refunded",   label: "Refunded",   color: "bg-rose-500" },
-  ];
-
   return (
-    <div className="space-y-6">
-
-      {/* ── Header banner ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-violet-700 p-6 text-white shadow-lg">
-        <div className="pointer-events-none absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/10" />
-        <div className="pointer-events-none absolute -bottom-8 -left-8 h-36 w-36 rounded-full bg-white/10" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Order Management</h1>
-            <p className="mt-1 text-sm text-violet-200">Track, update and manage all customer orders</p>
-          </div>
-          <div className="flex items-center gap-4 shrink-0">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{orders.length}</p>
-              <p className="text-xs text-violet-200 uppercase tracking-wide">Total</p>
-            </div>
-            <div className="w-px h-10 bg-white/20" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-amber-300">{pendingCount}</p>
-              <p className="text-xs text-violet-200 uppercase tracking-wide">Pending</p>
-            </div>
-            <div className="w-px h-10 bg-white/20" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-emerald-300">${totalRevenue.toFixed(0)}</p>
-              <p className="text-xs text-violet-200 uppercase tracking-wide">Revenue</p>
-            </div>
-          </div>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
+        <h2 className="text-2xl sm:text-3xl font-bold text-base-black">Order Management</h2>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="flex-1 sm:flex-none px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-aqua focus:border-transparent text-sm"
+          >
+            <option value="all">All Orders</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="refunded">Refunded</option>
+          </select>
         </div>
       </div>
 
-      {/* ── Status filter pills ── */}
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => {
-          const count = tab.value === "all"
-            ? orders.length
-            : orders.filter((o: Order) => o.status === tab.value).length;
-          const active = statusFilter === tab.value;
-          return (
-            <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                active
-                  ? `${tab.color} text-white border-transparent shadow-sm`
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {tab.label}
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${active ? "bg-white/25" : "bg-gray-100 text-gray-500"}`}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Orders list ── */}
       {filteredOrders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
-          <ShoppingCart className="h-12 w-12 opacity-30" />
-          <p className="text-sm">No orders found for this filter.</p>
+        <div className="text-center py-8">
+          <p className="text-gray-500">No orders found.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredOrders.map((order: Order) => (
-            <Card
-              key={order.id}
-              className="border-0 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-            >
-              <CardContent className="p-0">
-                {/* Top accent strip per status */}
-                <div className={`h-1 w-full ${
-                  order.status === "delivered" ? "bg-emerald-400" :
-                  order.status === "shipped"   ? "bg-violet-400" :
-                  order.status === "processing"? "bg-orange-400" :
-                  order.status === "confirmed" ? "bg-blue-400" :
-                  order.status === "cancelled" ? "bg-red-400" :
-                  order.status === "refunded"  ? "bg-rose-400" :
-                                                 "bg-amber-400"
-                }`} />
-
-                <div className="p-4 sm:p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-
-                    {/* Left: order identity */}
-                    <div className="flex-1 min-w-0 space-y-3">
-
-                      {/* Row 1: order # + badges */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          onClick={() => handleOrderNumberClick(order.id)}
-                          className="flex items-center gap-1.5 font-bold text-violet-700 hover:text-violet-900 text-sm sm:text-base group"
-                        >
-                          <FileText className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                          Order #{order.id}
-                        </button>
-                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${getStatusColor(order.status)}`}>
+        <div className="space-y-4">
+          {filteredOrders.map((order: Order) => {
+            return (
+              <Card key={order.id} className="overflow-hidden">
+                <CardContent className="p-3 sm:p-4 md:p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+                        <div className="flex items-center gap-2">
                           {getStatusIcon(order.status)}
-                          {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : "Unknown"}
-                        </span>
-                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${getPaymentColor(order.paymentStatus)}`}>
-                          <CreditCard className="h-3 w-3" />
-                          {order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : "Unknown"}
-                        </span>
+                          <button
+                            onClick={() => handleOrderNumberClick(order.id)}
+                            className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-sm sm:text-base"
+                          >
+                            Order #{order.id}
+                          </button>
+                        </div>
+                        <Badge className={`${getStatusColor(order.status)} px-3 py-1 text-xs font-semibold rounded-full`}>
+                          {order.status
+                            ? order.status.charAt(0).toUpperCase() + order.status.slice(1)
+                            : "Unknown"}
+                        </Badge>
+                        <Badge className={`${getPaymentColor(order.paymentStatus)} px-3 py-1 text-xs font-semibold rounded-full`}>
+                          {order.paymentStatus
+                            ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)
+                            : "Unknown"}
+                        </Badge>
                       </div>
 
-                      {/* Row 2: customer + date + total */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5 p-1.5 bg-violet-50 rounded-lg shrink-0">
-                            <User className="h-3.5 w-3.5 text-violet-600" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-gray-800 truncate">{order.customerName}</p>
-                            <p className="text-xs text-gray-500 truncate">{order.customerEmail}</p>
-                          </div>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm">
+                        <div>
+                          <p className="break-words"><strong>Customer:</strong> {order.customerName}</p>
+                          <p className="break-all"><strong>Email:</strong> {order.customerEmail}</p>
+                          <p><strong>Phone:</strong> {order.customerPhone}</p>
                         </div>
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5 p-1.5 bg-amber-50 rounded-lg shrink-0">
-                            <Clock className="h-3.5 w-3.5 text-amber-600" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-800">{format(new Date(order.createdAt), "MMM d, yyyy")}</p>
-                            <p className="text-xs text-gray-500">{format(new Date(order.createdAt), "h:mm a")}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5 p-1.5 bg-emerald-50 rounded-lg shrink-0">
-                            <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-emerald-700 text-base">${parseFloat(order.total).toFixed(2)}</p>
-                            <p className="text-xs text-gray-500">Order total</p>
-                          </div>
+                        <div>
+                          <p><strong>Total:</strong> ${parseFloat(order.total).toFixed(2)}</p>
+                          <p><strong>Order Date:</strong> {format(new Date(order.createdAt), "PPP")}</p>
+                          {order.trackingNumber && (
+                            <p><strong>Tracking:</strong> {order.trackingNumber}</p>
+                          )}
                         </div>
                       </div>
 
-                      {/* Row 3: tracking if present */}
-                      {order.trackingNumber && (
-                        <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 w-fit">
-                          <Truck className="h-3.5 w-3.5 text-violet-500" />
-                          <span className="font-medium">{order.shippingCarrier || "Carrier"}:</span>
-                          <span className="font-mono">{order.trackingNumber}</span>
-                        </div>
+                      {order.shippingCarrier && (
+                        <p className="text-sm"><strong>Carrier:</strong> {order.shippingCarrier}</p>
                       )}
                     </div>
 
-                    {/* Right: action button */}
-                    <div className="shrink-0">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenDialog(order)}
-                        className="h-9 px-4 text-violet-700 border-violet-200 hover:bg-violet-50 hover:border-violet-300 rounded-xl font-medium"
+                        className="flex items-center gap-1"
                       >
-                        <Edit className="w-3.5 h-3.5 mr-1.5" />
-                        Update
+                        <Edit className="w-3 h-3" />
+                        Update Status
                       </Button>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* ── Update Status Dialog ── */}
+      {/* Order Status Update Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Update Order</DialogTitle>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Order Status</DialogTitle>
           </DialogHeader>
-          {/* hero */}
-          <div className="bg-gradient-to-br from-violet-600 to-purple-700 p-5 text-white">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-xl">
-                <Edit className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Update Order #{selectedOrderId}</h3>
-                <p className="text-sm text-violet-200">Change status, carrier & tracking</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-5 space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Order Status</Label>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="status">Order Status</Label>
               <Select value={newStatus || undefined} onValueChange={setNewStatus}>
-                <SelectTrigger className="rounded-xl">
+                <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {["pending","confirmed","processing","shipped","delivered","cancelled","refunded"].map(s => (
-                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
-                  ))}
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Shipping Carrier</Label>
+            <div className="space-y-2">
+              <Label htmlFor="carrier">Shipping Carrier</Label>
               <select
+                id="carrier"
                 value={shippingCarrier === "" ? "no-carrier" : shippingCarrier}
                 onChange={(e) => setShippingCarrier(e.target.value)}
-                className="w-full px-3 py-2. rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-violet-400 focus:border-transparent outline-none py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-aqua focus:border-transparent"
               >
                 <option value="no-carrier">No Carrier</option>
-                {["FedEx","UPS","DHL","USPS","India Post","Blue Dart","Delhivery","Other"].map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+                <option value="FedEx">FedEx</option>
+                <option value="UPS">UPS</option>
+                <option value="DHL">DHL</option>
+                <option value="USPS">USPS</option>
+                <option value="India Post">India Post</option>
+                <option value="Blue Dart">Blue Dart</option>
+                <option value="Delhivery">Delhivery</option>
+                <option value="Other">Other</option>
               </select>
+              {shippingCarrier === "Other" && (
+                <Input
+                  placeholder="Enter custom carrier name"
+                  value={shippingCarrier}
+                  onChange={(e) => setShippingCarrier(e.target.value)}
+                  className="mt-2"
+                />
+              )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Tracking Number</Label>
+            <div className="space-y-2">
+              <Label htmlFor="tracking">Tracking Number</Label>
               <Input
+                id="tracking"
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
-                placeholder="e.g. 1Z999AA10123456784"
-                className="rounded-xl"
+                placeholder="Enter tracking number"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Notes</Label>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
               <Textarea
+                id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any additional notes…"
+                placeholder="Add any notes about this order..."
                 rows={3}
-                className="rounded-xl resize-none"
               />
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-4">
               <Button
                 onClick={handleUpdateOrder}
                 disabled={updateOrderMutation.isPending || !newStatus}
-                className="flex-1 bg-violet-600 hover:bg-violet-700 rounded-xl"
+                className="flex-1"
               >
-                {updateOrderMutation.isPending ? (
-                  <span className="flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Updating…</span>
-                ) : "Save Changes"}
+                {updateOrderMutation.isPending ? "Updating..." : "Update Order"}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
-                className="flex-1 rounded-xl"
+                className="flex-1"
               >
                 Cancel
               </Button>
@@ -668,238 +567,241 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Bill / Order Detail Dialog ── */}
+      {/* Bill Details Dialog */}
       <Dialog open={isBillDialogOpen} onOpenChange={setIsBillDialogOpen}>
-        <DialogContent className="max-w-2xl rounded-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Order Details</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Customer Bill - Order #{selectedBillOrderId}</DialogTitle>
           </DialogHeader>
 
-          {/* hero */}
-          <div className="bg-gradient-to-br from-violet-600 to-purple-700 p-5 text-white shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-xl">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Order #{selectedBillOrderId}</h3>
-                  {selectedOrderDetails && (
-                    <p className="text-sm text-violet-200">
-                      {format(new Date(selectedOrderDetails.createdAt), "MMMM d, yyyy · h:mm a")}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {selectedOrderDetails && (
-                <div className="text-right">
-                  <p className="text-2xl font-bold">${parseFloat(selectedOrderDetails.total || "0").toFixed(2)}</p>
-                  <p className="text-xs text-violet-200">Total</p>
-                </div>
-              )}
+          {isLoadingOrderDetails ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
             </div>
-          </div>
-
-          <div className="overflow-y-auto flex-1">
-            {isLoadingOrderDetails ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" />
-                  <p className="text-sm text-gray-500">Loading order details…</p>
+          ) : selectedOrderDetails ? (
+            <div className="space-y-6">
+              {/* Order Overview */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Order Date</p>
+                    <p className="font-semibold">
+                      {selectedOrderDetails.createdAt
+                        ? format(new Date(selectedOrderDetails.createdAt), 'MMM dd, yyyy')
+                        : 'N/A'
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <Badge className={`${getStatusColor(selectedOrderDetails.status || 'pending')} px-3 py-1 text-xs font-semibold rounded-full`}>
+                      {selectedOrderDetails.status
+                        ? selectedOrderDetails.status.charAt(0).toUpperCase() + selectedOrderDetails.status.slice(1)
+                        : 'Pending'
+                      }
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Payment</p>
+                    <Badge className={`${getPaymentColor(selectedOrderDetails.paymentStatus || '')} px-3 py-1 text-xs font-semibold rounded-full`}>
+                      {selectedOrderDetails.paymentStatus
+                        ? selectedOrderDetails.paymentStatus.charAt(0).toUpperCase() + selectedOrderDetails.paymentStatus.slice(1)
+                        : 'N/A'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Amount</p>
+                    <p className="font-semibold text-lg">
+                      ${selectedOrderDetails.total
+                        ? parseFloat(selectedOrderDetails.total).toFixed(2)
+                        : '0.00'
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
-            ) : selectedOrderDetails ? (
-              <div className="p-5 space-y-5">
 
-                {/* Status badges row */}
-                <div className="flex flex-wrap gap-2">
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${getStatusColor(selectedOrderDetails.status || "pending")}`}>
-                    {getStatusIcon(selectedOrderDetails.status || "pending")}
-                    {(selectedOrderDetails.status || "pending").charAt(0).toUpperCase() + (selectedOrderDetails.status || "pending").slice(1)}
-                  </span>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${getPaymentColor(selectedOrderDetails.paymentStatus || "")}`}>
-                    <CreditCard className="h-3 w-3" />
-                    {(selectedOrderDetails.paymentStatus || "N/A").charAt(0).toUpperCase() + (selectedOrderDetails.paymentStatus || "N/A").slice(1)}
-                  </span>
-                  {selectedOrderDetails.trackingNumber && (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
-                      <Truck className="h-3 w-3" />
-                      {selectedOrderDetails.shippingCarrier} · {selectedOrderDetails.trackingNumber}
-                    </span>
-                  )}
-                </div>
-
-                {/* Customer + Address */}
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {/* Customer info */}
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Customer</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-gray-500"
-                        onClick={() => {
-                          const info = [
-                            `Name: ${selectedOrderDetails.customerName || "N/A"}`,
-                            `Email: ${selectedOrderDetails.customerEmail || "N/A"}`,
-                            selectedOrderDetails.customerPhone ? `Phone: ${selectedOrderDetails.customerPhone}` : "",
-                          ].filter(Boolean).join("\n");
-                          copyToClipboard(info, "Customer info");
-                        }}
-                      >
-                        <Copy className="h-3 w-3 mr-1" /> Copy
-                      </Button>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="p-1 bg-white rounded border border-gray-100 shadow-sm">
-                          <User className="h-3 w-3 text-violet-600" />
-                        </div>
-                        <span className="font-medium text-gray-800">{selectedOrderDetails.customerName || "N/A"}</span>
-                      </div>
-                      {selectedOrderDetails.customerEmail && (
-                        <div className="flex items-center justify-between group">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <div className="p-1 bg-white rounded border border-gray-100 shadow-sm">
-                              <Mail className="h-3 w-3 text-teal-600" />
-                            </div>
-                            <span className="truncate max-w-[180px]">{selectedOrderDetails.customerEmail}</span>
-                          </div>
-                          <Button variant="ghost" size="sm" className="h-6 px-1 opacity-0 group-hover:opacity-100"
-                            onClick={() => copyToClipboard(selectedOrderDetails.customerEmail, "Email")}>
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      {selectedOrderDetails.customerPhone && (
-                        <div className="flex items-center justify-between group">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <div className="p-1 bg-white rounded border border-gray-100 shadow-sm">
-                              <Phone className="h-3 w-3 text-blue-600" />
-                            </div>
-                            {selectedOrderDetails.customerPhone}
-                          </div>
-                          <Button variant="ghost" size="sm" className="h-6 px-1 opacity-0 group-hover:opacity-100"
-                            onClick={() => copyToClipboard(selectedOrderDetails.customerPhone, "Phone")}>
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+              {/* Customer Information */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold">Customer Information</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const customerInfo = [
+                          `Name: ${selectedOrderDetails.customerName || 'N/A'}`,
+                          `Email: ${selectedOrderDetails.customerEmail || 'N/A'}`,
+                          selectedOrderDetails.customerPhone ? `Phone: ${selectedOrderDetails.customerPhone}` : '',
+                        ].filter(Boolean).join('\n');
+                        copyToClipboard(customerInfo, "Customer information");
+                      }}
+                      className="h-7 px-2 text-xs"
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copy All
+                    </Button>
                   </div>
-
-                  {/* Shipping address */}
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Ship To</p>
-                      {selectedOrderDetails.shippingAddress && (
+                      <p><strong>Name:</strong> {selectedOrderDetails.customerName || 'N/A'}</p>
+                      {selectedOrderDetails.customerName && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-2 text-xs text-gray-500"
-                          onClick={() => {
-                            const addr = [
-                              selectedOrderDetails.shippingAddress?.street || selectedOrderDetails.shippingAddress?.address,
-                              `${selectedOrderDetails.shippingAddress?.city || ""}, ${selectedOrderDetails.shippingAddress?.state || ""} ${selectedOrderDetails.shippingAddress?.zip || selectedOrderDetails.shippingAddress?.postalCode || ""}`,
-                              selectedOrderDetails.shippingAddress?.country,
-                            ].filter(Boolean).join("\n");
-                            copyToClipboard(addr, "Shipping address");
-                          }}
+                          onClick={() => copyToClipboard(selectedOrderDetails.customerName, "Customer name")}
+                          className="h-6 px-2"
                         >
-                          <Copy className="h-3 w-3 mr-1" /> Copy
+                          <Copy className="w-3 h-3" />
                         </Button>
                       )}
                     </div>
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <div className="p-1 bg-white rounded border border-gray-100 shadow-sm mt-0.5">
-                        <MapPin className="h-3 w-3 text-rose-500" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <p>{selectedOrderDetails.shippingAddress?.street || selectedOrderDetails.shippingAddress?.address || "N/A"}</p>
-                        <p className="text-gray-500">
-                          {selectedOrderDetails.shippingAddress?.city}, {selectedOrderDetails.shippingAddress?.state}{" "}
-                          {selectedOrderDetails.shippingAddress?.zip || selectedOrderDetails.shippingAddress?.postalCode}
-                        </p>
-                        <p className="font-medium">{selectedOrderDetails.shippingAddress?.country}</p>
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <p><strong>Email:</strong> {selectedOrderDetails.customerEmail || 'N/A'}</p>
+                      {selectedOrderDetails.customerEmail && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(selectedOrderDetails.customerEmail, "Email")}
+                          className="h-6 px-2"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                </div>
-
-                {/* Order items */}
-                <div className="rounded-xl border border-gray-100 overflow-hidden">
-                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Items Ordered</p>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {(selectedOrderDetails.items || []).length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm text-gray-400">No items found</div>
-                    ) : (
-                      selectedOrderDetails.items?.map((item: any, i: number) => {
-                        const price = parseFloat(item.price || item.book?.price || "0");
-                        const qty = item.quantity || 0;
-                        return (
-                          <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50">
-                            <div className="w-8 h-8 bg-violet-100 text-violet-700 rounded-lg flex items-center justify-center text-xs font-bold shrink-0">
-                              {qty}×
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm text-gray-800 truncate">{item.title || item.book?.title || "N/A"}</p>
-                              <p className="text-xs text-gray-500">{item.author || item.book?.author || ""}</p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="font-semibold text-sm text-gray-800">${(price * qty).toFixed(2)}</p>
-                              <p className="text-xs text-gray-400">${price.toFixed(2)} ea</p>
-                            </div>
-                          </div>
-                        );
-                      })
+                    {selectedOrderDetails.customerPhone && (
+                      <div className="flex items-center justify-between">
+                        <p><strong>Phone:</strong> {selectedOrderDetails.customerPhone}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(selectedOrderDetails.customerPhone, "Phone number")}
+                          className="h-6 px-2"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Order summary */}
-                <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 space-y-2">
-                  {[
-                    { label: "Subtotal", value: selectedOrderDetails.subtotal },
-                    { label: "Shipping", value: selectedOrderDetails.shipping },
-                    { label: "Tax",      value: selectedOrderDetails.tax },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex justify-between text-sm text-gray-600">
-                      <span>{label}</span>
-                      <span>${parseFloat(value || "0").toFixed(2)}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between font-bold text-base text-gray-900 border-t border-gray-200 pt-2 mt-2">
-                    <span>Total</span>
-                    <span className="text-violet-700">${parseFloat(selectedOrderDetails.total || "0").toFixed(2)}</span>
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold">Shipping Address</h3>
+                    {selectedOrderDetails.shippingAddress && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const address = [
+                            selectedOrderDetails.shippingAddress?.street || selectedOrderDetails.shippingAddress?.address,
+                            `${selectedOrderDetails.shippingAddress?.city || ''}, ${selectedOrderDetails.shippingAddress?.state || ''} ${selectedOrderDetails.shippingAddress?.zip || selectedOrderDetails.shippingAddress?.postalCode || ''}`,
+                            selectedOrderDetails.shippingAddress?.country
+                          ].filter(Boolean).join('\n');
+                          copyToClipboard(address, "Shipping address");
+                        }}
+                        className="h-6 px-2"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="text-sm">
+                    <p>{selectedOrderDetails.shippingAddress?.street || selectedOrderDetails.shippingAddress?.address || 'N/A'}</p>
+                    <p>
+                      {selectedOrderDetails.shippingAddress?.city || 'N/A'}, {selectedOrderDetails.shippingAddress?.state || 'N/A'} {selectedOrderDetails.shippingAddress?.zip || selectedOrderDetails.shippingAddress?.postalCode || 'N/A'}
+                    </p>
+                    <p>{selectedOrderDetails.shippingAddress?.country || 'N/A'}</p>
                   </div>
                 </div>
+              </div>
 
-                {/* Actions */}
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleDownloadBill}
-                    className="flex-1 bg-violet-600 hover:bg-violet-700 rounded-xl"
-                  >
-                    <Download className="w-4 h-4 mr-2" /> Download Invoice
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsBillDialogOpen(false)}
-                    className="flex-1 rounded-xl"
-                  >
-                    Close
-                  </Button>
+              {/* Order Items */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Order Items</h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Book</th>
+                        <th className="px-4 py-3 text-left">Author</th>
+                        <th className="px-4 py-3 text-right">Price</th>
+                        <th className="px-4 py-3 text-right">Quantity</th>
+                        <th className="px-4 py-3 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrderDetails.items?.map((item: any, index: number) => (
+                        <tr key={index} className="border-t">
+                          <td className="px-4 py-3">{item.title || item.book?.title || 'N/A'}</td>
+                          <td className="px-4 py-3">{item.author || item.book?.author || 'N/A'}</td>
+                          <td className="px-4 py-3 text-right">
+                            ${item.price ? parseFloat(item.price).toFixed(2) : item.book?.price ? parseFloat(item.book.price).toFixed(2) : '0.00'}
+                          </td>
+                          <td className="px-4 py-3 text-right">{item.quantity || 0}</td>
+                          <td className="px-4 py-3 text-right">
+                            ${item.price && item.quantity
+                              ? (parseFloat(item.price) * item.quantity).toFixed(2)
+                              : item.book?.price && item.quantity
+                                ? (parseFloat(item.book.price) * item.quantity).toFixed(2)
+                                : '0.00'
+                            }
+                          </td>
+                        </tr>
+                      )) || (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-3 text-center text-gray-500">No items found</td>
+                          </tr>
+                        )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
-                Order details not found.
+
+              {/* Order Summary */}
+              <div className="border-t pt-4">
+                <div className="flex justify-end">
+                  <div className="w-64 space-y-2">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>${selectedOrderDetails.subtotal ? parseFloat(selectedOrderDetails.subtotal).toFixed(2) : '0.00'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Shipping:</span>
+                      <span>${selectedOrderDetails.shipping ? parseFloat(selectedOrderDetails.shipping).toFixed(2) : '0.00'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tax:</span>
+                      <span>${selectedOrderDetails.tax ? parseFloat(selectedOrderDetails.tax).toFixed(2) : '0.00'}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <span>Total:</span>
+                      <span>${selectedOrderDetails.total ? parseFloat(selectedOrderDetails.total).toFixed(2) : '0.00'}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button onClick={handleDownloadBill} className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download Bill
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsBillDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Order details not found.</p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

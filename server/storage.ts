@@ -3,7 +3,6 @@ import {
   admins,
   books,
   categories,
-  bookCategories,
   orders,
   orderItems,
   cartItems,
@@ -26,7 +25,6 @@ import {
   type InsertBook,
   type Category,
   type InsertCategory,
-  type BookCategory,
   type Order,
   type InsertOrder,
   type OrderItem,
@@ -63,7 +61,7 @@ import {
   giftCart,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, like, and, or, sql, count, gte, lt, inArray } from "drizzle-orm";
+import { eq, desc, asc, like, and, or, sql, count, gte, lt } from "drizzle-orm";
 import { fuzzyMatch, getFuzzyMatchScore, findBestFuzzyMatches, normalizeText } from "./fuzzySearch";
 import { logAudit } from "./auditLog";
 
@@ -95,12 +93,10 @@ export interface IStorage {
     offset?: number;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
-  }): Promise<{ books: (Book & { categories: Category[] })[]; total: number }>;
-  getBookById(id: number): Promise<(Book & { category?: Category; categories?: Category[] }) | undefined>;
+  }): Promise<{ books: Book[]; total: number }>;
+  getBookById(id: number): Promise<(Book & { category?: Category }) | undefined>;
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: number, book: Partial<InsertBook>): Promise<Book>;
-  setBookCategories(bookId: number, categoryIds: number[]): Promise<void>;
-  isCategoryInUse(categoryId: number): Promise<boolean>;
   deleteBook(id: number, adminId?: number, ipAddress?: string): Promise<void>;
   updateBookStock(id: number, quantity: number): Promise<void>;
   getSearchSuggestions(query: string): Promise<string[]>;
@@ -253,79 +249,19 @@ export class DatabaseStorage implements IStorage {
         .limit(limit)
         .offset(offset);
 
-      if (customers.length === 0) {
-        return { customers: [], total };
-      }
-
-      const customerIds = customers.map(c => c.id);
-      const customerEmails = customers.map(c => c.email).filter(Boolean) as string[];
-
-      // Fetch real order stats matching by userId OR customerEmail (covers guest/email-only orders)
-      // Use a raw aggregate per customer identity
-      const orderStatsRaw = await db
-        .select({
-          matchId: sql<string>`COALESCE(${orders.userId}, '')`,
-          matchEmail: sql<string>`LOWER(${orders.customerEmail})`,
-          totalOrders: count(),
-          totalSpent: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)::text`,
-          lastOrderDate: sql<string | null>`MAX(${orders.createdAt})`
-        })
-        .from(orders)
-        .where(
-          or(
-            inArray(orders.userId, customerIds),
-            inArray(sql<string>`LOWER(${orders.customerEmail})`, customerEmails.map(e => e.toLowerCase()))
-          )
-        )
-        .groupBy(orders.userId, orders.customerEmail);
-
-      // Build a stats map keyed by customerId — merge rows belonging to same customer
-      const statsMap = new Map<string, { totalOrders: number; totalSpent: number; lastOrderDate: string | null }>();
-
-      for (const row of orderStatsRaw) {
-        // Find which customer this row belongs to
-        const customer =
-          customers.find(c => c.id === row.matchId) ||
-          customers.find(c => c.email?.toLowerCase() === row.matchEmail?.toLowerCase());
-
-        if (!customer) continue;
-
-        const existing = statsMap.get(customer.id);
-        const rowOrders = Number(row.totalOrders) || 0;
-        const rowSpent = parseFloat(row.totalSpent) || 0;
-        const rowDate = row.lastOrderDate;
-
-        if (!existing) {
-          statsMap.set(customer.id, {
-            totalOrders: rowOrders,
-            totalSpent: rowSpent,
-            lastOrderDate: rowDate ?? null,
-          });
-        } else {
-          existing.totalOrders += rowOrders;
-          existing.totalSpent += rowSpent;
-          if (rowDate && (!existing.lastOrderDate || rowDate > existing.lastOrderDate)) {
-            existing.lastOrderDate = rowDate;
-          }
-        }
-      }
-
-      const customersWithStats = customers.map(customer => {
-        const stats = statsMap.get(customer.id);
-        return {
-          id: customer.id,
-          email: customer.email,
-          phone: customer.phone,
-          firstName: customer.firstName,
-          lastName: customer.lastName,
-          authProvider: customer.authProvider,
-          createdAt: customer.createdAt,
-          isEmailVerified: customer.isEmailVerified,
-          totalOrders: stats?.totalOrders || 0,
-          totalSpent: stats ? stats.totalSpent.toFixed(2) : "0",
-          lastOrderDate: stats?.lastOrderDate || null
-        };
-      });
+      const customersWithStats = customers.map(customer => ({
+        id: customer.id,
+        email: customer.email,
+        phone: customer.phone,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        authProvider: customer.authProvider,
+        createdAt: customer.createdAt,
+        isEmailVerified: customer.isEmailVerified,
+        totalOrders: 0,
+        totalSpent: "0",
+        lastOrderDate: null
+      }));
 
       return { customers: customersWithStats, total };
     } catch (error) {
@@ -442,7 +378,7 @@ export class DatabaseStorage implements IStorage {
     offset?: number;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
-  } = {}): Promise<{ books: (Book & { categories: Category[] })[]; total: number }> {
+  } = {}): Promise<{ books: Book[]; total: number }> {
     const {
       categoryId,
       condition,
@@ -466,9 +402,7 @@ export class DatabaseStorage implements IStorage {
     // Always exclude out of stock books (stock = 0)
     conditions.push(sql`${books.stock} > 0`);
 
-    if (categoryId) conditions.push(
-      sql`(${books.categoryId} = ${categoryId} OR ${books.id} IN (SELECT book_id FROM book_categories WHERE category_id = ${categoryId}))`
-    );
+    if (categoryId) conditions.push(eq(books.categoryId, categoryId));
     if (condition) conditions.push(eq(books.condition, condition));
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
     if (bestseller !== undefined) conditions.push(eq(books.bestseller, bestseller));
@@ -544,22 +478,8 @@ export class DatabaseStorage implements IStorage {
       .orderBy(orderExpr)
       .limit(limit)
       .offset(offset);
-    // Attach categories from junction table to each book
-    const attachCategories = async (list: Book[]) => {
-      if (list.length === 0) return [];
-      const ids = list.map(b => b.id);
-      const junctionRows = await db
-        .select({ bookId: bookCategories.bookId, category: categories })
-        .from(bookCategories)
-        .innerJoin(categories, eq(bookCategories.categoryId, categories.id))
-        .where(sql`${bookCategories.bookId} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
-      const map = new Map<number, Category[]>();
-      for (const row of junctionRows) {
-        if (!map.has(row.bookId)) map.set(row.bookId, []);
-        map.get(row.bookId)!.push(row.category);
-      }
-      return list.map(b => ({ ...b, categories: map.get(b.id) ?? [] }));
-    };
+
+    // If search query returns few or no results, try fuzzy search
     if (isSearchQuery && total < 5) {
       console.log('Exact search returned', total, 'results. Trying fuzzy search...');
       
@@ -569,9 +489,7 @@ export class DatabaseStorage implements IStorage {
       // Get all books that match other filters (without search)
       const baseConditions = [];
       baseConditions.push(sql`${books.stock} > 0`);
-      if (categoryId) baseConditions.push(
-        sql`(${books.categoryId} = ${categoryId} OR ${books.id} IN (SELECT book_id FROM book_categories WHERE category_id = ${categoryId}))`
-      );
+      if (categoryId) baseConditions.push(eq(books.categoryId, categoryId));
       if (condition) baseConditions.push(eq(books.condition, condition));
       if (featured !== undefined) baseConditions.push(eq(books.featured, featured));
       if (bestseller !== undefined) baseConditions.push(eq(books.bestseller, bestseller));
@@ -633,16 +551,16 @@ export class DatabaseStorage implements IStorage {
           .map(item => item.book);
         
         return { 
-          books: await attachCategories(booksList), 
+          books: booksList, 
           total: fuzzyMatches.length 
         };
       }
     }
 
-    return { books: await attachCategories(booksList), total };
+    return { books: booksList, total };
   }
 
-  async getBookById(id: number): Promise<(Book & { category?: Category; categories?: Category[] }) | undefined> {
+  async getBookById(id: number): Promise<(Book & { category?: Category }) | undefined> {
     const [result] = await db
       .select()
       .from(books)
@@ -651,19 +569,9 @@ export class DatabaseStorage implements IStorage {
 
     if (!result) return undefined;
 
-    // Fetch all categories for this book from the junction table
-    const junctionRows = await db
-      .select({ category: categories })
-      .from(bookCategories)
-      .innerJoin(categories, eq(bookCategories.categoryId, categories.id))
-      .where(eq(bookCategories.bookId, id));
-
-    const allCategories = junctionRows.map(r => r.category);
-
     return {
       ...result.books,
       category: result.categories || undefined,
-      categories: allCategories.length > 0 ? allCategories : (result.categories ? [result.categories] : []),
     };
   }
 
@@ -679,35 +587,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(books.id, id))
       .returning();
     return updatedBook;
-  }
-
-  async setBookCategories(bookId: number, categoryIds: number[]): Promise<void> {
-    // Delete existing junction rows for this book
-    await db.delete(bookCategories).where(eq(bookCategories.bookId, bookId));
-    // Insert new ones
-    if (categoryIds.length > 0) {
-      await db.insert(bookCategories).values(
-        categoryIds.map(categoryId => ({ bookId, categoryId }))
-      );
-    }
-    // Keep books.categoryId in sync with first category (backward compat)
-    const primaryCategoryId = categoryIds.length > 0 ? categoryIds[0] : null;
-    await db.update(books).set({ categoryId: primaryCategoryId }).where(eq(books.id, bookId));
-  }
-
-  async isCategoryInUse(categoryId: number): Promise<boolean> {
-    // Check junction table (covers all books regardless of stock)
-    const [{ total }] = await db
-      .select({ total: count() })
-      .from(bookCategories)
-      .where(eq(bookCategories.categoryId, categoryId));
-    if (total > 0) return true;
-    // Also check books.categoryId for legacy books not yet in junction table
-    const [{ legacyTotal }] = await db
-      .select({ legacyTotal: count() })
-      .from(books)
-      .where(eq(books.categoryId, categoryId));
-    return legacyTotal > 0;
   }
 
   async deleteBook(id: number, adminId?: number, ipAddress?: string): Promise<void> {

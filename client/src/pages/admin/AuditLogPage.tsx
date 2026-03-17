@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  ShieldCheck, Filter, User, Clock, Database, AlertTriangle, Eye,
-  RotateCcw, RefreshCw, Trash2, PenLine, PlusCircle, BookOpen,
-  FolderOpen, Ticket, Package, Gift, FileText, CalendarDays, Fingerprint,
-  Globe, StickyNote, ChevronRight,
-} from "lucide-react";
+import { Calendar, Filter, Search, User, Clock, Database, AlertCircle, Eye, RotateCcw, LoaderIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface AuditLog {
   id: number;
@@ -150,387 +153,377 @@ export default function AuditLogPage() {
     coupons: auditLogs.filter(l => l.tableName === 'coupons').length,
   };
 
-  // ── helpers ──────────────────────────────────────────
-  const actionMeta: Record<string, { label: string; icon: React.ReactNode; bg: string; text: string; dot: string }> = {
-    DELETE: { label: "Delete", icon: <Trash2 className="w-3 h-3" />, bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
-    UPDATE: { label: "Update", icon: <PenLine className="w-3 h-3" />, bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-400" },
-    CREATE: { label: "Create", icon: <PlusCircle className="w-3 h-3" />, bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
-    RESTORE: { label: "Restore", icon: <RotateCcw className="w-3 h-3" />, bg: "bg-sky-50", text: "text-sky-700", dot: "bg-sky-500" },
-  };
-
-  const tableMeta: Record<string, {  label: string; Icon: React.ElementType }> = {
-    books: {  label: "Books", Icon: BookOpen },
-    categories: {  label: "Categories", Icon: FolderOpen },
-    coupons: {  label: "Coupons", Icon: Ticket },
-    orders: {  label: "Orders", Icon: Package },
-    users: {  label: "Users", Icon: User },
-    gift_items: {  label: "Gift Items", Icon: Gift },
-    gift_categories: {  label: "Gift Categories", Icon: Gift },
-  };
-
-  const getActionMeta = (action: string) => actionMeta[action.toUpperCase()] ?? {
-    label: action, icon: <FileText className="w-3 h-3" />, bg: "bg-gray-50", text: "text-gray-600", dot: "bg-gray-400",
-  };
-
-  const getTableMeta = (t: string) => tableMeta[t] ?? { emoji: "📄", label: t, Icon: Database };
-
   return (
-    <div className="space-y-6 sm:space-y-8">
-
-      {/* ── Page Header ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 via-white to-zinc-50 border border-slate-200 p-6 sm:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-slate-100/60 to-transparent rounded-full -translate-y-1/4 translate-x-1/4 pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Audit Trail</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Track all deletions and changes made in your system</p>
-            </div>
-          </div>
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            className="w-full sm:w-auto rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 h-10"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Audit Trail</h1>
+          <Button onClick={() => refetch()} className="mt-4 rounded-2xl">
+            <LoaderIcon className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
         </div>
 
-        {/* Stats strip */}
-        <div className="relative mt-5 flex flex-wrap gap-3">
-          {[
-            { label: "Total Events", value: stats.total, color: "bg-slate-100 text-slate-700" },
-            { label: "Books", value: stats.books, color: "bg-violet-100 text-violet-700" },
-            { label: "Categories", value: stats.categories, color: "bg-sky-100 text-sky-700" },
-            { label: "Coupons", value: stats.coupons, color: "bg-amber-100 text-amber-700" },
-          ].map(({ label, value, color }) => (
-            <span key={label} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${color}`}>
-              {label} <span className="font-bold">{value}</span>
-            </span>
-          ))}
-        </div>
+        <p className="text-sm text-gray-600">Track all deletions and changes made in your system</p>
       </div>
 
-      {/* ── Filters ── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Time period */}
-        <div className="flex items-center gap-2 flex-1">
-          <CalendarDays className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <select
-            value={days}
-            onChange={(e) => setDays(parseInt(e.target.value))}
-            className="flex-1 h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="60">Last 60 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="365">Last year</option>
-          </select>
-        </div>
-
-        {/* Table filter */}
-        <div className="flex items-center gap-2 flex-1">
-          <Database className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <select
-            value={tableFilter}
-            onChange={(e) => setTableFilter(e.target.value)}
-            className="flex-1 h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-          >
-            <option value="all">All Tables</option>
-            <option value="books">Books</option>
-            <option value="categories">Categories</option>
-            <option value="coupons">Coupons</option>
-            <option value="gift_items">Gift Items</option>
-            <option value="gift_categories">Gift Categories</option>
-          </select>
-        </div>
-
-        {/* Action filter pills */}
-        <div className="flex gap-1.5 p-1 rounded-xl bg-gray-100/80 flex-shrink-0">
-          {(["all", "DELETE", "UPDATE", "CREATE", "RESTORE"]).map(f => {
-            const meta = f !== "all" ? getActionMeta(f) : null;
-            return (
-              <button
-                key={f}
-                onClick={() => setActionFilter(f)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150
-                  ${actionFilter === f ? "bg-white shadow-sm text-slate-700" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                {f === "all" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Log list ── */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-gray-100 bg-white p-5 animate-pulse flex gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gray-100 flex-shrink-0" />
-              <div className="flex-1 space-y-2.5">
-                <div className="h-4 w-1/3 rounded bg-gray-100" />
-                <div className="h-3 w-2/3 rounded bg-gray-100" />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Deletions</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
+              <AlertCircle className="h-8 w-8 text-red-500" />
             </div>
-          ))}
-        </div>
-      ) : filteredLogs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-16 px-4 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-            <ShieldCheck className="w-7 h-7 text-slate-300" />
-          </div>
-          <h3 className="text-sm font-semibold text-gray-800 mb-1">No audit events found</h3>
-          <p className="text-xs text-gray-400 max-w-xs">Try adjusting the time period or filters above.</p>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          <p className="text-xs text-gray-400 font-medium px-1">{filteredLogs.length} event{filteredLogs.length !== 1 ? "s" : ""}</p>
-          {filteredLogs.map((log) => {
-            const am = getActionMeta(log.action);
-            const tm = getTableMeta(log.tableName);
-            const canRestore = log.action === "DELETE" && log.oldData;
+          </CardContent>
+        </Card>
 
-            return (
-              <div
-                key={log.id}
-                className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm hover:shadow-md transition-all duration-200"
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Books Deleted</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.books}</p>
+              </div>
+              <span className="text-3xl">📚</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Categories Deleted</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.categories}</p>
+              </div>
+              <span className="text-3xl">📁</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Coupons Deleted</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.coupons}</p>
+              </div>
+              <span className="text-3xl">🎟️</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Time Period</label>
+              <select
+                value={days}
+                onChange={(e) => setDays(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="60">Last 60 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+              </select>
+            </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Action badge */}
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${am.bg} ${am.text}`}>
-                      {am.icon}{am.label}
-                    </span>
-                    {/* Table badge */}
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                      <Database className="w-3 h-3" />{tm.label}
-                    </span>
-                    {/* Record ID */}
-                    <code className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono">
-                      #{log.recordId}
-                    </code>
-                  </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Table</label>
+              <select
+                value={tableFilter}
+                onChange={(e) => setTableFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Tables</option>
+                <option value="books">Books</option>
+                <option value="categories">Categories</option>
+                <option value="coupons">Coupons</option>
+                <option value="gift_items">Gift Items</option>
+                <option value="gift_categories">Gift Categories</option>
+              </select>
+            </div>
 
-                  <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                    {/* Who */}
-                    <span className="flex items-center gap-1">
-                      <User className="w-3 h-3 text-gray-300" />
-                      {log.adminName
-                        ? <span className="font-medium text-gray-700">{log.adminName}</span>
-                        : log.adminId
-                          ? `Admin #${log.adminId}`
-                          : log.userId
-                            ? `User ${log.userId}`
-                            : <span className="italic text-gray-400">System</span>
-                      }
-                    </span>
-                    {/* When */}
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-gray-300" />
-                      {formatDate(log.createdAt)}
-                    </span>
-                    {/* Notes */}
-                    {log.notes && (
-                      <span className="flex items-center gap-1 truncate max-w-xs">
-                        <StickyNote className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                        {log.notes}
-                      </span>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Action</label>
+              <select
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Actions</option>
+                <option value="DELETE">Delete</option>
+                <option value="UPDATE">Update</option>
+                <option value="CREATE">Create</option>
+              </select>
+            </div>
+          </div>
+
+
+        </CardContent>
+      </Card>
+
+      {/* Audit Logs Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Deletion History ({filteredLogs.length} records)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            {isLoading ? (
+              <div className="text-center py-8 text-gray-500">Loading audit logs...</div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No audit logs found</div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Date & Time</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Table</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Record</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Action</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Admin</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Details</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLogs.map((log) => (
+                    <tr key={log.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                          {formatDate(log.createdAt)}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{getTableIcon(log.tableName)}</span>
+                          <span className="font-medium">{log.tableName}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+                          #{log.recordId}
+                        </code>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge className={getActionColor(log.action)}>
+                          {log.action}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <div className="text-sm">
+                            {log.adminName ? (
+                              <div>
+                                <div className="font-medium">{log.adminName}</div>
+                                <div className="text-xs text-gray-500">{log.adminEmail || log.adminUsername}</div>
+                              </div>
+                            ) : log.adminId ? (
+                              <span>Admin #{log.adminId}</span>
+                            ) : log.userId ? (
+                              <span>User: {log.userId}</span>
+                            ) : (
+                              <span className="text-gray-400">System</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-sm text-gray-600 truncate max-w-xs">
+                          {log.notes || 'No notes'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDetails(log)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          {log.action === 'DELETE' && log.oldData && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleRestore(log)}
+                              disabled={restoringId === log.id}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-1" />
+                              {restoringId === log.id ? 'Restoring...' : 'Restore'}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Audit Log Details</DialogTitle>
+          </DialogHeader>
+          {selectedLog && (
+            <div className="space-y-4">
+              {/* Metadata */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Table</label>
+                  <p className="mt-1">{selectedLog.tableName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Record ID</label>
+                  <p className="mt-1">#{selectedLog.recordId}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Action</label>
+                  <p className="mt-1">
+                    <Badge className={getActionColor(selectedLog.action)}>
+                      {selectedLog.action}
+                    </Badge>
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Date & Time</label>
+                  <p className="mt-1">{formatDate(selectedLog.createdAt)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Admin</label>
+                  <div className="mt-1">
+                    {selectedLog.adminName ? (
+                      <div>
+                        <p className="font-medium">{selectedLog.adminName}</p>
+                        {selectedLog.adminEmail && (
+                          <p className="text-sm text-gray-600">{selectedLog.adminEmail}</p>
+                        )}
+                        {selectedLog.adminUsername && (
+                          <p className="text-xs text-gray-500">@{selectedLog.adminUsername}</p>
+                        )}
+                      </div>
+                    ) : selectedLog.adminId ? (
+                      <p>Admin #{selectedLog.adminId}</p>
+                    ) : (
+                      <p className="text-gray-400">N/A</p>
                     )}
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 flex-shrink-0">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleViewDetails(log)}
-                    className="rounded-xl border-gray-200 text-gray-600 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 h-8 text-xs px-3"
-                  >
-                    <Eye className="w-3.5 h-3.5 mr-1" /> View
-                  </Button>
-                  {canRestore && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleRestore(log)}
-                      disabled={restoringId === log.id}
-                      className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white h-8 text-xs px-3 shadow-sm"
-                    >
-                      <RotateCcw className={`w-3.5 h-3.5 mr-1 ${restoringId === log.id ? "animate-spin" : ""}`} />
-                      {restoringId === log.id ? "Restoring…" : "Restore"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Details Dialog ── */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl p-0 gap-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100">
-            <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
-                <ShieldCheck className="w-4 h-4 text-slate-600" />
-              </span>
-              Audit Event Details
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedLog && (
-            <div className="px-6 py-5 space-y-5">
-              {/* Meta grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { label: "Table", value: getTableMeta(selectedLog.tableName).label, icon: <Database className="w-3.5 h-3.5" /> },
-                  { label: "Record ID", value: `#${selectedLog.recordId}`, icon: <Fingerprint className="w-3.5 h-3.5" /> },
-                  { label: "Date", value: formatDate(selectedLog.createdAt), icon: <CalendarDays className="w-3.5 h-3.5" /> },
-                  { label: "IP", value: selectedLog.ipAddress || "N/A", icon: <Globe className="w-3.5 h-3.5" /> },
-                  { label: "Action", value: null, icon: null },
-                  { label: "Admin", value: null, icon: null },
-                ].filter(f => f.label !== "Action" && f.label !== "Admin").map(({ label, value, icon }) => (
-                  <div key={label} className="rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3">
-                    <p className="text-xs text-gray-400 font-medium flex items-center gap-1 mb-1">{icon}{label}</p>
-                    <p className="text-sm font-semibold text-gray-800 truncate">{value}</p>
-                  </div>
-                ))}
-                {/* Action */}
-                <div className="rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3">
-                  <p className="text-xs text-gray-400 font-medium mb-1.5">Action</p>
-                  {(() => {
-                    const am = getActionMeta(selectedLog.action); return (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${am.bg} ${am.text}`}>
-                        {am.icon}{am.label}
-                      </span>
-                    );
-                  })()}
-                </div>
-                {/* Admin */}
-                <div className="rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3">
-                  <p className="text-xs text-gray-400 font-medium flex items-center gap-1 mb-1"><User className="w-3.5 h-3.5" />Admin</p>
-                  {selectedLog.adminName ? (
-                    <>
-                      <p className="text-sm font-semibold text-gray-800">{selectedLog.adminName}</p>
-                      <p className="text-xs text-gray-400">{selectedLog.adminEmail || selectedLog.adminUsername}</p>
-                    </>
-                  ) : selectedLog.adminId ? (
-                    <p className="text-sm font-semibold text-gray-800">Admin #{selectedLog.adminId}</p>
-                  ) : (
-                    <p className="text-sm text-gray-400 italic">System</p>
-                  )}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">IP Address</label>
+                  <p className="mt-1">{selectedLog.ipAddress || 'N/A'}</p>
                 </div>
               </div>
 
               {/* Notes */}
               {selectedLog.notes && (
-                <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
-                  <p className="text-xs font-medium text-amber-600 flex items-center gap-1 mb-1">
-                    <StickyNote className="w-3.5 h-3.5" />Notes
-                  </p>
-                  <p className="text-sm text-amber-800">{selectedLog.notes}</p>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Notes</label>
+                  <p className="mt-1 p-3 bg-gray-50 rounded border">{selectedLog.notes}</p>
                 </div>
               )}
 
-              {/* Human-readable summary */}
-              {selectedLog.oldData && selectedLog.tableName === "books" && (
-                <div className="rounded-xl border border-gray-100 overflow-hidden">
-                  <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📚 Book Details</p>
-                  </div>
-                  <div className="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-                    {[
-                      ["Title", selectedLog.oldData.title],
-                      ["Author", selectedLog.oldData.author],
-                      ["ISBN", selectedLog.oldData.isbn || "N/A"],
-                      ["Price", `$${selectedLog.oldData.price}`],
-                      ["Stock", selectedLog.oldData.stockQuantity ?? 0],
-                      ["Condition", selectedLog.oldData.condition || "N/A"],
-                    ].map(([k, v]) => (
-                      <div key={k as string}>
-                        <span className="text-gray-400">{k}: </span>
-                        <span className="font-medium text-gray-800">{v as string}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selectedLog.oldData && selectedLog.tableName === "categories" && (
-                <div className="rounded-xl border border-gray-100 overflow-hidden">
-                  <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📁 Category Details</p>
-                  </div>
-                  <div className="px-4 py-3 space-y-1 text-sm">
-                    <div><span className="text-gray-400">Name: </span><span className="font-medium text-gray-800">{selectedLog.oldData.name}</span></div>
-                    <div><span className="text-gray-400">Description: </span><span className="font-medium text-gray-800">{selectedLog.oldData.description || "N/A"}</span></div>
-                  </div>
-                </div>
-              )}
-
-              {selectedLog.oldData && selectedLog.tableName === "coupons" && (
-                <div className="rounded-xl border border-gray-100 overflow-hidden">
-                  <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">🎟️ Coupon Details</p>
-                  </div>
-                  <div className="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-                    {[
-                      ["Code", selectedLog.oldData.code],
-                      ["Discount", `${selectedLog.oldData.discountValue}${selectedLog.oldData.discountType === "percentage" ? "%" : " fixed"}`],
-                      ["Valid From", selectedLog.oldData.validFrom ? new Date(selectedLog.oldData.validFrom).toLocaleDateString() : "N/A"],
-                      ["Valid Until", selectedLog.oldData.validUntil ? new Date(selectedLog.oldData.validUntil).toLocaleDateString() : "N/A"],
-                    ].map(([k, v]) => (
-                      <div key={k as string}>
-                        <span className="text-gray-400">{k}: </span>
-                        <span className="font-medium text-gray-800">{v as string}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Raw data */}
+              {/* Old Data */}
               {selectedLog.oldData && (
-                <details className="group">
-                  <summary className="cursor-pointer text-xs font-medium text-gray-500 hover:text-gray-700 flex items-center gap-1.5 select-none">
-                    <ChevronRight className="w-3.5 h-3.5 group-open:rotate-90 transition-transform" />
-                    Raw data (before deletion)
-                  </summary>
-                  <div className="mt-2 rounded-xl bg-red-50 border border-red-100 p-4 overflow-x-auto">
-                    <pre className="text-xs text-red-800 leading-relaxed">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Data Before Deletion
+                  </label>
+                  <div className="bg-red-50 border border-red-200 rounded p-4">
+                    <pre className="text-sm overflow-x-auto">
                       {JSON.stringify(selectedLog.oldData, null, 2)}
                     </pre>
                   </div>
-                </details>
-              )}
 
-              {/* Dialog actions */}
-              <div className="flex gap-3 pt-1 border-t border-gray-100">
-                {selectedLog.action === "DELETE" && selectedLog.oldData && (
-                  <Button
-                    onClick={() => handleRestore(selectedLog)}
-                    disabled={restoringId === selectedLog.id}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-10 font-medium shadow-sm"
-                  >
-                    <RotateCcw className={`w-4 h-4 mr-2 ${restoringId === selectedLog.id ? "animate-spin" : ""}`} />
-                    {restoringId === selectedLog.id ? "Restoring…" : "Restore Record"}
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  onClick={() => setDetailsOpen(false)}
-                  className="rounded-xl h-10 border-gray-200 text-gray-600 hover:bg-gray-50"
-                >
-                  Close
-                </Button>
-              </div>
+                  {/* Human-readable summary for books */}
+                  {selectedLog.tableName === 'books' && selectedLog.oldData && (
+                    <div className="mt-3 p-4 bg-white border rounded">
+                      <h4 className="font-semibold mb-2">Book Details:</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><strong>Title:</strong> {selectedLog.oldData.title}</p>
+                        <p><strong>Author:</strong> {selectedLog.oldData.author}</p>
+                        <p><strong>ISBN:</strong> {selectedLog.oldData.isbn || 'N/A'}</p>
+                        <p><strong>Price:</strong> ${selectedLog.oldData.price}</p>
+                        <p><strong>Stock:</strong> {selectedLog.oldData.stockQuantity || 0}</p>
+                        {selectedLog.oldData.condition && (
+                          <p><strong>Condition:</strong> {selectedLog.oldData.condition}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Human-readable summary for categories */}
+                  {selectedLog.tableName === 'categories' && selectedLog.oldData && (
+                    <div className="mt-3 p-4 bg-white border rounded">
+                      <h4 className="font-semibold mb-2">Category Details:</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><strong>Name:</strong> {selectedLog.oldData.name}</p>
+                        <p><strong>Description:</strong> {selectedLog.oldData.description || 'N/A'}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Human-readable summary for coupons */}
+                  {selectedLog.tableName === 'coupons' && selectedLog.oldData && (
+                    <div className="mt-3 p-4 bg-white border rounded">
+                      <h4 className="font-semibold mb-2">Coupon Details:</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><strong>Code:</strong> {selectedLog.oldData.code}</p>
+                        <p><strong>Discount:</strong> {selectedLog.oldData.discountValue}{selectedLog.oldData.discountType === 'percentage' ? '%' : ' fixed'}</p>
+                        <p><strong>Valid From:</strong> {selectedLog.oldData.validFrom ? new Date(selectedLog.oldData.validFrom).toLocaleDateString() : 'N/A'}</p>
+                        <p><strong>Valid Until:</strong> {selectedLog.oldData.validUntil ? new Date(selectedLog.oldData.validUntil).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {selectedLog && selectedLog.action === 'DELETE' && selectedLog.oldData && (
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setDetailsOpen(false)}
+              >
+                Close
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => handleRestore(selectedLog)}
+                disabled={restoringId === selectedLog.id}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                {restoringId === selectedLog.id ? 'Restoring...' : 'Restore Record'}
+              </Button>
             </div>
           )}
         </DialogContent>

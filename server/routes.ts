@@ -10,7 +10,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
 import {
@@ -89,8 +89,6 @@ function getRefundProcessingTime(refundMethod: string): string {
       return '3-5 business days';
     case 'razorpay':
       return '5-7 business days';
-    case 'stripe':
-      return '5-10 business days';
     case 'bank_transfer':
       return '7-10 business days';
     default:
@@ -195,130 +193,6 @@ async function sendRefundConfirmationEmail(data: {
     });
   } catch (error) {
     console.error('Error sending refund confirmation email:', error);
-    return false;
-  }
-}
-
-// Helper function to send return request status update email
-async function sendReturnStatusUpdateEmail(data: {
-  customerEmail: string;
-  customerName: string;
-  orderId: number;
-  returnRequestId: number;
-  returnRequestNumber: string;
-  newStatus: string;
-  adminNotes?: string;
-  totalRefundAmount: string;
-}): Promise<boolean> {
-  try {
-    const statusLabels: Record<string, string> = {
-      pending: 'Pending Review',
-      approved: 'Approved',
-      rejected: 'Rejected',
-      refund_processed: 'Refund Processed',
-    };
-
-    const statusColors: Record<string, { header: string; badge: string; badgeText: string }> = {
-      pending: { header: 'linear-gradient(135deg, #f59e0b, #d97706)', badge: '#fef3c7', badgeText: '#92400e' },
-      approved: { header: 'linear-gradient(135deg, #10b981, #047857)', badge: '#d1fae5', badgeText: '#064e3b' },
-      rejected: { header: 'linear-gradient(135deg, #ef4444, #b91c1c)', badge: '#fee2e2', badgeText: '#991b1b' },
-      refund_processed: { header: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', badge: '#eff6ff', badgeText: '#1e40af' },
-    };
-
-    const statusMessages: Record<string, { headline: string; body: string }> = {
-      pending: {
-        headline: 'Your Return Request Is Under Review',
-        body: 'We have received your return request and our team is currently reviewing it. We will notify you once a decision has been made.',
-      },
-      approved: {
-        headline: 'Your Return Request Has Been Approved!',
-        body: `Great news! Your return request has been approved. We will process your refund of <strong>$${data.totalRefundAmount}</strong> shortly. You will receive a separate confirmation once the refund has been issued.`,
-      },
-      rejected: {
-        headline: 'Your Return Request Has Been Reviewed',
-        body: 'After reviewing your return request, we are unable to process it at this time. Please see the notes below for more details. If you believe this is an error, please contact our support team.',
-      },
-      refund_processed: {
-        headline: 'Your Refund Has Been Processed!',
-        body: `Your refund of <strong>$${data.totalRefundAmount}</strong> has been successfully processed. Please allow 5–10 business days for the amount to appear in your original payment method.`,
-      },
-    };
-
-    const statusKey = data.newStatus.toLowerCase();
-    const colors = statusColors[statusKey] ?? { header: 'linear-gradient(135deg, #6b7280, #374151)', badge: '#f3f4f6', badgeText: '#1f2937' };
-    const label = statusLabels[statusKey] ?? data.newStatus;
-    const msg = statusMessages[statusKey] ?? { headline: 'Return Request Update', body: 'There has been an update to your return request.' };
-
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Return Request Update - A2Z BOOKSHOP</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: ${colors.header}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-          .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; background: ${colors.badge}; color: ${colors.badgeText}; margin: 10px 0; }
-          .details-box { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #dc2626; margin: 20px 0; }
-          .notes-box { background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0; }
-          .contact-box { background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          .footer { text-align: center; padding: 20px; font-size: 14px; color: #666; }
-          .link { color: #dc2626; text-decoration: none; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>A<span style="color:#fca5a5">2</span>Z BOOKSHOP</h1>
-          <h2>Return Request Update</h2>
-          <div class="badge">${label}</div>
-        </div>
-        <div class="content">
-          <p>Dear ${data.customerName},</p>
-          <h3>${msg.headline}</h3>
-          <p>${msg.body}</p>
-
-          <div class="details-box">
-            <h3>Return Request Details</h3>
-            <p><strong>Return Request #:</strong> ${data.returnRequestNumber}</p>
-            <p><strong>Order ID:</strong> #${data.orderId}</p>
-            <p><strong>Status:</strong> ${label}</p>
-            <p><strong>Refund Amount:</strong> $${data.totalRefundAmount}</p>
-          </div>
-
-          ${data.adminNotes ? `
-          <div class="notes-box">
-            <h3>Notes from Our Team</h3>
-            <p>${data.adminNotes}</p>
-          </div>` : ''}
-
-          <div class="contact-box">
-            <h3>Need Help?</h3>
-            <p>If you have any questions about your return request, please contact our support team.</p>
-            <p>📧 <a href="mailto:support@a2zbookshop.com" class="link">support@a2zbookshop.com</a></p>
-            <p>🌐 <a href="https://a2zbookshop.com" class="link">a2zbookshop.com</a></p>
-          </div>
-
-          <p>Thank you for choosing A2Z BOOKSHOP!</p>
-        </div>
-        <div class="footer">
-          <p>© 2025 A2Z BOOKSHOP. All rights reserved.</p>
-          <p><a href="https://a2zbookshop.com" class="link">a2zbookshop.com</a></p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    return await sendEmail({
-      to: data.customerEmail,
-      from: 'support@a2zbookshop.com',
-      subject: `Return Request #${data.returnRequestNumber} — Status Updated to ${label} | A2Z BOOKSHOP`,
-      html,
-      text: `Dear ${data.customerName},\n\nYour return request #${data.returnRequestNumber} for Order #${data.orderId} has been updated to: ${label}.\n${data.adminNotes ? `\nNotes: ${data.adminNotes}\n` : ''}\nRefund Amount: $${data.totalRefundAmount}\n\nThank you for choosing A2Z BOOKSHOP!\n\nBest regards,\nA2Z BOOKSHOP Team`,
-    });
-  } catch (error) {
-    console.error('Error sending return status update email:', error);
     return false;
   }
 }
@@ -1817,7 +1691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Confirm Stripe payment and create order
-  app.post("/api/stripe/confirm-order", async (req: any, res) => {
+  app.post("/api/stripe/confirm-order", async (req, res) => {
     try {
       const { paymentIntentId, orderData } = req.body;
 
@@ -1828,23 +1702,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate required order fields
       if (!orderData.customerName || !orderData.customerEmail || !orderData.items || !Array.isArray(orderData.items)) {
         return res.status(400).json({ error: "Invalid order data: missing required fields" });
-      }
-
-      // Determine the authoritative customer email (always use account email for logged-in users)
-      const sessionUserId = (req.session as any)?.userId;
-      const isCustomerAuth = (req.session as any)?.isCustomerAuth;
-      const sessionCustomerEmail = (req.session as any)?.customerEmail;
-
-      let primaryCustomerEmail = orderData.customerEmail;
-      let notificationEmail: string | undefined = orderData.notificationEmail;
-
-      if (sessionUserId && isCustomerAuth && sessionCustomerEmail) {
-        const accountEmail = sessionCustomerEmail.toLowerCase();
-        const formEmail = (orderData.customerEmail || '').toLowerCase();
-        if (accountEmail && formEmail && accountEmail !== formEmail) {
-          primaryCustomerEmail = sessionCustomerEmail;
-          if (!notificationEmail) notificationEmail = orderData.customerEmail;
-        }
       }
 
       const stripe = await getUncachableStripeClient();
@@ -1874,7 +1731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create order in database
       const order = await storage.createOrder({
         customerName: orderData.customerName,
-        customerEmail: primaryCustomerEmail,
+        customerEmail: orderData.customerEmail,
         customerPhone: orderData.customerPhone || "",
         shippingAddress: orderData.shippingAddress,
         billingAddress: orderData.billingAddress,
@@ -1885,36 +1742,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: "stripe",
         paymentId: paymentIntentId,
         paymentStatus: paymentStatus,
-        userId: sessionUserId || orderData.userId || null,
+        userId: orderData.userId || null,
       }, normalizedItems);
-
-      // Record coupon usage if a DB coupon was applied
-      if (orderData.couponId && orderData.couponDiscountAmount != null) {
-        try {
-          await storage.applyCoupon(
-            Number(orderData.couponId),
-            order.id,
-            sessionUserId || null,
-            primaryCustomerEmail,
-            parseFloat(orderData.couponDiscountAmount)
-          );
-          await storage.incrementCouponUsage(Number(orderData.couponId));
-        } catch (couponError) {
-          console.error("Failed to record coupon usage (non-critical):", couponError);
-        }
-      }
 
       // Send order confirmation email
       try {
-        const orderWithItems = await storage.getOrderById(order.id);
-        if (orderWithItems) {
-          await sendOrderConfirmationEmail({
-            order: orderWithItems,
-            customerEmail: primaryCustomerEmail,
-            customerName: orderData.customerName,
-            notificationEmail,
-          });
-        }
+        await sendOrderConfirmationEmail({
+          orderId: order.id,
+          customerEmail: orderData.customerEmail,
+          customerName: orderData.customerName,
+          items: orderData.items,
+          subtotal: orderData.subtotal,
+          shipping: orderData.shipping,
+          tax: orderData.tax,
+          total: orderData.total,
+          shippingAddress: orderData.shippingAddress,
+        });
       } catch (emailError) {
         console.error("Failed to send order confirmation email:", emailError);
       }
@@ -2315,24 +2158,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentId,
         items,
         checkoutType,
-        registerPassword,
-        notificationEmail: formNotificationEmail
+        registerPassword
       } = req.body;
-
-      // If a logged-in user provided a different email in the form, always use the
-      // account email as the authoritative customerEmail so the order is tied to
-      // their account. The form email becomes an extra notification address.
-      let primaryCustomerEmail = customerEmail;
-      let notificationEmail: string | undefined = formNotificationEmail;
-
-      if (userId && user && user.email) {
-        const accountEmail = (user.email || '').toLowerCase();
-        const formEmail = (customerEmail || '').toLowerCase();
-        if (accountEmail && formEmail && accountEmail !== formEmail) {
-          primaryCustomerEmail = user.email;
-          if (!notificationEmail) notificationEmail = customerEmail;
-        }
-      }
 
       // Handle account creation during checkout
       if (checkoutType === "register" && registerPassword && !userId) {
@@ -2471,7 +2298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const order = await storage.createOrder({
         userId,
         customerName,
-        customerEmail: primaryCustomerEmail,
+        customerEmail,
         customerPhone,
         shippingAddress,
         billingAddress,
@@ -2504,9 +2331,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Order items count:", orderWithItems.items?.length || 0);
           const emailResult = await sendOrderConfirmationEmail({
             order: orderWithItems,
-            customerEmail: primaryCustomerEmail,
-            customerName,
-            notificationEmail,
+            customerEmail,
+            customerName
           });
           console.log(`Order confirmation email result for order #${order.id}:`, emailResult);
         } else {
@@ -3005,11 +2831,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (booksWithCategory && booksWithCategory.books && booksWithCategory.books.length > 0) {
         return res.status(400).json({ message: "Cannot delete category: It is associated with one or more books." });
       }
-      // Also check junction table (covers out-of-stock books)
-      const inUse = await storage.isCategoryInUse(id);
-      if (inUse) {
-        return res.status(400).json({ message: "Cannot delete category: It is associated with one or more books." });
-      }
 
       // Get IP address for audit logging
       const ipAddress = req.ip || req.connection?.remoteAddress;
@@ -3126,15 +2947,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Admin authentication required" });
       }
 
-      const { categoryIds, ...bookBody } = req.body;
-      const bookData = insertBookSchema.parse(bookBody);
+      const bookData = insertBookSchema.parse(req.body);
       const book = await storage.createBook(bookData);
-      // Set multi-category assignments
-      if (Array.isArray(categoryIds) && categoryIds.length > 0) {
-        await storage.setBookCategories(book.id, categoryIds.map(Number));
-      }
-      const updatedBook = await storage.getBookById(book.id);
-      res.json(updatedBook ?? book);
+      res.json(book);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
@@ -3167,15 +2982,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const id = parseInt(req.params.id);
-      const { categoryIds, ...bookBody } = req.body;
-      const bookData = insertBookSchema.partial().parse(bookBody);
+      const bookData = insertBookSchema.partial().parse(req.body);
       const book = await storage.updateBook(id, bookData);
-      // Update multi-category assignments
-      if (Array.isArray(categoryIds)) {
-        await storage.setBookCategories(book.id, categoryIds.map(Number));
-      }
-      const updatedBook = await storage.getBookById(book.id);
-      res.json(updatedBook ?? book);
+      res.json(book);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
@@ -3981,69 +3790,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching guest orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
-    }
-  });
-
-  // Cancel order - customer-facing route
-  app.post("/api/orders/:id/cancel", async (req: any, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid order ID" });
-      }
-
-      // Determine who is requesting
-      const sessionUserId = (req.session as any).userId;
-      const isCustomerAuth = (req.session as any).isCustomerAuth;
-      const sessionCustomerEmail = (req.session as any).customerEmail;
-      const guestEmail = req.body.email as string | undefined;
-
-      const isAuthenticated = sessionUserId && isCustomerAuth;
-      const effectiveEmail = isAuthenticated ? sessionCustomerEmail : guestEmail;
-
-      if (!isAuthenticated && !effectiveEmail) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      // Fetch the order
-      const order = await storage.getOrderById(id);
-      if (!order) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-
-      // Verify ownership
-      const emailMatch = effectiveEmail && order.customerEmail?.toLowerCase() === effectiveEmail.toLowerCase();
-      const userIdMatch = sessionUserId && order.userId === sessionUserId;
-      if (!emailMatch && !userIdMatch) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      // Only allow cancellation for pending or confirmed orders
-      const cancelableStatuses = ["pending", "confirmed"];
-      if (!cancelableStatuses.includes(order.status ?? "")) {
-        return res.status(400).json({
-          message: `Order cannot be cancelled. Current status: ${order.status}. Only pending or confirmed orders can be cancelled.`
-        });
-      }
-
-      const updatedOrder = await storage.updateOrderStatus(id, "cancelled");
-
-      // Send cancellation email
-      try {
-        await sendOrderCancellationEmail({
-          order,
-          customerEmail: order.customerEmail,
-          customerName: order.customerName,
-          cancelledByCustomer: true,
-        });
-      } catch (emailError) {
-        console.error("Failed to send cancellation email:", emailError);
-      }
-
-      return res.json({ message: "Order cancelled successfully", order: updatedOrder });
-    } catch (error) {
-      console.error("Error cancelling order:", error);
-      res.status(500).json({ message: "Failed to cancel order" });
     }
   });
 
@@ -4858,31 +4604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Status is required" });
       }
 
-      // Fetch full return request details before updating (for email)
-      const existingReturn = await storage.getReturnRequestById(parseInt(id));
-      if (!existingReturn) {
-        return res.status(404).json({ message: "Return request not found" });
-      }
-
       const returnRequest = await storage.updateReturnRequestStatus(parseInt(id), status, adminNotes);
-
-      // Send email notification to customer about the status change
-      try {
-        await sendReturnStatusUpdateEmail({
-          customerEmail: existingReturn.customerEmail,
-          customerName: existingReturn.customerName,
-          orderId: existingReturn.orderId,
-          returnRequestId: existingReturn.id,
-          returnRequestNumber: existingReturn.returnRequestNumber,
-          newStatus: status,
-          adminNotes: adminNotes || existingReturn.adminNotes || undefined,
-          totalRefundAmount: existingReturn.totalRefundAmount,
-        });
-      } catch (emailError) {
-        console.error("Failed to send return status update email:", emailError);
-        // Don't block the response if email fails
-      }
-
       res.json(returnRequest);
     } catch (error) {
       console.error("Error updating return request status:", error);
@@ -4953,56 +4675,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`PayPal refund processed successfully: ${refundTransactionId}`);
 
         } else if (refundMethod === "razorpay") {
-          // Process actual Razorpay refund via API
-          console.log(`Processing Razorpay refund of ₹/$ ${refundAmount} for order ${order.id}`);
+          // Process Razorpay refund
+          console.log(`Processing Razorpay refund of $${refundAmount} for order ${order.id}`);
 
-          if (!order.paymentId) {
-            throw new Error("Original Razorpay payment ID not found on the order. Cannot auto-refund — use Bank Transfer instead.");
-          }
+          // Create refund transaction ID
+          refundTransactionId = `RZP_REF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          refundStatus = "completed";
 
-          const { razorpay } = await import('./razorpay');
-          // Razorpay amounts are in the smallest currency unit (paise / cents)
-          const amountInSmallestUnit = Math.round(refundAmount * 100);
-
-          const rzpRefund = await razorpay.payments.refund(order.paymentId, {
-            amount: amountInSmallestUnit,
-            speed: 'normal',
-            notes: {
-              reason: refundReason,
-              returnRequestId: id,
-            },
-          });
-
-          refundTransactionId = rzpRefund.id;
-          refundStatus = (rzpRefund as any).status === 'processed' ? 'completed' : 'pending';
-          console.log(`Razorpay refund initiated: ${refundTransactionId}, status: ${refundStatus}`);
-
-        } else if (refundMethod === "stripe") {
-          // Process actual Stripe refund via API
-          console.log(`Processing Stripe refund of $${refundAmount} for order ${order.id}`);
-
-          if (!order.paymentId) {
-            throw new Error("Original Stripe payment intent ID not found on the order. Cannot auto-refund — use Bank Transfer instead.");
-          }
-
-          const { getUncachableStripeClient } = await import('./stripeClient');
-          const stripe = await getUncachableStripeClient();
-          // Stripe amounts are in cents
-          const amountInCents = Math.round(refundAmount * 100);
-
-          const stripeRefund = await stripe.refunds.create({
-            payment_intent: order.paymentId,
-            amount: amountInCents,
-            reason: 'requested_by_customer',
-            metadata: {
-              returnRequestId: id.toString(),
-              reason: refundReason,
-            },
-          });
-
-          refundTransactionId = stripeRefund.id;
-          refundStatus = stripeRefund.status === 'succeeded' ? 'completed' : 'pending';
-          console.log(`Stripe refund initiated: ${refundTransactionId}, status: ${stripeRefund.status}`);
+          console.log(`Razorpay refund processed successfully: ${refundTransactionId}`);
 
         } else if (refundMethod === "bank_transfer") {
           // Bank transfer refund (manual process)

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -20,14 +20,7 @@ import {
   XCircle,
   Clock,
   RefreshCw,
-  RotateCcw,
-  User,
-  Mail,
-  ShoppingBag,
-  AlertTriangle,
-  CreditCard,
-  FileText,
-  ChevronDown,
+  Filter
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -56,8 +49,6 @@ interface ReturnRequest {
     totalAmount: string;
     status: string;
     createdAt: string;
-    paymentMethod?: string;
-    paymentId?: string;
     items: OrderItem[];
   };
 }
@@ -77,20 +68,8 @@ interface OrderItem {
   author: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; style: string; icon: React.ReactNode; pill: string }> = {
-  pending:          { label: "Pending",          style: "bg-amber-50 text-amber-700 border border-amber-200",   icon: <Clock className="h-3.5 w-3.5" />,        pill: "bg-amber-500" },
-  approved:         { label: "Approved",         style: "bg-emerald-50 text-emerald-700 border border-emerald-200", icon: <CheckCircle className="h-3.5 w-3.5" />,  pill: "bg-emerald-500" },
-  rejected:         { label: "Rejected",         style: "bg-red-50 text-red-700 border border-red-200",         icon: <XCircle className="h-3.5 w-3.5" />,      pill: "bg-red-500" },
-  refund_processed: { label: "Refund Processed", style: "bg-blue-50 text-blue-700 border border-blue-200",      icon: <DollarSign className="h-3.5 w-3.5" />,   pill: "bg-blue-500" },
-};
-
-const getStatusCfg = (s: string) =>
-  STATUS_CONFIG[s] ?? { label: s, style: "bg-gray-100 text-gray-600", icon: <Clock className="h-3.5 w-3.5" />, pill: "bg-gray-400" };
-
-const fmt = (d: string) => { try { return format(new Date(d), "MMM d, yyyy"); } catch { return d; } };
-
 export default function ReturnsPage() {
-  const { isLoading: authLoading, isAuthenticated } = useAdminAuth();
+  const { admin, isLoading: authLoading, isAuthenticated } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -101,533 +80,460 @@ export default function ReturnsPage() {
   const [refundMethod, setRefundMethod] = useState("");
   const [refundReason, setRefundReason] = useState("");
 
-  /* ── Queries ── */
-  const { data: returnsData, isLoading, refetch } = useQuery({
+  // Fetch return requests
+  const { data: returnsData, isLoading } = useQuery({
     queryKey: ["/api/admin/returns", statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.append("status", statusFilter);
-      const url = `/api/admin/returns${params.toString() ? "?" + params.toString() : ""}`;
-      const response = await fetch(url, { credentials: "include" });
+      const url = `/api/admin/returns${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) throw new Error("Failed to fetch return requests");
       return response.json();
     },
     enabled: isAuthenticated,
   });
 
-  const returnRequests: ReturnRequest[] = returnsData?.returnRequests || [];
+  const returnRequests = returnsData?.returnRequests || [];
   const total = returnsData?.total || 0;
 
-  /* ── Mutations ── */
+  // Update return status mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async (data: { id: number; status: string; adminNotes?: string }) =>
-      apiRequest("PUT", `/api/admin/returns/${data.id}/status`, {
+    mutationFn: async (data: { id: number; status: string; adminNotes?: string }) => {
+      return await apiRequest("PUT", `/api/admin/returns/${data.id}/status`, {
         status: data.status,
         adminNotes: data.adminNotes,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/returns"] });
-      toast({ title: "✓ Status updated successfully" });
+      toast({
+        title: "Success",
+        description: "Return request status updated successfully",
+      });
       setSelectedReturn(null);
       setNewStatus("");
       setAdminNotes("");
     },
-    onError: (error: any) =>
-      toast({ title: "Error", description: error.message || "Failed to update status", variant: "destructive" }),
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update return request status",
+        variant: "destructive",
+      });
+    },
   });
 
+  // Process refund mutation
   const processRefundMutation = useMutation({
-    mutationFn: async (data: { id: number; refundMethod: string; refundReason: string }) =>
-      apiRequest("POST", `/api/admin/returns/${data.id}/refund`, {
+    mutationFn: async (data: { id: number; refundMethod: string; refundReason: string }) => {
+      console.log("Making API request to process refund with:", data);
+      const response = await apiRequest("POST", `/api/admin/returns/${data.id}/refund`, {
         refundMethod: data.refundMethod,
         refundReason: data.refundReason,
-      }),
-    onSuccess: () => {
+      });
+      console.log("Refund API response:", response);
+      return response;
+    },
+    onSuccess: (data) => {
+      console.log("Refund processed successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/returns"] });
-      toast({ title: "✓ Refund processed successfully" });
+      toast({
+        title: "Success",
+        description: "Refund processed successfully",
+      });
       setSelectedReturn(null);
       setRefundMethod("");
       setRefundReason("");
     },
-    onError: (error: any) =>
-      toast({ title: "Error", description: error.message || "Failed to process refund", variant: "destructive" }),
+    onError: (error: any) => {
+      console.error("Refund processing failed:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process refund",
+        variant: "destructive",
+      });
+    },
   });
 
-  const openDetail = (r: ReturnRequest) => {
-    setSelectedReturn(r);
-    setNewStatus(r.status);
-    setAdminNotes(r.adminNotes || "");
-    const pm = r.order.paymentMethod;
-    setRefundMethod(pm === "razorpay" || pm === "stripe" || pm === "paypal" ? pm : "");
-    setRefundReason("");
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "approved":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "refund_processed":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="h-4 w-4" />;
+      case "approved":
+        return <CheckCircle className="h-4 w-4" />;
+      case "rejected":
+        return <XCircle className="h-4 w-4" />;
+      case "refund_processed":
+        return <DollarSign className="h-4 w-4" />;
+      default:
+        return <Clock className="h-4 w-4" />;
+    }
   };
 
   const handleUpdateStatus = () => {
     if (!selectedReturn || !newStatus) return;
-    updateStatusMutation.mutate({ id: selectedReturn.id, status: newStatus, adminNotes: adminNotes.trim() || undefined });
+
+    updateStatusMutation.mutate({
+      id: selectedReturn.id,
+      status: newStatus,
+      adminNotes: adminNotes.trim() || undefined,
+    });
   };
 
   const handleProcessRefund = () => {
-    if (!selectedReturn || !refundMethod || !refundReason) return;
-    processRefundMutation.mutate({ id: selectedReturn.id, refundMethod, refundReason: refundReason.trim() });
+    if (!selectedReturn || !refundMethod || !refundReason) {
+      return;
+    }
+    processRefundMutation.mutate({
+      id: selectedReturn.id,
+      refundMethod,
+      refundReason: refundReason.trim(),
+    });
   };
 
-  /* ── Auth guards ── */
   if (authLoading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-4 border-rose-100 border-t-rose-500 animate-spin" />
-          <RotateCcw className="absolute inset-0 m-auto h-6 w-6 text-rose-500" />
-        </div>
-        <p className="text-gray-500 text-sm">Loading…</p>
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <XCircle className="h-12 w-12 text-red-400 mx-auto" />
-          <p className="text-red-600 font-semibold">Access Denied</p>
-        </div>
+      <div className="text-center py-8">
+        <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+        <p className="text-gray-600 mt-2">Please log in to access return management.</p>
       </div>
     );
   }
 
-  /* ── Status tabs data ── */
-  const STATUS_TABS = [
-    { value: "all",              label: "All",             color: "bg-gray-600" },
-    { value: "pending",          label: "Pending",         color: "bg-amber-500" },
-    { value: "approved",         label: "Approved",        color: "bg-emerald-500" },
-    { value: "rejected",         label: "Rejected",        color: "bg-red-500" },
-    { value: "refund_processed", label: "Refund Processed",color: "bg-blue-500" },
-  ];
-
-  const pendingCount   = returnRequests.filter((r) => r.status === "pending").length;
-  const approvedCount  = returnRequests.filter((r) => r.status === "approved").length;
-  const processedCount = returnRequests.filter((r) => r.status === "refund_processed").length;
-  const totalRefunds   = returnRequests.reduce((s, r) => s + parseFloat(r.totalRefundAmount || "0"), 0);
-
-  /* ══════════════════════════════════════════════════════ */
   return (
-    <div className="space-y-6">
-
-      {/* ── Header banner ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600 via-pink-600 to-rose-700 p-6 text-white shadow-lg">
-        <div className="pointer-events-none absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/10" />
-        <div className="pointer-events-none absolute -bottom-8 -left-8 h-36 w-36 rounded-full bg-white/10" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Return & Refund Management</h1>
-            <p className="mt-1 text-sm text-rose-200">Review return requests and process refunds</p>
-          </div>
-          <div className="flex items-center gap-4 shrink-0 flex-wrap">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{total}</p>
-              <p className="text-xs text-rose-200 uppercase tracking-wide">Total</p>
-            </div>
-            <div className="w-px h-10 bg-white/20" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-amber-300">{pendingCount}</p>
-              <p className="text-xs text-rose-200 uppercase tracking-wide">Pending</p>
-            </div>
-            <div className="w-px h-10 bg-white/20" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-emerald-300">${totalRefunds.toFixed(0)}</p>
-              <p className="text-xs text-rose-200 uppercase tracking-wide">Refunded</p>
-            </div>
-            <div className="w-px h-10 bg-white/20" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetch()}
-              className="text-white hover:bg-white/20 border border-white/30"
-            >
-              <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-            </Button>
-          </div>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-base-black">Return & Refund Management</h1>
+          <p className="text-sm text-secondary-black mt-1">Manage customer return requests and process refunds</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="flex h-10 w-full sm:w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="refund_processed">Refund Processed</option>
+          </select>
         </div>
       </div>
 
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { icon: <Package className="h-5 w-5 text-rose-600" />, bg: "bg-rose-50", label: "Total Requests", value: total, sub: "all time" },
-          { icon: <Clock className="h-5 w-5 text-amber-500" />, bg: "bg-amber-50", label: "Awaiting Review", value: pendingCount, sub: "need action" },
-          { icon: <CheckCircle className="h-5 w-5 text-emerald-600" />, bg: "bg-emerald-50", label: "Approved", value: approvedCount, sub: "ready to refund" },
-          { icon: <DollarSign className="h-5 w-5 text-blue-600" />, bg: "bg-blue-50", label: "Refunds Done", value: processedCount, sub: "completed" },
-        ].map((s, i) => (
-          <Card key={i} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={`p-2.5 rounded-xl ${s.bg} shrink-0`}>{s.icon}</div>
-              <div className="min-w-0">
-                <p className="text-xs text-gray-500 truncate">{s.label}</p>
-                <p className="text-xl font-bold text-gray-800 leading-tight">{s.value}</p>
-                <p className="text-xs text-gray-400">{s.sub}</p>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Requests</p>
+                <p className="text-2xl font-bold">{total}</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              <Package className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-2xl font-bold">
+                  {returnRequests.filter((r: ReturnRequest) => r.status === "pending").length}
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Approved</p>
+                <p className="text-2xl font-bold">
+                  {returnRequests.filter((r: ReturnRequest) => r.status === "approved").length}
+                </p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Refunds Processed</p>
+                <p className="text-2xl font-bold">
+                  {returnRequests.filter((r: ReturnRequest) => r.status === "refund_processed").length}
+                </p>
+              </div>
+              <DollarSign className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* ── Status filter pills ── */}
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => {
-          const count = tab.value === "all"
-            ? returnRequests.length
-            : returnRequests.filter((r) => r.status === tab.value).length;
-          const active = statusFilter === tab.value;
-          return (
-            <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                active
-                  ? `${tab.color} text-white border-transparent shadow-sm`
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {tab.label}
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${active ? "bg-white/25" : "bg-gray-100 text-gray-500"}`}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Request list ── */}
-      <Card className="border-0 shadow-sm overflow-hidden">
-        <CardHeader className="bg-gray-50 border-b px-5 py-3.5">
-          <CardTitle className="text-sm font-semibold text-gray-600">
-            {returnRequests.length} return request{returnRequests.length !== 1 ? "s" : ""}
-          </CardTitle>
+      {/* Return Requests Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Return Requests</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent>
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full border-4 border-rose-100 border-t-rose-500 animate-spin" />
-              </div>
-              <p className="text-sm text-gray-500">Loading return requests…</p>
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto" />
+              <p className="mt-2">Loading return requests...</p>
             </div>
           ) : returnRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
-              <RotateCcw className="h-12 w-12 opacity-30" />
-              <p className="text-sm">No return requests found.</p>
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">No Return Requests</h3>
+              <p className="text-gray-600">No return requests found for the selected filter.</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {returnRequests.map((r) => {
-                const cfg = getStatusCfg(r.status);
-                const isOverdue = new Date(r.returnDeadline) < new Date() && r.status === "pending";
-                return (
-                  <div
-                    key={r.id}
-                    className="flex gap-3 sm:gap-4 p-4 sm:p-5 hover:bg-rose-50/20 transition-colors group"
-                  >
-                    {/* Icon column */}
-                    <div className={`mt-0.5 p-2.5 rounded-xl shrink-0 h-fit ${
-                      r.status === "refund_processed" ? "bg-blue-50" :
-                      r.status === "approved"         ? "bg-emerald-50" :
-                      r.status === "rejected"         ? "bg-red-50" : "bg-amber-50"
-                    }`}>
-                      <RotateCcw className={`h-4 w-4 ${
-                        r.status === "refund_processed" ? "text-blue-500" :
-                        r.status === "approved"         ? "text-emerald-500" :
-                        r.status === "rejected"         ? "text-red-500" : "text-amber-500"
-                      }`} />
+            <div className="space-y-4">
+              {returnRequests.map((returnRequest: ReturnRequest) => (
+                <div key={returnRequest.id} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <h3 className="font-semibold">Return #{returnRequest.id}</h3>
+                        <p className="text-sm text-gray-600">
+                          Order #{returnRequest.orderId} • {returnRequest.customerName}
+                        </p>
+                      </div>
+                      <Badge className={`${getStatusColor(returnRequest.status)} border-0`}>
+                        <div className="flex items-center gap-1">
+                          {getStatusIcon(returnRequest.status)}
+                          {returnRequest.status.charAt(0).toUpperCase() + returnRequest.status.slice(1).replace('_', ' ')}
+                        </div>
+                      </Badge>
                     </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 space-y-2">
-                      {/* Row 1: ID + badges */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-gray-800 text-sm">Return #{r.id}</span>
-                        <span className="text-gray-400 text-xs">→ Order #{r.orderId}</span>
-                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${cfg.style}`}>
-                          {cfg.icon} {cfg.label}
-                        </span>
-                        {isOverdue && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
-                            <AlertTriangle className="h-3 w-3" /> Overdue
-                          </span>
-                        )}
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="font-semibold text-green-600">
+                          ${parseFloat(returnRequest.totalRefundAmount).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(returnRequest.createdAt).toLocaleDateString()}
+                        </p>
                       </div>
-
-                      {/* Row 2: customer + refund + deadline */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <User className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-800 truncate">{r.customerName}</p>
-                            <p className="text-xs text-gray-400 truncate">{r.customerEmail}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <DollarSign className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                          <div>
-                            <p className="font-bold text-emerald-700">${parseFloat(r.totalRefundAmount).toFixed(2)}</p>
-                            <p className="text-xs text-gray-400">{r.itemsToReturn.length} item{r.itemsToReturn.length !== 1 ? "s" : ""}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-700">Submitted {fmt(r.createdAt)}</p>
-                            <p className={`text-xs ${isOverdue ? "text-red-600 font-semibold" : "text-gray-400"}`}>
-                              Deadline {fmt(r.returnDeadline)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Reason pill */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full capitalize">
-                          {r.returnReason.replace(/_/g, " ")}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* View button */}
-                    <div className="shrink-0 flex items-start pt-0.5">
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => openDetail(r)}
-                            className="h-9 px-3 text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-xl opacity-70 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              setSelectedReturn(returnRequest);
+                              setNewStatus(returnRequest.status);
+                              setAdminNotes(returnRequest.adminNotes || "");
+                            }}
                           >
-                            <Eye className="h-3.5 w-3.5 mr-1.5" />
-                            Review
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Details
                           </Button>
                         </DialogTrigger>
-
-                        {/* ── Detail Dialog ── */}
-                        <DialogContent className="max-w-2xl rounded-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
-                          <DialogHeader className="sr-only">
-                            <DialogTitle>Return #{r.id}</DialogTitle>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Return Request #{returnRequest.id}</DialogTitle>
                           </DialogHeader>
 
-                          {/* Hero */}
-                          <div className="bg-gradient-to-br from-rose-600 to-pink-700 p-5 text-white shrink-0">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white/20 rounded-xl">
-                                  <RotateCcw className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <h3 className="font-bold text-lg">Return #{r.id}</h3>
-                                  <p className="text-sm text-rose-200">Order #{r.orderId} · {fmt(r.createdAt)}</p>
-                                </div>
+                          <div className="space-y-6">
+                            {/* Customer Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="font-semibold">Customer</Label>
+                                <p>{returnRequest.customerName}</p>
+                                <p className="text-sm text-gray-600">{returnRequest.customerEmail}</p>
                               </div>
-                              <div className="text-right">
-                                <p className="text-2xl font-bold">${parseFloat(r.totalRefundAmount).toFixed(2)}</p>
-                                <p className="text-xs text-rose-200">Refund Amount</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="overflow-y-auto flex-1 p-5 space-y-5">
-
-                            {/* Status pill */}
-                            <div className="flex flex-wrap gap-2">
-                              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${getStatusCfg(r.status).style}`}>
-                                {getStatusCfg(r.status).icon} {getStatusCfg(r.status).label}
-                              </span>
-                              {r.order.paymentMethod && (
-                                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-600">
-                                  <CreditCard className="h-3 w-3" /> {r.order.paymentMethod}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Customer + reason */}
-                            <div className="grid sm:grid-cols-2 gap-4">
-                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Customer</p>
-                                <div className="flex items-center gap-2 text-sm text-gray-700">
-                                  <div className="p-1 bg-white rounded border border-gray-100">
-                                    <User className="h-3 w-3 text-rose-500" />
-                                  </div>
-                                  <span className="font-medium">{r.customerName}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                  <div className="p-1 bg-white rounded border border-gray-100">
-                                    <Mail className="h-3 w-3 text-gray-400" />
-                                  </div>
-                                  <span className="truncate">{r.customerEmail}</span>
-                                </div>
-                              </div>
-                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Return Reason</p>
-                                <p className="text-sm font-medium text-gray-800 capitalize">{r.returnReason.replace(/_/g, " ")}</p>
-                                <p className="text-xs text-gray-500 line-clamp-3">{r.returnDescription}</p>
+                              <div>
+                                <Label className="font-semibold">Order Details</Label>
+                                <p>Order #{returnRequest.orderId}</p>
+                                <p className="text-sm text-gray-600">
+                                  Original Amount: ${parseFloat(returnRequest.order.totalAmount).toFixed(2)}
+                                </p>
                               </div>
                             </div>
 
-                            {/* Items */}
-                            <div className="rounded-xl border border-gray-100 overflow-hidden">
-                              <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Items to Return</p>
-                              </div>
-                              <div className="divide-y divide-gray-50">
-                                {r.itemsToReturn.map((item, idx) => {
-                                  const oi = r.order.items.find((o) => o.bookId === item.bookId);
-                                  if (!oi) return null;
+                            {/* Return Details */}
+                            <div>
+                              <Label className="font-semibold">Return Reason</Label>
+                              <p className="mt-1">{returnRequest.returnReason.replace('_', ' ')}</p>
+                            </div>
+
+                            <div>
+                              <Label className="font-semibold">Customer Description</Label>
+                              <p className="mt-1 p-3 bg-gray-50 rounded border">{returnRequest.returnDescription}</p>
+                            </div>
+
+                            {/* Items to Return */}
+                            <div>
+                              <Label className="font-semibold">Items to Return</Label>
+                              <div className="space-y-2 mt-2">
+                                {returnRequest.itemsToReturn.map((item, index) => {
+                                  const orderItem = returnRequest.order.items.find(oi => oi.bookId === item.bookId);
+                                  if (!orderItem) return null;
+
                                   return (
-                                    <div key={idx} className="flex items-center gap-3 px-4 py-3">
-                                      <div className="w-8 h-8 bg-rose-100 text-rose-700 rounded-lg flex items-center justify-center text-xs font-bold shrink-0">
-                                        {item.quantity}×
+                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                                      <div>
+                                        <p className="font-medium">{orderItem.title}</p>
+                                        <p className="text-sm text-gray-600">by {orderItem.author}</p>
+                                        <p className="text-sm text-red-600">Reason: {item.reason.replace('_', ' ')}</p>
                                       </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm text-gray-800 truncate">{oi.title}</p>
-                                        <p className="text-xs text-gray-500">by {oi.author}</p>
-                                        <p className="text-xs text-rose-600 capitalize">{item.reason.replace(/_/g, " ")}</p>
-                                      </div>
-                                      <div className="text-right shrink-0">
-                                        <p className="font-semibold text-sm text-gray-800">${(parseFloat(oi.price) * item.quantity).toFixed(2)}</p>
-                                        <p className="text-xs text-gray-400">${parseFloat(oi.price).toFixed(2)} ea</p>
+                                      <div className="text-right">
+                                        <p>Qty: {item.quantity} of {orderItem.quantity}</p>
+                                        <p className="font-semibold">
+                                          ${(parseFloat(orderItem.price) * item.quantity).toFixed(2)}
+                                        </p>
                                       </div>
                                     </div>
                                   );
                                 })}
                               </div>
-                              <div className="flex justify-between items-center px-4 py-3 bg-emerald-50 border-t border-emerald-100">
-                                <span className="text-sm font-semibold text-emerald-800">Total Refund</span>
-                                <span className="text-lg font-bold text-emerald-700">${parseFloat(r.totalRefundAmount).toFixed(2)}</span>
+                              <div className="mt-4 p-3 bg-green-50 rounded">
+                                <p className="font-semibold text-green-800">
+                                  Total Refund Amount: ${parseFloat(returnRequest.totalRefundAmount).toFixed(2)}
+                                </p>
                               </div>
                             </div>
 
-                            {/* Previous admin notes */}
-                            {r.adminNotes && (
-                              <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 space-y-1">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-blue-500">Admin Notes</p>
-                                <p className="text-sm text-blue-800">{r.adminNotes}</p>
-                              </div>
-                            )}
+                            {/* Status Update */}
+                            <div className="border-t pt-6">
+                              <h3 className="font-semibold mb-4">Update Return Status</h3>
 
-                            {/* Refund info if processed */}
-                            {r.refundProcessedAt && (
-                              <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4 space-y-1.5">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Refund Processed</p>
-                                <div className="grid grid-cols-2 gap-1 text-sm text-emerald-800">
-                                  <span className="text-emerald-500 text-xs">Method</span>
-                                  <span className="font-medium capitalize">{r.refundMethod}</span>
-                                  <span className="text-emerald-500 text-xs">Transaction ID</span>
-                                  <span className="font-mono text-xs">{r.refundTransactionId}</span>
-                                  <span className="text-emerald-500 text-xs">Processed</span>
-                                  <span>{fmt(r.refundProcessedAt)}</span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* ── Status Update ── */}
-                            <div className="rounded-xl border border-gray-200 p-4 space-y-4">
-                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Update Status</p>
-
-                              <div className="grid sm:grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <Label className="text-xs text-gray-500">New Status</Label>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="status">Status</Label>
                                   <select
+                                    id="status"
                                     value={newStatus}
                                     onChange={(e) => setNewStatus(e.target.value)}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-rose-400 focus:border-transparent outline-none"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
                                     <option value="pending">Pending</option>
                                     <option value="approved">Approved</option>
                                     <option value="rejected">Rejected</option>
                                   </select>
                                 </div>
-                                <div className="flex items-end">
-                                  <Button
-                                    onClick={handleUpdateStatus}
-                                    disabled={updateStatusMutation.isPending || !newStatus}
-                                    className="w-full bg-rose-600 hover:bg-rose-700 rounded-xl"
-                                  >
-                                    {updateStatusMutation.isPending ? (
-                                      <span className="flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Saving…</span>
-                                    ) : "Save Status"}
-                                  </Button>
-                                </div>
+                                <div></div>
                               </div>
 
-                              <div className="space-y-1">
-                                <Label className="text-xs text-gray-500">Admin Notes (shown to customer)</Label>
+                              <div className="mt-4">
+                                <Label htmlFor="adminNotes">Admin Notes</Label>
                                 <Textarea
+                                  id="adminNotes"
                                   value={adminNotes}
                                   onChange={(e) => setAdminNotes(e.target.value)}
-                                  placeholder="Add a note for the customer…"
-                                  rows={2}
-                                  className="rounded-xl resize-none"
+                                  placeholder="Add notes for customer..."
+                                  rows={3}
                                 />
                               </div>
 
-                              {/* Process Refund section — only when approved */}
-                              {r.status === "approved" && (
-                                <div className="space-y-3 pt-2 border-t border-dashed border-gray-200">
-                                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Process Refund</p>
+                              <div className="flex gap-4 mt-4">
+                                <Button
+                                  onClick={handleUpdateStatus}
+                                  disabled={updateStatusMutation.isPending}
+                                  className="bg-primary-aqua hover:bg-secondary-aqua"
+                                >
+                                  {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
+                                </Button>
 
-                                  {r.order.paymentMethod && (
-                                    <div className="flex items-start gap-2 text-xs bg-blue-50 border border-blue-200 rounded-xl p-3 text-blue-700">
-                                      <CreditCard className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                                      <span>
-                                        Original payment via <strong className="capitalize">{r.order.paymentMethod}</strong>
-                                        {r.order.paymentId && <span className="font-mono text-blue-400 ml-1">({r.order.paymentId})</span>}.
-                                        Matching method triggers an automatic gateway refund.
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  <div className="grid sm:grid-cols-2 gap-3">
-                                    <div className="space-y-1">
-                                      <Label className="text-xs text-gray-500">Refund Method</Label>
-                                      <select
-                                        value={refundMethod}
-                                        onChange={(e) => setRefundMethod(e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none"
-                                      >
-                                        <option value="">Select Method</option>
-                                        <option value="paypal">PayPal</option>
-                                        <option value="razorpay">Razorpay (auto)</option>
-                                        <option value="stripe">Stripe (auto)</option>
-                                        <option value="bank_transfer">Bank Transfer (manual)</option>
-                                      </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                      <Label className="text-xs text-gray-500">Refund Reason</Label>
-                                      <Input
-                                        placeholder="e.g. Damaged item"
-                                        value={refundReason}
-                                        onChange={(e) => setRefundReason(e.target.value)}
-                                        className="rounded-xl"
-                                      />
-                                    </div>
+                                {returnRequest.status === "approved" && (
+                                  <div className="flex gap-2">
+                                    <select
+                                      value={refundMethod}
+                                      onChange={(e) => setRefundMethod(e.target.value)}
+                                      className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      <option value="">Select Method</option>
+                                      <option value="paypal">PayPal</option>
+                                      <option value="razorpay">Razorpay</option>
+                                      <option value="bank_transfer">Bank Transfer</option>
+                                    </select>
+                                    <Input
+                                      placeholder="Refund reason"
+                                      value={refundReason}
+                                      onChange={(e) => setRefundReason(e.target.value)}
+                                      className="w-48"
+                                    />
+                                    <Button
+                                      onClick={handleProcessRefund}
+                                      disabled={processRefundMutation.isPending || !refundMethod || !refundReason}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      {processRefundMutation.isPending ? "Processing..." : "Process Refund"}
+                                    </Button>
                                   </div>
-
-                                  <Button
-                                    onClick={handleProcessRefund}
-                                    disabled={processRefundMutation.isPending || !refundMethod || !refundReason}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-xl"
-                                  >
-                                    {processRefundMutation.isPending ? (
-                                      <span className="flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Processing…</span>
-                                    ) : <span className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Process Refund ${parseFloat(r.totalRefundAmount).toFixed(2)}</span>}
-                                  </Button>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
+
+                            {returnRequest.adminNotes && (
+                              <div className="border-t pt-4">
+                                <Label className="font-semibold">Previous Admin Notes</Label>
+                                <p className="mt-1 p-3 bg-blue-50 rounded border">{returnRequest.adminNotes}</p>
+                              </div>
+                            )}
+
+                            {returnRequest.refundProcessedAt && (
+                              <div className="border-t pt-4">
+                                <Label className="font-semibold">Refund Information</Label>
+                                <div className="mt-2 p-3 bg-green-50 rounded">
+                                  <p><strong>Method:</strong> {returnRequest.refundMethod}</p>
+                                  <p><strong>Transaction ID:</strong> {returnRequest.refundTransactionId}</p>
+                                  <p><strong>Processed:</strong> {new Date(returnRequest.refundProcessedAt).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </DialogContent>
                       </Dialog>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Reason:</span> {returnRequest.returnReason.replace('_', ' ')}
+                    </div>
+                    <div>
+                      <span className="font-medium">Items:</span> {returnRequest.itemsToReturn.length}
+                    </div>
+                    <div>
+                      <span className="font-medium">Deadline:</span> {new Date(returnRequest.returnDeadline).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
