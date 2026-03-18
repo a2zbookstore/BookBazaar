@@ -10,7 +10,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail, sendReturnRequestEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
 import {
@@ -111,95 +111,144 @@ async function sendRefundConfirmationEmail(data: {
   estimatedProcessingTime: string;
 }): Promise<boolean> {
   try {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Refund Confirmation - A2Z BOOKSHOP</title>
-          <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-              .refund-details { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #22c55e; margin: 20px 0; }
-              .amount { font-size: 24px; font-weight: bold; color: #22c55e; }
-              .status { padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }
-              .status.completed { background: #dcfce7; color: #16a34a; }
-              .status.pending { background: #fef3c7; color: #d97706; }
-              .footer { text-align: center; padding: 20px; font-size: 14px; color: #666; }
-              .website-link { color: #dc2626; text-decoration: none; font-weight: bold; }
-              .contact-info { background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 20px 0; }
-              @media (max-width: 600px) {
-                  body { padding: 10px; }
-                  .header, .content { padding: 20px; }
-              }
-          </style>
-      </head>
-      <body>
-          <div class="header">
-              <h1>A<span style="color: #dc2626;">2</span>Z BOOKSHOP</h1>
-              <h2>Refund Confirmation</h2>
-          </div>
-          
-          <div class="content">
-              <p>Dear ${data.customerName},</p>
-              
-              <p>Great news! Your refund has been processed successfully.</p>
-              
-              <div class="refund-details">
-                  <h3>Refund Details</h3>
-                  <p><strong>Order ID:</strong> #${data.orderId}</p>
-                  <p><strong>Return Request ID:</strong> #${data.returnRequestId}</p>
-                  <p><strong>Refund Amount:</strong> <span class="amount">$${data.refundAmount}</span></p>
-                  <p><strong>Refund Method:</strong> ${data.refundMethod.charAt(0).toUpperCase() + data.refundMethod.slice(1).replace('_', ' ')}</p>
-                  ${data.refundTransactionId ? `<p><strong>Transaction ID:</strong> ${data.refundTransactionId}</p>` : ''}
-                  <p><strong>Status:</strong> <span class="status ${data.refundStatus}">${data.refundStatus.charAt(0).toUpperCase() + data.refundStatus.slice(1)}</span></p>
-                  <p><strong>Processing Time:</strong> ${data.estimatedProcessingTime}</p>
-              </div>
-              
-              <div class="contact-info">
-                  <h3>What happens next?</h3>
-                  ${data.refundStatus === 'completed' ?
-        `<p>Your refund has been processed and will appear in your original payment method within ${data.estimatedProcessingTime}.</p>` :
-        `<p>Your refund is being processed and will be completed within ${data.estimatedProcessingTime}.</p>`
+    const methodLabel = data.refundMethod.charAt(0).toUpperCase() + data.refundMethod.slice(1).replace(/_/g, ' ');
+    const statusLabel = data.refundStatus === 'completed' ? 'Completed' : 'Processing';
+    const isCompleted = data.refundStatus === 'completed';
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Refund Processed — A2Z BOOKSHOP</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);border-radius:16px 16px 0 0;padding:48px 40px 36px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#6ee7b7;">A2Z BOOKSHOP</p>
+              <h1 style="margin:0 0 10px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.25;">Refund ${isCompleted ? 'Processed' : 'Initiated'}</h1>
+              <p style="margin:0;font-size:15px;color:#a7f3d0;line-height:1.55;">Your refund has been ${isCompleted ? 'successfully processed' : 'initiated and is being processed'}.</p>
+            </td>
+          </tr>
+
+          <!-- COLOUR BAR -->
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg,#10b981,#34d399,#6ee7b7);"></td>
+          </tr>
+
+          <!-- META BADGES -->
+          <tr>
+            <td style="background:#ffffff;padding:24px 40px;border-bottom:1px solid #d1fae5;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Order ID</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">#${data.orderId}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Return Request</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">#${data.returnRequestId}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Status</span>
+                    <span style="display:inline-block;background:${isCompleted ? '#d1fae5' : '#fef3c7'};color:${isCompleted ? '#065f46' : '#92400e'};border:1.5px solid ${isCompleted ? '#6ee7b7' : '#fcd34d'};padding:5px 16px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">${statusLabel}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Refund Amount</span>
+                    <span style="display:block;font-size:16px;font-weight:800;color:#059669;">\$${data.refundAmount}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="background:#ffffff;padding:32px 40px 8px;">
+              <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#0f172a;">Hi, ${data.customerName}!</p>
+              <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.75;">
+                ${isCompleted
+        ? `Your refund of <strong>\$${data.refundAmount}</strong> has been successfully processed to your <strong>${methodLabel}</strong> account. Please allow up to <strong>${data.estimatedProcessingTime}</strong> for the amount to appear.`
+        : `Your refund of <strong>\$${data.refundAmount}</strong> has been initiated via <strong>${methodLabel}</strong>. It will be completed within <strong>${data.estimatedProcessingTime}</strong>.`
       }
-                  <p>You'll receive the refund in the same payment method you used for the original purchase.</p>
+              </p>
+
+              <!-- Refund details table -->
+              <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#64748b;">Refund Details</p>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:4px 24px;margin-bottom:28px;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:11px 0;font-size:14px;color:#64748b;border-bottom:1px solid #e2e8f0;">Refund Method</td>
+                    <td style="padding:11px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;border-bottom:1px solid #e2e8f0;">${methodLabel}</td>
+                  </tr>
+                  ${data.refundTransactionId ? `
+                  <tr>
+                    <td style="padding:11px 0;font-size:14px;color:#64748b;border-bottom:1px solid #e2e8f0;">Transaction ID</td>
+                    <td style="padding:11px 0;font-size:13px;font-weight:600;color:#0f172a;text-align:right;border-bottom:1px solid #e2e8f0;font-family:monospace;">${data.refundTransactionId}</td>
+                  </tr>` : ''}
+                  <tr>
+                    <td style="padding:11px 0;font-size:14px;color:#64748b;border-bottom:1px solid #e2e8f0;">Processing Time</td>
+                    <td style="padding:11px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;border-bottom:1px solid #e2e8f0;">${data.estimatedProcessingTime}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:14px 0 11px;font-size:16px;font-weight:800;color:#0f172a;">Total Refund</td>
+                    <td style="padding:14px 0 11px;font-size:16px;font-weight:800;color:#059669;text-align:right;">\$${data.refundAmount}</td>
+                  </tr>
+                </table>
               </div>
-              
-              <div class="contact-info">
-                  <h3>Need Help?</h3>
-                  <p>If you have any questions about your refund, please contact our customer support team.</p>
-                  <p>📧 Email: support@a2zbookshop.com</p>
-                  <p>📧 Email: a2zbookshopglobal@gmail.com</p>
-                  <p>🌐 Website: <a href="https://a2zbookshop.com" class="website-link">a2zbookshop.com</a></p>
-              </div>
-              
-              <p>Thank you for choosing A2Z BOOKSHOP. We appreciate your business!</p>
-          </div>
-          
-          <div class="footer">
-              <p>© 2025 A2Z BOOKSHOP. All rights reserved.</p>
-              <p>Visit us at <a href="https://a2zbookshop.com" class="website-link">a2zbookshop.com</a> | <a href="https://www.a2zbookshop.com" class="website-link">www.a2zbookshop.com</a></p>
-          </div>
-      </body>
-      </html>
-    `;
+
+              <!-- What happens next -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border-left:4px solid #10b981;border-radius:0 12px 12px 0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#065f46;">What Happens Next?</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; The refund will appear in your <strong>${methodLabel}</strong> account within <strong>${data.estimatedProcessingTime}</strong>.</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; Banking processing times may vary depending on your provider.</p>
+                    <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; For queries, contact us at <a href="mailto:support@a2zbookshop.com" style="color:#059669;text-decoration:none;">support@a2zbookshop.com</a></p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#1e293b;border-radius:0 0 16px 16px;padding:28px 40px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#f8fafc;letter-spacing:2px;text-transform:uppercase;">A2Z BOOKSHOP</p>
+              <p style="margin:0 0 12px;font-size:12px;color:#94a3b8;">Your one-stop destination for books worldwide</p>
+              <p style="margin:0;font-size:11px;color:#64748b;line-height:1.7;">
+                Questions? Email us at <a href="mailto:support@a2zbookshop.com" style="color:#60a5fa;text-decoration:none;">support@a2zbookshop.com</a><br>
+                &copy; ${new Date().getFullYear()} A2Z BOOKSHOP. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
     return await sendEmail({
       to: data.customerEmail,
-      from: 'orders@a2zbookshop.com',
-      subject: `Refund Confirmation - Order #${data.orderId} - A2Z BOOKSHOP`,
+      subject: `Refund ${isCompleted ? 'Processed' : 'Initiated'} — Order #${data.orderId} | A2Z BOOKSHOP`,
       html,
-      text: `Dear ${data.customerName},\n\nYour refund has been processed successfully.\n\nRefund Details:\n- Order ID: #${data.orderId}\n- Return Request ID: #${data.returnRequestId}\n- Refund Amount: $${data.refundAmount}\n- Refund Method: ${data.refundMethod}\n- Status: ${data.refundStatus}\n- Processing Time: ${data.estimatedProcessingTime}\n\nThank you for choosing A2Z BOOKSHOP!\n\nBest regards,\nA2Z BOOKSHOP Team`
+      text: `Hi ${data.customerName}, your refund of $${data.refundAmount} for Order #${data.orderId} has been ${isCompleted ? 'processed' : 'initiated'} via ${methodLabel}. Processing time: ${data.estimatedProcessingTime}. For help, contact support@a2zbookshop.com`,
+      emailType: 'support',
     });
   } catch (error) {
     console.error('Error sending refund confirmation email:', error);
     return false;
   }
 }
-
-// Helper function to send return request status update email
 async function sendReturnStatusUpdateEmail(data: {
   customerEmail: string;
   customerName: string;
@@ -218,104 +267,152 @@ async function sendReturnStatusUpdateEmail(data: {
       refund_processed: 'Refund Processed',
     };
 
-    const statusColors: Record<string, { header: string; badge: string; badgeText: string }> = {
-      pending: { header: 'linear-gradient(135deg, #f59e0b, #d97706)', badge: '#fef3c7', badgeText: '#92400e' },
-      approved: { header: 'linear-gradient(135deg, #10b981, #047857)', badge: '#d1fae5', badgeText: '#064e3b' },
-      rejected: { header: 'linear-gradient(135deg, #ef4444, #b91c1c)', badge: '#fee2e2', badgeText: '#991b1b' },
-      refund_processed: { header: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', badge: '#eff6ff', badgeText: '#1e40af' },
+    type StatusKey = 'pending' | 'approved' | 'rejected' | 'refund_processed';
+
+    const headerGradients: Record<StatusKey, string> = {
+      pending: 'linear-gradient(135deg,#92400e 0%,#b45309 50%,#d97706 100%)',
+      approved: 'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',
+      rejected: 'linear-gradient(135deg,#7f1d1d 0%,#b91c1c 55%,#dc2626 100%)',
+      refund_processed: 'linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 55%,#3b82f6 100%)',
+    };
+    const badgeStyles: Record<StatusKey, { bg: string; text: string; border: string }> = {
+      pending: { bg: '#fef3c7', text: '#92400e', border: '#fcd34d' },
+      approved: { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },
+      rejected: { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' },
+      refund_processed: { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
+    };
+    const accentColours: Record<StatusKey, { bar: string; border: string; title: string }> = {
+      pending: { bar: 'linear-gradient(90deg,#f59e0b,#fbbf24,#fde68a)', border: '#f59e0b', title: '#92400e' },
+      approved: { bar: 'linear-gradient(90deg,#10b981,#34d399,#6ee7b7)', border: '#10b981', title: '#065f46' },
+      rejected: { bar: 'linear-gradient(90deg,#ef4444,#f87171,#fca5a5)', border: '#ef4444', title: '#991b1b' },
+      refund_processed: { bar: 'linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd)', border: '#3b82f6', title: '#1e40af' },
+    };
+    const bodyMessages: Record<StatusKey, string> = {
+      pending: 'We have received your return request and our team is currently reviewing it. We will notify you once a decision has been made — usually within 2–3 business days.',
+      approved: `Great news! Your return request has been approved. We will process your refund of <strong>$${data.totalRefundAmount}</strong> shortly. You will receive a separate confirmation once the refund has been issued.`,
+      rejected: 'After carefully reviewing your return request, we are unable to process it at this time. Please see the notes below for more details, or contact our support team if you have questions.',
+      refund_processed: `Your refund of <strong>$${data.totalRefundAmount}</strong> has been successfully processed. Please allow 5–10 business days for the amount to appear in your original payment method.`,
     };
 
-    const statusMessages: Record<string, { headline: string; body: string }> = {
-      pending: {
-        headline: 'Your Return Request Is Under Review',
-        body: 'We have received your return request and our team is currently reviewing it. We will notify you once a decision has been made.',
-      },
-      approved: {
-        headline: 'Your Return Request Has Been Approved!',
-        body: `Great news! Your return request has been approved. We will process your refund of <strong>$${data.totalRefundAmount}</strong> shortly. You will receive a separate confirmation once the refund has been issued.`,
-      },
-      rejected: {
-        headline: 'Your Return Request Has Been Reviewed',
-        body: 'After reviewing your return request, we are unable to process it at this time. Please see the notes below for more details. If you believe this is an error, please contact our support team.',
-      },
-      refund_processed: {
-        headline: 'Your Refund Has Been Processed!',
-        body: `Your refund of <strong>$${data.totalRefundAmount}</strong> has been successfully processed. Please allow 5–10 business days for the amount to appear in your original payment method.`,
-      },
-    };
-
-    const statusKey = data.newStatus.toLowerCase();
-    const colors = statusColors[statusKey] ?? { header: 'linear-gradient(135deg, #6b7280, #374151)', badge: '#f3f4f6', badgeText: '#1f2937' };
+    const statusKey = (data.newStatus.toLowerCase() in headerGradients ? data.newStatus.toLowerCase() : 'pending') as StatusKey;
     const label = statusLabels[statusKey] ?? data.newStatus;
-    const msg = statusMessages[statusKey] ?? { headline: 'Return Request Update', body: 'There has been an update to your return request.' };
+    const gradient = headerGradients[statusKey];
+    const badge = badgeStyles[statusKey];
+    const accent = accentColours[statusKey];
+    const bodyText = bodyMessages[statusKey] ?? 'There has been an update to your return request.';
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Return Request Update - A2Z BOOKSHOP</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: ${colors.header}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-          .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; background: ${colors.badge}; color: ${colors.badgeText}; margin: 10px 0; }
-          .details-box { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #dc2626; margin: 20px 0; }
-          .notes-box { background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0; }
-          .contact-box { background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          .footer { text-align: center; padding: 20px; font-size: 14px; color: #666; }
-          .link { color: #dc2626; text-decoration: none; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>A<span style="color:#fca5a5">2</span>Z BOOKSHOP</h1>
-          <h2>Return Request Update</h2>
-          <div class="badge">${label}</div>
-        </div>
-        <div class="content">
-          <p>Dear ${data.customerName},</p>
-          <h3>${msg.headline}</h3>
-          <p>${msg.body}</p>
+    const returnRequestUpdateHtml = 
+    `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Return Request Update — A2Z BOOKSHOP</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;">
 
-          <div class="details-box">
-            <h3>Return Request Details</h3>
-            <p><strong>Return Request #:</strong> ${data.returnRequestNumber}</p>
-            <p><strong>Order ID:</strong> #${data.orderId}</p>
-            <p><strong>Status:</strong> ${label}</p>
-            <p><strong>Refund Amount:</strong> $${data.totalRefundAmount}</p>
-          </div>
+          <!-- HEADER -->
+          <tr>
+            <td style="background:${gradient};border-radius:16px 16px 0 0;padding:48px 40px 36px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.7);">A2Z BOOKSHOP</p>
+              <h1 style="margin:0 0 10px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.25;">Return Request Update</h1>
+              <p style="margin:0 0 18px;font-size:15px;color:rgba(255,255,255,0.8);line-height:1.55;">There's an update on your return request.</p>
+              <span style="display:inline-block;background:${badge.bg};color:${badge.text};border:1.5px solid ${badge.border};padding:6px 20px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">${label}</span>
+            </td>
+          </tr>
 
-          ${data.adminNotes ? `
-          <div class="notes-box">
-            <h3>Notes from Our Team</h3>
-            <p>${data.adminNotes}</p>
-          </div>` : ''}
+          <!-- COLOUR BAR -->
+          <tr>
+            <td style="height:4px;background:${accent.bar};"></td>
+          </tr>
 
-          <div class="contact-box">
-            <h3>Need Help?</h3>
-            <p>If you have any questions about your return request, please contact our support team.</p>
-            <p>📧 <a href="mailto:support@a2zbookshop.com" class="link">support@a2zbookshop.com</a></p>
-            <p>🌐 <a href="https://a2zbookshop.com" class="link">a2zbookshop.com</a></p>
-          </div>
+          <!-- META BADGES -->
+          <tr>
+            <td style="background:#ffffff;padding:24px 40px;border-bottom:1px solid #e2e8f0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Request #</span>
+                    <span style="display:block;font-size:14px;font-weight:700;color:#1d4ed8;font-family:monospace;">${data.returnRequestNumber}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Order ID</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">#${data.orderId}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Status</span>
+                    <span style="display:inline-block;background:${badge.bg};color:${badge.text};border:1.5px solid ${badge.border};padding:5px 16px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">${label}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Refund</span>
+                    <span style="display:block;font-size:15px;font-weight:800;color:#059669;">\$${data.totalRefundAmount}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-          <p>Thank you for choosing A2Z BOOKSHOP!</p>
-        </div>
-        <div class="footer">
-          <p>© 2025 A2Z BOOKSHOP. All rights reserved.</p>
-          <p><a href="https://a2zbookshop.com" class="link">a2zbookshop.com</a></p>
-        </div>
-      </body>
-      </html>
-    `;
+          <!-- BODY -->
+          <tr>
+            <td style="background:#ffffff;padding:32px 40px 8px;">
+              <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#0f172a;">Hi, ${data.customerName}!</p>
+              <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.75;">${bodyText}</p>
+
+              <!-- Admin notes -->
+              ${data.adminNotes ? `
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 12px 12px 0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#b45309;">Note from Our Team</p>
+                    <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">${data.adminNotes}</p>
+                  </td>
+                </tr>
+              </table>` : ''}
+
+              <!-- Next steps / contact -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#eff6ff;border-left:4px solid ${accent.border};border-radius:0 12px 12px 0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:${accent.title};">Need Help?</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; Quote your request number <strong>${data.returnRequestNumber}</strong> in all correspondence.</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; Email us at <a href="mailto:support@a2zbookshop.com" style="color:#1d4ed8;text-decoration:none;">support@a2zbookshop.com</a></p>
+                    <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; Our team responds within 1–2 business days.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#1e293b;border-radius:0 0 16px 16px;padding:28px 40px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#f8fafc;letter-spacing:2px;text-transform:uppercase;">A2Z BOOKSHOP</p>
+              <p style="margin:0 0 12px;font-size:12px;color:#94a3b8;">Your one-stop destination for books worldwide</p>
+              <p style="margin:0;font-size:11px;color:#64748b;line-height:1.7;">
+                Questions? Email us at <a href="mailto:support@a2zbookshop.com" style="color:#60a5fa;text-decoration:none;">support@a2zbookshop.com</a><br>
+                &copy; ${new Date().getFullYear()} A2Z BOOKSHOP. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
     return await sendEmail({
       to: data.customerEmail,
-      from: 'support@a2zbookshop.com',
-      subject: `Return Request #${data.returnRequestNumber} — Status Updated to ${label} | A2Z BOOKSHOP`,
-      html,
-      text: `Dear ${data.customerName},\n\nYour return request #${data.returnRequestNumber} for Order #${data.orderId} has been updated to: ${label}.\n${data.adminNotes ? `\nNotes: ${data.adminNotes}\n` : ''}\nRefund Amount: $${data.totalRefundAmount}\n\nThank you for choosing A2Z BOOKSHOP!\n\nBest regards,\nA2Z BOOKSHOP Team`,
+      subject: `Return Request ${data.returnRequestNumber} — Status: ${label} | A2Z BOOKSHOP`,
+      html: returnRequestUpdateHtml,
+      text: `Hi ${data.customerName}, your return request ${data.returnRequestNumber} for Order #${data.orderId} has been updated to: ${label}.${data.adminNotes ? ` Note: ${data.adminNotes}` : ''} Refund amount: $${data.totalRefundAmount}. For help, contact support@a2zbookshop.com`,
+      emailType: 'support',
     });
   } catch (error) {
     console.error('Error sending return status update email:', error);
@@ -4745,6 +4842,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         returnDeadline,
       });
 
+      // Send confirmation email to customer (and admin) immediately
+      sendReturnRequestEmail({
+        returnRequestNumber: returnRequest.returnRequestNumber,
+        orderId: returnRequest.orderId,
+        customerEmail: returnRequest.customerEmail,
+        customerName: returnRequest.customerName,
+        returnReason: returnRequest.returnReason,
+        returnDescription: returnRequest.returnDescription,
+        itemsToReturn: returnRequest.itemsToReturn as { bookId: number; quantity: number; reason?: string }[],
+        totalRefundAmount: returnRequest.totalRefundAmount,
+        returnDeadline: returnRequest.returnDeadline,
+        createdAt: returnRequest.createdAt,
+      }).catch((err) => console.error('Return request email failed:', err));
+
       res.json(returnRequest);
     } catch (error) {
       console.error("Error creating return request:", error);
@@ -5537,29 +5648,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestData = insertBookRequestSchema.parse(req.body);
       const bookRequest = await storage.createBookRequest(requestData);
 
-      // Send notification email to admin (optional)
+      // Send notification email to admin
       try {
         await sendEmail({
-          to: "admin@a2zbookshop.com", // Admin email
-          subject: "New Book Request Received",
+          to: "admin@a2zbookshop.com",
+          subject: `New Book Request Received - ${bookRequest.bookTitle}`,
           html: `
-            <h2>New Book Request</h2>
-            <p><strong>Customer:</strong> ${bookRequest.customerName}</p>
-            <p><strong>Email:</strong> ${bookRequest.customerEmail}</p>
-            <p><strong>Phone:</strong> ${bookRequest.customerPhone || 'Not provided'}</p>
-            <p><strong>Book Title:</strong> ${bookRequest.bookTitle}</p>
-            <p><strong>Author:</strong> ${bookRequest.author || 'Not provided'}</p>
-            <p><strong>ISBN:</strong> ${bookRequest.isbn || 'Not provided'}</p>
-            <p><strong>Expected Price:</strong> $${bookRequest.expectedPrice || 'Not specified'}</p>
-            <p><strong>Quantity:</strong> ${bookRequest.quantity}</p>
-            <p><strong>Additional Notes:</strong> ${bookRequest.notes || 'None'}</p>
-            <p><strong>Request ID:</strong> #${bookRequest.id}</p>
-            <p><strong>Date:</strong> ${new Date(bookRequest.createdAt!).toLocaleString()}</p>
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+              <h2 style="color:#0891b2;">New Book Request</h2>
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:6px 0;"><strong>Customer:</strong></td><td>${bookRequest.customerName}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Email:</strong></td><td>${bookRequest.customerEmail}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Phone:</strong></td><td>${bookRequest.customerPhone || 'Not provided'}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Book Title:</strong></td><td>${bookRequest.bookTitle}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Author:</strong></td><td>${bookRequest.author || 'Not provided'}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>ISBN:</strong></td><td>${bookRequest.isbn || 'Not provided'}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Binding:</strong></td><td>${bookRequest.binding || 'Not specified'}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Expected Price:</strong></td><td>$${bookRequest.expectedPrice || 'Not specified'}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Quantity:</strong></td><td>${bookRequest.quantity}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Additional Notes:</strong></td><td>${bookRequest.notes || 'None'}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Request ID:</strong></td><td>#${bookRequest.id}</td></tr>
+                <tr><td style="padding:6px 0;"><strong>Date:</strong></td><td>${new Date(bookRequest.createdAt!).toLocaleString()}</td></tr>
+              </table>
+            </div>
           `
         });
       } catch (emailError) {
-        console.error("Failed to send book request notification email:", emailError);
-        // Don't fail the request if email fails
+        console.error("Failed to send book request admin notification email:", emailError);
+      }
+
+      // Send confirmation email to the customer
+      try {
+        await sendEmail({
+          to: bookRequest.customerEmail,
+          subject: `Book Request Received - ${bookRequest.bookTitle} | A2Z BOOKSHOP`,
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+              <!-- Header -->
+              <div style="background:linear-gradient(135deg,#0891b2,#3b82f6);padding:32px 24px;text-align:center;border-radius:8px 8px 0 0;">
+                <h1 style="color:#ffffff;margin:0;font-size:24px;">A2Z BOOKSHOP</h1>
+                <p style="color:#e0f7fa;margin:8px 0 0;">Book Request Confirmation</p>
+              </div>
+
+              <!-- Body -->
+              <div style="padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+                <p style="color:#374151;font-size:16px;">Dear <strong>${bookRequest.customerName}</strong>,</p>
+                <p style="color:#6b7280;">Thank you for submitting your book request. We have received it and our team will start searching our supplier network right away.</p>
+
+                <!-- Request Summary Box -->
+                <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;margin:24px 0;">
+                  <h3 style="color:#0369a1;margin:0 0 12px;font-size:15px;">Your Request Summary</h3>
+                  <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;">
+                    <tr><td style="padding:5px 0;color:#6b7280;width:40%;">Request ID</td><td><strong>#${bookRequest.id}</strong></td></tr>
+                    <tr><td style="padding:5px 0;color:#6b7280;">Book Title</td><td><strong>${bookRequest.bookTitle}</strong></td></tr>
+                    ${bookRequest.author ? `<tr><td style="padding:5px 0;color:#6b7280;">Author</td><td>${bookRequest.author}</td></tr>` : ''}
+                    ${bookRequest.isbn ? `<tr><td style="padding:5px 0;color:#6b7280;">ISBN</td><td>${bookRequest.isbn}</td></tr>` : ''}
+                    ${bookRequest.binding ? `<tr><td style="padding:5px 0;color:#6b7280;">Binding</td><td style="text-transform:capitalize;">${bookRequest.binding.replace('_', ' ')}</td></tr>` : ''}
+                    <tr><td style="padding:5px 0;color:#6b7280;">Quantity</td><td>${bookRequest.quantity}</td></tr>
+                    ${bookRequest.expectedPrice ? `<tr><td style="padding:5px 0;color:#6b7280;">Expected Price</td><td>$${bookRequest.expectedPrice}</td></tr>` : ''}
+                    <tr><td style="padding:5px 0;color:#6b7280;">Date Submitted</td><td>${new Date(bookRequest.createdAt!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
+                  </table>
+                </div>
+
+                <!-- What's Next -->
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;margin:24px 0;">
+                  <h3 style="color:#15803d;margin:0 0 12px;font-size:15px;">What Happens Next?</h3>
+                  <ul style="color:#166534;font-size:14px;margin:0;padding-left:20px;line-height:1.8;">
+                    <li>Our team will search our supplier network for your book</li>
+                    <li>You'll receive an email update within <strong>1-3 business days</strong></li>
+                    <li>Once found, we'll notify you with pricing and availability</li>
+                    <li>No payment is required until you decide to purchase</li>
+                  </ul>
+                </div>
+                <p style="color:#374151;">Thank you for choosing A2Z BOOKSHOP!</p>
+              </div>
+
+              <!-- Footer -->
+              <div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;">
+                <p style="margin:0;">© ${new Date().getFullYear()} A2Z BOOKSHOP. All rights reserved.</p>
+                <p style="margin:4px 0 0;"><a href="https://a2zbookshop.com" style="color:#0891b2;">a2zbookshop.com</a></p>
+              </div>
+            </div>
+          `
+        });
+      } catch (emailError) {
+        console.error("Failed to send book request confirmation email to customer:", emailError);
       }
 
       res.json(bookRequest);

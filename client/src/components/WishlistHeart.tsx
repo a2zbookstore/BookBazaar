@@ -22,6 +22,11 @@ export default function WishlistHeart({ bookId, className = "", size = 20 }: Wis
   // Check if book is in wishlist
   const { data: wishlistStatus } = useQuery({
     queryKey: ['/api/wishlist/check', bookId],
+    queryFn: async () => {
+      const res = await fetch(`/api/wishlist/check/${bookId}`, { credentials: "include" });
+      if (!res.ok) return { inWishlist: false };
+      return res.json();
+    },
     enabled: isAuthenticated,
   });
 

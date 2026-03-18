@@ -983,9 +983,6 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
               <p style="margin:0 0 6px;font-size:13px;">
                 <a href="mailto:support@a2zbookshop.com" style="color:#7dd3fc;text-decoration:none;">support@a2zbookshop.com</a>
               </p>
-              <p style="margin:0 0 16px;font-size:13px;">
-                <a href="https://a2zbookshop.com" style="color:#7dd3fc;text-decoration:none;">a2zbookshop.com</a>
-              </p>
               <p style="margin:0;font-size:11px;color:#475569;">
                 This is an automated message — please do not reply directly to this email.<br>
                 © ${new Date().getFullYear()} A2Z BOOKSHOP. All rights reserved.
@@ -1802,6 +1799,243 @@ export const sendPaymentFailedEmail = async (data: {
     return true;
   } catch (error) {
     console.error('Error sending payment failed email:', error);
+    return false;
+  }
+};
+interface ReturnRequestEmailData {
+  returnRequestNumber: string;
+  orderId: number;
+  customerEmail: string;
+  customerName: string;
+  returnReason: string;
+  returnDescription: string;
+  itemsToReturn: { bookId: number; quantity: number; reason?: string }[];
+  totalRefundAmount: string;
+  returnDeadline: Date;
+  createdAt?: Date | null;
+}
+
+const generateReturnRequestHTML = (data: ReturnRequestEmailData): string => {
+  const {
+    returnRequestNumber,
+    orderId,
+    customerName,
+    returnReason,
+    returnDescription,
+    itemsToReturn,
+    totalRefundAmount,
+    returnDeadline,
+    createdAt,
+  } = data;
+
+  const submittedDate = createdAt
+    ? new Date(createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const deadlineDateStr = new Date(returnDeadline).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  const reasonLabel: Record<string, string> = {
+    damaged: 'Item Arrived Damaged',
+    defective: 'Defective Product',
+    wrong_item: 'Wrong Item Received',
+    not_as_described: 'Not As Described',
+    other: 'Other',
+  };
+
+  const itemRows = itemsToReturn
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding:12px 0;font-size:14px;color:#374151;border-bottom:1px solid #e5e7eb;">
+          Book ID #${item.bookId}
+          ${item.reason ? `<br><span style="font-size:12px;color:#6b7280;">${item.reason}</span>` : ''}
+        </td>
+        <td style="padding:12px 0;font-size:14px;font-weight:600;color:#0f172a;text-align:right;border-bottom:1px solid #e5e7eb;">
+          Qty: ${item.quantity}
+        </td>
+      </tr>`
+    )
+    .join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Return Request ${returnRequestNumber} — A2Z BOOKSHOP</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 55%,#3b82f6 100%);border-radius:16px 16px 0 0;padding:48px 40px 36px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#bfdbfe;">A2Z BOOKSHOP</p>
+              <h1 style="margin:0 0 10px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.25;">Return Request Received</h1>
+              <p style="margin:0;font-size:15px;color:#dbeafe;line-height:1.55;">We've received your return request and will review it shortly.</p>
+            </td>
+          </tr>
+
+          <!-- COLOUR BAR -->
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg,#3b82f6,#6366f1,#8b5cf6);"></td>
+          </tr>
+
+          <!-- META BADGES -->
+          <tr>
+            <td style="background:#ffffff;padding:24px 40px;border-bottom:1px solid #e0e7ff;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Request #</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#1d4ed8;">${returnRequestNumber}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Order ID</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">#${orderId}</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Status</span>
+                    <span style="display:inline-block;background:#dbeafe;color:#1e40af;border:1.5px solid #93c5fd;padding:5px 16px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">PENDING REVIEW</span>
+                  </td>
+                  <td style="text-align:center;padding:0 8px;">
+                    <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Submitted</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">${submittedDate}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="background:#ffffff;padding:32px 40px 8px;">
+              <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#0f172a;">Hi, ${customerName}!</p>
+              <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.75;">
+                Your return request <strong>${returnRequestNumber}</strong> has been successfully submitted for Order <strong>#${orderId}</strong>.
+                Our team will review it and get back to you within <strong>2–3 business days</strong>.
+              </p>
+
+              <!-- REQUEST SUMMARY -->
+              <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#64748b;">Return Reason</p>
+              <div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 12px 12px 0;margin-bottom:24px;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:16px 20px;">
+                      <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#1e40af;">${reasonLabel[returnReason] || returnReason}</p>
+                      <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">${returnDescription}</p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- ITEMS TABLE -->
+              <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#64748b;">Items to Return</p>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:4px 24px;margin-bottom:28px;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  ${itemRows}
+                </table>
+              </div>
+
+              <!-- REFUND -->
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:28px;">
+                <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#15803d;">Estimated Refund Amount</p>
+                <p style="margin:0;font-size:24px;font-weight:800;color:#166534;">$${parseFloat(totalRefundAmount).toFixed(2)}</p>
+                <p style="margin:6px 0 0;font-size:13px;color:#4b5563;line-height:1.6;">
+                  If approved, the refund will be processed to your original payment method within <strong>5–7 business days</strong>.
+                </p>
+              </div>
+
+              <!-- DEADLINE -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border-left:4px solid #f97316;border-radius:0 12px 12px 0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#c2410c;">Return Deadline</p>
+                    <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">
+                      Please ship your items back by <strong>${deadlineDateStr}</strong> to be eligible for a refund.
+                      You will receive further instructions from our team once your request is approved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- NEXT STEPS -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:0 12px 12px 0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#5b21b6;">What Happens Next?</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; Our team will review your request within <strong>2–3 business days</strong>.</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; You'll receive an email with the return shipping instructions once approved.</p>
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; Refunds are processed after we receive and inspect the returned items.</p>
+                    <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">&#8226;&nbsp; For questions, contact us at <a href="mailto:support@a2zbookshop.com" style="color:#7c3aed;text-decoration:none;">support@a2zbookshop.com</a> with your request number <strong>${returnRequestNumber}</strong>.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#1e293b;border-radius:0 0 16px 16px;padding:28px 40px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#f8fafc;letter-spacing:2px;text-transform:uppercase;">A2Z BOOKSHOP</p>
+              <p style="margin:0 0 12px;font-size:12px;color:#94a3b8;">Your one-stop destination for books worldwide</p>
+              <p style="margin:0;font-size:11px;color:#64748b;line-height:1.7;">
+                Questions? Email us at <a href="mailto:support@a2zbookshop.com" style="color:#60a5fa;text-decoration:none;">support@a2zbookshop.com</a><br>
+                &copy; ${new Date().getFullYear()} A2Z BOOKSHOP. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+};
+
+export const sendReturnRequestEmail = async (data: ReturnRequestEmailData): Promise<boolean> => {
+  try {
+    const transport = createTransporter();
+    if (!transport) {
+      console.log('Email transporter not available - skipping return request email');
+      return false;
+    }
+
+    const htmlContent = generateReturnRequestHTML(data);
+    const { returnRequestNumber, orderId, customerEmail, customerName, totalRefundAmount } = data;
+
+    const customerMailOptions = {
+      from: { name: 'A2Z BOOKSHOP Support', address: getZohoEmail('support') },
+      to: customerEmail,
+      subject: `Return Request ${returnRequestNumber} Received — A2Z BOOKSHOP`,
+      html: htmlContent,
+      text: `Hi ${customerName}, your return request ${returnRequestNumber} for Order #${orderId} has been received. Estimated refund: $${parseFloat(totalRefundAmount).toFixed(2)}. Our team will review it within 2–3 business days. For help, quote ${returnRequestNumber} and email support@a2zbookshop.com`,
+    };
+
+    const adminMailOptions = {
+      from: { name: 'A2Z BOOKSHOP System', address: getZohoEmail('admin') },
+      to: getZohoEmail('admin'),
+      subject: `New Return Request ${returnRequestNumber} — Order #${orderId}`,
+      html: htmlContent,
+      text: `New return request ${returnRequestNumber} from ${customerEmail} for Order #${orderId}. Estimated refund: $${parseFloat(totalRefundAmount).toFixed(2)}.`,
+    };
+
+    await Promise.all([
+      transport.sendMail(customerMailOptions),
+      transport.sendMail(adminMailOptions),
+    ]);
+
+    console.log(`Return request emails sent for ${returnRequestNumber}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending return request email:', error);
     return false;
   }
 };

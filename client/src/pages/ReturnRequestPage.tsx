@@ -298,6 +298,16 @@ export default function ReturnRequestPage() {
                             <p className="text-sm font-semibold text-gray-900 line-clamp-1">{item.title}</p>
                             <p className="text-xs text-gray-500">{item.author}</p>
                           </div>
+                          <div className="flex items-center gap-1 justify-center">
+                            <p className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                              ${parseFloat(item.price).toFixed(2)}
+                            </p>
+                            <span>x</span>
+                            <p className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                              {item.quantity}
+                            </p>
+                            <span>=</span>
+                          </div>
                           <p className="text-sm font-semibold text-gray-900 flex-shrink-0">
                             ${(parseFloat(item.price) * item.quantity).toFixed(2)}
                           </p>
@@ -387,11 +397,10 @@ export default function ReturnRequestPage() {
                                 <p className="text-base font-bold text-gray-900 flex-shrink-0">#{order.id}</p>
                                 <Badge className="bg-green-100 text-green-800 px-2 py-0.5 text-xs rounded-full flex-shrink-0">Delivered</Badge>
                                 {/* ── Days-left return window badge ── */}
-                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 border ${
-                                  isUrgent
-                                    ? "bg-red-50 text-red-700 border-red-200"
-                                    : "bg-amber-50 text-amber-700 border-amber-200"
-                                }`}>
+                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 border ${isUrgent
+                                  ? "bg-red-50 text-red-700 border-red-200"
+                                  : "bg-amber-50 text-amber-700 border-amber-200"
+                                  }`}>
                                   <Clock className="h-3 w-3" />
                                   {daysLeft === 1 ? "Last day to return!" : `${daysLeft} days left to return`}
                                 </span>
