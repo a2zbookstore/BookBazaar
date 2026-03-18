@@ -14,6 +14,7 @@ import {
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { useGlobalContext } from "@/contexts/GlobalContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const menuItems = [
     { label: "Catalog", icon: List, location: "/catalog" },
@@ -29,6 +30,7 @@ export default function ProfileMenu(user?: any) {
     const [, setLocation] = useLocation();
     const [customerName, setCustomerName] = useState("");
     const { setIsAuthTransitioning } = useGlobalContext();
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         setCustomerName(user && (user.user.firstName || user.user.lastName)
@@ -113,14 +115,12 @@ export default function ProfileMenu(user?: any) {
                             setIsAuthTransitioning(true);
                             try {
                                 await fetch("/api/auth/logout", { method: "POST" });
-                                setTimeout(() => {
-                                    window.location.href = "/";
-                                }, 300);
-                            } catch (error) {
-                                setTimeout(() => {
-                                    window.location.href = "/api/logout";
-                                }, 300);
+                            } catch {
+                                // best-effort, proceed regardless
                             }
+                            await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+                            setIsAuthTransitioning(false);
+                            setLocation("/");
                         }}
                     >
                         <LogOut className="h-4 w-4 md:h-5 md:w-5" />

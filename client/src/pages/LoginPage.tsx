@@ -68,23 +68,14 @@ export default function LoginPage() {
       return await apiRequest("POST", "/api/auth/login", data);
     },
     onSuccess: async () => {
-      // Set transitioning state before any redirects
       setIsAuthTransitioning(true);
-      
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-      
-      // Wait for auth to refresh
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
-      
-      // Small delay to ensure everything is loaded
-      setTimeout(() => {
-        setIsAuthTransitioning(false);
-        setLocation("/");
-      }, 500);
+      setIsAuthTransitioning(false);
+      setLocation(redirect);
     },
     onError: (error: any) => {
       toast({

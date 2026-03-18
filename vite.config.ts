@@ -27,6 +27,31 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime — tiny, always needed first
+          "vendor-react": ["react", "react-dom"],
+          // Routing + data fetching
+          "vendor-query": ["@tanstack/react-query", "wouter"],
+          // UI component library
+          "vendor-ui": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-select",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-label",
+            "@radix-ui/react-avatar",
+          ],
+          // Icons — large package, isolate it
+          "vendor-icons": ["lucide-react"],
+          // Carousel
+          "vendor-carousel": ["embla-carousel-react", "embla-carousel-autoplay"],
+        },
+      },
+    },
   },
   server: {
     fs: {
