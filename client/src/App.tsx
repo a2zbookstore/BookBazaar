@@ -71,8 +71,6 @@ function PageLoader() {
   );
 }
 
-import { Loader2 } from "lucide-react";
-
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -173,12 +171,10 @@ function AuthTransitionLoader() {
   if (!isAuthTransitioning) return null;
 
   return (
-    <div className="fixed inset-0 bg-transparent backdrop-blur-sm z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 bg-white z-[9999] flex items-center justify-center">
       <div className="text-center">
-        <div className="flex items-center justify-center gap-6">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg font-semibold text-secondary-black">Please Wait</p>
-        </div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
+        <p className="mt-4 text-secondary-black">Loading...</p>
       </div>
     </div>
   );
