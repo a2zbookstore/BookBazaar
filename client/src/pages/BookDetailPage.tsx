@@ -40,23 +40,53 @@ export default function BookDetailPage() {
   const [shippingCost, setShippingCost] = useState<string>("");
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
   const [expanded, setExpanded] = useState(false);
-
-
-  // Shipping cost logic from BookCard
-  useEffect(() => {
-    if (shipCost !== undefined) {
-      if (shipCost === 0) {
-        setShippingCost("Free Delivery");
-      } else {
-        setShippingCost(formatAmount(shipCost, "USD"));
-      }
-    }
-  }, [shipCost, formatAmount]);
+  const [displayPrice, setDisplayPrice] = useState<string>('');
+  const [isConverting, setIsConverting] = useState(false);
 
   const { data: book, isLoading } = useQuery<Book>({
     queryKey: [`/api/books/${id}`],
     enabled: !!id,
   });
+
+  // Convert price + shipping whenever currency or book changes
+  useEffect(() => {
+    if (!book) return;
+    const run = async () => {
+      setIsConverting(true);
+      try {
+        if (userCurrency !== 'USD') {
+          const converted = await convertPrice(parseFloat(book.price));
+          setDisplayPrice(converted
+            ? formatAmount(converted.convertedAmount, userCurrency)
+            : formatAmount(parseFloat(book.price), 'USD'));
+
+          if (shipCost !== undefined) {
+            if (shipCost === 0) {
+              setShippingCost('Free Delivery');
+            } else {
+              const convertedShipping = await convertPrice(shipCost);
+              setShippingCost(convertedShipping
+                ? formatAmount(convertedShipping.convertedAmount, userCurrency)
+                : formatAmount(shipCost, 'USD'));
+            }
+          }
+        } else {
+          setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+          if (shipCost !== undefined) {
+            setShippingCost(shipCost === 0 ? 'Free Delivery' : formatAmount(shipCost, 'USD'));
+          }
+        }
+      } catch {
+        setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+        if (shipCost !== undefined) {
+          setShippingCost(shipCost === 0 ? 'Free Delivery' : formatAmount(shipCost, 'USD'));
+        }
+      } finally {
+        setIsConverting(false);
+      }
+    };
+    run();
+  }, [book?.price, userCurrency, shipCost, convertPrice, formatAmount]);
 
   const handleAddToCart = async () => {
     if (!book) return;
@@ -302,7 +332,7 @@ export default function BookDetailPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold text-primary-aqua">
-                  ${parseFloat(book.price).toFixed(2)}
+                  {isConverting ? '...' : (displayPrice || `$${parseFloat(book.price).toFixed(2)}`)}
                 </span>
                 {book.stock > 0 && book.stock <= 5 && (
                   <span className="text-sm text-abe-red font-medium">

@@ -118,6 +118,18 @@ export default function ReturnsPage() {
   const returnRequests: ReturnRequest[] = returnsData?.returnRequests || [];
   const total = returnsData?.total || 0;
 
+  // Separate unfiltered query so stats are always accurate regardless of active filter
+  const { data: allReturnsData } = useQuery({
+    queryKey: ["/api/admin/returns/all-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/returns", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch return stats");
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
+  const allReturnRequests: ReturnRequest[] = allReturnsData?.returnRequests || [];
+
   /* ── Mutations ── */
   const updateStatusMutation = useMutation({
     mutationFn: async (data: { id: number; status: string; adminNotes?: string }) =>
@@ -205,10 +217,10 @@ export default function ReturnsPage() {
     { value: "refund_processed", label: "Refund Processed",color: "bg-blue-500" },
   ];
 
-  const pendingCount   = returnRequests.filter((r) => r.status === "pending").length;
-  const approvedCount  = returnRequests.filter((r) => r.status === "approved").length;
-  const processedCount = returnRequests.filter((r) => r.status === "refund_processed").length;
-  const totalRefunds   = returnRequests.reduce((s, r) => s + parseFloat(r.totalRefundAmount || "0"), 0);
+  const pendingCount   = allReturnRequests.filter((r) => r.status === "pending").length;
+  const approvedCount  = allReturnRequests.filter((r) => r.status === "approved").length;
+  const processedCount = allReturnRequests.filter((r) => r.status === "refund_processed").length;
+  const totalRefunds   = allReturnRequests.reduce((s, r) => s + parseFloat(r.totalRefundAmount || "0"), 0);
 
   /* ══════════════════════════════════════════════════════ */
   return (
@@ -254,7 +266,7 @@ export default function ReturnsPage() {
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: <Package className="h-5 w-5 text-rose-600" />, bg: "bg-rose-50", label: "Total Requests", value: total, sub: "all time" },
+          { icon: <Package className="h-5 w-5 text-rose-600" />, bg: "bg-rose-50", label: "Total Requests", value: allReturnRequests.length || total, sub: "all time" },
           { icon: <Clock className="h-5 w-5 text-amber-500" />, bg: "bg-amber-50", label: "Awaiting Review", value: pendingCount, sub: "need action" },
           { icon: <CheckCircle className="h-5 w-5 text-emerald-600" />, bg: "bg-emerald-50", label: "Approved", value: approvedCount, sub: "ready to refund" },
           { icon: <DollarSign className="h-5 w-5 text-blue-600" />, bg: "bg-blue-50", label: "Refunds Done", value: processedCount, sub: "completed" },
@@ -276,8 +288,8 @@ export default function ReturnsPage() {
       <div className="flex flex-wrap gap-2">
         {STATUS_TABS.map((tab) => {
           const count = tab.value === "all"
-            ? returnRequests.length
-            : returnRequests.filter((r) => r.status === tab.value).length;
+            ? allReturnRequests.length
+            : allReturnRequests.filter((r) => r.status === tab.value).length;
           const active = statusFilter === tab.value;
           return (
             <button

@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Store,
   BarChart2,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ const menuSections = [
     items: [
       { href: "/admin/inventory", icon: BookOpen, label: "Inventory" },
       { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
+      { href: "/admin/book-requests", icon: ClipboardList, label: "Book Requests" },
       { href: "/admin/customers", icon: Users, label: "Customers" },
       { href: "/admin/returns", icon: RotateCcw, label: "Returns" },
     ],

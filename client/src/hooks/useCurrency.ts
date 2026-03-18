@@ -4,8 +4,6 @@ import {
   getPreferredCurrency,
   getCurrencyForCountry,
   formatPrice,
-  getCachedExchangeRates,
-  cacheExchangeRates,
   getExchangeRates,
   type ConvertedPrice,
   type CurrencyInfo,
@@ -49,23 +47,15 @@ export function useCurrency(countryCode?: string): UseCurrencyReturn {
     setIsLoading(false);
   }, [location?.countryCode]);
 
-  // Load exchange rates
+  // Load exchange rates — getExchangeRates handles memory cache, localStorage cache,
+  // and in-flight deduplication internally, so at most ONE network request fires
+  // per currency per hour across all hook instances on the page.
   const loadExchangeRates = useCallback(async (baseCurrency: string = 'USD') => {
     try {
       setError(null);
-      // Try to get cached rates first
-      const cachedRates = getCachedExchangeRates(baseCurrency);
-      if (cachedRates) {        
-        setExchangeRates(cachedRates);
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch fresh rates      
       const rates = await getExchangeRates(baseCurrency);
       if (rates) {
         setExchangeRates(rates);
-        cacheExchangeRates(rates, baseCurrency);
       } else {
         setError('Failed to load exchange rates');
       }

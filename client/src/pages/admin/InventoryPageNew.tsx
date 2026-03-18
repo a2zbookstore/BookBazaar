@@ -569,15 +569,15 @@ export default function InventoryPageNew() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-5 py-4 border-t border-gray-50">
-              <span className="text-xs text-secondary-black">
+            <div className="flex flex-col gap-4 items-center justify-center px-5 py-4 border-t border-gray-50">
+              {/* <span className="text-xs text-secondary-black">
                 Page {currentPage} of {totalPages} · {totalBooks} books
-              </span>
+              </span> */}
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-8 h-8 rounded-full flex items-center justify-center border border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -588,7 +588,7 @@ export default function InventoryPageNew() {
                     <button
                       key={p}
                       onClick={() => setCurrentPage(p)}
-                      className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-all ${currentPage === p ? "bg-primary-aqua text-white border-primary-aqua" : "border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua"}`}
+                      className={`w-8 h-8 rounded-full text-xs font-semibold border transition-all ${currentPage === p ? "bg-primary-aqua text-white border-primary-aqua" : "border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua"}`}
                     >
                       {p}
                     </button>
@@ -597,7 +597,7 @@ export default function InventoryPageNew() {
                 <button
                   onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-8 h-8 rounded-full flex items-center justify-center border border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>

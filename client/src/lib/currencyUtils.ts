@@ -97,31 +97,62 @@ export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
   // Other regions - default to USD for easier currency conversion
 };
 
+// Module-level in-memory cache — shared across ALL hook instances within the same page session.
+// This prevents N concurrent fetches when N BookCards mount at the same time.
+const MEMORY_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const _memoryRatesCache = new Map<string, { rates: Record<string, number>; timestamp: number }>();
+// In-flight promise deduplication: if a fetch is already running for a currency,
+// all subsequent callers get the same promise instead of firing a new request.
+const _pendingFetches = new Map<string, Promise<Record<string, number> | null>>();
+
 /**
- * Get exchange rates from a free API service
+ * Get exchange rates from a free API service.
+ * Uses a module-level memory cache (1 h TTL) and deduplicates concurrent requests,
+ * so only ONE network call is made per currency per hour regardless of how many
+ * components call this at the same time.
  */
 export async function getExchangeRates(baseCurrency: string = 'USD'): Promise<Record<string, number> | null> {
-  try {
-    // Using exchangerate-api.com free tier (1,500 requests/month)
-    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${baseCurrency}`);
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.rates;
-    }
-
-    // Fallback to fixer.io if first API fails
-    const fallbackResponse = await fetch(`https://api.fixer.io/latest?base=${baseCurrency}&access_key=free`);
-    if (fallbackResponse.ok) {
-      const fallbackData = await fallbackResponse.json();
-      return fallbackData.rates;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error fetching exchange rates:', error);
-    return null;
+  // 1. Check module-level memory cache first (fastest — no I/O)
+  const memoryCached = _memoryRatesCache.get(baseCurrency);
+  if (memoryCached && Date.now() - memoryCached.timestamp < MEMORY_CACHE_TTL) {
+    return memoryCached.rates;
   }
+
+  // 2. Check localStorage cache (survives page refresh)
+  const lsCached = getCachedExchangeRates(baseCurrency);
+  if (lsCached) {
+    _memoryRatesCache.set(baseCurrency, { rates: lsCached, timestamp: Date.now() });
+    return lsCached;
+  }
+
+  // 3. Deduplicate concurrent requests — if one is already in-flight, share its promise
+  if (_pendingFetches.has(baseCurrency)) {
+    return _pendingFetches.get(baseCurrency)!;
+  }
+
+  // 4. Fire a single fetch and store the promise so concurrent callers share it
+  const fetchPromise = (async (): Promise<Record<string, number> | null> => {
+    try {
+      // Using exchangerate-api.com free tier (1,500 requests/month)
+      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${baseCurrency}`);
+      if (response.ok) {
+        const data = await response.json();
+        const rates: Record<string, number> = data.rates;
+        _memoryRatesCache.set(baseCurrency, { rates, timestamp: Date.now() });
+        cacheExchangeRates(rates, baseCurrency);
+        return rates;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching exchange rates:', error);
+      return null;
+    } finally {
+      _pendingFetches.delete(baseCurrency);
+    }
+  })();
+
+  _pendingFetches.set(baseCurrency, fetchPromise);
+  return fetchPromise;
 }
 
 /**
