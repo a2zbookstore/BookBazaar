@@ -1,4 +1,5 @@
 import { Switch, Route, Router } from "wouter";
+import { lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,51 +12,64 @@ import { GlobalProvider, useGlobalContext } from "@/contexts/GlobalContext";
 import { LocationProvider } from "@/contexts/userLocationContext";
 import Layout from "./components/Layout";
 
-// Pages
-import HomePage from "@/pages/HomePage";
-import CatalogPage from "@/pages/CatalogPage";
-import BookDetailPage from "@/pages/BookDetailPage";
-import CartPage from "@/pages/CartPage";
-import AboutPage from "@/pages/AboutPage";
-import ContactPage from "@/pages/ContactPage";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
-import InventoryPageNew from "@/pages/admin/InventoryPageNew";
-import OrdersPage from "@/pages/admin/OrdersPage";
-import CustomersPage from "@/pages/admin/CustomersPage";
-import SalesPage from "@/pages/admin/SalesPage";
-import SettingsPage from "@/pages/admin/SettingsPage";
-import ShippingPage from "@/pages/admin/ShippingPage";
-import ReturnsPage from "@/pages/admin/ReturnsPage";
-import AdminAccountPage from "@/pages/admin/AdminAccountPage";
-import MessagesPage from "@/pages/admin/MessagesPage";
-import GiftCategoriesPage from "@/pages/admin/GiftCategoriesPage";
-import CouponsPage from "@/pages/admin/CouponsPage";
-import BookRequestsPage from "@/pages/admin/BookRequestsPage";
-import AnalyticsPage from "@/pages/admin/AnalyticsPage";
-import GiftItemsPage from "@/pages/GiftItemsPage";
-import GiftManagementPage from "@/pages/admin/GiftManagementPage";
-import AuditLogPage from "@/pages/admin/AuditLogPage";
-import TrackOrderPage from "@/pages/TrackOrderPage";
-import MyOrdersPage from "@/pages/MyOrdersPage";
-import CheckoutPage from "@/pages/CheckoutPage";
-import OrderDetailPage from "@/pages/OrderDetailPage";
-import PayPalCompletePage from "@/pages/PayPalCompletePage";
-import ReturnRequestPage from "@/pages/ReturnRequestPage";
-import WishlistPage from "@/pages/WishlistPage";
-import AdminLoginPage from "@/pages/AdminLoginPage";
-import LoginPage from "@/pages/LoginPage";
-import RegisterPage from "@/pages/RegisterPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
-import ShippingInfoPage from "@/pages/ShippingInfoPage";
-import ReturnPolicyPage from "@/pages/ReturnPolicyPage";
-import CancellationPolicyPage from "@/pages/CancellationPolicyPage";
-import TermsAndConditionsPage from "@/pages/TermsAndConditionsPage";
-import FAQPage from "@/pages/FAQPage";
-import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
-import RequestBookPage from "@/pages/RequestBookPage";
-import NotFound from "@/pages/NotFound";
-import MyProfile from "./pages/MyProfile";
-import { Loader2 } from "lucide-react";
+// ── Lazy-loaded pages (each gets its own JS chunk — only loaded when visited) ──
+const HomePage            = lazy(() => import("@/pages/HomePage"));
+const CatalogPage         = lazy(() => import("@/pages/CatalogPage"));
+const BookDetailPage      = lazy(() => import("@/pages/BookDetailPage"));
+const CartPage            = lazy(() => import("@/pages/CartPage"));
+const AboutPage           = lazy(() => import("@/pages/AboutPage"));
+const ContactPage         = lazy(() => import("@/pages/ContactPage"));
+const RequestBookPage     = lazy(() => import("@/pages/RequestBookPage"));
+const TrackOrderPage      = lazy(() => import("@/pages/TrackOrderPage"));
+const MyOrdersPage        = lazy(() => import("@/pages/MyOrdersPage"));
+const CheckoutPage        = lazy(() => import("@/pages/CheckoutPage"));
+const MyProfile           = lazy(() => import("@/pages/MyProfile"));
+const PayPalCompletePage  = lazy(() => import("@/pages/PayPalCompletePage"));
+const OrderDetailPage     = lazy(() => import("@/pages/OrderDetailPage"));
+const ReturnRequestPage   = lazy(() => import("@/pages/ReturnRequestPage"));
+const WishlistPage        = lazy(() => import("@/pages/WishlistPage"));
+const GiftItemsPage       = lazy(() => import("@/pages/GiftItemsPage"));
+const ShippingInfoPage    = lazy(() => import("@/pages/ShippingInfoPage"));
+const ReturnPolicyPage    = lazy(() => import("@/pages/ReturnPolicyPage"));
+const CancellationPolicyPage = lazy(() => import("@/pages/CancellationPolicyPage"));
+const TermsAndConditionsPage = lazy(() => import("@/pages/TermsAndConditionsPage"));
+const FAQPage             = lazy(() => import("@/pages/FAQPage"));
+const PrivacyPolicyPage   = lazy(() => import("@/pages/PrivacyPolicyPage"));
+const LoginPage           = lazy(() => import("@/pages/LoginPage"));
+const RegisterPage        = lazy(() => import("@/pages/RegisterPage"));
+const ResetPasswordPage   = lazy(() => import("@/pages/ResetPasswordPage"));
+const AdminLoginPage      = lazy(() => import("@/pages/AdminLoginPage"));
+const NotFound            = lazy(() => import("@/pages/NotFound"));
+
+// Admin pages — each is a separate chunk; only loaded when admin visits them
+const AdminDashboard      = lazy(() => import("@/pages/admin/AdminDashboard"));
+const InventoryPageNew    = lazy(() => import("@/pages/admin/InventoryPageNew"));
+const OrdersPage          = lazy(() => import("@/pages/admin/OrdersPage"));
+const CustomersPage       = lazy(() => import("@/pages/admin/CustomersPage"));
+const SalesPage           = lazy(() => import("@/pages/admin/SalesPage"));
+const SettingsPage        = lazy(() => import("@/pages/admin/SettingsPage"));
+const ShippingPage        = lazy(() => import("@/pages/admin/ShippingPage"));
+const ReturnsPage         = lazy(() => import("@/pages/admin/ReturnsPage"));
+const AdminAccountPage    = lazy(() => import("@/pages/admin/AdminAccountPage"));
+const MessagesPage        = lazy(() => import("@/pages/admin/MessagesPage"));
+const GiftCategoriesPage  = lazy(() => import("@/pages/admin/GiftCategoriesPage"));
+const CouponsPage         = lazy(() => import("@/pages/admin/CouponsPage"));
+const BookRequestsPage    = lazy(() => import("@/pages/admin/BookRequestsPage"));
+const AnalyticsPage       = lazy(() => import("@/pages/admin/AnalyticsPage"));
+const GiftManagementPage  = lazy(() => import("@/pages/admin/GiftManagementPage"));
+const AuditLogPage        = lazy(() => import("@/pages/admin/AuditLogPage"));
+
+// Minimal inline spinner shown while a lazy chunk is downloading
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
+        <p className="mt-4 text-secondary-black">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function AppRouter() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -78,142 +92,57 @@ function AppRouter() {
   }
 
   return (
-    <Switch>
-      {/* Public routes — wrapped in Layout (Header + SubHeader + Footer) */}
-      <Route path="/" component={() => <Layout><HomePage /></Layout>} />
-      <Route path="/catalog" component={() => <Layout><CatalogPage /></Layout>} />
-      <Route path="/books/:id" component={() => <Layout><BookDetailPage /></Layout>} />
-      <Route path="/about" component={() => <Layout><AboutPage /></Layout>} />
-      <Route path="/contact" component={() => <Layout><ContactPage /></Layout>} />
-      <Route path="/request-book" component={() => <Layout><RequestBookPage /></Layout>} />
-      <Route path="/track-order" component={() => <Layout><TrackOrderPage /></Layout>} />
-      <Route path="/my-orders" component={() => <Layout><MyOrdersPage /></Layout>} />
-      <Route path="/cart" component={() => <Layout><CartPage /></Layout>} />
-      <Route path="/checkout/:mode/:bookId/:quantity" component={() => <Layout><CheckoutPage /></Layout>} />
-      <Route path="/profile" component={() => <Layout><MyProfile /></Layout>} />
-      <Route path="/paypal-complete" component={() => <Layout><PayPalCompletePage /></Layout>} />
-      <Route path="/orders/:id" component={() => <Layout><OrderDetailPage /></Layout>} />
-      <Route path="/returns" component={() => <Layout><ReturnRequestPage /></Layout>} />
-      <Route path="/wishlist" component={() => <Layout><WishlistPage /></Layout>} />
-      <Route path="/shipping-info" component={() => <Layout><ShippingInfoPage /></Layout>} />
-      <Route path="/return-policy" component={() => <Layout><ReturnPolicyPage /></Layout>} />
-      <Route path="/cancellation-policy" component={() => <Layout><CancellationPolicyPage /></Layout>} />
-      <Route path="/terms-and-conditions" component={() => <Layout><TermsAndConditionsPage /></Layout>} />
-      <Route path="/gift-items" component={() => <Layout><GiftItemsPage /></Layout>} />
-      <Route path="/faq" component={() => <Layout><FAQPage /></Layout>} />
-      <Route path="/privacy-policy" component={() => <Layout><PrivacyPolicyPage /></Layout>} />
-      <Route path="/admin-login" component={AdminLoginPage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/register" component={RegisterPage} />
-      <Route path="/reset-password" component={ResetPasswordPage} />
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        {/* Public routes */}
+        <Route path="/" component={() => <Layout><HomePage /></Layout>} />
+        <Route path="/catalog" component={() => <Layout><CatalogPage /></Layout>} />
+        <Route path="/books/:id" component={() => <Layout><BookDetailPage /></Layout>} />
+        <Route path="/about" component={() => <Layout><AboutPage /></Layout>} />
+        <Route path="/contact" component={() => <Layout><ContactPage /></Layout>} />
+        <Route path="/request-book" component={() => <Layout><RequestBookPage /></Layout>} />
+        <Route path="/track-order" component={() => <Layout><TrackOrderPage /></Layout>} />
+        <Route path="/my-orders" component={() => <Layout><MyOrdersPage /></Layout>} />
+        <Route path="/cart" component={() => <Layout><CartPage /></Layout>} />
+        <Route path="/checkout/:mode/:bookId/:quantity" component={() => <Layout><CheckoutPage /></Layout>} />
+        <Route path="/profile" component={() => <Layout><MyProfile /></Layout>} />
+        <Route path="/paypal-complete" component={() => <Layout><PayPalCompletePage /></Layout>} />
+        <Route path="/orders/:id" component={() => <Layout><OrderDetailPage /></Layout>} />
+        <Route path="/returns" component={() => <Layout><ReturnRequestPage /></Layout>} />
+        <Route path="/wishlist" component={() => <Layout><WishlistPage /></Layout>} />
+        <Route path="/gift-items" component={() => <Layout><GiftItemsPage /></Layout>} />
+        <Route path="/shipping-info" component={() => <Layout><ShippingInfoPage /></Layout>} />
+        <Route path="/return-policy" component={() => <Layout><ReturnPolicyPage /></Layout>} />
+        <Route path="/cancellation-policy" component={() => <Layout><CancellationPolicyPage /></Layout>} />
+        <Route path="/terms-and-conditions" component={() => <Layout><TermsAndConditionsPage /></Layout>} />
+        <Route path="/faq" component={() => <Layout><FAQPage /></Layout>} />
+        <Route path="/privacy-policy" component={() => <Layout><PrivacyPolicyPage /></Layout>} />
+        <Route path="/admin-login" component={AdminLoginPage} />
+        <Route path="/login" component={LoginPage} />
+        <Route path="/register" component={RegisterPage} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
 
-      {/* Admin routes - protected by separate admin authentication */}
-      <Route path="/admin">
-        <AdminProtectedRoute>
-          <AdminDashboard />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/inventory">
-        <AdminProtectedRoute>
-          <InventoryPageNew />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/orders">
-        <AdminProtectedRoute>
-          <OrdersPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/customers">
-        <AdminProtectedRoute>
-          <CustomersPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/messages">
-        <AdminProtectedRoute>
-          <MessagesPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/returns">
-        <AdminProtectedRoute>
-          <ReturnsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/gift-categories">
-        <AdminProtectedRoute>
-          <GiftCategoriesPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/gift-management">
-        <AdminProtectedRoute>
-          <GiftManagementPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/coupons">
-        <AdminProtectedRoute>
-          <CouponsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/book-requests">
-        <AdminProtectedRoute>
-          <BookRequestsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/analytics">
-        <AdminProtectedRoute>
-          <AnalyticsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/shipping">
-        <AdminProtectedRoute>
-          <ShippingPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/settings">
-        <AdminProtectedRoute>
-          <SettingsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/account">
-        <AdminProtectedRoute>
-          <AdminAccountPage />
-        </AdminProtectedRoute>
-      </Route>
+        {/* Admin routes */}
+        <Route path="/admin"><AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute></Route>
+        <Route path="/admin/inventory"><AdminProtectedRoute><InventoryPageNew /></AdminProtectedRoute></Route>
+        <Route path="/admin/orders"><AdminProtectedRoute><OrdersPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/customers"><AdminProtectedRoute><CustomersPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/sales"><AdminProtectedRoute><SalesPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/shipping"><AdminProtectedRoute><ShippingPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/returns"><AdminProtectedRoute><ReturnsPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/messages"><AdminProtectedRoute><MessagesPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/gift-categories"><AdminProtectedRoute><GiftCategoriesPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/gift-management"><AdminProtectedRoute><GiftManagementPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/coupons"><AdminProtectedRoute><CouponsPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/book-requests"><AdminProtectedRoute><BookRequestsPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/analytics"><AdminProtectedRoute><AnalyticsPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/settings"><AdminProtectedRoute><SettingsPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/account"><AdminProtectedRoute><AdminAccountPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/audit-trail"><AdminProtectedRoute><AuditLogPage /></AdminProtectedRoute></Route>
 
-      <Route path="/admin/sales">
-        <AdminProtectedRoute>
-          <SalesPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/shipping">
-        <AdminProtectedRoute>
-          <ShippingPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/returns">
-        <AdminProtectedRoute>
-          <ReturnsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/settings">
-        <AdminProtectedRoute>
-          <SettingsPage />
-        </AdminProtectedRoute>
-      </Route>
-      <Route path="/admin/account">
-        <AdminProtectedRoute>
-          <AdminAccountPage />
-        </AdminProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/audit-trail">
-        <AdminProtectedRoute>
-          <AuditLogPage />
-        </AdminProtectedRoute>
-      </Route>
-
-      {/* Fallback */}
-      <Route component={NotFound} />
-    </Switch>
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -242,12 +171,10 @@ function AuthTransitionLoader() {
   if (!isAuthTransitioning) return null;
 
   return (
-    <div className="fixed inset-0 bg-transparent backdrop-blur-sm z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 bg-white z-[9999] flex items-center justify-center">
       <div className="text-center">
-        <div className="flex items-center justify-center gap-6">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg font-semibold text-secondary-black">Please Wait</p>
-        </div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
+        <p className="mt-4 text-secondary-black">Loading...</p>
       </div>
     </div>
   );
