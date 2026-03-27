@@ -18,7 +18,7 @@ export default function SEO({
   title = 'A2Z BOOKSHOP - Your Online Book Store',
   description = 'Discover thousands of books at A2Z Bookshop. Buy new and used books online with fast shipping. Fiction, non-fiction, bestsellers, and more.',
   keywords = 'books, online bookstore, buy books, new books, used books, fiction, non-fiction, bestsellers',
-  image = 'https://a2zbookshop.com/logo.svg',
+  image = 'https://a2zbookshop.com/logo.jpeg',
   url = 'https://a2zbookshop.com',
   type = 'website',
   author,
@@ -83,6 +83,10 @@ export default function SEO({
 
 // Helper function to generate book structured data (Book schema for richer results)
 export function generateBookStructuredData(book: any) {
+  const bookUrl = book.slug 
+    ? `https://a2zbookshop.com/books/${book.slug}` 
+    : `https://a2zbookshop.com/books/${book.id}`;
+  
   const schema: any = {
     "@context": "https://schema.org",
     "@type": "Book",
@@ -98,7 +102,7 @@ export function generateBookStructuredData(book: any) {
       "price": book.price,
       "priceCurrency": "INR",
       "availability": book.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "url": `https://a2zbookshop.com/book/${book.id}`,
+      "url": bookUrl,
       "itemCondition": book.condition === 'New' ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
       "seller": {
         "@type": "Organization",
