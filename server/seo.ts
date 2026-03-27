@@ -16,9 +16,11 @@ export async function generateSitemap() {
       { url: '/faq', priority: '0.6', changefreq: 'monthly' },
       { url: '/shipping-info', priority: '0.6', changefreq: 'monthly' },
       { url: '/return-policy', priority: '0.6', changefreq: 'monthly' },
-      { url: '/terms', priority: '0.5', changefreq: 'yearly' },
+      { url: '/terms-and-conditions', priority: '0.5', changefreq: 'yearly' },
       { url: '/cancellation-policy', priority: '0.5', changefreq: 'yearly' },
+      { url: '/privacy-policy', priority: '0.5', changefreq: 'yearly' },
       { url: '/about', priority: '0.6', changefreq: 'monthly' },
+      { url: '/gift-items', priority: '0.7', changefreq: 'weekly' },
     ];
 
     const today = new Date().toISOString().split('T')[0];
@@ -49,9 +51,11 @@ export async function generateSitemap() {
 
     // Add book pages (individual book detail pages if you have them)
     books.forEach((book: any) => {
+      // Use slug if available, otherwise fall back to ID
+      const bookUrl = book.slug ? `/books/${book.slug}` : `/books/${book.id}`;
       sitemap += `
   <url>
-    <loc>${baseUrl}/book/${book.id}</loc>
+    <loc>${baseUrl}${bookUrl}</loc>
     <lastmod>${book.updatedAt || book.createdAt}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

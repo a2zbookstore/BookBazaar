@@ -236,7 +236,7 @@ export default function BookDetailPage() {
         description={book.description || `Buy ${book.title} by ${book.author}. ${book.condition} condition. Available now at A2Z BOOKSHOP with fast shipping.`}
         keywords={`${book.title}, ${book.author}, ${book.category?.name || 'books'}, buy books online, ${book.condition} books`}
         image={getImageSrc(book.imageUrl)}
-        url={`https://a2zbookshop.com/book/${book.id}`}
+        url={`https://a2zbookshop.com/books/${book.id}`}
         type="product"
         structuredData={[
           generateBookStructuredData(book),
@@ -244,7 +244,7 @@ export default function BookDetailPage() {
             { name: "Home", url: "https://a2zbookshop.com" },
             { name: "Catalog", url: "https://a2zbookshop.com/catalog" },
             ...(book.category?.name ? [{ name: book.category.name, url: `https://a2zbookshop.com/catalog?categoryId=${book.category.id}` }] : []),
-            { name: book.title, url: `https://a2zbookshop.com/book/${book.id}` },
+            { name: book.title, url: `https://a2zbookshop.com/books/${book.id}` },
           ]),
         ]}
       />
