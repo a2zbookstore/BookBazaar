@@ -1,29 +1,6 @@
 /**
- * Utility to extract a numeric book ID from a URL slug or plain ID.
- *
- * Supported formats:
- *   "42"                    → 42   (plain numeric ID)
- *   "book-title-42"         → 42   (slug ending with -<id>)
- *
- * Returns null when the input doesn't match any known pattern.
- */
-export function extractBookIdFromSlug(slugOrId: string): number | null {
-  // Pure numeric ID
-  if (/^\d+$/.test(slugOrId)) {
-    return parseInt(slugOrId, 10);
-  }
-
-  // Slug pattern: some-text-<id>
-  const match = slugOrId.match(/-(\d+)$/);
-  if (match) {
-    return parseInt(match[1], 10);
-  }
-
-  return null;
-}
-
-/**
  * Generate a URL-friendly slug from a book title and ID.
+ * The trailing numeric ID is the actual identifier used for API calls.
  *
  * Examples:
  *   ("The Great Gatsby", 42)  → "the-great-gatsby-42"
@@ -38,4 +15,17 @@ export function generateBookSlug(title: string, id: number): string {
     .replace(/^-+|-+$/g, "")                           // trim leading/trailing hyphens
     .replace(/-{2,}/g, "-");                            // collapse multiple hyphens
   return `${slug}-${id}`;
+}
+
+/**
+ * Extract the numeric book ID from a slug or plain numeric string.
+ *
+ * Supported formats:
+ *   "42"                → 42
+ *   "the-great-gatsby-42" → 42
+ */
+export function extractBookIdFromSlug(slugOrId: string): number | null {
+  if (/^\d+$/.test(slugOrId)) return parseInt(slugOrId, 10);
+  const match = slugOrId.match(/-(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
 }

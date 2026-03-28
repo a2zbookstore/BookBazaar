@@ -1,4 +1,5 @@
 import { storage } from "./storage";
+import { generateBookSlug } from "./slugUtils";
 
 export async function generateSitemap() {
   try {
@@ -51,12 +52,14 @@ export async function generateSitemap() {
 
     // Add book pages (individual book detail pages if you have them)
     books.forEach((book: any) => {
-      // Use slug if available, otherwise fall back to ID
-      const bookUrl = book.slug ? `/books/${book.slug}` : `/books/${book.id}`;
+      const bookUrl = `/books/${generateBookSlug(book.title, book.id)}`;
+      const lastmod = book.updatedAt || book.createdAt
+        ? new Date(book.updatedAt || book.createdAt).toISOString().split('T')[0]
+        : today;
       sitemap += `
   <url>
     <loc>${baseUrl}${bookUrl}</loc>
-    <lastmod>${book.updatedAt || book.createdAt}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`;

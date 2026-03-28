@@ -3190,6 +3190,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/books/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid book ID" });
+      }
       const book = await storage.getBookById(id);
       if (!book) {
         return res.status(404).json({ message: "Book not found" });

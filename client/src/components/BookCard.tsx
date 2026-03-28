@@ -10,6 +10,7 @@ import { useShipping } from "@/hooks/useShipping";
 import WishlistHeart from "@/components/WishlistHeart";
 import { Book } from "@/types";
 import { useUserLocation } from "@/contexts/userLocationContext";
+import { generateBookSlug } from "@/lib/slugUtils";
 
 // Image helper functions
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -164,7 +165,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
       <div className="absolute top-2 right-2 z-10">
         <WishlistHeart bookId={book.id} />
       </div>
-      <Link to={`/books/${book.id}`} className="block min-w-0">
+      <Link to={`/books/${generateBookSlug(book.title, book.id)}`} className="block min-w-0">
 
         {/* image container */}
         <div className="relative bg-white p-4 h-[260px] flex items-center justify-center overflow-hidden">

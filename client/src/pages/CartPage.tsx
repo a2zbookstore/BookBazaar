@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGlobalContext } from "@/contexts/GlobalContext";
+import { generateBookSlug } from "@/lib/slugUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
@@ -550,7 +551,7 @@ export default function CartPage() {
                   <div className="flex items-center gap-4">
                     {!isGift && item.book?.id ? (
                       <div className="w-16 h-20 sm:w-20 sm:h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                        <Link href={`/books/${item.book.id}`} className="block w-16 h-20 sm:w-20 sm:h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+                        <Link href={`/books/${generateBookSlug(item.book.title, item.book.id)}`} className="block w-16 h-20 sm:w-20 sm:h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
                           <img
                             src={imageUrl?.startsWith('data:') ? imageUrl : getImageSrc(imageUrl)}
                             alt={title || 'Item'}
@@ -582,7 +583,7 @@ export default function CartPage() {
                         {/* LEFT CONTENT */}
                         <div className="min-w-0 flex-1">
                           {!isGift && item.book?.id ? (
-                            <Link href={`/books/${item.book.id}`}>
+                            <Link href={`/books/${generateBookSlug(item.book.title, item.book.id)}`}>
                               <h3
                                 className="line-clamp-1 font-semibold text-gray-900 cursor-pointer transition-colors
                                   hover:text-primary-aqua text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1 leading-snug"

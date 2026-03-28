@@ -14,7 +14,7 @@
  */
 
 import { storage } from "./storage";
-import { extractBookIdFromSlug } from "./slugUtils";
+import { extractBookIdFromSlug, generateBookSlug } from "./slugUtils";
 
 const BASE_URL = "https://a2zbookshop.com";
 
@@ -73,7 +73,7 @@ async function buildCatalogPrerender(
     const listItems = books
       .map(
         (b) =>
-          `    <li><a href="${BASE_URL}/books/${b.id}">${et(b.title)} by ${
+          `    <li><a href="${BASE_URL}/books/${generateBookSlug(b.title, b.id)}">${et(b.title)} by ${
             et(b.author)
           } — ${et(b.condition)} — &#8377;${et(String(b.price))}</a></li>`
       )
@@ -110,7 +110,7 @@ async function buildHomepagePrerender(): Promise<string> {
       const items = books
         .map(
           (b) =>
-            `    <li><a href="${BASE_URL}/books/${b.id}">${et(b.title)} by ${
+            `    <li><a href="${BASE_URL}/books/${generateBookSlug(b.title, b.id)}">${et(b.title)} by ${
               et(b.author)
             } — &#8377;${et(String(b.price))}</a></li>`
         )
@@ -187,7 +187,8 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
           book.imageUrl?.startsWith("http")
             ? book.imageUrl
             : `${BASE_URL}${book.imageUrl || "/logo.jpeg"}`;
-        const canonical = `${BASE_URL}/books/${book.id}`;
+        const bookSlug = generateBookSlug(book.title, book.id);
+        const canonical = `${BASE_URL}/books/${bookSlug}`;
 
         const bookSchema: Record<string, unknown> = {
           "@context": "https://schema.org",
