@@ -13,6 +13,8 @@ import { calculateDeliveryDate } from "@/lib/deliveryUtils";
 import { Book } from "@/types";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useCurrency } from "@/hooks/useCurrency";
+import { extractBookIdFromSlug, generateBookSlug } from "@/lib/slugUtils";
+import BookCarousel from "@/components/BookCarousel";
 
 // Image helper function
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -30,7 +32,8 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
 };
 
 export default function BookDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: slugOrId } = useParams<{ id: string }>();
+  const bookId = slugOrId ? extractBookIdFromSlug(slugOrId) : null;
   const { addToCart } = useGlobalContext();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -44,9 +47,17 @@ export default function BookDetailPage() {
   const [isConverting, setIsConverting] = useState(false);
 
   const { data: book, isLoading } = useQuery<Book>({
-    queryKey: [`/api/books/${id}`],
-    enabled: !!id,
+    queryKey: [`/api/books/${bookId}`],
+    enabled: !!bookId,
   });
+
+  // Redirect bare numeric IDs (e.g. /books/42) to the slug URL for SEO
+  useEffect(() => {
+    if (book && slugOrId && /^\d+$/.test(slugOrId)) {
+      const correctSlug = generateBookSlug(book.title, book.id);
+      setLocation(`/books/${correctSlug}`, { replace: true });
+    }
+  }, [book, slugOrId, setLocation]);
 
   // Convert price + shipping whenever currency or book changes
   useEffect(() => {
@@ -107,7 +118,7 @@ export default function BookDetailPage() {
   };
 
   const handleBuyNow = async () => {
-    setLocation(`/checkout/buyNow/${id}/${quantity}`);
+    setLocation(`/checkout/buyNow/${book?.id}/${quantity}`);
   }
 
   const getConditionColor = (condition: string) => {
@@ -236,15 +247,15 @@ export default function BookDetailPage() {
         description={book.description || `Buy ${book.title} by ${book.author}. ${book.condition} condition. Available now at A2Z BOOKSHOP with fast shipping.`}
         keywords={`${book.title}, ${book.author}, ${book.category?.name || 'books'}, buy books online, ${book.condition} books`}
         image={getImageSrc(book.imageUrl)}
-        url={`https://a2zbookshop.com/books/${book.id}`}
+        url={`https://a2zbookshop.com/books/${generateBookSlug(book.title, book.id)}`}
         type="product"
         structuredData={[
-          generateBookStructuredData(book),
+          generateBookStructuredData({ ...book, slug: generateBookSlug(book.title, book.id) }),
           generateBreadcrumbStructuredData([
             { name: "Home", url: "https://a2zbookshop.com" },
             { name: "Catalog", url: "https://a2zbookshop.com/catalog" },
             ...(book.category?.name ? [{ name: book.category.name, url: `https://a2zbookshop.com/catalog?categoryId=${book.category.id}` }] : []),
-            { name: book.title, url: `https://a2zbookshop.com/books/${book.id}` },
+            { name: book.title, url: `https://a2zbookshop.com/books/${generateBookSlug(book.title, book.id)}` },
           ]),
         ]}
       />
@@ -626,6 +637,73 @@ export default function BookDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Related Books */}
+      <RelatedBooks currentBookId={book.id} categoryId={book.categoryId} author={book.author} />
     </ >
+  );
+}
+
+function RelatedBooks({
+  currentBookId,
+  categoryId,
+  author,
+}: {
+  currentBookId: number;
+  categoryId: number | null | undefined;
+  author: string;
+}) {
+  // Fetch books from the same category
+  const { data: byCategoryData, isLoading: catLoading } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: ["/api/books", "related-category", categoryId],
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: "12" });
+      if (categoryId) params.set("categoryId", String(categoryId));
+      const res = await fetch(`/api/books?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    enabled: !!categoryId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch books by the same author (via search)
+  const { data: byAuthorData, isLoading: authorLoading } = useQuery<{ books: Book[]; total: number }>({
+    queryKey: ["/api/books", "related-author", author],
+    queryFn: async () => {
+      const params = new URLSearchParams({ search: author, limit: "12" });
+      const res = await fetch(`/api/books?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    enabled: !!author,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const relatedByCategory = (byCategoryData?.books ?? []).filter((b) => b.id !== currentBookId);
+  const relatedByAuthor = (byAuthorData?.books ?? []).filter((b) => b.id !== currentBookId);
+
+  if (!catLoading && !authorLoading && relatedByCategory.length === 0 && relatedByAuthor.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-12 px-4 md:px-8 pb-12">
+      {/* More by same category */}
+      {(catLoading || relatedByCategory.length > 0) && (
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-base-black mb-4">More in this Category</h2>
+          <BookCarousel books={relatedByCategory} isLoading={catLoading} showEmptyBrowseButton={false} />
+        </section>
+      )}
+
+      {/* More by same author */}
+      {(authorLoading || relatedByAuthor.length > 0) && (
+        <section>
+          <h2 className="text-xl font-bold text-base-black mb-4">More by {author}</h2>
+          <BookCarousel books={relatedByAuthor} isLoading={authorLoading} showEmptyBrowseButton={false} />
+        </section>
+      )}
+    </div>
   );
 }
