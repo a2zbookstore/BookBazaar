@@ -155,6 +155,11 @@ html, body {
     gap: 1rem;
   }
   
+  /* Catalog page: show 2 books per row on mobile */
+  .catalog-books-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
   /* Improve checkout form on mobile */
   .checkout-form {
     padding: 1rem;

@@ -23,7 +23,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
     const GAP_REM = 1;        // gap-4 = 1rem
     const STEP = CARD_WIDTH_REM + GAP_REM;
     // Calculate visible cards based on screen size - ensure it's never negative
-    const VISIBLE_CARDS = window.innerWidth >= 768 
+    const VISIBLE_CARDS = window.innerWidth >= 768
         ? Math.floor((window.innerWidth - 64) / (CARD_WIDTH_REM * 16 + GAP_REM * 16))
         : 2; // Always show 2 cards on mobile for skeleton
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -48,27 +48,27 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                         {Array.from({ length: 3 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="flex-none w-[314px] rounded-xl bg-white shadow-sm border"
+                                className="flex-none w-[170px] rounded-xl bg-white shadow-sm border"
                             >
                                 {/* Book image */}
                                 <div className="aspect-[3/4] bg-gray-300 rounded-t-xl" />
 
                                 {/* Content */}
-                                <div className="p-4 space-y-3">
+                                <div className="p-2 space-y-2">
                                     {/* Title */}
-                                    <div className="h-4 bg-gray-300 rounded w-5/6" />
+                                    <div className="h-3 bg-gray-300 rounded w-5/6" />
 
                                     {/* Author */}
-                                    <div className="h-3 bg-gray-300 rounded w-2/3" />
+                                    <div className="h-2 bg-gray-300 rounded w-2/3" />
 
                                     {/* Price / rating row */}
-                                    <div className="flex items-center justify-between pt-2">
-                                        <div className="h-4 bg-gray-300 rounded w-1/3" />
-                                        <div className="h-3 bg-gray-300 rounded w-1/4" />
+                                    <div className="flex items-center justify-between pt-1">
+                                        <div className="h-3 bg-gray-300 rounded w-1/3" />
+                                        <div className="h-2 bg-gray-300 rounded w-1/4" />
                                     </div>
 
                                     {/* CTA button */}
-                                    <div className="h-9 bg-gray-300 rounded-lg mt-3" />
+                                    <div className="h-6 bg-gray-300 rounded-lg mt-2" />
                                 </div>
                             </div>
                         ))}
@@ -108,7 +108,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                     >
                         <div className="flex gap-4 w-max">
                             {books.map((book) => (
-                                <div key={book.id} className="flex-none snap-start">
+                                <div key={book.id} className="flex-none w-[170px] snap-start">
                                     <BookCard book={book} />
                                 </div>
                             ))}
@@ -133,7 +133,7 @@ const BookCarousel: React.FC<BookCarouselProps> = ({
                             {books.map((book) => (
                                 <div
                                     key={book.id}
-                                    className="flex-none w-56 snap-start rounded-xl"
+                                    className="flex-none w-56 snap-start"
                                 >
                                     <BookCard book={book} />
                                 </div>
