@@ -280,17 +280,36 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       canonical: BASE_URL,
       type: "website",
       noindex: false,
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: "A2Z BOOKSHOP",
-        url: BASE_URL,
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${BASE_URL}/catalog?search={search_term_string}`,
-          "query-input": "required name=search_term_string",
+      structuredData: [
+        // WebSite schema for search functionality
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "A2Z BOOKSHOP",
+          url: BASE_URL,
+          potentialAction: {
+            "@type": "SearchAction",
+            target: `${BASE_URL}/catalog?search={search_term_string}`,
+            "query-input": "required name=search_term_string",
+          },
         },
-      },
+        // Organization schema for logo and business details (required for Google logo display)
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "A2Z BOOKSHOP",
+          alternateName: "A2Z Book Shop",
+          url: BASE_URL,
+          logo: `${BASE_URL}/logo.jpeg`,
+          image: `${BASE_URL}/logo.jpeg`,
+          description: "A2Z BOOKSHOP is your premier online destination for new and used books. We offer thousands of titles across all genres with fast shipping and competitive prices.",
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "Customer Service",
+            email: "support@a2zbookshop.com",
+          },
+        },
+      ],
       prerenderedHtml: prerenderedHtml || undefined,
     };
   }

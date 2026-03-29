@@ -290,25 +290,23 @@ export default function CatalogPage() {
 
           {/* Books Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            <div className="catalog-books-grid grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
               {[...Array(10)].map((_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="bg-gray-200 aspect-[3/4] rounded-lg mb-4"></div>
-                  <div className="space-y-2">
-                    <div className="bg-gray-200 h-4 rounded"></div>
-                    <div className="bg-gray-200 h-3 rounded w-2/3"></div>
-                    <div className="bg-gray-200 h-3 rounded w-1/2"></div>
+                  <div className="bg-gray-200 aspect-[3/4] rounded-lg mb-2 sm:mb-4"></div>
+                  <div className="space-y-1 sm:space-y-2">
+                    <div className="bg-gray-200 h-3 sm:h-4 rounded"></div>
+                    <div className="bg-gray-200 h-2 sm:h-3 rounded w-2/3"></div>
+                    <div className="bg-gray-200 h-2 sm:h-3 rounded w-1/2"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : books.length > 0 ? (
             <>
-              <div className="grid gap-4 sm:gap-6 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+              <div className="catalog-books-grid grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
                 {books.map((book) => (
-                  <div key={book.id} className="flex items-start justify-center sm:justify-start flex-[1_1_18px]">
-                    <BookCard book={book} />
-                  </div>
+                  <BookCard key={book.id} book={book} />
                 ))}
               </div>
 

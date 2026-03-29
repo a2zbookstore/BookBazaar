@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { Star, Truck, Clock } from "lucide-react";
+import { Star, Truck, Clock, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalContext } from "@/contexts/GlobalContext";
@@ -161,14 +161,14 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   }
 
   return (
-    <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-xl sm:w-full max-w-[314px]">
-      <div className="absolute top-2 right-2 z-10">
+    <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-xl w-full">
+      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10">
         <WishlistHeart bookId={book.id} />
       </div>
       <Link to={`/books/${generateBookSlug(book.title, book.id)}`} className="block min-w-0">
 
         {/* image container */}
-        <div className="relative bg-white p-4 h-[260px] flex items-center justify-center overflow-hidden">
+        <div className="relative bg-white p-2 sm:p-4 h-[180px] sm:h-[260px] flex items-center justify-center overflow-hidden">
           <img
             src={getImageSrc(book.imageUrl)}
             alt={book.title}
@@ -178,26 +178,26 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
             }}
           />
           {book.featured && (
-            <Badge className="absolute top-2 left-2 bg-amber-500 text-white">
+            <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-amber-500 text-white text-[8px] sm:text-xs px-1 py-0 sm:px-2 sm:py-1">
               Featured
             </Badge>
           )}
           {book.bestseller && (
-            <Badge className="absolute top-8 left-2 bg-purple-500 text-white">
+            <Badge className="absolute top-6 left-1 sm:top-8 sm:left-2 bg-purple-500 text-white text-[8px] sm:text-xs px-1 py-0 sm:px-2 sm:py-1">
               Bestseller
             </Badge>
           )}
         </div>
 
         {/* book-details */}
-        <div className="px-4">
-          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-sm h-10">
+        <div className="px-2 sm:px-4">
+          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-[10px] sm:text-sm h-8 sm:h-10">
             {book.title}
           </h3>
-          <p className="text-sm text-gray-600 mb-2 truncate">{book.author}</p>
+          <p className="text-[9px] sm:text-sm text-gray-600 mb-1 sm:mb-2 truncate">{book.author}</p>
 
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-lg font-bold text-secondary-aqua min-w-0 truncate">
+          <div className="flex items-center justify-between mb-1 sm:mb-2">
+            <div className="text-xs sm:text-lg font-bold text-secondary-aqua min-w-0 truncate">
               {isGift ? (
                 <span>
                   <span className="text-xs text-gray-400 line-through mr-2">
@@ -216,28 +216,28 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               )}
             </div>
             {book.condition && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[8px] sm:text-xs px-1 py-0 sm:px-2 sm:py-1">
                 {book.condition}
               </Badge>
             )}
           </div>
 
           {/* Rating - Enhanced with Half Stars */}
-          <div className="flex flex-nowrap whitespace-nowrap items-center mb-2 bg-gradient-to-r from-amber-50 to-orange-50 px-2 py-1.5 rounded-lg border border-amber-100">
+          <div className="flex flex-nowrap whitespace-nowrap items-center mb-1 sm:mb-2 bg-gradient-to-r from-amber-50 to-orange-50 px-1 sm:px-2 py-1 sm:py-1.5 rounded-lg border border-amber-100">
             <div className="flex shrink-0">
               {/* Full Stars */}
               {[...Array(fullStars)].map((_, i) => (
                 <Star
                   key={`full-${i}`}
-                  className="h-4 w-4 text-amber-400 fill-amber-400 drop-shadow-sm transition-transform hover:scale-110"
+                  className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-amber-400 fill-amber-400 drop-shadow-sm transition-transform hover:scale-110"
                 />
               ))}
               {/* Half Star */}
               {hasHalfStar && (
                 <div className="relative shrink-0">
-                  <Star className="h-4 w-4 text-gray-300 fill-gray-300" />
+                  <Star className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-gray-300 fill-gray-300" />
                   <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
-                    <Star className="h-4 w-4 text-amber-400 fill-amber-400 drop-shadow-sm" />
+                    <Star className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-amber-400 fill-amber-400 drop-shadow-sm" />
                   </div>
                 </div>
               )}
@@ -245,30 +245,30 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               {[...Array(emptyStars)].map((_, i) => (
                 <Star
                   key={`empty-${i}`}
-                  className="h-4 w-4 text-gray-300 fill-gray-200"
+                  className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-gray-300 fill-gray-200"
                 />
               ))}
             </div>
-            <span className="text-xs font-semibold text-gray-700 ml-2 shrink-0">
+            <span className="text-[8px] sm:text-xs font-semibold text-gray-700 ml-1 sm:ml-2 shrink-0">
               {bookRating.toFixed(1)}
             </span>
-            <span className="text-xs text-gray-500 ml-1 shrink-0">
+            <span className="text-[8px] sm:text-xs text-gray-500 ml-0.5 sm:ml-1 shrink-0">
               ({reviewCount})
             </span>
           </div>
 
           {/* Shipping and Return Info */}
-          <div className="flex justify-between text-xs text-gray-500 mb-3">
-            <div className="flex items-center gap-1">
-              <Truck className="h-3 w-3 text-green-600" />
+          <div className="flex justify-between text-[8px] sm:text-xs text-gray-500 mb-2 sm:mb-3">
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <Truck className="h-2 w-2 sm:h-3 sm:w-3 text-green-600" />
               <span className="text-secondary-black font-medium truncate">
                 {isShippingLoading ? (
                   <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
                 ) : shippingCost}
               </span>
             </div>
-            <div className="flex  items-center gap-1">
-              <Clock className="h-3 w-3 text-blue-600" />
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <Clock className="h-2 w-2 sm:h-3 sm:w-3 text-blue-600" />
               <span className="text-secondary-black">
                 {isShippingLoading ? (
                   <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
@@ -284,25 +284,38 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
       </Link>
 
       {/* Buttons */}
-      <div className="flex gap-2 px-4 pb-4 min-w-0">
+      <div className="flex gap-1 sm:gap-2 px-2 sm:px-4 pb-2 sm:pb-4 min-w-0">
         <Button
           onClick={handleAddToCart}
           disabled={isAddingToCart}
           className="
               flex-1 min-w-0
               bg-primary-aqua hover:bg-secondary-aqua
-              text-white text-sm font-medium
-              rounded-full
+              text-white text-[9px] sm:text-sm font-medium
+              rounded-full py-1 sm:py-2
               shadow-md hover:shadow-lg
               transition-all
-              flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed text-[12px]"
+              flex items-center justify-center gap-1 sm:gap-2
+              disabled:opacity-50 disabled:cursor-not-allowed"
 
         >
-          {/* <ShoppingCart
-            className={`h-4 w-4 ${isAddingToCart ? 'animate-cart-slide' : ''}`}
-          /> */}
-          {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+          {isAddingToCart ? (
+            <>
+              <span className="sm:hidden">...</span>
+              <span className="hidden sm:inline">Adding...</span>
+            </>
+          ) : (
+            <>
+              <span className="sm:hidden "><ShoppingCart className="h-6 w-6" /> </span>
+              <span className="hidden sm:inline">
+
+                <div className="flex items-center gap-1">
+                  Add
+                  <ShoppingCart className="h-6 w-6" />
+                </div>
+              </span>
+            </>
+          )}
         </Button>
 
         <Button
@@ -311,17 +324,15 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           className="
               flex-1 min-w-0
               bg-red-500 hover:bg-red-600
-              text-white text-sm font-medium
-              rounded-full
+              text-white text-[9px] sm:text-sm font-medium
+              rounded-full py-1 sm:py-2
               shadow-md hover:shadow-lg
               transition-all
-              flex items-center justify-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed text-[12px]"
+              flex items-center justify-center gap-1 sm:gap-2
+              disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {/* <BadgeDollarSign
-            className={` h-4 w-4 animate-rotate-bounce`}
-          /> */}
-          Buy Now
+          <span className="sm:hidden text-[12px] font-bold">Buy </span>
+          <span className="hidden sm:inline">Buy Now</span>
         </Button>
       </div>
     </div>

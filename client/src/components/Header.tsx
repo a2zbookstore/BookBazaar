@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, User, Menu, Heart } from "lucide-react";
+import { ShoppingCart, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";

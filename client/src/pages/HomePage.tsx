@@ -249,19 +249,44 @@ export default function HomePage() {
     };
   }, []);
 
-  // Structured data for homepage
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "A2Z BOOKSHOP",
-    "url": "https://a2zbookshop.com",
-    "description": "Buy books online at best prices. Fiction, non-fiction, bestsellers and more.",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://a2zbookshop.com/catalog?search={search_term_string}",
-      "query-input": "required name=search_term_string"
+  // Structured data for homepage - both WebSite and Organization schemas
+  const structuredData = [
+    // WebSite schema for search functionality
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "A2Z BOOKSHOP",
+      "url": "https://a2zbookshop.com",
+      "description": "Buy books online at best prices. Fiction, non-fiction, bestsellers and more.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://a2zbookshop.com/catalog?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    // Organization schema for logo and business details (required for Google logo display)
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "A2Z BOOKSHOP",
+      "alternateName": "A2Z Book Shop",
+      "url": "https://a2zbookshop.com",
+      "logo": "https://a2zbookshop.com/logo.jpeg",
+      "image": "https://a2zbookshop.com/logo.jpeg",
+      "description": "A2Z BOOKSHOP is your premier online destination for new and used books. We offer thousands of titles across all genres with fast shipping and competitive prices.",
+      "sameAs": [
+        // Add your social media profiles here when you create them
+        // "https://www.facebook.com/a2zbookshop",
+        // "https://www.instagram.com/a2zbookshop",
+        // "https://twitter.com/a2zbookshop"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "email": "support@a2zbookshop.com"
+      }
     }
-  };
+  ];
 
   const { data: featuredBooksResponse, isLoading: featuredLoading } = useQuery<{ books: Book[]; total: number }>({
     queryKey: ["/api/books?featured=true&limit=12"],
