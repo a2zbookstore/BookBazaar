@@ -88,7 +88,7 @@ export default function AdminDashboard() {
     { label: "Orders", desc: "Process & track orders", icon: ShoppingBag, href: "/admin/orders", accent: "from-violet-500 to-purple-600" },
     { label: "Sales Reports", desc: "Analytics & insights", icon: BarChart3, href: "/admin/sales", accent: "from-blue-500 to-indigo-600" },
     { label: "Shipping", desc: "Rates & delivery zones", icon: Truck, href: "/admin/shipping", accent: "from-orange-500 to-amber-600" },
-    { label: "Gift Items", desc: "Manage gifts & bundles", icon: Gift, href: "/admin/gift-management", accent: "from-pink-500 to-rose-600" },
+    { label: "Gift Items", desc: "Manage gift categories", icon: Gift, href: "/admin/gift-categories", accent: "from-pink-500 to-rose-600" },
     { label: "Book Requests", desc: "Customer wishlist items", icon: BookOpen, href: "/admin/book-requests", accent: "from-lime-500 to-green-600" },
     { label: "Settings", desc: "Store configuration", icon: Settings, href: "/admin/settings", accent: "from-slate-500 to-gray-700" },
     { label: "Audit Trail", desc: "Track & restore changes", icon: AlertTriangle, href: "/admin/audit-trail", accent: "from-red-500 to-rose-700" },

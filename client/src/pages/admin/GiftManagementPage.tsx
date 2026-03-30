@@ -16,7 +16,7 @@ import type { GiftItem, HomepageContent, GiftCategory } from "@/shared/schema";
 interface GiftForm {
   categoryId: number;
   name: string;
-  type: "novel" | "notebook" | "";
+  type: "novel" | "notebook" | "bookmark" | "tote_bag" | "stationery" | "journal" | "reading_light" | "poster" | "mug" | "calendar" | "other" | "";
   description: string;
   imageUrl: string;
   imageUrl2: string;
@@ -263,7 +263,7 @@ export default function GiftManagementPage() {
     setGiftForm({
       categoryId: gift.categoryId,
       name: gift.name,
-      type: gift.type as "novel" | "notebook",
+      type: gift.type as any,
       description: gift.description || "",
       imageUrl: gift.imageUrl || "",
       imageUrl2: gift.imageUrl2 || "",

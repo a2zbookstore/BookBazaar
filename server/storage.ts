@@ -14,7 +14,7 @@ import {
   returnRequests,
   refundTransactions,
   giftCategories,
-  giftItems,
+  // giftItems, // DEPRECATED - using categories directly
   homepageContent,
   coupons,
   couponUsages,
@@ -47,8 +47,8 @@ import {
   type InsertRefundTransaction,
   type GiftCategory,
   type InsertGiftCategory,
-  type GiftItem,
-  type InsertGiftItem,
+  // type GiftItem, // DEPRECATED
+  // type InsertGiftItem, // DEPRECATED
   type HomepageContent,
   type InsertHomepageContent,
   type Coupon,
@@ -191,13 +191,13 @@ export interface IStorage {
   updateGiftCategory(id: number, category: Partial<InsertGiftCategory>): Promise<GiftCategory>;
   deleteGiftCategory(id: number): Promise<void>;
 
-  // Gift Items operations
-  getGiftItems(): Promise<GiftItem[]>;
-  getGiftItemById(id: number): Promise<GiftItem | undefined>;
-  createGiftItem(giftItem: InsertGiftItem): Promise<GiftItem>;
-  updateGiftItem(id: number, giftItem: Partial<InsertGiftItem>): Promise<GiftItem>;
-  deleteGiftItem(id: number): Promise<void>;
-  updateGiftItemOrder(items: { id: number; sortOrder: number }[]): Promise<void>;
+  // Gift Items operations - DEPRECATED (using categories directly now)
+  // getGiftItems(): Promise<GiftItem[]>;
+  // getGiftItemById(id: number): Promise<GiftItem | undefined>;
+  // createGiftItem(giftItem: InsertGiftItem): Promise<GiftItem>;
+  // updateGiftItem(id: number, giftItem: Partial<InsertGiftItem>): Promise<GiftItem>;
+  // deleteGiftItem(id: number): Promise<void>;
+  // updateGiftItemOrder(items: { id: number; sortOrder: number }[]): Promise<void>;
 
   // Homepage Content operations
   getHomepageContent(): Promise<HomepageContent[]>;
@@ -1661,51 +1661,49 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteGiftCategory(id: number): Promise<void> {
-    // First delete all gift items in this category
-    await db.delete(giftItems).where(eq(giftItems.categoryId, id));
-    // Then delete the category
+    // No need to delete gift items anymore - categories are the products
     await db.delete(giftCategories).where(eq(giftCategories.id, id));
   }
 
-  // Gift Items Methods
-  async getGiftItems(categoryId?: number): Promise<GiftItem[]> {
-    if (categoryId) {
-      return await db.select().from(giftItems)
-        .where(eq(giftItems.categoryId, categoryId))
-        .orderBy(giftItems.sortOrder, giftItems.name);
-    }
-    return await db.select().from(giftItems).orderBy(giftItems.sortOrder, giftItems.name);
-  }
+  // Gift Items Methods - DEPRECATED (commented out, using categories directly)
+  // async getGiftItems(categoryId?: number): Promise<GiftItem[]> {
+  //   if (categoryId) {
+  //     return await db.select().from(giftItems)
+  //       .where(eq(giftItems.categoryId, categoryId))
+  //       .orderBy(giftItems.sortOrder, giftItems.name);
+  //   }
+  //   return await db.select().from(giftItems).orderBy(giftItems.sortOrder, giftItems.name);
+  // }
 
-  async getGiftItemById(id: number): Promise<GiftItem | undefined> {
-    const [item] = await db.select().from(giftItems).where(eq(giftItems.id, id));
-    return item;
-  }
+  // async getGiftItemById(id: number): Promise<GiftItem | undefined> {
+  //   const [item] = await db.select().from(giftItems).where(eq(giftItems.id, id));
+  //   return item;
+  // }
 
-  async createGiftItem(itemData: InsertGiftItem): Promise<GiftItem> {
-    const [item] = await db.insert(giftItems).values(itemData).returning();
-    return item;
-  }
+  // async createGiftItem(itemData: InsertGiftItem): Promise<GiftItem> {
+  //   const [item] = await db.insert(giftItems).values(itemData).returning();
+  //   return item;
+  // }
 
-  async updateGiftItem(id: number, itemData: Partial<InsertGiftItem>): Promise<GiftItem> {
-    const [item] = await db.update(giftItems)
-      .set({ ...itemData, updatedAt: new Date() })
-      .where(eq(giftItems.id, id))
-      .returning();
-    return item;
-  }
+  // async updateGiftItem(id: number, itemData: Partial<InsertGiftItem>): Promise<GiftItem> {
+  //   const [item] = await db.update(giftItems)
+  //     .set({ ...itemData, updatedAt: new Date() })
+  //     .where(eq(giftItems.id, id))
+  //     .returning();
+  //   return item;
+  // }
 
-  async deleteGiftItem(id: number): Promise<void> {
-    await db.delete(giftItems).where(eq(giftItems.id, id));
-  }
+  // async deleteGiftItem(id: number): Promise<void> {
+  //   await db.delete(giftItems).where(eq(giftItems.id, id));
+  // }
 
-  async updateGiftItemOrder(items: { id: number; sortOrder: number }[]): Promise<void> {
-    for (const item of items) {
-      await db.update(giftItems)
-        .set({ sortOrder: item.sortOrder, updatedAt: new Date() })
-        .where(eq(giftItems.id, item.id));
-    }
-  }
+  // async updateGiftItemOrder(items: { id: number; sortOrder: number }[]): Promise<void> {
+  //   for (const item of items) {
+  //     await db.update(giftItems)
+  //       .set({ sortOrder: item.sortOrder, updatedAt: new Date() })
+  //       .where(eq(giftItems.id, item.id));
+  //   }
+  // }
 
   // Coupon Methods
   async getCoupons(): Promise<Coupon[]> {

@@ -36,7 +36,6 @@ export default function CatalogPage() {
     const searchQuery = params.get("search") || "";
     const categoryIdQuery = params.get("categoryId") || "";
     const condition = Object.fromEntries(params.entries());
-    console.log(condition);
 
     if (condition.featured === 'true') queryParams.set('featured', 'true');
     if (condition.bestseller === 'true') { queryParams.set('bestseller', 'true'); }
@@ -45,8 +44,6 @@ export default function CatalogPage() {
     if (condition.boxSet === 'true') queryParams.set('boxSet', 'true');
     searchQuery ? setSearch(searchQuery) : setSearch('');
     categoryIdQuery ? setSelectedCategories([categoryIdQuery]) : setSelectedCategories([]);
-
-    console.log(queryParams.toString());
 
     setCurrentPage(1);
     if (searchQuery) {
@@ -71,7 +68,6 @@ export default function CatalogPage() {
 
   // Check URL params for special filters
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
-  console.log("drty",urlParams.toString());
   
   if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
   if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');

@@ -514,7 +514,7 @@ export type InsertBookRequest = z.infer<typeof insertBookRequestSchema>;
 export const giftCategories = pgTable("gift_categories", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
+  type: varchar("type", { length: 50 }).notNull(), // flexible type field - admin can enter any value (e.g., 'novel', 'notebook', 'bookmark', 'tote_bag', 'custom_gift', etc.)
   description: text("description"),
   imageUrl: text("image_url"),
   imageUrl2: text("image_url_2"),
@@ -528,23 +528,24 @@ export const giftCategories = pgTable("gift_categories", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// Gift Items Management
-export const giftItems = pgTable("gift_items", {
-  id: serial("id").primaryKey(),
-  categoryId: integer("category_id").references(() => giftCategories.id).notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
-  description: text("description"),
-  imageUrl: varchar("image_url", { length: 500 }),
-  imageUrl2: varchar("image_url_2", { length: 500 }),
-  imageUrl3: varchar("image_url_3", { length: 500 }),
-  price: decimal("price", { precision: 10, scale: 2 }),
-  isbn: varchar("isbn", { length: 20 }),
-  isActive: boolean("is_active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+// Gift Items Management - DEPRECATED: Gift Categories are now used directly as products
+// Kept for reference only - can be removed after migration
+// export const giftItems = pgTable("gift_items", {
+//   id: serial("id").primaryKey(),
+//   categoryId: integer("category_id").references(() => giftCategories.id).notNull(),
+//   name: varchar("name", { length: 255 }).notNull(),
+//   type: varchar("type", { length: 50 }).notNull(), // 'novel' | 'notebook'
+//   description: text("description"),
+//   imageUrl: varchar("image_url", { length: 500 }),
+//   imageUrl2: varchar("image_url_2", { length: 500 }),
+//   imageUrl3: varchar("image_url_3", { length: 500 }),
+//   price: decimal("price", { precision: 10, scale: 2 }),
+//   isbn: varchar("isbn", { length: 20 }),
+//   isActive: boolean("is_active").notNull().default(true),
+//   sortOrder: integer("sort_order").notNull().default(0),
+//   createdAt: timestamp("created_at").notNull().defaultNow(),
+//   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+// });
 
 // Gift Cart table: tracks gifts added by users, links to user and gift category
 export const giftCart = pgTable("gift_cart", {
@@ -590,10 +591,10 @@ export const insertGiftCategorySchema = createInsertSchema(giftCategories).exten
 export type InsertGiftCategory = z.infer<typeof insertGiftCategorySchema>;
 export type GiftCategory = typeof giftCategories.$inferSelect;
 
-// Gift Items schemas
-export const insertGiftItemSchema = createInsertSchema(giftItems);
-export type InsertGiftItem = z.infer<typeof insertGiftItemSchema>;
-export type GiftItem = typeof giftItems.$inferSelect;
+// Gift Items schemas - DEPRECATED
+// export const insertGiftItemSchema = createInsertSchema(giftItems);
+// export type InsertGiftItem = z.infer<typeof insertGiftItemSchema>;
+// export type GiftItem = typeof giftItems.$inferSelect;
 
 // Homepage Content schemas
 export const insertHomepageContentSchema = createInsertSchema(homepageContent);
