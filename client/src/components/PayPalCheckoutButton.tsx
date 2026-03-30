@@ -130,7 +130,6 @@ export default function PayPalCheckoutButton({
 
       try {
         sessionStorage.setItem('pendingPayPalOrder', JSON.stringify(orderDataForStorage));
-          // ...removed console.log...
       } catch (storageError) {
         // ...removed console.error...
         // Continue anyway - payment can still work without storage
@@ -140,8 +139,6 @@ export default function PayPalCheckoutButton({
         title: "Redirecting to PayPal",
         description: "Please complete your payment on PayPal's secure website",
       });
-
-        // ...removed console.log...
 
       // Redirect to PayPal after short delay
       setTimeout(() => {

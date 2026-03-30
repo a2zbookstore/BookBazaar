@@ -198,7 +198,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         });
         return;
       }
-      console.log(cartItems);
       if(cartItems.length > 0) {
         const existingItem = cartItems.find(item => item.book.id === bookId);
         const currentQuantityInCart = existingItem ? existingItem.quantity : 0;

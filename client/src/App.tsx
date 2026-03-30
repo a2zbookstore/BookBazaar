@@ -56,7 +56,7 @@ const GiftCategoriesPage  = lazy(() => import("@/pages/admin/GiftCategoriesPage"
 const CouponsPage         = lazy(() => import("@/pages/admin/CouponsPage"));
 const BookRequestsPage    = lazy(() => import("@/pages/admin/BookRequestsPage"));
 const AnalyticsPage       = lazy(() => import("@/pages/admin/AnalyticsPage"));
-const GiftManagementPage  = lazy(() => import("@/pages/admin/GiftManagementPage"));
+// const GiftManagementPage  = lazy(() => import("@/pages/admin/GiftManagementPage")); // DEPRECATED
 const AuditLogPage        = lazy(() => import("@/pages/admin/AuditLogPage"));
 
 // Minimal inline spinner shown while a lazy chunk is downloading
@@ -132,7 +132,7 @@ function AppRouter() {
         <Route path="/admin/returns"><AdminProtectedRoute><ReturnsPage /></AdminProtectedRoute></Route>
         <Route path="/admin/messages"><AdminProtectedRoute><MessagesPage /></AdminProtectedRoute></Route>
         <Route path="/admin/gift-categories"><AdminProtectedRoute><GiftCategoriesPage /></AdminProtectedRoute></Route>
-        <Route path="/admin/gift-management"><AdminProtectedRoute><GiftManagementPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/gift-management"><AdminProtectedRoute><GiftCategoriesPage /></AdminProtectedRoute></Route>
         <Route path="/admin/coupons"><AdminProtectedRoute><CouponsPage /></AdminProtectedRoute></Route>
         <Route path="/admin/book-requests"><AdminProtectedRoute><BookRequestsPage /></AdminProtectedRoute></Route>
         <Route path="/admin/analytics"><AdminProtectedRoute><AnalyticsPage /></AdminProtectedRoute></Route>

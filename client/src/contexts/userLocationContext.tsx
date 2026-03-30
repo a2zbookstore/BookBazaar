@@ -130,7 +130,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     );
 
   const setFetchedLocation = (data: LocationData) => {
-    console.log("fetchinglocation");
 
     setLocation({
       source: "fetched_user_location",
@@ -144,7 +143,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     country: string;
     countryCode: string;
   }) => {
-    console.log("manuallocation");
     setLocation({
       source: "manual_country_selection",
       country: data.country,

@@ -15,7 +15,7 @@ import type { GiftCategory } from "../../../../shared/schema";
 
 interface CategoryForm {
   name: string;
-  type: "novel" | "notebook" | "";
+  type: string;
   description: string;
   imageUrl: string;
   imageUrl2: string;
@@ -140,7 +140,7 @@ export default function GiftCategoriesPage() {
     setEditingCategory(category);
     setForm({
       name: category.name,
-      type: category.type as "novel" | "notebook",
+      type: category.type as any,
       description: category.description || "",
       imageUrl: category.imageUrl || "",
       imageUrl2: category.imageUrl2 || "",
@@ -373,8 +373,33 @@ export default function GiftCategoriesPage() {
   };
 
   const activeCount = categories.filter(c => c.isActive).length;
-  const novelCount = categories.filter(c => c.type === 'novel').length;
-  const notebookCount = categories.filter(c => c.type === 'notebook').length;
+  const typeGroups = categories.reduce((acc, cat) => {
+    acc[cat.type] = (acc[cat.type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Helper function to get type display info
+  const getTypeInfo = (type: string) => {
+    const typeMap: Record<string, { icon: any; label: string; color: string }> = {
+      novel: { icon: BookOpen, label: "Novel", color: "bg-violet-500/90 text-white" },
+      notebook: { icon: BookMarked, label: "Notebook", color: "bg-amber-500/90 text-white" },
+      bookmark: { icon: BookOpen, label: "Bookmark", color: "bg-blue-500/90 text-white" },
+      tote_bag: { icon: Package, label: "Tote Bag", color: "bg-pink-500/90 text-white" },
+      stationery: { icon: Pen, label: "Stationery", color: "bg-purple-500/90 text-white" },
+      journal: { icon: BookMarked, label: "Journal", color: "bg-indigo-500/90 text-white" },
+      reading_light: { icon: Sparkles, label: "Reading Light", color: "bg-yellow-500/90 text-white" },
+      poster: { icon: Gift, label: "Poster", color: "bg-cyan-500/90 text-white" },
+      mug: { icon: Gift, label: "Mug", color: "bg-orange-500/90 text-white" },
+      calendar: { icon: Gift, label: "Calendar", color: "bg-green-500/90 text-white" },
+      other: { icon: Gift, label: "Other", color: "bg-gray-500/90 text-white" },
+    };
+    // Return known type or create custom type info with proper label formatting
+    return typeMap[type] || { 
+      icon: Gift, 
+      label: type.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      color: "bg-gray-500/90 text-white" 
+    };
+  };
 
   const ImageUploadZone = ({
     preview,
@@ -482,24 +507,16 @@ export default function GiftCategoriesPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-gray-700">Type <span className="text-red-400">*</span></Label>
-                    <div className="flex gap-2">
-                      {(["novel", "notebook"] as const).map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setForm({ ...form, type: t })}
-                          className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border text-sm font-medium transition-all duration-150
-                            ${form.type === t
-                              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                              : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
-                            }`}
-                        >
-                          {t === "novel" ? <BookOpen className="w-4 h-4" /> : <BookMarked className="w-4 h-4" />}
-                          {t.charAt(0).toUpperCase() + t.slice(1)}
-                        </button>
-                      ))}
-                    </div>
+                    <Label htmlFor="type" className="text-sm font-medium text-gray-700">Type <span className="text-red-400">*</span></Label>
+                    <Input
+                      id="type"
+                      value={form.type}
+                      onChange={(e) => setForm({ ...form, type: e.target.value })}
+                      placeholder="e.g., novel, bookmark, tote_bag"
+                      required
+                      className="rounded-lg border-gray-200 focus-visible:ring-indigo-400 h-10"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">💡 Suggestions: novel, notebook, bookmark, tote_bag, stationery, journal, reading_light, poster, mug, calendar</p>
                   </div>
                 </div>
 
@@ -660,20 +677,23 @@ export default function GiftCategoriesPage() {
 
         {/* Stats strip */}
         <div className="relative mt-5 flex flex-wrap gap-3">
-          {[
-            { label: "Total", value: categories.length, color: "bg-indigo-100 text-indigo-700" },
-            { label: "Active", value: activeCount, color: "bg-emerald-100 text-emerald-700" },
-            { label: "Novels", value: novelCount, color: "bg-violet-100 text-violet-700" },
-            { label: "Notebooks", value: notebookCount, color: "bg-amber-100 text-amber-700" },
-          ].map((s) => (
-            <span
-              key={s.label}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${s.color}`}
-            >
-              {s.label}
-              <span className="font-bold">{s.value}</span>
-            </span>
-          ))}
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700`}>
+            Total <span className="font-bold">{categories.length}</span>
+          </span>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700`}>
+            Active <span className="font-bold">{activeCount}</span>
+          </span>
+          {Object.entries(typeGroups).map(([type, count]) => {
+            const typeInfo = getTypeInfo(type);
+            return (
+              <span
+                key={type}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700"
+              >
+                {typeInfo.label} <span className="font-bold">{count}</span>
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -730,14 +750,16 @@ export default function GiftCategoriesPage() {
 
                 {/* Type badge overlay */}
                 <div className="absolute top-3 left-3">
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-sm
-                    ${category.type === "novel"
-                      ? "bg-violet-500/90 text-white"
-                      : "bg-amber-500/90 text-white"
-                    }`}>
-                    {category.type === "novel" ? <BookOpen className="w-3 h-3" /> : <BookMarked className="w-3 h-3" />}
-                    {category.type === "novel" ? "Novel" : "Notebook"}
-                  </span>
+                  {(() => {
+                    const typeInfo = getTypeInfo(category.type);
+                    const Icon = typeInfo.icon;
+                    return (
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${typeInfo.color}`}>
+                        <Icon className="w-3 h-3" />
+                        {typeInfo.label}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 {/* Status badge */}

@@ -38,6 +38,63 @@ function Field({ label, hint, icon, children }: { label: string; hint?: string; 
     );
 }
 
+/* ── shared dialog form fields ── */
+const CategoryFormFields = ({
+    values, onChange,
+}: {
+    values: CategoryForm;
+    onChange: (field: keyof CategoryForm, value: string) => void;
+}) => (
+    <div className="space-y-4">
+        <Field label="Category Name" icon={<Tag className="h-3.5 w-3.5" />}>
+            <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                    className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10"
+                    value={values.name}
+                    onChange={(e) => onChange("name", e.target.value)}
+                    required
+                    placeholder="e.g., Science Fiction"
+                />
+            </div>
+        </Field>
+        <Field label="URL Slug" icon={<Hash className="h-3.5 w-3.5" />} hint="Auto-generated from name. Used in URLs.">
+            <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                    className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10 font-mono text-sm"
+                    value={values.slug}
+                    onChange={(e) => onChange("slug", e.target.value)}
+                    required
+                    placeholder="science-fiction"
+                />
+            </div>
+        </Field>
+        <Field label="Description" icon={<AlignLeft className="h-3.5 w-3.5" />}>
+            <Textarea
+                className="rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 resize-none"
+                value={values.description}
+                onChange={(e) => onChange("description", e.target.value)}
+                rows={3}
+                placeholder="Optional description for this category"
+            />
+        </Field>
+        <Field label="Sort Order" icon={<ArrowUpDown className="h-3.5 w-3.5" />} hint="Lower number = displayed first.">
+            <div className="relative">
+                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                    type="number"
+                    min={0}
+                    className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10"
+                    value={values.sort_order ?? ""}
+                    onChange={(e) => onChange("sort_order", e.target.value)}
+                    placeholder="e.g., 1"
+                />
+            </div>
+        </Field>
+    </div>
+);
+
 export default function CategoriesManagement() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -135,63 +192,6 @@ export default function CategoriesManagement() {
             deleteCategoryMutation.mutate(id);
         }
     };
-
-    /* ── shared dialog form fields ── */
-    const CategoryFormFields = ({
-        values, onChange,
-    }: {
-        values: CategoryForm;
-        onChange: (field: keyof CategoryForm, value: string) => void;
-    }) => (
-        <div className="space-y-4">
-            <Field label="Category Name" icon={<Tag className="h-3.5 w-3.5" />}>
-                <div className="relative">
-                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                    <Input
-                        className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10"
-                        value={values.name}
-                        onChange={(e) => onChange("name", e.target.value)}
-                        required
-                        placeholder="e.g., Science Fiction"
-                    />
-                </div>
-            </Field>
-            <Field label="URL Slug" icon={<Hash className="h-3.5 w-3.5" />} hint="Auto-generated from name. Used in URLs.">
-                <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                    <Input
-                        className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10 font-mono text-sm"
-                        value={values.slug}
-                        onChange={(e) => onChange("slug", e.target.value)}
-                        required
-                        placeholder="science-fiction"
-                    />
-                </div>
-            </Field>
-            <Field label="Description" icon={<AlignLeft className="h-3.5 w-3.5" />}>
-                <Textarea
-                    className="rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 resize-none"
-                    value={values.description}
-                    onChange={(e) => onChange("description", e.target.value)}
-                    rows={3}
-                    placeholder="Optional description for this category"
-                />
-            </Field>
-            <Field label="Sort Order" icon={<ArrowUpDown className="h-3.5 w-3.5" />} hint="Lower number = displayed first.">
-                <div className="relative">
-                    <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                    <Input
-                        type="number"
-                        min={0}
-                        className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10"
-                        value={values.sort_order ?? ""}
-                        onChange={(e) => onChange("sort_order", e.target.value)}
-                        placeholder="e.g., 1"
-                    />
-                </div>
-            </Field>
-        </div>
-    );
 
     return (
         <>

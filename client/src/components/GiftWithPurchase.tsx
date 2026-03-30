@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import type { GiftItem, GiftCategory } from '@/shared/schema';
+import type { GiftCategory } from '@/shared/schema';
 
 interface GiftWithPurchaseProps {
   hasItemsInCart: boolean;
@@ -28,25 +28,16 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
-  // Fetch gift items from database (public endpoint)
-  const { data: giftItems = [], isLoading: itemsLoading } = useQuery<GiftItem[]>({
-    queryKey: ["/api/gift-items"],
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-  });
-
-  const isLoading = categoriesLoading || itemsLoading;
+  // Gift items deprecated - using categories directly
+  const isLoading = categoriesLoading;
 
   // Filter active categories and sort by sortOrder
   const activeCategories = giftCategories
     .filter(category => category.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
-  // Filter active items and sort by sortOrder
-  const activeGiftItems = giftItems
-    .filter(item => item.isActive && (!selectedCategory || item.categoryId === selectedCategory))
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  // Categories are now the products themselves
+  const activeGiftItems = activeCategories;
 
   useEffect(() => {
     // Load selected gift from localStorage
@@ -443,13 +434,28 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                               className={`w-full h-full object-contain transition-transform duration-300 ${hasItemsInCart ? 'group-hover:scale-110' : ''
                                 }`}
                             />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                              <span className="text-4xl">
-                                {category.type === 'novel' ? '📖' : '📝'}
-                              </span>
-                            </div>
-                          )}
+                          ) : (() => {
+                            const typeEmojis: Record<string, string> = {
+                              novel: '📖',
+                              notebook: '📝',
+                              bookmark: '🔖',
+                              tote_bag: '👜',
+                              stationery: '✏️',
+                              journal: '📔',
+                              reading_light: '💡',
+                              poster: '🖼️',
+                              mug: '☕',
+                              calendar: '📅',
+                              other: '🎁'
+                            };
+                            return (
+                              <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                <span className="text-4xl">
+                                  {typeEmojis[category.type] || '🎁'}
+                                </span>
+                              </div>
+                            );
+                          })()}
 
                           {/* Add Books First Overlay */}
                           {!hasItemsInCart && (
@@ -494,10 +500,24 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                               </span>
                             )}
                             <Badge
-                              variant={category.type === 'novel' ? 'default' : 'secondary'}
-                              className="text-xs"
+                              className={(() => {
+                                const typeColors: Record<string, string> = {
+                                  novel: 'bg-violet-500 text-white',
+                                  notebook: 'bg-amber-500 text-white',
+                                  bookmark: 'bg-blue-500 text-white',
+                                  tote_bag: 'bg-pink-500 text-white',
+                                  stationery: 'bg-purple-500 text-white',
+                                  journal: 'bg-indigo-500 text-white',
+                                  reading_light: 'bg-yellow-500 text-white',
+                                  poster: 'bg-cyan-500 text-white',
+                                  mug: 'bg-orange-500 text-white',
+                                  calendar: 'bg-green-500 text-white',
+                                  other: 'bg-gray-500 text-white'
+                                };
+                                return `${typeColors[category.type] || 'bg-purple-500 text-white'} text-xs`;
+                              })()}
                             >
-                              {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
+                              {category.type.replace('_', ' ').charAt(0).toUpperCase() + category.type.replace('_', ' ').slice(1)}
                             </Badge>
                           </div>
                           <p className="text-xs text-gray-500 text-center mt-1 truncate">
@@ -590,10 +610,52 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Badge
-                            variant={gift.type === 'novel' ? 'default' : 'secondary'}
-                            className="text-xs font-medium"
+                            className={(() => {
+                              const typeColors: Record<string, string> = {
+                                novel: 'bg-violet-500 text-white',
+                                notebook: 'bg-amber-500 text-white',
+                                bookmark: 'bg-blue-500 text-white',
+                                tote_bag: 'bg-pink-500 text-white',
+                                stationery: 'bg-purple-500 text-white',
+                                journal: 'bg-indigo-500 text-white',
+                                reading_light: 'bg-yellow-500 text-white',
+                                poster: 'bg-cyan-500 text-white',
+                                mug: 'bg-orange-500 text-white',
+                                calendar: 'bg-green-500 text-white',
+                                other: 'bg-gray-500 text-white'
+                              };
+                              const typeEmojis: Record<string, string> = {
+                                novel: '📖',
+                                notebook: '📝',
+                                bookmark: '🔖',
+                                tote_bag: '👜',
+                                stationery: '✏️',
+                                journal: '📔',
+                                reading_light: '💡',
+                                poster: '🖼️',
+                                mug: '☕',
+                                calendar: '📅',
+                                other: '🎁'
+                              };
+                              return `${typeColors[gift.type] || 'bg-purple-500 text-white'} text-xs font-medium`;
+                            })()}
                           >
-                            {gift.type === 'novel' ? '📖 Novel' : '📝 Notebook'}
+                            {(() => {
+                              const typeEmojis: Record<string, string> = {
+                                novel: '📖',
+                                notebook: '📝',
+                                bookmark: '🔖',
+                                tote_bag: '👜',
+                                stationery: '✏️',
+                                journal: '📔',
+                                reading_light: '💡',
+                                poster: '🖼️',
+                                mug: '☕',
+                                calendar: '📅',
+                                other: '🎁'
+                              };
+                              return `${typeEmojis[gift.type] || '🎁'} ${gift.type.replace('_', ' ').charAt(0).toUpperCase() + gift.type.replace('_', ' ').slice(1)}`;
+                            })()}
                           </Badge>
                           {gift.price && parseFloat(gift.price) > 0 && (
                             <Badge variant="outline" className="text-xs">

@@ -56,7 +56,6 @@ const menuSections = [
     items: [
       { href: "/admin/coupons", icon: Percent, label: "Coupons" },
       { href: "/admin/gift-categories", icon: Gift, label: "Gift Categories" },
-      { href: "/admin/gift-management", icon: Gift, label: "Gift Management" },
       { href: "/admin/messages", icon: Mail, label: "Messages" },
     ],
   },

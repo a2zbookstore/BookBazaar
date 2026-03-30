@@ -38,7 +38,7 @@ import {
   insertContactMessageSchema,
   insertCartItemSchema,
   insertGiftCategorySchema,
-  insertGiftItemSchema,
+  // insertGiftItemSchema, // DEPRECATED - using categories directly
   insertCouponSchema,
   insertBookRequestSchema,
   insertBannerSchemaDrizzle
@@ -5370,59 +5370,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public Gift Items API Route (for homepage)
-  app.get("/api/gift-items", async (req, res) => {
-    try {
-      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
-      const giftItems = await storage.getGiftItems(categoryId);
-      // Only return active items for public use
-      const activeItems = giftItems.filter(item => item.isActive);
-      res.json(activeItems);
-    } catch (error) {
-      console.error("Error fetching gift items:", error);
-      res.status(500).json({ message: "Failed to fetch gift items" });
-    }
-  });
-
-  app.post("/api/admin/gift-items", requireAdminAuth, async (req, res) => {
-    try {
-      const giftItemData = insertGiftItemSchema.parse(req.body);
-      const giftItem = await storage.createGiftItem(giftItemData);
-      res.json(giftItem);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      console.error("Error creating gift item:", error);
-      res.status(500).json({ message: "Failed to create gift item" });
-    }
-  });
-
-  app.put("/api/admin/gift-items/:id", requireAdminAuth, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const giftItemData = insertGiftItemSchema.partial().parse(req.body);
-      const giftItem = await storage.updateGiftItem(id, giftItemData);
-      res.json(giftItem);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      console.error("Error updating gift item:", error);
-      res.status(500).json({ message: "Failed to update gift item" });
-    }
-  });
-
-  app.delete("/api/admin/gift-items/:id", requireAdminAuth, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      await storage.deleteGiftItem(id);
-      res.json({ message: "Gift item deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting gift item:", error);
-      res.status(500).json({ message: "Failed to delete gift item" });
-    }
-  });
+  // DEPRECATED: Gift Items API Routes - removed, using gift categories directly
+  // app.get("/api/gift-items", async (req, res) => { ... });
+  // app.post("/api/admin/gift-items", requireAdminAuth, async (req, res) => { ... });
+  // app.put("/api/admin/gift-items/:id", requireAdminAuth, async (req, res) => { ... });
+  // app.delete("/api/admin/gift-items/:id", requireAdminAuth, async (req, res) => { ... });
 
   // Coupon Management Routes
 

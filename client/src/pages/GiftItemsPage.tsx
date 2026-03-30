@@ -11,7 +11,7 @@ import { Gift, BookOpen, PartyPopper, ArrowLeft, Check, ShoppingCart, ShoppingBa
 import { toast } from "@/hooks/use-toast";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { apiRequest } from "@/lib/queryClient";
-import { GiftItem, GiftCategory } from "@/shared/schema";
+import { GiftCategory } from "@/shared/schema";
 import { useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -29,9 +29,10 @@ export default function GiftItemsPage() {
   });
   const { cartItems, isLoading: isCartLoading, cartCount } = useGlobalContext();
 
-  const { data: giftItems = [], isLoading: isItemsLoading } = useQuery<GiftItem[]>({
-    queryKey: ["/api/gift-items"],
-  });
+  // Gift items are deprecated - we use categories directly now
+  // const { data: giftItems = [], isLoading: isItemsLoading } = useQuery<GiftItem[]>({
+  //   queryKey: ["/api/gift-items"],
+  // });
 
   useEffect(() => {
     // Reset selected gift if cart becomes empty
@@ -49,12 +50,10 @@ export default function GiftItemsPage() {
     ? giftCategories.filter(gift => gift.type === selectedCategory)
     : giftCategories;
 
-  const isLoading = isCategoriesLoading || isItemsLoading;
+  const isLoading = isCategoriesLoading;
 
-  // Filter items by selected category
-  const filteredItems = selectedCategory
-    ? giftItems.filter(item => item.categoryId === selectedCategory)
-    : giftItems;
+  // Categories are now the products themselves (no separate items table)
+  const filteredItems = filteredGifts;
 
   const selectedCategoryData = giftCategories.find(cat => cat.id === selectedCategory);
 
@@ -437,14 +436,26 @@ export default function GiftItemsPage() {
 
 
                         {/* Category Type Badge */}
-                        {category.type && (
-                          <Badge className={`${category.type === 'novel'
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-purple-500 text-white'
-                            }`}>
-                            {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
-                          </Badge>
-                        )}
+                        {category.type && (() => {
+                          const typeColors: Record<string, string> = {
+                            novel: 'bg-violet-500 text-white',
+                            notebook: 'bg-amber-500 text-white',
+                            bookmark: 'bg-blue-500 text-white',
+                            tote_bag: 'bg-pink-500 text-white',
+                            stationery: 'bg-purple-500 text-white',
+                            journal: 'bg-indigo-500 text-white',
+                            reading_light: 'bg-yellow-500 text-white',
+                            poster: 'bg-cyan-500 text-white',
+                            mug: 'bg-orange-500 text-white',
+                            calendar: 'bg-green-500 text-white',
+                            other: 'bg-gray-500 text-white'
+                          };
+                          return (
+                            <Badge className={typeColors[category.type] || 'bg-purple-500 text-white'}>
+                              {category.type.replace('_', ' ').charAt(0).toUpperCase() + category.type.replace('_', ' ').slice(1)}
+                            </Badge>
+                          );
+                        })()}
                       </div>
 
                       {category.description && (
