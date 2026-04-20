@@ -51,6 +51,7 @@ interface ReturnRequest {
   updatedAt: string;
   order: {
     id: number;
+    orderNumber?: string;
     customerEmail: string;
     customerName: string;
     totalAmount: string;
@@ -358,7 +359,7 @@ export default function ReturnsPage() {
                       {/* Row 1: ID + badges */}
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-gray-800 text-sm">Return #{r.id}</span>
-                        <span className="text-gray-400 text-xs">→ Order #{r.orderId}</span>
+                        <span className="text-gray-400 text-xs">→ {r.order?.orderNumber || `Order #${r.orderId}`}</span>
                         <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${cfg.style}`}>
                           {cfg.icon} {cfg.label}
                         </span>
@@ -434,7 +435,7 @@ export default function ReturnsPage() {
                                 </div>
                                 <div>
                                   <h3 className="font-bold text-lg">Return #{r.id}</h3>
-                                  <p className="text-sm text-rose-200">Order #{r.orderId} · {fmt(r.createdAt)}</p>
+                                  <p className="text-sm text-rose-200">{r.order?.orderNumber || `Order #${r.orderId}`} · {fmt(r.createdAt)}</p>
                                 </div>
                               </div>
                               <div className="text-right">

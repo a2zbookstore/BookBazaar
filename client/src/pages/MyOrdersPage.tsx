@@ -25,7 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow } from "date-fns";
-import { Package, Eye, FileDown, Home, Calendar, CreditCard, Mail, XCircle } from "lucide-react";
+import { Package, Eye, FileDown, Home, Calendar, CreditCard, Mail, XCircle, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "@/hooks/use-toast";
 
@@ -92,6 +92,8 @@ export default function MyOrdersPage() {
   const [, setLocation] = useLocation();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
+  const [cancelOrderDisplay, setCancelOrderDisplay] = useState<string>("");
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   // Guest email input for order lookup
@@ -232,7 +234,7 @@ export default function MyOrdersPage() {
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="font-semibold">Order #{order.id}</p>
+                              <p className="font-semibold">{order.orderNumber || `Order #${order.id}`}</p>
                               <p className="text-sm text-gray-600">
                                 {formatDistanceToNow(new Date(order.createdAt))} ago
                               </p>
@@ -301,6 +303,7 @@ export default function MyOrdersPage() {
   }
 
   const downloadInvoice = async (orderId: number) => {
+    setDownloadingInvoiceId(orderId);
     try {
       const emailParam = !isAuthenticated && guestEmail ? `?email=${encodeURIComponent(guestEmail)}` : '';
       const url = `/api/orders/${orderId}/invoice${emailParam}`;
@@ -320,6 +323,8 @@ export default function MyOrdersPage() {
       }
     } catch (error) {
       toast({ title: "Error", description: "Could not open invoice.", variant: "destructive" });
+    } finally {
+      setDownloadingInvoiceId(null);
     }
   };
 
@@ -371,7 +376,7 @@ export default function MyOrdersPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Order</p>
-                            <p className="text-base font-bold text-gray-900">#{order.id}</p>
+                            <p className="text-base font-bold text-gray-900">{order.orderNumber || `#${order.id}`}</p>
                             <Badge className={`${statusColors[order.status as keyof typeof statusColors]} px-3 py-1 text-xs font-semibold rounded-full ml-2`}>
                               {statusLabels[order.status as keyof typeof statusLabels]}
                             </Badge>
@@ -407,16 +412,20 @@ export default function MyOrdersPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => downloadInvoice(order.id)}
+                          disabled={downloadingInvoiceId === order.id}
                           className="flex items-center gap-1.5 rounded-full border-gray-300 hover:bg-white hover:border-primary-aqua hover:text-primary-aqua transition-colors"
                         >
-                          <FileDown className="h-4 w-4" />
-                          Invoice
+                          {downloadingInvoiceId === order.id ? (
+                            <><Loader2 className="h-4 w-4 animate-spin" /> Downloading...</>
+                          ) : (
+                            <><FileDown className="h-4 w-4" /> Invoice</>
+                          )}
                         </Button>
                         {CANCELABLE_STATUSES.includes(order.status) && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setCancelOrderId(order.id)}
+                            onClick={() => { setCancelOrderId(order.id); setCancelOrderDisplay(order.orderNumber || `#${order.id}`); }}
                             className="flex items-center gap-1.5 rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-500 transition-colors"
                           >
                             <XCircle className="h-4 w-4" />
@@ -503,7 +512,7 @@ export default function MyOrdersPage() {
       <AlertDialog open={cancelOrderId !== null} onOpenChange={(open) => { if (!open) setCancelOrderId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Order #{cancelOrderId}?</AlertDialogTitle>
+            <AlertDialogTitle>Cancel Order {cancelOrderDisplay || `#${cancelOrderId}`}?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to cancel this order? This action cannot be undone.
               Once cancelled, you will need to place a new order if you change your mind.
@@ -561,7 +570,7 @@ export default function MyOrdersPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => { setCancelOrderId(selectedOrder.id); }}
+                    onClick={() => { setCancelOrderId(selectedOrder.id); setCancelOrderDisplay(selectedOrder.orderNumber || `#${selectedOrder.id}`); }}
                     className="flex items-center gap-1.5 rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-500 transition-colors"
                   >
                     <XCircle className="h-4 w-4" />

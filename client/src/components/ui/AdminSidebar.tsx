@@ -19,6 +19,7 @@ import {
   Store,
   BarChart2,
   ClipboardList,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ const menuSections = [
       { href: "/admin/book-requests", icon: ClipboardList, label: "Book Requests" },
       { href: "/admin/customers", icon: Users, label: "Customers" },
       { href: "/admin/returns", icon: RotateCcw, label: "Returns" },
+      { href: "/admin/bill-creator", icon: Receipt, label: "Bill Creator" },
     ],
   },
   {

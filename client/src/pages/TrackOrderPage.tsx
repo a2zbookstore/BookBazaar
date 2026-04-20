@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Package, Truck, CheckCircle, XCircle, Clock,
-  ChevronDown, ChevronUp, Calendar, MapPin, FileDown,
+  ChevronDown, ChevronUp, Calendar, MapPin, FileDown, Loader2,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
@@ -111,8 +111,10 @@ function OrderCard({ order, expanded, onToggle }: { order: Order; expanded: bool
     [addr.city, addr.state || addr.region].filter(Boolean).join(", "),
     [addr.postalCode || addr.zip, addr.country].filter(Boolean).join(" "),
   ].filter(Boolean);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   const downloadInvoice = async () => {
+    setDownloadingInvoice(true);
     try {
       const response = await fetch(`/api/orders/${order.id}/invoice`, { credentials: "include" });
       if (!response.ok) { toast({ title: "Failed to load invoice", variant: "destructive" }); return; }
@@ -120,6 +122,7 @@ function OrderCard({ order, expanded, onToggle }: { order: Order; expanded: bool
       const win = window.open("", "_blank");
       if (win) { win.document.write(html); win.document.close(); }
     } catch { toast({ title: "Error", description: "Could not open invoice.", variant: "destructive" }); }
+    finally { setDownloadingInvoice(false); }
   };
 
   return (
@@ -132,7 +135,7 @@ function OrderCard({ order, expanded, onToggle }: { order: Order; expanded: bool
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Order</p>
-            <p className="text-lg font-bold mt-0.5 text-gray-900">#{order.id}</p>
+            <p className="text-lg font-bold mt-0.5 text-gray-900">{order.orderNumber || `#${order.id}`}</p>
           </div>
           <div className="flex items-center gap-3">
             <Badge className={`${statusColors[statusKey] ?? "bg-gray-100 text-gray-800"} px-3 py-1 text-xs font-semibold rounded-full`}>
@@ -297,8 +300,12 @@ function OrderCard({ order, expanded, onToggle }: { order: Order; expanded: bool
                 View Full Details
               </Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={downloadInvoice} className="rounded-full border-gray-300 hover:border-primary-aqua hover:text-primary-aqua transition-colors flex items-center gap-1.5">
-              <FileDown className="h-4 w-4" /> Invoice
+            <Button variant="outline" size="sm" onClick={downloadInvoice} disabled={downloadingInvoice} className="rounded-full border-gray-300 hover:border-primary-aqua hover:text-primary-aqua transition-colors flex items-center gap-1.5">
+              {downloadingInvoice ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Downloading...</>
+              ) : (
+                <><FileDown className="h-4 w-4" /> Invoice</>
+              )}
             </Button>
           </div>
         </div>

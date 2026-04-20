@@ -186,6 +186,9 @@ export interface IStorage {
 
   // Gift Categories operations
   getGiftCategories(): Promise<GiftCategory[]>;
+  getDistinctGiftCategoryTypes(): Promise<string[]>;
+  renameGiftCategoryType(oldType: string, newType: string): Promise<number>;
+  deleteGiftCategoryType(type: string): Promise<number>;
   getGiftCategoryById(id: number): Promise<GiftCategory | undefined>;
   createGiftCategory(category: InsertGiftCategory): Promise<GiftCategory>;
   updateGiftCategory(id: number, category: Partial<InsertGiftCategory>): Promise<GiftCategory>;
@@ -436,6 +439,7 @@ export class DatabaseStorage implements IStorage {
     boxSet?: boolean;
     search?: string;
     titleOnly?: boolean;
+    includeOutOfStock?: boolean;
     minPrice?: number;
     maxPrice?: number;
     limit?: number;
@@ -453,6 +457,7 @@ export class DatabaseStorage implements IStorage {
       boxSet,
       search,
       titleOnly,
+      includeOutOfStock,
       minPrice,
       maxPrice,
       limit = 12,
@@ -463,8 +468,10 @@ export class DatabaseStorage implements IStorage {
 
     const conditions = [];
 
-    // Always exclude out of stock books (stock = 0)
-    conditions.push(sql`${books.stock} > 0`);
+    // Exclude out of stock books unless explicitly included (for admin inventory)
+    if (!includeOutOfStock) {
+      conditions.push(sql`${books.stock} > 0`);
+    }
 
     if (categoryId) conditions.push(
       sql`(${books.categoryId} = ${categoryId} OR ${books.id} IN (SELECT book_id FROM book_categories WHERE category_id = ${categoryId}))`
@@ -936,10 +943,22 @@ export class DatabaseStorage implements IStorage {
       const [newOrder] = await db.insert(orders).values(order).returning();
       console.log("Order created with ID:", newOrder.id);
 
+      // Generate human-readable order number: BB-YYYYMMDD-XXXXXX
+      const now = newOrder.createdAt ? new Date(newOrder.createdAt) : new Date();
+      const datePart = now.toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
+      const seqPart = String(newOrder.id).padStart(6, "0");
+      const generatedOrderNumber = `BB-${datePart}-${seqPart}`;
+      const [orderWithNumber] = await db
+        .update(orders)
+        .set({ orderNumber: generatedOrderNumber })
+        .where(eq(orders.id, newOrder.id))
+        .returning();
+      console.log("Order number assigned:", generatedOrderNumber);
+
       // Insert order items
       if (items.length > 0) {
         await db.insert(orderItems).values(
-          items.map((item) => ({ ...item, orderId: newOrder.id }))
+          items.map((item) => ({ ...item, orderId: orderWithNumber.id }))
         );
         console.log("Order items inserted successfully");
       }
@@ -956,7 +975,7 @@ export class DatabaseStorage implements IStorage {
       }
       console.log("Book stock updated");
 
-      return newOrder;
+      return orderWithNumber;
     } catch (error) {
       console.error("Error creating order:", error);
       throw error;
@@ -1642,6 +1661,24 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(giftCategories).orderBy(giftCategories.sortOrder, giftCategories.name);
   }
 
+  async getDistinctGiftCategoryTypes(): Promise<string[]> {
+    const rows = await db.selectDistinct({ type: giftCategories.type }).from(giftCategories).orderBy(giftCategories.type);
+    return rows.map((r) => r.type);
+  }
+
+  async renameGiftCategoryType(oldType: string, newType: string): Promise<number> {
+    const result = await db
+      .update(giftCategories)
+      .set({ type: newType, updatedAt: new Date() })
+      .where(eq(giftCategories.type, oldType));
+    return result.rowCount ?? 0;
+  }
+
+  async deleteGiftCategoryType(type: string): Promise<number> {
+    const result = await db.delete(giftCategories).where(eq(giftCategories.type, type));
+    return result.rowCount ?? 0;
+  }
+
   async getGiftCategoryById(id: number): Promise<GiftCategory | undefined> {
     const [category] = await db.select().from(giftCategories).where(eq(giftCategories.id, id));
     return category;
@@ -1973,6 +2010,7 @@ export class DatabaseStorage implements IStorage {
         userId: giftCart.userId,
         giftCategoryId: giftCart.giftCategoryId,
         engraving: giftCart.engrave,
+        engravingMessage: giftCart.engravingMessage,
         createdAt: giftCart.addedAt,
         category: {
           id: giftCategories.id,
@@ -1992,6 +2030,7 @@ export class DatabaseStorage implements IStorage {
       userId: row.userId,
       giftCategoryId: row.giftCategoryId,
       engraving: row.engraving,
+      engravingMessage: row.engravingMessage,
       createdAt: row.createdAt,
       category: row.category,
       imageUrl: row.category?.imageUrl || null,

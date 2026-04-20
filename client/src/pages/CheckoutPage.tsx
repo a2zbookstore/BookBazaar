@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -52,12 +52,16 @@ const validateName = (name: string): boolean => {
 function CheckoutItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: number }) {
   const { formatAmount, convertPrice } = useCurrency();
   const [convertedPrice, setConvertedPrice] = useState<number>(bookPrice * quantity);
+  const versionRef = useRef(0);
 
   const convertItemPrice = React.useCallback(async () => {
+    const version = ++versionRef.current;
     try {
       const converted = await convertPrice(bookPrice * quantity);
+      if (version !== versionRef.current) return;
       setConvertedPrice(converted?.convertedAmount || (bookPrice * quantity));
     } catch (error) {
+      if (version !== versionRef.current) return;
       console.error('Error converting checkout item price:', error);
       setConvertedPrice(bookPrice * quantity);
     }
@@ -314,13 +318,17 @@ export default function CheckoutPage() {
   // Convert all amounts to user's currency for display
   const [convertedAmounts, setConvertedAmounts] = useState({
     subtotal: subtotal,
-    shipping: shippingCost,
+    shipping: checkoutShippingCost,
     tax: tax,
     total: total
   });
 
+  // Version ref to prevent stale async conversions from overwriting current values
+  const conversionVersionRef = useRef(0);
+
   // Convert amounts function
   const convertAmounts = React.useCallback(async () => {
+    const version = ++conversionVersionRef.current;
     try {
       console.log('Checkout conversion attempt:', { subtotal, userCurrency, exchangeRates });
 
@@ -328,6 +336,9 @@ export default function CheckoutPage() {
       const convertedShipping = await convertPrice(checkoutShippingCost);
       const convertedTax = await convertPrice(tax);
       const convertedTotal = await convertPrice(total);
+
+      // Only apply if this is still the latest conversion request
+      if (version !== conversionVersionRef.current) return;
 
       console.log('Checkout conversion results:', {
         original: { subtotal, checkoutShippingCost, tax, total },
@@ -341,6 +352,8 @@ export default function CheckoutPage() {
         total: convertedTotal?.convertedAmount || total
       });
     } catch (error) {
+      // Only apply fallback if this is still the latest conversion request
+      if (version !== conversionVersionRef.current) return;
       console.error('Error converting currencies:', error);
       // Fallback to original amounts
       setConvertedAmounts({
@@ -368,7 +381,7 @@ export default function CheckoutPage() {
     if (exchangeRates && userCurrency !== 'USD') {
       convertAmounts();
     } else {
-      // For USD or when no exchange rates, use original amounts
+      // For USD or when no exchange rates, use original amounts directly
       setConvertedAmounts({
         subtotal: subtotal,
         shipping: checkoutShippingCost,
@@ -376,7 +389,7 @@ export default function CheckoutPage() {
         total: total
       });
     }
-  }, [convertAmounts, exchangeRates, userCurrency]);
+  }, [convertAmounts, exchangeRates, userCurrency, subtotal, checkoutShippingCost, tax, total]);
 
   // Razorpay config
   const { data: razorpayConfig } = useQuery({
@@ -593,7 +606,7 @@ export default function CheckoutPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/my-orders"] });
       toast({
         title: "Order Placed Successfully!",
-        description: `Your order #${data.orderId} has been confirmed.`,
+        description: `Your order ${data.orderNumber || `#${data.orderId}`} has been confirmed.`,
       });
       // Navigate to order detail page with email for guest access
       setLocation(`/orders/${data.orderId}?email=${encodeURIComponent(customerEmail)}`);
@@ -721,7 +734,7 @@ export default function CheckoutPage() {
               queryClient.invalidateQueries({ queryKey: ["/api/my-orders"] });
               toast({
                 title: "Payment Successful!",
-                description: `Your order #${verifyData.orderId} has been placed successfully.`,
+                description: `Your order ${verifyData.orderNumber || `#${verifyData.orderId}`} has been placed successfully.`,
               });
 
               // Navigate to order detail page with email for guest access

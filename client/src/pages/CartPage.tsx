@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
-import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles, Truck, Delete, Trash } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Gift, Sparkles, Truck, Delete, Trash, Pen } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
-import { useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 // Image helper function
@@ -40,12 +40,16 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
 function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: number }) {
   const { formatAmount, convertPrice } = useCurrency();
   const [convertedPrice, setConvertedPrice] = useState<number>(bookPrice * quantity);
+  const versionRef = useRef(0);
 
   const convertItemPrice = React.useCallback(async () => {
+    const version = ++versionRef.current;
     try {
       const converted = await convertPrice(bookPrice * quantity);
+      if (version !== versionRef.current) return;
       setConvertedPrice(converted?.convertedAmount || (bookPrice * quantity));
     } catch (error) {
+      if (version !== versionRef.current) return;
       console.error('Error converting item price:', error);
       setConvertedPrice(bookPrice * quantity);
     }
@@ -75,7 +79,6 @@ function ItemPrice({ bookPrice, quantity }: { bookPrice: number; quantity: numbe
 export default function CartPage() {
   const { cartItems, updateCartItem, removeFromCart, isLoading, cartCount } = useGlobalContext();
   const queryClient = useQueryClient();
-  const isFetchingCart = useIsFetching({ queryKey: ["/api/cart"] }) > 0;
   const [optimisticCartItems, setOptimisticCartItems] = useState<CartItem[] | null>(null);
   const [optimisticallyRemovedId, setOptimisticallyRemovedId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -143,13 +146,20 @@ export default function CartPage() {
     total: cartTotal
   });
 
+  // Version ref to prevent stale async conversions from overwriting current values
+  const conversionVersionRef = useRef(0);
+
   // Convert amounts function
   const convertAmounts = React.useCallback(async () => {
+    const version = ++conversionVersionRef.current;
     try {
       const convertedSubtotal = await convertPrice(cartSubtotal);
       const convertedShipping = await convertPrice(cartShipping);
       const convertedTax = await convertPrice(cartTax);
       const convertedTotal = await convertPrice(cartTotal);
+
+      // Only apply if this is still the latest conversion request
+      if (version !== conversionVersionRef.current) return;
 
       setConvertedAmounts({
         subtotal: convertedSubtotal?.convertedAmount || cartSubtotal,
@@ -158,6 +168,8 @@ export default function CartPage() {
         total: convertedTotal?.convertedAmount || cartTotal
       });
     } catch (error) {
+      // Only apply fallback if this is still the latest conversion request
+      if (version !== conversionVersionRef.current) return;
       setConvertedAmounts({
         subtotal: cartSubtotal,
         shipping: cartShipping,
@@ -183,7 +195,7 @@ export default function CartPage() {
     if (exchangeRates && userCurrency !== 'USD') {
       convertAmounts();
     } else {
-      // For USD or when no exchange rates, use original amounts
+      // For USD or when no exchange rates, use original amounts directly
       setConvertedAmounts({
         subtotal: cartSubtotal,
         shipping: cartShipping,
@@ -191,7 +203,7 @@ export default function CartPage() {
         total: cartTotal
       });
     }
-  }, [convertAmounts, exchangeRates, userCurrency]);
+  }, [convertAmounts, exchangeRates, userCurrency, cartSubtotal, cartShipping, cartTax, cartTotal]);
 
   // Debounced update function - waits 800ms after user stops changing quantity
   const debouncedUpdateQuantity = React.useCallback((itemId: number, newQuantity: number) => {
@@ -380,7 +392,7 @@ export default function CartPage() {
     }
   }, [cartItems, optimisticCartItems, optimisticallyRemovedId]);
 
-  if (isLoading || isFetchingCart) {
+  if (isLoading) {
     return (
       <>
         <div className="container mx-auto px-4">
@@ -635,6 +647,20 @@ export default function CartPage() {
                               FREE Gift
                             </span>
                           )}
+                          {/* Engraving info for gift items */}
+                          {isGift && (item as any).engraving && (
+                            <div className="mt-1.5 flex items-start gap-1.5 bg-pink-50 border border-pink-200 rounded-md px-2 py-1.5 max-w-xs">
+                              <Pen className="h-3 w-3 text-pink-500 mt-0.5 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <span className="text-[10px] sm:text-xs font-medium text-pink-600 block">Engraved</span>
+                                {(item as any).engravingMessage && (
+                                  <p className="text-[10px] sm:text-xs text-pink-700 italic font-serif truncate leading-tight">
+                                    "{(item as any).engravingMessage}"
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* RIGHT ACTION */}
@@ -765,7 +791,7 @@ export default function CartPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
                           <h3 className="text-sm sm:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent break-words">
-                            Don't forget your FREE gift! 🎁
+                            Don't forget your FREE gift! 
                           </h3>
                           <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 animate-pulse flex-shrink-0" />
                         </div>

@@ -42,10 +42,12 @@ import {
   Mail,
   Phone,
   FileText,
+  Loader2,
 } from "lucide-react";
 
 interface Order {
   id: number;
+  orderNumber?: string;
   userId: string;
   customerName: string;
   customerEmail: string;
@@ -73,6 +75,7 @@ export default function OrdersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBillDialogOpen, setIsBillDialogOpen] = useState(false);
   const [selectedBillOrderId, setSelectedBillOrderId] = useState<number | null>(null);
+  const [downloadingBill, setDownloadingBill] = useState(false);
   const [newStatus, setNewStatus] = useState<string | undefined>(undefined);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
@@ -186,124 +189,11 @@ export default function OrdersPage() {
   };
 
   const handleDownloadBill = () => {
-    if (selectedOrderDetails) {
-      const printWindow = window.open('', '', 'height=600,width=800');
-      if (printWindow) {
-        printWindow.document.write(generateBillHTML(selectedOrderDetails));
-        printWindow.document.close();
-        printWindow.print();
-      }
+    if (selectedBillOrderId) {
+      setDownloadingBill(true);
+      window.open(`/api/orders/${selectedBillOrderId}/invoice`, '_blank');
+      setTimeout(() => setDownloadingBill(false), 1500);
     }
-  };
-
-  const generateBillHTML = (order: any) => {
-    const items = order.items || [];
-    const subtotal = parseFloat(order.subtotal || '0');
-    const shipping = parseFloat(order.shipping || '0');
-    const tax = parseFloat(order.tax || '0');
-    const total = parseFloat(order.total || '0');
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice - Order #${order.id}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; }
-            .company-name { font-size: 24px; font-weight: bold; color: #d32f2f; }
-            .invoice-details { margin: 20px 0; }
-            .customer-details { margin: 20px 0; }
-            .order-items { margin: 20px 0; }
-            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .total-row { font-weight: bold; }
-            .footer { margin-top: 30px; text-align: center; border-top: 1px solid #ddd; padding-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="company-name">A2Z BOOKSHOP</div>
-            <p>International Online Bookstore</p>
-            <p>Email: orders@a2zbookshop.com | Website: https://a2zbookshop.com</p>
-          </div>
-          
-          <div class="invoice-details">
-            <h2>INVOICE</h2>
-            <p><strong>Order Number:</strong> #${order.id}</p>
-            <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
-            <p><strong>Payment Status:</strong> ${order.paymentStatus}</p>
-            <p><strong>Order Status:</strong> ${order.status}</p>
-            ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${order.trackingNumber}</p>` : ''}
-          </div>
-          
-          <div class="customer-details">
-            <h3>Customer Information</h3>
-            <p><strong>Name:</strong> ${order.customerName}</p>
-            <p><strong>Email:</strong> ${order.customerEmail}</p>
-            ${order.customerPhone ? `<p><strong>Phone:</strong> ${order.customerPhone}</p>` : ''}
-            
-            <h4>Shipping Address</h4>
-            <p>
-              ${order.shippingAddress?.street || order.shippingAddress?.address || ''}<br>
-              ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.zip || order.shippingAddress?.postalCode || ''}<br>
-              ${order.shippingAddress?.country || ''}
-            </p>
-          </div>
-          
-          <div class="order-items">
-            <h3>Order Items</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Book</th>
-                  <th>Author</th>
-                  <th>Price</th>
-                  <th>Quantity</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${items.map((item: any) => `
-                  <tr>
-                    <td>${item.title}</td>
-                    <td>${item.author}</td>
-                    <td>$${parseFloat(item.price).toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-            <table style="margin-top: 20px;">
-              <tr>
-                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Subtotal:</strong></td>
-                <td style="border: none; text-align: right;">$${subtotal.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Shipping:</strong></td>
-                <td style="border: none; text-align: right;">$${shipping.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Tax:</strong></td>
-                <td style="border: none; text-align: right;">$${tax.toFixed(2)}</td>
-              </tr>
-              <tr class="total-row">
-                <td style="border: none; text-align: right; padding-right: 10px;"><strong>Total:</strong></td>
-                <td style="border: none; text-align: right;"><strong>$${total.toFixed(2)}</strong></td>
-              </tr>
-            </table>
-          </div>
-          
-          <div class="footer">
-            <p>Thank you for your business!</p>
-            <p>A2Z BOOKSHOP - Your Global Book Destination</p>
-          </div>
-        </body>
-      </html>
-    `;
   };
 
   const handleUpdateOrder = () => {
@@ -504,7 +394,7 @@ export default function OrdersPage() {
                           className="flex items-center gap-1.5 font-bold text-violet-700 hover:text-violet-900 text-sm sm:text-base group"
                         >
                           <FileText className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                          Order #{order.id}
+                          {order.orderNumber || `#${order.id}`}
                         </button>
                         <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${getStatusColor(order.status)}`}>
                           {getStatusIcon(order.status)}
@@ -590,7 +480,7 @@ export default function OrdersPage() {
                 <Edit className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">Update Order #{selectedOrderId}</h3>
+                <h3 className="font-bold text-lg">Update Order {(ordersData?.orders || []).find((o: Order) => o.id === selectedOrderId)?.orderNumber || `#${selectedOrderId}`}</h3>
                 <p className="text-sm text-violet-200">Change status, carrier & tracking</p>
               </div>
             </div>
@@ -683,7 +573,7 @@ export default function OrdersPage() {
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">Order #{selectedBillOrderId}</h3>
+                  <h3 className="font-bold text-lg">{selectedOrderDetails?.orderNumber || `Order #${selectedBillOrderId}`}</h3>
                   {selectedOrderDetails && (
                     <p className="text-sm text-violet-200">
                       {format(new Date(selectedOrderDetails.createdAt), "MMMM d, yyyy · h:mm a")}
@@ -881,9 +771,14 @@ export default function OrdersPage() {
                 <div className="flex gap-3">
                   <Button
                     onClick={handleDownloadBill}
+                    disabled={downloadingBill}
                     className="flex-1 bg-violet-600 hover:bg-violet-700 rounded-xl"
                   >
-                    <Download className="w-4 h-4 mr-2" /> Download Invoice
+                    {downloadingBill ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Opening...</>
+                    ) : (
+                      <><Download className="w-4 h-4 mr-2" /> Download Invoice</>
+                    )}
                   </Button>
                   <Button
                     variant="outline"

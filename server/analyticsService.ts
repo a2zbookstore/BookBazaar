@@ -127,28 +127,76 @@ export async function updateSessionHeartbeat(
 ) {
   try {
     let sessionId = req.session?.analyticsSessionId;
-    if (!sessionId) return;
+
+    // If no analytics session exists yet (e.g. SPA navigated without an HTML request,
+    // or session was lost), create one now so this user gets tracked.
+    if (!sessionId) {
+      await getOrCreateSession(req);
+      return; // session just created — next heartbeat will carry the full update
+    }
 
     const currentUserId = getRequestUserId(req);
 
     const existing = await db
-      .select({ userId: analyticsSessions.userId })
+      .select({ userId: analyticsSessions.userId, country: analyticsSessions.country, city: analyticsSessions.city })
       .from(analyticsSessions)
       .where(eq(analyticsSessions.sessionId, sessionId))
       .limit(1);
 
-    if (existing.length === 0) return;
+    // Session ID in cookie but not in DB (e.g. after cleanup) — recreate it
+    if (existing.length === 0) {
+      req.session.analyticsSessionId = undefined as any;
+      await getOrCreateSession(req);
+      return;
+    }
 
     const updatePayload: Record<string, any> = {
       lastActivity: new Date(),
     };
-    if (currentPage) {
-      // store the current page as a lightweight page view record (no duplicate full tracking)
-      updatePayload.landingPage = updatePayload.landingPage; // keep existing
-    }
     // backfill userId if user has since logged in
     if (currentUserId && !existing[0].userId) {
       updatePayload.userId = currentUserId;
+    }
+    // backfill country/city from client-detected location if not yet stored
+    const clientLocation = (req as any).userLocation;
+    if (clientLocation?.country && !existing[0].country) {
+      updatePayload.country = clientLocation.country;
+      updatePayload.city = clientLocation.city || null;
+    }
+
+    // Track SPA navigation: if currentPage differs from the last recorded page view,
+    // insert a new page view row so the journey stays up to date.
+    if (currentPage) {
+      const lastView = await db
+        .select({ pagePath: analyticsPageViews.pagePath })
+        .from(analyticsPageViews)
+        .where(eq(analyticsPageViews.sessionId, sessionId))
+        .orderBy(desc(analyticsPageViews.createdAt))
+        .limit(1);
+
+      if (!lastView[0] || lastView[0].pagePath !== currentPage) {
+        const userAgent = (req.headers?.['user-agent'] as string) || '';
+        const { deviceType, browser, os } = parseUserAgent(userAgent);
+        const ipAddress =
+          ((req.headers?.['x-forwarded-for'] as string) || '').split(',')[0].trim() ||
+          (req.socket as any)?.remoteAddress ||
+          'unknown';
+        await db.insert(analyticsPageViews).values({
+          sessionId,
+          userId: currentUserId,
+          pagePath: currentPage,
+          pageTitle: currentPage,
+          referrer: null,
+          userAgent,
+          ipAddress,
+          country: clientLocation?.country || existing[0].country || null,
+          city: clientLocation?.city || existing[0].city || null,
+          deviceType,
+          browser,
+          os,
+        });
+        updatePayload.pageViewCount = sql`${analyticsSessions.pageViewCount} + 1`;
+      }
     }
 
     await db
@@ -635,6 +683,8 @@ export async function getActiveLoggedInUsers() {
       userLastName: users.lastName,
       lastActivity: analyticsSessions.lastActivity,
       sessionId: analyticsSessions.sessionId,
+      country: analyticsSessions.country,
+      city: analyticsSessions.city,
       currentPage: sql<string>`(
         SELECT page_path FROM analytics_page_views
         WHERE session_id = ${analyticsSessions.sessionId}

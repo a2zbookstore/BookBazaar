@@ -173,11 +173,14 @@ interface UserAnalytics {
 
 interface ActiveUser {
   userId: string | null;
+  sessionId: string;
   userEmail: string | null;
   userFirstName: string | null;
   userLastName: string | null;
   lastActivity: string;
   currentPage: string | null;
+  country: string | null;
+  city: string | null;
 }
 
 export default function AnalyticsPage() {
@@ -229,10 +232,11 @@ export default function AnalyticsPage() {
     refetchInterval: 60000,
   });
 
-  // Fetch visitor detail when selected
+  // Fetch visitor detail when selected — refresh every 15s while dialog is open
   const { data: visitorDetail } = useQuery<VisitorDetail>({
     queryKey: [`/api/analytics/visitors/${selectedVisitor}`],
     enabled: !!selectedVisitor,
+    refetchInterval: 15000,
   });
 
   // Fetch user analytics (grouped by logged-in user)
@@ -372,132 +376,225 @@ export default function AnalyticsPage() {
     return minutes > 0 ? `${minutes}m ${secs}s` : `${secs}s`;
   };
 
+  // Convert country name to flag emoji via ISO 3166-1 alpha-2 lookup
+  const COUNTRY_CODES: Record<string, string> = {
+    'Afghanistan': 'AF', 'Albania': 'AL', 'Algeria': 'DZ', 'Argentina': 'AR',
+    'Australia': 'AU', 'Austria': 'AT', 'Bangladesh': 'BD', 'Belgium': 'BE',
+    'Brazil': 'BR', 'Canada': 'CA', 'Chile': 'CL', 'China': 'CN',
+    'Colombia': 'CO', 'Croatia': 'HR', 'Czech Republic': 'CZ', 'Denmark': 'DK',
+    'Egypt': 'EG', 'Finland': 'FI', 'France': 'FR', 'Germany': 'DE',
+    'Ghana': 'GH', 'Greece': 'GR', 'Hong Kong': 'HK', 'Hungary': 'HU',
+    'India': 'IN', 'Indonesia': 'ID', 'Iran': 'IR', 'Iraq': 'IQ',
+    'Ireland': 'IE', 'Israel': 'IL', 'Italy': 'IT', 'Japan': 'JP',
+    'Jordan': 'JO', 'Kenya': 'KE', 'Kuwait': 'KW', 'Malaysia': 'MY',
+    'Mexico': 'MX', 'Morocco': 'MA', 'Nepal': 'NP', 'Netherlands': 'NL',
+    'New Zealand': 'NZ', 'Nigeria': 'NG', 'Norway': 'NO', 'Oman': 'OM',
+    'Pakistan': 'PK', 'Peru': 'PE', 'Philippines': 'PH', 'Poland': 'PL',
+    'Portugal': 'PT', 'Qatar': 'QA', 'Romania': 'RO', 'Russia': 'RU',
+    'Saudi Arabia': 'SA', 'Singapore': 'SG', 'South Africa': 'ZA',
+    'South Korea': 'KR', 'Spain': 'ES', 'Sri Lanka': 'LK', 'Sweden': 'SE',
+    'Switzerland': 'CH', 'Taiwan': 'TW', 'Thailand': 'TH', 'Turkey': 'TR',
+    'Ukraine': 'UA', 'United Arab Emirates': 'AE', 'United Kingdom': 'GB',
+    'United States': 'US', 'Venezuela': 'VE', 'Vietnam': 'VN',
+  };
+
+  const getFlagEmoji = (countryName: string | null): string => {
+    if (!countryName) return '🌐';
+    const code = COUNTRY_CODES[countryName];
+    if (!code) return '🌐';
+    return code.toUpperCase().split('').map(c =>
+      String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)
+    ).join('');
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8">
 
       {/* ── Visitor Detail Modal ── */}
       <Dialog open={!!selectedVisitor} onOpenChange={() => setSelectedVisitor(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl p-0 gap-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                <Users className="w-4 h-4 text-violet-600" />
-              </div>
-              Visitor Session Details
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500 mt-1">
-              Detailed information about this visitor's session
-            </DialogDescription>
-          </DialogHeader>
-          
-          {visitorDetail && (
-            <div className="px-6 py-5 space-y-5">
-              {/* User Identity */}
-              {visitorDetail.session.userId && (
-                <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
-                  <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">
-                    {((visitorDetail.session as any).userFirstName?.[0] || (visitorDetail.session as any).userEmail?.[0] || 'U').toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-gray-800">
-                      {getUserDisplayName(
-                        (visitorDetail.session as any).userFirstName,
-                        (visitorDetail.session as any).userLastName,
-                        (visitorDetail.session as any).userEmail
-                      )}
-                    </p>
-                    {(visitorDetail.session as any).userEmail && (
-                      <p className="text-xs text-gray-500">{(visitorDetail.session as any).userEmail}</p>
-                    )}
-                  </div>
-                  <span className="ml-auto text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">Logged-in</span>
-                </div>
-              )}
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl p-0 gap-0">
 
-              {/* Meta grid */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { label: "First Visit", value: format(new Date(visitorDetail.session.firstVisit), 'PPpp') },
-                  { label: "Last Activity", value: format(new Date(visitorDetail.session.lastActivity), 'PPpp') },
-                  { label: "Session Duration", value: formatDuration(visitorDetail.sessionDuration) },
-                  { label: "Page Views", value: String(visitorDetail.session.pageViewCount) },
-                  { label: "Device", value: visitorDetail.session.deviceType || 'Unknown' },
-                  { label: "Browser", value: visitorDetail.session.browser || 'Unknown' },
-                  { label: "OS", value: visitorDetail.session.os || 'Unknown' },
-                  { label: "Location", value: [visitorDetail.session.city, visitorDetail.session.country].filter(Boolean).join(', ') || 'Unknown' },
-                ].map(({ label, value }) => (
-                  <div key={label} className="rounded-xl bg-gray-50 px-3 py-2.5">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{label}</p>
-                    <p className="text-sm font-semibold text-gray-700">{value}</p>
-                  </div>
-                ))}
-                {visitorDetail.session.landingPage && (
-                  <div className="col-span-2 rounded-xl bg-gray-50 px-3 py-2.5">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">Landing Page</p>
-                    <p className="text-sm font-semibold text-gray-700">{visitorDetail.session.landingPage}</p>
-                  </div>
-                )}
-                {visitorDetail.session.referrer && (
-                  <div className="col-span-2 rounded-xl bg-gray-50 px-3 py-2.5">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">Referrer</p>
-                    <p className="text-sm font-semibold text-gray-700 truncate">{visitorDetail.session.referrer}</p>
-                  </div>
-                )}
-              </div>
+          {visitorDetail ? (() => {
+            const s = visitorDetail.session as any;
+            const isLive = activeUsers?.some(u => u.sessionId === selectedVisitor);
+            const currentLivePage = activeUsers?.find(u => u.sessionId === selectedVisitor)?.currentPage;
+            const displayName = getUserDisplayName(s.userFirstName, s.userLastName, s.userEmail);
+            const locationStr = [s.city, s.country].filter(Boolean).join(', ');
 
-              {/* UTM Campaign */}
-              {(visitorDetail.session.utmSource || visitorDetail.session.utmMedium || visitorDetail.session.utmCampaign) && (
-                <div className="rounded-xl bg-violet-50 border border-violet-100 px-4 py-3">
-                  <p className="text-xs font-semibold text-violet-700 mb-2">Campaign Parameters</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {visitorDetail.session.utmSource && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Source: {visitorDetail.session.utmSource}</span>
-                    )}
-                    {visitorDetail.session.utmMedium && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Medium: {visitorDetail.session.utmMedium}</span>
-                    )}
-                    {visitorDetail.session.utmCampaign && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Campaign: {visitorDetail.session.utmCampaign}</span>
-                    )}
-                  </div>
-                </div>
-              )}
+            return (
+              <>
+                {/* ── Hero header ── */}
+                <div className="relative bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 px-6 pt-6 pb-5 rounded-t-2xl text-white overflow-hidden">
+                  <div className="pointer-events-none absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/[0.06]" />
+                  <div className="pointer-events-none absolute bottom-0 left-12 w-20 h-20 rounded-full bg-white/[0.04]" />
 
-              {/* Page Journey */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                  <MousePointer className="w-3.5 h-3.5 text-violet-500" />
-                  Page Journey ({visitorDetail.pageViews.length} pages)
-                </h3>
-                <div className="space-y-1.5">
-                  {visitorDetail.pageViews.map((view, index) => (
-                    <div key={view.id} className="flex items-center gap-2.5 bg-gray-50 rounded-lg px-3 py-2">
-                      <div className="w-5 h-5 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-[10px] font-bold shrink-0">{index + 1}</div>
-                      <p className="text-sm text-gray-700 truncate flex-1">{view.pagePath}</p>
-                      <p className="text-[10px] text-gray-400 shrink-0">{format(new Date(view.createdAt), 'p')}</p>
+                  {/* Live badge */}
+                  {isLive && (
+                    <div className="absolute top-4 right-5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-400/25 text-emerald-200 text-[10px] font-semibold">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                      </span>
+                      LIVE
                     </div>
-                  ))}
-                </div>
-              </div>
+                  )}
 
-              {/* Events */}
-              {visitorDetail.events.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Events ({visitorDetail.events.length})</h3>
-                  <div className="space-y-1.5">
-                    {visitorDetail.events.map((event) => (
-                      <div key={event.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">{event.eventType}</span>
-                          {event.eventCategory && <span className="text-[10px] text-gray-400">{event.eventCategory}</span>}
-                          {event.pagePath && <span className="text-[10px] text-gray-400 hidden sm:inline">{event.pagePath}</span>}
-                        </div>
-                        <span className="text-[10px] text-gray-400 shrink-0">{format(new Date(event.createdAt), 'p')}</span>
+                  {/* Avatar + name */}
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-lg font-bold shrink-0">
+                      {s.userId ? (s.userFirstName?.[0] || s.userEmail?.[0] || 'U').toUpperCase() : '?'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-base leading-tight">{s.userId ? displayName : 'Anonymous Visitor'}</p>
+                      {s.userEmail && <p className="text-white/70 text-xs mt-0.5 truncate">{s.userEmail}</p>}
+                      {!s.userId && <p className="text-white/50 text-xs mt-0.5">Guest session</p>}
+                    </div>
+                  </div>
+
+                  {/* Location + device strip */}
+                  <div className="relative z-10 mt-4 flex flex-wrap gap-2">
+                    {s.country && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 text-white text-[11px] font-medium">
+                        <span className="text-base leading-none">{getFlagEmoji(s.country)}</span>
+                        {locationStr}
+                      </span>
+                    )}
+                    {s.deviceType && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 text-white text-[11px] font-medium">
+                        {getDeviceIcon(s.deviceType)}
+                        {s.deviceType}
+                      </span>
+                    )}
+                    {s.browser && (
+                      <span className="px-2.5 py-1 rounded-full bg-white/15 text-white text-[11px] font-medium">{s.browser}</span>
+                    )}
+                    {s.os && (
+                      <span className="px-2.5 py-1 rounded-full bg-white/15 text-white text-[11px] font-medium">{s.os}</span>
+                    )}
+                  </div>
+
+                  {/* Live page indicator */}
+                  {isLive && currentLivePage && (
+                    <div className="relative z-10 mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 text-white/90 text-xs">
+                      <MousePointer className="w-3 h-3 shrink-0 text-emerald-300" />
+                      <span className="font-medium text-emerald-200">Currently on:</span>
+                      <span className="truncate">{currentLivePage}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Body ── */}
+                <div className="px-6 py-5 space-y-5">
+
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: "Page Views", value: String(s.pageViewCount ?? visitorDetail.pageViews.length) },
+                      { label: "Duration", value: formatDuration(visitorDetail.sessionDuration) },
+                      { label: "Events", value: String(visitorDetail.events.length) },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2.5 text-center">
+                        <p className="text-lg font-bold text-gray-800">{value}</p>
+                        <p className="text-[10px] font-medium text-gray-400 mt-0.5">{label}</p>
                       </div>
                     ))}
                   </div>
+
+                  {/* Time info */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="rounded-xl bg-gray-50 px-3 py-2.5">
+                      <p className="text-[10px] font-medium text-gray-400 mb-0.5">First Visit</p>
+                      <p className="text-xs font-semibold text-gray-700">{format(new Date(s.firstVisit), 'PPp')}</p>
+                    </div>
+                    <div className="rounded-xl bg-gray-50 px-3 py-2.5">
+                      <p className="text-[10px] font-medium text-gray-400 mb-0.5">Last Activity</p>
+                      <p className="text-xs font-semibold text-gray-700">{format(new Date(s.lastActivity), 'PPp')}</p>
+                    </div>
+                    {s.landingPage && (
+                      <div className="col-span-2 rounded-xl bg-gray-50 px-3 py-2.5">
+                        <p className="text-[10px] font-medium text-gray-400 mb-0.5">Landing Page</p>
+                        <p className="text-xs font-semibold text-gray-700">{s.landingPage}</p>
+                      </div>
+                    )}
+                    {s.referrer && (
+                      <div className="col-span-2 rounded-xl bg-gray-50 px-3 py-2.5">
+                        <p className="text-[10px] font-medium text-gray-400 mb-0.5">Referred from</p>
+                        <p className="text-xs font-semibold text-gray-700 truncate">{s.referrer}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* UTM Campaign */}
+                  {(s.utmSource || s.utmMedium || s.utmCampaign) && (
+                    <div className="rounded-xl bg-violet-50 border border-violet-100 px-4 py-3">
+                      <p className="text-xs font-semibold text-violet-700 mb-2">Campaign Parameters</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {s.utmSource && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Source: {s.utmSource}</span>}
+                        {s.utmMedium && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Medium: {s.utmMedium}</span>}
+                        {s.utmCampaign && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Campaign: {s.utmCampaign}</span>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Page Journey */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2.5 flex items-center gap-1.5">
+                      <MousePointer className="w-3.5 h-3.5 text-violet-500" />
+                      Page Journey
+                      <span className="ml-auto text-[10px] font-medium text-gray-400">{visitorDetail.pageViews.length} pages</span>
+                    </h3>
+                    {visitorDetail.pageViews.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {visitorDetail.pageViews.map((view, index) => {
+                          const isCurrentPage = isLive && currentLivePage === view.pagePath && index === visitorDetail.pageViews.length - 1;
+                          return (
+                            <div key={view.id} className={`flex items-center gap-2.5 rounded-xl px-3 py-2 ${isCurrentPage ? 'bg-emerald-50 border border-emerald-200' : 'bg-gray-50'}`}>
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isCurrentPage ? 'bg-emerald-100 text-emerald-700' : 'bg-violet-100 text-violet-700'}`}>
+                                {index + 1}
+                              </div>
+                              <p className={`text-xs truncate flex-1 ${isCurrentPage ? 'text-emerald-700 font-semibold' : 'text-gray-700'}`}>{view.pagePath}</p>
+                              {isCurrentPage && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 shrink-0">NOW</span>
+                              )}
+                              <p className="text-[10px] text-gray-400 shrink-0">{format(new Date(view.createdAt), 'p')}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic px-1">No page views recorded yet</p>
+                    )}
+                  </div>
+
+                  {/* Events */}
+                  {visitorDetail.events.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2.5 flex items-center gap-1.5">
+                        <BarChart3 className="w-3.5 h-3.5 text-violet-500" />
+                        Events
+                        <span className="ml-auto text-[10px] font-medium text-gray-400">{visitorDetail.events.length} total</span>
+                      </h3>
+                      <div className="space-y-1.5">
+                        {visitorDetail.events.map((event) => (
+                          <div key={event.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 shrink-0">{event.eventType}</span>
+                              {event.eventCategory && <span className="text-[10px] text-gray-400 truncate">{event.eventCategory}</span>}
+                              {event.pagePath && <span className="text-[10px] text-gray-300 hidden sm:inline truncate">{event.pagePath}</span>}
+                            </div>
+                            <span className="text-[10px] text-gray-400 shrink-0 ml-2">{format(new Date(event.createdAt), 'p')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </>
+            );
+          })() : (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-300">
+              <Users className="w-10 h-10 mb-3" />
+              <p className="text-sm text-gray-400">Loading session details…</p>
             </div>
           )}
         </DialogContent>
@@ -604,18 +701,32 @@ export default function AnalyticsPage() {
               <span className="text-xs font-semibold text-gray-700">Logged-in users ({activeUsers?.length ?? 0})</span>
             </div>
             {activeUsers && activeUsers.length > 0 ? (
-              <div className="space-y-1">
-                {activeUsers.slice(0, 5).map((user, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5 border border-emerald-100">
-                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <div className="space-y-1.5">
+                {activeUsers.slice(0, 8).map((user, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedVisitor(user.sessionId)}
+                    className="w-full flex items-start gap-2 bg-white rounded-xl px-3 py-2 border border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer text-left"
+                  >
+                    <span className="relative flex h-1.5 w-1.5 mt-1.5 shrink-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                     </span>
-                    <span className="text-xs font-medium text-gray-700 flex-1 truncate">
-                      {getUserDisplayName(user.userFirstName, user.userLastName, user.userEmail)}
-                    </span>
-                    <span className="text-[10px] text-gray-400 truncate max-w-[100px]">{user.currentPage || '/'}</span>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium text-gray-700 block truncate">
+                        {getUserDisplayName(user.userFirstName, user.userLastName, user.userEmail)}
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-violet-500 truncate">{user.currentPage || '/'}</span>
+                        {user.country && (
+                          <span className="text-[10px] text-gray-400 shrink-0">
+                            · {getFlagEmoji(user.country)} {user.city ? `${user.city}, ` : ''}{user.country}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-gray-300 shrink-0 mt-1" />
+                  </button>
                 ))}
               </div>
             ) : (
@@ -806,7 +917,10 @@ export default function AnalyticsPage() {
                 return (
                   <div key={i}>
                     <div className="flex justify-between items-center text-xs mb-1">
-                      <span className="text-gray-600 truncate flex-1 pr-2">{country.country || 'Unknown'}</span>
+                      <span className="flex items-center gap-1.5 text-gray-600 truncate flex-1 pr-2">
+                        <span className="text-base leading-none">{getFlagEmoji(country.country)}</span>
+                        {country.country || 'Unknown'}
+                      </span>
                       <span className="font-semibold text-gray-800 shrink-0">{Number(country.count).toLocaleString()}</span>
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">

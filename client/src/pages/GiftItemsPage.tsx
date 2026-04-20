@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EngraveFeature from "@/components/ui/EngraveFeature";
-import { Gift, BookOpen, PartyPopper, ArrowLeft, Check, ShoppingCart, ShoppingBag, Edit } from "lucide-react";
+import { Gift, BookOpen, PartyPopper, ArrowLeft, Check, ShoppingCart, ShoppingBag, Pen } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { apiRequest } from "@/lib/queryClient";
@@ -382,20 +382,6 @@ export default function GiftItemsPage() {
                           <span className="ml-1 text-xs">Engraving Available</span>
                         </Badge>
                       )}
-                      {/* EngraveFeature right panel (only once, outside the loop) */}
-                      {engravePanelCategory && (
-                        <EngraveFeature
-                          open={engravePanelOpen}
-                          onClose={() => { setEngravePanelOpen(false); setEngravePanelCategory(null); }}
-                          category={engravePanelCategory}
-
-                          engraveEnabled={engraveEnabled}
-                          setEngraveEnabled={setEngraveEnabled}
-                          engravingMessage={engravingMessage}
-                          setEngravingMessage={setEngravingMessage}
-                          onSubmit={() => handleGiftSelect(engravePanelCategory.id)}
-                        />
-                      )}
 
                       {/* Disabled Overlay */}
                       {!hasBookInCart && (
@@ -492,15 +478,17 @@ export default function GiftItemsPage() {
                           setEngravePanelOpen(true);
                           setEngravePanelCategory(category);
                         }}
-                        disabled={!category.isEngravingAllowed}
+                        disabled={!category.isEngravingAllowed || !hasBookInCart}
                         size={"sm"}
-                        className="rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-red-500
-                          text-white font-bold shadow-lg shadow-rose-300/40 flex items-center gap-1
-                          cursor-pointer w-full hover:brightness-110 transition-all duration-2000
-                          animate-pulse md:animate-none"
+                        variant="outline"
+                        className={`rounded-full flex items-center gap-1.5 w-full transition-all duration-200 text-xs
+                          ${category.isEngravingAllowed
+                            ? "border-pink-300 text-pink-600 hover:bg-pink-50 hover:border-pink-400"
+                            : "border-gray-200 text-gray-400 cursor-not-allowed"
+                          }`}
                       >
-                        <Edit className="h-4 w-4" />
-                        <span className="ml-1 text-xs">Click to Engrave</span>
+                        <Pen className="h-3.5 w-3.5" />
+                        {category.isEngravingAllowed ? "Personalize" : "No Engraving"}
                       </Button>
                     </div>
 
@@ -540,6 +528,20 @@ export default function GiftItemsPage() {
               })}
             </div>
           </>
+        )}
+
+        {/* EngraveFeature panel (rendered once, outside the grid) */}
+        {engravePanelCategory && (
+          <EngraveFeature
+            open={engravePanelOpen}
+            onClose={() => { setEngravePanelOpen(false); setEngravePanelCategory(null); }}
+            category={engravePanelCategory}
+            engraveEnabled={engraveEnabled}
+            setEngraveEnabled={setEngraveEnabled}
+            engravingMessage={engravingMessage}
+            setEngravingMessage={setEngravingMessage}
+            onSubmit={() => handleGiftSelect(engravePanelCategory.id)}
+          />
         )}
 
         {/* Compact How it Works */}

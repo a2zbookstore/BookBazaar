@@ -326,7 +326,7 @@ export default function HomePage() {
     <div className="sm:px-8">
       <SEO
         title="A2Z BOOKSHOP - Buy Books Online | New & Used Books"
-        description="Discover thousands of books at A2Z Bookshop. Best prices on fiction, non-fiction, bestsellers, trending books and more. Fast shipping across India with secure payment options."
+        description="A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping."
         keywords="buy books online, online bookstore India, new books, used books, fiction books, non-fiction books, bestsellers, trending books, book store"
         image="https://a2zbookshop.com/logo.svg"
         url="https://a2zbookshop.com"

@@ -301,8 +301,8 @@ async function sendReturnStatusUpdateEmail(data: {
     const accent = accentColours[statusKey];
     const bodyText = bodyMessages[statusKey] ?? 'There has been an update to your return request.';
 
-    const returnRequestUpdateHtml = 
-    `<!DOCTYPE html>
+    const returnRequestUpdateHtml =
+      `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -552,25 +552,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Heartbeat: SPA clients call this periodically to keep session alive & backfill userId
+  // Heartbeat: SPA clients call this periodically to keep session alive & backfill userId + location
   app.post('/api/analytics/heartbeat', async (req: any, res) => {
     try {
-      const { currentPage } = req.body || {};
+      const { currentPage, country, city } = req.body || {};
+      // Inject client-detected location so analyticsService can persist it
+      if (country) {
+        req.userLocation = { country, city: city || null };
+      }
       await updateSessionHeartbeat(req, currentPage);
       res.json({ ok: true });
     } catch (error) {
       // Silently ignore — never block the client
-      res.json({ ok: false });
-    }
-  });
-
-  // Heartbeat: SPA clients call this periodically to keep session alive & backfill userId
-  app.post('/api/analytics/heartbeat', async (req: any, res) => {
-    try {
-      const { currentPage } = req.body || {};
-      await updateSessionHeartbeat(req, currentPage);
-      res.json({ ok: true });
-    } catch (error) {
       res.json({ ok: false });
     }
   });
@@ -1152,6 +1145,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── Admin custom bill generator ──────────────────────────────────────────
+  app.post('/api/admin/generate-bill', requireAdminAuth, async (req: any, res) => {
+    try {
+      const {
+        customer,
+        items,
+        shipping = 0,
+        taxRate = 0,
+        taxAmount = 0,
+        discount = 0,
+        subtotal = 0,
+        total = 0,
+        paymentMethod = 'Cash',
+        note = '',
+      } = req.body;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: 'At least one item is required' });
+      }
+
+      const billDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const billNumber = `ADM-${Date.now().toString().slice(-8)}`;
+
+      const shippingLines = customer
+        ? [
+          customer.address,
+          [customer.city, customer.state].filter(Boolean).join(', '),
+          [customer.zip, customer.country].filter(Boolean).join(' '),
+        ].filter(Boolean)
+        : [];
+
+      const stampPath = path.join(process.cwd(), 'client/src/asset/stamp.png');
+      const stampDataUrl = fs.existsSync(stampPath) ? `data:image/png;base64,${fs.readFileSync(stampPath).toString('base64')}` : null;
+
+      const billHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bill ${billNumber} — A2Z Bookshop</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: #1a1a2e;
+      background: #f4f6f9;
+      padding: 32px 24px;
+    }
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    }
+    .banner {
+      background: linear-gradient(135deg, #0d2137 0%, #1b4f72 100%);
+      padding: 32px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      color: #fff;
+    }
+    .brand-name { font-size: 26px; font-weight: 800; letter-spacing: 1px; }
+    .brand-name .two { color: #e74c3c; }
+    .brand-name .az { color: #ffffff; }
+    .brand-tagline { font-size: 11px; color: #a9cce3; margin-top: 4px; letter-spacing: 0.5px; }
+    .brand-contact { font-size: 11px; color: #a9cce3; margin-top: 10px; line-height: 1.8; }
+    .invoice-meta { text-align: right; }
+    .invoice-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #5dade2; margin-bottom: 6px; }
+    .invoice-number { font-size: 22px; font-weight: 800; }
+    .invoice-date { font-size: 12px; color: #a9cce3; margin-top: 6px; }
+    .status-pill { display: inline-block; margin-top: 10px; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: #27ae60; color: #fff; }
+    .body { padding: 36px 40px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px; }
+    .info-box-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #7f8c8d; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+    .info-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 12.5px; }
+    .info-key { color: #7f8c8d; min-width: 56px; flex-shrink: 0; }
+    .info-val { color: #1a1a2e; font-weight: 500; word-break: break-word; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #7f8c8d; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+    thead tr { background: #0d2137; color: #fff; }
+    thead th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+    thead th:last-child { text-align: right; }
+    tbody tr { border-bottom: 1px solid #eef2f7; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody td { padding: 12px 14px; font-size: 13px; color: #2c3e50; vertical-align: middle; }
+    tbody td:last-child { text-align: right; font-weight: 600; }
+    .book-title { font-weight: 600; color: #1a1a2e; }
+    .book-author { font-size: 11px; color: #7f8c8d; margin-top: 2px; }
+    .totals-wrap { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; }
+    .totals-box { width: 280px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .totals-row { display: flex; justify-content: space-between; padding: 10px 18px; font-size: 13px; color: #4a5568; border-bottom: 1px solid #eef2f7; }
+    .totals-row:last-child { border-bottom: none; }
+    .totals-row.grand { background: #0d2137; color: #fff; font-size: 15px; font-weight: 700; padding: 14px 18px; }
+    .note-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 12.5px; color: #78350f; }
+    .auth-block { text-align: center; }
+    .auth-stamp { width: 120px; opacity: 0.9; }
+    .auth-line { width: 160px; border: none; border-top: 1px solid #1a1a2e; margin: 8px auto 0; }
+    .auth-text { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #1a1a2e; margin-top: 6px; }
+    .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 40px; text-align: center; }
+    .footer-thank { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
+    .footer-sub { font-size: 11px; color: #95a5a6; line-height: 1.8; }
+    .print-bar { text-align: center; padding: 16px; background: #fff; }
+    .print-btn { background: #0d2137; color: #fff; border: none; padding: 11px 28px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px; }
+    .print-btn:hover { background: #1b4f72; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .page { box-shadow: none; border-radius: 0; }
+      .print-bar { display: none; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="print-bar">
+  <button class="print-btn" onclick="window.print()">Save as PDF / Print</button>
+</div>
+<div class="page">
+  <!-- Banner -->
+  <div class="banner">
+    <div>
+      <div class="brand-name"><span class="az">A</span><span class="two">2</span><span class="az">Z</span> <span class="az">BOOKSHOP</span></div>
+      <div class="brand-tagline">Your Global Book Destination</div>
+      <div class="brand-contact">a2zbookshop.com<br>support@a2zbookshop.com</div>
+    </div>
+    <div class="invoice-meta">
+      <div class="invoice-label">Invoice</div>
+      <div class="invoice-number">${billNumber}</div>
+      <div class="invoice-date">Issued: ${billDate}</div>
+      <div class="status-pill">${paymentMethod.toUpperCase()}</div>
+    </div>
+  </div>
+  <!-- Body -->
+  <div class="body">
+    <!-- Bill To / Ship To -->
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-box-title">Bill To</div>
+        ${customer?.name ? `<div class="info-row"><span class="info-key">Name</span><span class="info-val">${customer.name}</span></div>` : ''}
+        ${customer?.email ? `<div class="info-row"><span class="info-key">Email</span><span class="info-val">${customer.email}</span></div>` : ''}
+        ${customer?.phone ? `<div class="info-row"><span class="info-key">Phone</span><span class="info-val">${customer.phone}</span></div>` : ''}
+        <div class="info-row"><span class="info-key">Payment</span><span class="info-val">${paymentMethod}</span></div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-title">Ship To</div>
+        ${shippingLines.length > 0
+          ? shippingLines.map(line => `<div class="info-row"><span class="info-val">${line}</span></div>`).join('')
+          : '<div class="info-row"><span class="info-val" style="color:#95a5a6">—</span></div>'}
+      </div>
+    </div>
+    <!-- Items -->
+    <div class="section-title">Items</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50%">Book</th>
+          <th>Author</th>
+          <th style="text-align:center">Qty</th>
+          <th style="text-align:right">Unit Price</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map((item: any) => `
+        <tr>
+          <td><div class="book-title">${item.title || '—'}</div></td>
+          <td><span class="book-author">${item.author || '—'}</span></td>
+          <td style="text-align:center">${item.quantity}</td>
+          <td style="text-align:right">$${parseFloat(item.unitPrice).toFixed(2)}</td>
+          <td>$${(parseFloat(item.unitPrice) * item.quantity).toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <!-- Totals -->
+    <div class="totals-wrap">
+      ${stampDataUrl ? `<div class="auth-block">
+        <img class="auth-stamp" src="${stampDataUrl}" alt="Authorized" />
+        <hr class="auth-line" />
+        <div class="auth-text">Authorized Signatory</div>
+      </div>` : '<div></div>'}
+      <div class="totals-box">
+        <div class="totals-row"><span>Subtotal</span><span>$${parseFloat(subtotal).toFixed(2)}</span></div>
+        <div class="totals-row"><span>Shipping</span><span>${parseFloat(shipping) === 0 ? 'FREE' : '$' + parseFloat(shipping).toFixed(2)}</span></div>
+        ${parseFloat(taxAmount) > 0 ? `<div class="totals-row"><span>Tax (${taxRate}%)</span><span>$${parseFloat(taxAmount).toFixed(2)}</span></div>` : ''}
+        ${parseFloat(discount) > 0 ? `<div class="totals-row" style="color:#16a34a"><span>Discount</span><span>−$${parseFloat(discount).toFixed(2)}</span></div>` : ''}
+        <div class="totals-row grand"><span>Total</span><span>$${parseFloat(total).toFixed(2)}</span></div>
+      </div>
+    </div>
+    ${note ? `<div class="note-box"><strong>Note:</strong> ${note}</div>` : ''}
+  </div>
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-thank">Thank you for your business!</div>
+    <div class="footer-sub">
+      A2Z Bookshop &nbsp;|&nbsp; a2zbookshop.com &nbsp;|&nbsp; support@a2zbookshop.com<br>
+      Generated on ${billDate}.
+    </div>
+  </div>
+</div>
+<script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 600); });</script>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', `inline; filename="bill-${billNumber}.html"`);
+      res.send(billHtml);
+    } catch (error) {
+      console.error('Error generating admin bill:', error);
+      res.status(500).json({ message: 'Failed to generate bill' });
+    }
+  });
+
   // Invoice generation endpoint
   app.get('/api/orders/:id/invoice', async (req, res) => {
     try {
@@ -1235,12 +1445,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ].filter(Boolean)
         : [];
 
+      const stampPath = path.join(process.cwd(), 'client/src/asset/stamp.png');
+      const stampDataUrl = fs.existsSync(stampPath) ? `data:image/png;base64,${fs.readFileSync(stampPath).toString('base64')}` : null;
+
       const invoiceHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice #${order.id} — A2Z Bookshop</title>
+  <title>Invoice ${order.orderNumber || `#${order.id}`} — A2Z Bookshop</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1378,7 +1591,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     /* ── TOTALS ── */
     .totals-wrap {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: flex-end;
       margin-bottom: 32px;
     }
     .totals-box {
@@ -1423,6 +1637,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     .footer-thank { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
     .footer-sub { font-size: 11px; color: #95a5a6; line-height: 1.8; }
+    .auth-block { text-align: center; }
+    .auth-stamp { width: 120px; opacity: 0.9; }
+    .auth-line { width: 160px; border: none; border-top: 1px solid #1a1a2e; margin: 8px auto 0; }
+    .auth-text { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #1a1a2e; margin-top: 6px; }
 
     /* ── PRINT BUTTON (hidden on print) ── */
     .print-bar {
@@ -1476,7 +1694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     </div>
     <div class="invoice-meta">
       <div class="invoice-label">Invoice</div>
-      <div class="invoice-number">#${order.id}</div>
+      <div class="invoice-number">${order.orderNumber || `#${order.id}`}</div>
       <div class="invoice-date">Issued: ${invoiceDate}</div>
       <div class="status-pill">${order.status.toUpperCase()}</div>
     </div>
@@ -1489,6 +1707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     <div class="info-grid">
       <div class="info-box">
         <div class="info-box-title">Bill To</div>
+        ${order.orderNumber ? `<div class="info-row"><span class="info-key">Order No.</span><span class="info-val" style="font-weight:700">${order.orderNumber}</span></div>` : ''}
         <div class="info-row"><span class="info-key">Name</span><span class="info-val">${order.customerName || '—'}</span></div>
         <div class="info-row"><span class="info-key">Email</span><span class="info-val">${order.customerEmail || '—'}</span></div>
         ${order.customerPhone ? `<div class="info-row"><span class="info-key">Phone</span><span class="info-val">${order.customerPhone}</span></div>` : ''}
@@ -1533,6 +1752,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     <!-- Totals -->
     <div class="totals-wrap">
+      ${stampDataUrl ? `<div class="auth-block">
+        <img class="auth-stamp" src="${stampDataUrl}" alt="Authorized" />
+        <hr class="auth-line" />
+        <div class="auth-text">Authorized Signatory</div>
+      </div>` : '<div></div>'}
       <div class="totals-box">
         <div class="totals-row"><span>Subtotal</span><span>$${parseFloat(order.subtotal || '0').toFixed(2)}</span></div>
         <div class="totals-row"><span>Shipping</span><span>$${parseFloat(order.shipping || '0').toFixed(2)}</span></div>
@@ -1576,7 +1800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Set proper headers for HTML content that can be printed as PDF
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Content-Disposition', `inline; filename="invoice-${order.id}.html"`);
+      res.setHeader('Content-Disposition', `inline; filename="invoice-${order.orderNumber || order.id}.html"`);
 
       res.send(invoiceHtml);
     } catch (error) {
@@ -1758,6 +1982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             res.json({
               ...captureData,
               orderId: order.id,
+              orderNumber: order.orderNumber,
               success: true
             });
           } catch (dbError) {
@@ -2019,6 +2244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         orderId: order.id,
+        orderNumber: order.orderNumber,
         message: "Order created successfully",
       });
     } catch (error: any) {
@@ -2614,7 +2840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the order if email fails
       }
 
-      res.json({ success: true, orderId: order.id });
+      res.json({ success: true, orderId: order.id, orderNumber: order.orderNumber });
     } catch (error) {
       console.error("Error completing order:", error);
       res.status(500).json({ message: "Failed to complete order" });
@@ -3138,6 +3364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         offset,
         sortBy,
         sortOrder,
+        includeOutOfStock,
       } = req.query;
 
       const options = {
@@ -3150,6 +3377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         boxSet: boxSet === "true" ? true : boxSet === "false" ? false : undefined,
         search: search as string,
         titleOnly: titleOnly === "true" ? true : undefined,
+        includeOutOfStock: includeOutOfStock === "true" ? true : undefined,
         minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,
@@ -3550,7 +3778,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               categoryId: giftItem.category?.id || null
             },
             quantity: 1,
-            isGift: true
+            isGift: true,
+            engraving: giftItem.engraving || false,
+            engravingMessage: giftItem.engravingMessage || null
           });
         }
 
@@ -3595,7 +3825,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               imageUrl: giftItem.imageUrl
             },
             quantity: 1,
-            isGift: true
+            isGift: true,
+            engraving: giftItem.engrave || false,
+            engravingMessage: giftItem.engravingMessage || null
           });
         }
 
@@ -5315,6 +5547,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching gift categories:", error);
       res.status(500).json({ message: "Failed to fetch gift categories" });
+    }
+  });
+
+  app.get("/api/admin/gift-category-types", requireAdminAuth, async (req, res) => {
+    try {
+      const types = await storage.getDistinctGiftCategoryTypes();
+      res.json(types);
+    } catch (error) {
+      console.error("Error fetching gift category types:", error);
+      res.status(500).json({ message: "Failed to fetch gift category types" });
+    }
+  });
+
+  app.put("/api/admin/gift-category-types/rename", requireAdminAuth, async (req, res) => {
+    try {
+      const { oldType, newType } = req.body;
+      if (!oldType || !newType) {
+        return res.status(400).json({ message: "oldType and newType are required" });
+      }
+      const count = await storage.renameGiftCategoryType(oldType.trim(), newType.trim());
+      res.json({ message: `Renamed type in ${count} categories`, count });
+    } catch (error) {
+      console.error("Error renaming gift category type:", error);
+      res.status(500).json({ message: "Failed to rename type" });
+    }
+  });
+
+  app.delete("/api/admin/gift-category-types/:type", requireAdminAuth, async (req, res) => {
+    try {
+      const type = decodeURIComponent(req.params.type);
+      const count = await storage.deleteGiftCategoryType(type);
+      res.json({ message: `Deleted ${count} categories with type "${type}"`, count });
+    } catch (error) {
+      console.error("Error deleting gift category type:", error);
+      res.status(500).json({ message: "Failed to delete type" });
     }
   });
 

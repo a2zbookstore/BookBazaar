@@ -81,7 +81,7 @@ async function buildCatalogPrerender(
 
     const html =
       `<section id="ssr-catalog" style="position:absolute;width:1px;height:1px;` +
-      `overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;" aria-hidden="true">\n` +
+      `overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">\n` +
       `  <h1>${et(heading)}</h1>\n` +
       `  <p>${total} books available at A2Z Bookshop</p>\n` +
       `  <ul>\n${listItems}\n  </ul>\n` +
@@ -130,7 +130,7 @@ async function buildHomepagePrerender(): Promise<string> {
 
     return (
       `<div id="ssr-homepage" style="position:absolute;width:1px;height:1px;` +
-      `overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;" aria-hidden="true">\n` +
+      `overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">\n` +
       `  <h1>A2Z BOOKSHOP — Buy Books Online | New &amp; Used Books</h1>\n` +
       sections +
       `\n</div>`
@@ -180,7 +180,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
           ? rawDesc.length > 160
             ? rawDesc.slice(0, 157) + "..."
             : rawDesc
-          : `Buy "${book.title}" by ${book.author} at A2Z Bookshop. ${book.condition} condition. Fast delivery across India with secure payment.`;
+          : `Buy "${book.title}" by ${book.author} at A2Z Bookshop. ${book.condition} condition. Worldwide shipping with secure payment.`;
 
         const title = `${book.title} by ${book.author} | A2Z BOOKSHOP`;
         const imageUrl =
@@ -240,7 +240,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         };
 
         // Visually hidden content for crawlers (CSS clip-path hides from users)
-        const prerenderedHtml = `<div id="ssr-book-content" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;" aria-hidden="true">
+        const prerenderedHtml = `<div id="ssr-book-content" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">
   <h1>${et(book.title)}</h1>
   <p>By ${et(book.author)}</p>
   <p>Price: &#8377;${et(String(book.price))}</p>
@@ -273,10 +273,10 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     return {
       title: "A2Z BOOKSHOP - Buy Books Online | New & Used Books",
       description:
-        "Discover thousands of books at A2Z Bookshop. Best prices on fiction, non-fiction, bestsellers, trending books and more. Fast shipping across India with secure payment.",
+        "A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
       keywords:
-        "buy books online, online bookstore India, new books, used books, fiction, non-fiction, bestsellers, trending books, book store",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+        "buy books online, online bookstore, new books, used books, fiction, non-fiction, bestsellers, trending books, book store worldwide",
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: BASE_URL,
       type: "website",
       noindex: false,
@@ -300,9 +300,14 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
           name: "A2Z BOOKSHOP",
           alternateName: "A2Z Book Shop",
           url: BASE_URL,
-          logo: `${BASE_URL}/logo.jpeg`,
-          image: `${BASE_URL}/logo.jpeg`,
-          description: "A2Z BOOKSHOP is your premier online destination for new and used books. We offer thousands of titles across all genres with fast shipping and competitive prices.",
+          logo: {
+            "@type": "ImageObject",
+            url: `${BASE_URL}/favicon.png`,
+            width: 512,
+            height: 512,
+          },
+          image: `${BASE_URL}/favicon.png`,
+          description: "A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
           contactPoint: {
             "@type": "ContactPoint",
             contactType: "Customer Service",
@@ -329,9 +334,9 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     let heading = "All Books — Browse Our Complete Collection";
     let metaTitle = "All Books — Browse Our Complete Collection | A2Z BOOKSHOP";
     let metaDesc =
-      "Browse thousands of books across all categories. Fiction, non-fiction, bestsellers and more. Best prices with fast delivery across India.";
+      "Browse thousands of books across all categories — fiction, non-fiction, bestsellers, children's & academic. Best prices with worldwide shipping.";
     const metaKeywords =
-      "buy books, book catalog, fiction books, non-fiction books, bestsellers, online bookstore India, book store";
+      "buy books online, book catalog, fiction books, non-fiction books, bestsellers, international online bookstore, book store worldwide";
     let canonical = `${BASE_URL}/catalog`;
 
     if (search) {
@@ -347,7 +352,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     } else if (bestseller) {
       heading = "Bestselling Books";
       metaTitle = "Bestselling Books | A2Z BOOKSHOP";
-      metaDesc = "Shop our bestselling books at A2Z Bookshop. Top reads with fast delivery across India.";
+      metaDesc = "Shop our bestselling books at A2Z Bookshop. Top reads from around the world, delivered worldwide.";
       canonical = `${BASE_URL}/catalog?bestseller=true`;
     } else if (trending) {
       heading = "Trending Books";
@@ -375,14 +380,14 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     );
 
     if (total > 0 && !search && !categoryId) {
-      metaDesc = `Browse ${total}+ books at A2Z Bookshop. Fiction, non-fiction, bestsellers and more. Fast delivery across India.`;
+      metaDesc = `Browse ${total}+ books at A2Z Bookshop — fiction, non-fiction, bestsellers & more. Secure checkout, worldwide shipping.`;
     }
 
     return {
       title: metaTitle,
       description: metaDesc,
       keywords: metaKeywords,
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical,
       type: "website",
       noindex: false,
@@ -404,7 +409,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       title: "Admin | A2Z BOOKSHOP",
       description: "A2Z BOOKSHOP administration panel.",
       keywords: "",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}${urlPath}`,
       type: "website",
       noindex: true,
@@ -419,8 +424,8 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Learn about A2Z BOOKSHOP, your premier destination for rare, collectible, and contemporary books. Quality guaranteed, fast shipping, and exceptional customer service.",
       keywords:
-        "about a2z bookshop, online bookstore India, rare books, collectible books, book seller India",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+        "about a2z bookshop, international online bookstore, rare books, collectible books, global book seller",
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/about`,
       type: "website",
       structuredData: {
@@ -438,7 +443,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         "Get in touch with A2Z BOOKSHOP. Contact our customer service team for book inquiries, orders, shipping questions, or general assistance.",
       keywords:
         "contact a2z bookshop, book store contact, customer service, book inquiries",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/contact`,
       type: "website",
       structuredData: {
@@ -454,7 +459,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         "Find answers to common questions about ordering, payment, shipping, returns, and more at A2Z BOOKSHOP.",
       keywords:
         "a2z bookshop faq, online bookstore questions, shipping faq, return policy, payment methods",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/faq`,
       type: "website",
       structuredData: {
@@ -467,10 +472,10 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     "/shipping-info": {
       title: "Shipping Information | A2Z BOOKSHOP",
       description:
-        "Learn about our shipping options, delivery times, and costs at A2Z BOOKSHOP. Fast and reliable book delivery across India.",
+        "Learn about our shipping options, delivery times, and costs at A2Z BOOKSHOP. Fast and reliable book delivery worldwide.",
       keywords:
-        "a2z bookshop shipping, book delivery India, shipping rates, delivery time, free shipping",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+        "a2z bookshop shipping, international book delivery, worldwide shipping rates, delivery time, free shipping",
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/shipping-info`,
       type: "website",
       structuredData: {
@@ -486,7 +491,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         "Read our return policy at A2Z BOOKSHOP. Easy returns. Customer satisfaction guaranteed.",
       keywords:
         "a2z bookshop return policy, book return, refund policy, return books online",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/return-policy`,
       type: "website",
       structuredData: {
@@ -502,7 +507,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         "Learn about our order cancellation policy at A2Z BOOKSHOP.",
       keywords:
         "a2z bookshop cancellation, cancel order, order cancellation policy",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/cancellation-policy`,
       type: "website",
       structuredData: {
@@ -517,7 +522,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Read the terms and conditions for using A2Z BOOKSHOP, your online book store.",
       keywords: "a2z bookshop terms, terms of service, conditions of use",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/terms-and-conditions`,
       type: "website",
       structuredData: {
@@ -532,7 +537,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Read our privacy policy to understand how A2Z BOOKSHOP collects, uses, and protects your personal data.",
       keywords: "a2z bookshop privacy, privacy policy, data protection",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/privacy-policy`,
       type: "website",
       structuredData: {
@@ -547,8 +552,8 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Browse our curated selection of gift books and box sets at A2Z BOOKSHOP. Perfect gifts for every book lover.",
       keywords:
-        "gift books, book gifts, box sets, book sets, gift ideas books India",
-      ogImage: `${BASE_URL}/logo.jpeg`,
+        "gift books, book gifts, box sets, book sets, gift ideas for book lovers worldwide",
+      ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/gift-items`,
       type: "website",
       structuredData: {
@@ -575,10 +580,10 @@ function resolveDefaultMeta(urlPath: string): PageMeta {
   return {
     title: "A2Z BOOKSHOP — Your Online Book Store",
     description:
-      "Discover thousands of books at A2Z Bookshop. Buy new and used books online with fast shipping. Fiction, non-fiction, bestsellers, and more.",
+      "A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
     keywords:
-      "books, online bookstore, buy books, new books, used books, fiction, non-fiction, bestsellers",
-    ogImage: `${BASE_URL}/logo.jpeg`,
+      "books, online bookstore, buy books worldwide, new books, used books, fiction, non-fiction, bestsellers",
+    ogImage: `${BASE_URL}/favicon.png`,
     canonical: `${BASE_URL}${urlPath}`,
     type: "website",
     noindex: false,
@@ -653,8 +658,11 @@ export async function injectSSRMeta(
 ${schemaScripts}
     <!-- SSR meta end -->`;
 
-    // Remove the static placeholder <title> that ships in index.html
+    // Remove the static placeholder <title>, description, and robots tags that ship in index.html
+    // to avoid duplicates with the SSR-injected block below.
     let result = html.replace(/<title>[^<]*<\/title>/, "");
+    result = result.replace(/<meta name="description"[^>]*>/i, "");
+    result = result.replace(/<meta name="robots"[^>]*>/i, "");
 
     // Inject our block just before </head>
     result = result.replace("</head>", `${headBlock}\n  </head>`);

@@ -26,7 +26,7 @@ export default function PayPalCompletePage() {
       setOrderCompleted(true);
       toast({
         title: "Order Placed Successfully!",
-        description: `Your order #${data.orderId} has been confirmed.`,
+        description: `Your order ${data.orderNumber || `#${data.orderId}`} has been confirmed.`,
       });
       
       // Redirect to order detail page after 3 seconds
@@ -91,7 +91,7 @@ export default function PayPalCompletePage() {
           setOrderCompleted(true);
           toast({
             title: "Order Placed Successfully!",
-            description: `Your order #${captureData.orderId} has been confirmed.`,
+            description: `Your order ${captureData.orderNumber || `#${captureData.orderId}`} has been confirmed.`,
           });
           
           // Clear session storage

@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CheckCircle, Clock, Package, Truck, FileDown, ArrowLeft, CreditCard, Calendar, XCircle } from "lucide-react";
+import { CheckCircle, Clock, Package, Truck, FileDown, ArrowLeft, CreditCard, Calendar, XCircle, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
@@ -56,6 +56,7 @@ export default function OrderDetailPage() {
   const urlParams = new URLSearchParams(search);
   const email = urlParams.get("email");
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: order, isLoading } = useQuery({
@@ -91,6 +92,7 @@ export default function OrderDetailPage() {
   });
 
   const downloadInvoice = async () => {
+    setDownloadingInvoice(true);
     try {
       const emailParam = email ? `?email=${encodeURIComponent(email)}` : "";
       const response = await fetch(`/api/orders/${id}/invoice${emailParam}`, { credentials: "include" });
@@ -103,6 +105,8 @@ export default function OrderDetailPage() {
       if (win) { win.document.write(html); win.document.close(); }
     } catch {
       toast({ title: "Error", description: "Could not open invoice.", variant: "destructive" });
+    } finally {
+      setDownloadingInvoice(false);
     }
   };
 
@@ -198,7 +202,7 @@ export default function OrderDetailPage() {
   return (
     <>
       <SEO
-        title={`Order #${(order as any).id} - Order Details`}
+        title={`Order ${(order as any).orderNumber || `#${(order as any).id}`} - Order Details`}
         description="View your order details, track shipment, and download invoice from A2Z BOOKSHOP."
         url={`https://a2zbookshop.com/orders/${(order as any).id}`}
         type="website"
@@ -213,7 +217,7 @@ export default function OrderDetailPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-300">Order Details</p>
-                <p className="text-2xl font-bold mt-0.5">#{(order as any).id}</p>
+                <p className="text-2xl font-bold mt-0.5">{(order as any).orderNumber || `#${(order as any).id}`}</p>
               </div>
               <div className="flex items-center gap-4">
                 <Badge className={`${statusColors[statusKey] ?? "bg-gray-100 text-gray-800"} px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1`}>
@@ -252,10 +256,14 @@ export default function OrderDetailPage() {
               variant="outline"
               size="sm"
               onClick={downloadInvoice}
+              disabled={downloadingInvoice}
               className="rounded-full border-gray-300 hover:border-primary-aqua hover:text-primary-aqua transition-colors flex items-center gap-1.5"
             >
-              <FileDown className="h-4 w-4" />
-              Download Invoice
+              {downloadingInvoice ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Downloading...</>
+              ) : (
+                <><FileDown className="h-4 w-4" /> Download Invoice</>
+              )}
             </Button>
             {CANCELABLE_STATUSES.includes(statusKey) && (
               <Button
@@ -424,7 +432,7 @@ export default function OrderDetailPage() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Order #{(order as any).id}?</AlertDialogTitle>
+            <AlertDialogTitle>Cancel Order {(order as any).orderNumber || `#${(order as any).id}`}?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to cancel this order? This action cannot be undone.
               Once cancelled, you will need to place a new order if you change your mind.

@@ -310,7 +310,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${getStatusDot(order.status)}`} />
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm text-base-black leading-tight">#{order.id} · {order.customerName}</p>
+                        <p className="font-semibold text-sm text-base-black leading-tight">{order.orderNumber || `#${order.id}`} · {order.customerName}</p>
                         <p className="text-xs text-secondary-black mt-0.5">
                           {new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </p>
