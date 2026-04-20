@@ -12,8 +12,8 @@
     <meta name="apple-mobile-web-app-title" content="A2Z BOOKSHOP" />
     <meta name="theme-color" content="#4F46E5" />
 
-    <!-- Google Search Console verification — replace YOUR_VERIFICATION_CODE with the code from GSC -->
-    <!-- <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" /> -->
+    <!-- Google Search Console verification -->
+    <meta name="google-site-verification" content="3f1f69d826ddb6a4" />
     
     <!-- Google Fonts (non-render-blocking) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,21 +28,21 @@
     
     <title>A2Z BOOKSHOP - Your Online Book Store</title>
     
-    <!-- Structured Data for Brand -->
-    <script type="application/ld+json">
+    <!-- Structured Data for Brand — SSR injector will replace with per-route schemas -->
+    <!-- Static fallback for crawlers that don't execute SSR -->
+    <script type="application/ld+json" id="static-org-schema">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "A2Z Bookshop",
-      "alternateName": "A2Z BOOKSHOP",
+      "name": "A2Z BOOKSHOP",
+      "alternateName": ["A2Z Bookshop", "A2Z Book Shop"],
       "url": "https://a2zbookshop.com",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://a2zbookshop.com/favicon.png",
-        "width": "512",
-        "height": "512"
-      },
-      "image": "https://a2zbookshop.com/favicon.png",
+      "logo": "https://a2zbookshop.com/logo.jpeg",
+      "image": [
+        "https://a2zbookshop.com/logo.jpeg",
+        "https://a2zbookshop.com/favicon.png"
+      ],
+      "description": "India's trusted online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children's, academic & more. Secure checkout & worldwide shipping.",
       "sameAs": [
         "https://www.instagram.com/a2zbookshop",
         "https://www.facebook.com/a2zbookshop"
@@ -50,7 +50,7 @@
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer service",
-        "availableLanguage": "English"
+        "availableLanguage": ["English", "Hindi"]
       }
     }
     </script>

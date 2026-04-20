@@ -13,15 +13,22 @@ export async function generateSitemap() {
     const staticPages = [
       { url: '', priority: '1.0', changefreq: 'daily' },
       { url: '/catalog', priority: '0.9', changefreq: 'daily' },
+      { url: '/catalog?bestseller=true', priority: '0.8', changefreq: 'daily' },
+      { url: '/catalog?newArrival=true', priority: '0.8', changefreq: 'daily' },
+      { url: '/catalog?featured=true', priority: '0.8', changefreq: 'daily' },
+      { url: '/catalog?trending=true', priority: '0.8', changefreq: 'daily' },
+      { url: '/catalog?boxSet=true', priority: '0.7', changefreq: 'weekly' },
+      { url: '/gift-items', priority: '0.8', changefreq: 'weekly' },
+      { url: '/about', priority: '0.7', changefreq: 'monthly' },
       { url: '/contact', priority: '0.7', changefreq: 'monthly' },
+      { url: '/request-book', priority: '0.7', changefreq: 'monthly' },
+      { url: '/track-order', priority: '0.6', changefreq: 'monthly' },
       { url: '/faq', priority: '0.6', changefreq: 'monthly' },
       { url: '/shipping-info', priority: '0.6', changefreq: 'monthly' },
       { url: '/return-policy', priority: '0.6', changefreq: 'monthly' },
       { url: '/terms-and-conditions', priority: '0.5', changefreq: 'yearly' },
       { url: '/cancellation-policy', priority: '0.5', changefreq: 'yearly' },
       { url: '/privacy-policy', priority: '0.5', changefreq: 'yearly' },
-      { url: '/about', priority: '0.6', changefreq: 'monthly' },
-      { url: '/gift-items', priority: '0.7', changefreq: 'weekly' },
     ];
 
     const today = new Date().toISOString().split('T')[0];
@@ -79,6 +86,7 @@ export function generateRobotsTxt() {
   const baseUrl = 'https://a2zbookshop.com'; // Update with your actual domain
 
   return `# Robots.txt for A2Z BOOKSHOP
+# https://a2zbookshop.com
 
 User-agent: *
 Allow: /
@@ -87,6 +95,12 @@ Disallow: /api/
 Disallow: /checkout
 Disallow: /my-orders
 Disallow: /wishlist
+Disallow: /cart
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+Disallow: /paypal-complete
 
 # Sitemap
 Sitemap: ${baseUrl}/sitemap.xml

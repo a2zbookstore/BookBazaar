@@ -271,48 +271,120 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
   if (urlPath === "/") {
     const prerenderedHtml = await buildHomepagePrerender();
     return {
-      title: "A2Z BOOKSHOP - Buy Books Online | New & Used Books",
+      title: "A2Z BOOKSHOP - Buy Books Online | New & Used Books | Worldwide Shipping",
       description:
-        "A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
+        "A2Z Bookshop — India's trusted online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
       keywords:
-        "buy books online, online bookstore, new books, used books, fiction, non-fiction, bestsellers, trending books, book store worldwide",
-      ogImage: `${BASE_URL}/favicon.png`,
+        "buy books online, online bookstore, new books, used books, fiction, non-fiction, bestsellers, trending books, book store worldwide, a2z bookshop",
+      ogImage: `${BASE_URL}/logo.jpeg`,
       canonical: BASE_URL,
       type: "website",
       noindex: false,
       structuredData: [
-        // WebSite schema for search functionality
+        // WebSite schema with SearchAction (triggers Google sitelinks search box)
         {
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "A2Z BOOKSHOP",
+          alternateName: ["A2Z Bookshop", "A2Z Book Shop"],
           url: BASE_URL,
           potentialAction: {
             "@type": "SearchAction",
-            target: `${BASE_URL}/catalog?search={search_term_string}`,
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${BASE_URL}/catalog?search={search_term_string}`,
+            },
             "query-input": "required name=search_term_string",
           },
         },
-        // Organization schema for logo and business details (required for Google logo display)
+        // Organization schema for Knowledge Panel & logo display
         {
           "@context": "https://schema.org",
           "@type": "Organization",
           name: "A2Z BOOKSHOP",
-          alternateName: "A2Z Book Shop",
+          alternateName: ["A2Z Bookshop", "A2Z Book Shop"],
           url: BASE_URL,
-          logo: {
-            "@type": "ImageObject",
-            url: `${BASE_URL}/favicon.png`,
-            width: 512,
-            height: 512,
-          },
-          image: `${BASE_URL}/favicon.png`,
-          description: "A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
+          logo: `${BASE_URL}/logo.jpeg`,
+          image: [
+            `${BASE_URL}/logo.jpeg`,
+            `${BASE_URL}/favicon.png`,
+          ],
+          description: "A2Z Bookshop — India's trusted online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children's, academic & more. Secure checkout & worldwide shipping.",
           contactPoint: {
             "@type": "ContactPoint",
             contactType: "Customer Service",
             email: "support@a2zbookshop.com",
+            availableLanguage: ["English", "Hindi"],
           },
+          sameAs: [
+            "https://www.instagram.com/a2zbookshop",
+            "https://www.facebook.com/a2zbookshop",
+          ],
+        },
+        // SiteNavigationElement — tells Google about the main navigation links
+        // This is the key schema that helps Google generate sitelinks
+        {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Main Navigation",
+          itemListElement: [
+            {
+              "@type": "SiteNavigationElement",
+              position: 1,
+              name: "Book Catalog",
+              description: "Browse our complete collection of new & used books across all categories",
+              url: `${BASE_URL}/catalog`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 2,
+              name: "Bestsellers",
+              description: "Shop our bestselling books — top reads from around the world",
+              url: `${BASE_URL}/catalog?bestseller=true`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 3,
+              name: "New Arrivals",
+              description: "Explore our latest book arrivals — fresh stock added regularly",
+              url: `${BASE_URL}/catalog?newArrival=true`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 4,
+              name: "Gift Books & Sets",
+              description: "Curated gift books and box sets — perfect for every book lover",
+              url: `${BASE_URL}/gift-items`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 5,
+              name: "Track Your Order",
+              description: "Track the delivery status of your book order",
+              url: `${BASE_URL}/track-order`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 6,
+              name: "Contact Us",
+              description: "Get in touch with A2Z BOOKSHOP for inquiries or support",
+              url: `${BASE_URL}/contact`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 7,
+              name: "About Us",
+              description: "Learn about A2Z BOOKSHOP — your premier destination for books",
+              url: `${BASE_URL}/about`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 8,
+              name: "Request a Book",
+              description: "Can't find a book? Request it and we'll source it for you",
+              url: `${BASE_URL}/request-book`,
+            },
+          ],
         },
       ],
       prerenderedHtml: prerenderedHtml || undefined,
@@ -391,14 +463,24 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       canonical,
       type: "website",
       noindex: false,
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        name: heading,
-        description: metaDesc,
-        url: canonical,
-        provider: { "@type": "Organization", name: "A2Z BOOKSHOP" },
-      },
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: heading,
+          description: metaDesc,
+          url: canonical,
+          provider: { "@type": "Organization", name: "A2Z BOOKSHOP" },
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Catalog", item: `${BASE_URL}/catalog` },
+          ],
+        },
+      ],
       prerenderedHtml: prerenderedHtml || undefined,
     };
   }
@@ -408,6 +490,24 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     return {
       title: "Admin | A2Z BOOKSHOP",
       description: "A2Z BOOKSHOP administration panel.",
+      keywords: "",
+      ogImage: `${BASE_URL}/favicon.png`,
+      canonical: `${BASE_URL}${urlPath}`,
+      type: "website",
+      noindex: true,
+      structuredData: {},
+    };
+  }
+
+  // ── Private/user pages — noindex ─────────────────────────────────────────
+  const noindexPaths = [
+    "/checkout", "/my-orders", "/wishlist", "/cart", "/profile",
+    "/login", "/register", "/reset-password", "/paypal-complete",
+  ];
+  if (noindexPaths.some((p) => urlPath === p || urlPath.startsWith(p + "/"))) {
+    return {
+      title: "A2Z BOOKSHOP — Your Online Book Store",
+      description: "A2Z Bookshop — your global online bookstore for new & used books.",
       keywords: "",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}${urlPath}`,
@@ -428,14 +528,24 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/about`,
       type: "website",
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "AboutPage",
-        name: "About A2Z BOOKSHOP",
-        url: `${BASE_URL}/about`,
-        description:
-          "A2Z Bookshop — your premier destination for rare, collectible, and contemporary books.",
-      },
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          name: "About A2Z BOOKSHOP",
+          url: `${BASE_URL}/about`,
+          description:
+            "A2Z Bookshop — your premier destination for rare, collectible, and contemporary books.",
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "About Us", item: `${BASE_URL}/about` },
+          ],
+        },
+      ],
     },
     "/contact": {
       title: "Contact Us | A2Z BOOKSHOP",
@@ -446,12 +556,22 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/contact`,
       type: "website",
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "ContactPage",
-        name: "Contact A2Z BOOKSHOP",
-        url: `${BASE_URL}/contact`,
-      },
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          name: "Contact A2Z BOOKSHOP",
+          url: `${BASE_URL}/contact`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Contact Us", item: `${BASE_URL}/contact` },
+          ],
+        },
+      ],
     },
     "/faq": {
       title: "Frequently Asked Questions | A2Z BOOKSHOP",
@@ -462,12 +582,22 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/faq`,
       type: "website",
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        name: "FAQ — A2Z BOOKSHOP",
-        url: `${BASE_URL}/faq`,
-      },
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          name: "FAQ — A2Z BOOKSHOP",
+          url: `${BASE_URL}/faq`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "FAQ", item: `${BASE_URL}/faq` },
+          ],
+        },
+      ],
     },
     "/shipping-info": {
       title: "Shipping Information | A2Z BOOKSHOP",
@@ -478,12 +608,22 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/shipping-info`,
       type: "website",
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        name: "Shipping Information — A2Z BOOKSHOP",
-        url: `${BASE_URL}/shipping-info`,
-      },
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Shipping Information — A2Z BOOKSHOP",
+          url: `${BASE_URL}/shipping-info`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Shipping Info", item: `${BASE_URL}/shipping-info` },
+          ],
+        },
+      ],
     },
     "/return-policy": {
       title: "Return Policy | A2Z BOOKSHOP",
@@ -494,12 +634,22 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/return-policy`,
       type: "website",
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        name: "Return Policy — A2Z BOOKSHOP",
-        url: `${BASE_URL}/return-policy`,
-      },
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Return Policy — A2Z BOOKSHOP",
+          url: `${BASE_URL}/return-policy`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Return Policy", item: `${BASE_URL}/return-policy` },
+          ],
+        },
+      ],
     },
     "/cancellation-policy": {
       title: "Cancellation Policy | A2Z BOOKSHOP",
@@ -556,12 +706,100 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/gift-items`,
       type: "website",
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        name: "Gift Books — A2Z BOOKSHOP",
-        url: `${BASE_URL}/gift-items`,
-      },
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Gift Books — A2Z BOOKSHOP",
+          url: `${BASE_URL}/gift-items`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Gift Books & Sets", item: `${BASE_URL}/gift-items` },
+          ],
+        },
+      ],
+    },
+    "/track-order": {
+      title: "Track Your Order | A2Z BOOKSHOP",
+      description:
+        "Track the delivery status of your book order at A2Z BOOKSHOP. Enter your order number to get real-time updates.",
+      keywords:
+        "track order, order tracking, delivery status, a2z bookshop order",
+      ogImage: `${BASE_URL}/favicon.png`,
+      canonical: `${BASE_URL}/track-order`,
+      type: "website",
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Track Your Order — A2Z BOOKSHOP",
+          url: `${BASE_URL}/track-order`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Track Order", item: `${BASE_URL}/track-order` },
+          ],
+        },
+      ],
+    },
+    "/request-book": {
+      title: "Request a Book | A2Z BOOKSHOP",
+      description:
+        "Can't find the book you're looking for? Request it at A2Z BOOKSHOP and we'll source it for you. Any title, any author.",
+      keywords:
+        "request book, book request, find a book, source books, a2z bookshop",
+      ogImage: `${BASE_URL}/favicon.png`,
+      canonical: `${BASE_URL}/request-book`,
+      type: "website",
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Request a Book — A2Z BOOKSHOP",
+          url: `${BASE_URL}/request-book`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Request a Book", item: `${BASE_URL}/request-book` },
+          ],
+        },
+      ],
+    },
+    "/returns": {
+      title: "Returns & Refunds | A2Z BOOKSHOP",
+      description:
+        "Initiate a return or check your refund status at A2Z BOOKSHOP. Hassle-free returns with customer satisfaction guaranteed.",
+      keywords:
+        "returns, refunds, book return, return request, a2z bookshop returns",
+      ogImage: `${BASE_URL}/favicon.png`,
+      canonical: `${BASE_URL}/returns`,
+      type: "website",
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Returns & Refunds — A2Z BOOKSHOP",
+          url: `${BASE_URL}/returns`,
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Returns", item: `${BASE_URL}/returns` },
+          ],
+        },
+      ],
     },
   };
 
@@ -663,6 +901,8 @@ ${schemaScripts}
     let result = html.replace(/<title>[^<]*<\/title>/, "");
     result = result.replace(/<meta name="description"[^>]*>/i, "");
     result = result.replace(/<meta name="robots"[^>]*>/i, "");
+    // Remove the static Organization JSON-LD from index.html — SSR injects per-route schemas
+    result = result.replace(/<script type="application\/ld\+json" id="static-org-schema">[\s\S]*?<\/script>/i, "");
 
     // Inject our block just before </head>
     result = result.replace("</head>", `${headBlock}\n  </head>`);
