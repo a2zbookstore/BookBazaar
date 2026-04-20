@@ -477,8 +477,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Analytics tracking middleware - tracks only actual page routes
   app.use(async (req: any, res, next) => {
+    // Filter out bot/scanner requests probing for WordPress and other CMS vulnerabilities
+    const isBotProbe =
+      /\.(php|asp|aspx|jsp|cgi|env|git|sql|bak|old|orig|swp)$/i.test(req.path) ||
+      /wp-admin|wp-login|wp-content|wp-includes|xmlrpc|wp-json/i.test(req.path) ||
+      /phpmyadmin|adminer|administrator|joomla|drupal|magento/i.test(req.path) ||
+      /\.well-known\/security/i.test(req.path);
+
     // Only track actual user-facing pages, not development/build files or assets
     const shouldTrack =
+      !isBotProbe &&
       !req.path.startsWith('/api') &&
       !req.path.startsWith('/uploads') &&
       !req.path.startsWith('/attached_assets') &&
