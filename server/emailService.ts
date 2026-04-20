@@ -447,7 +447,7 @@ const generateOrderConfirmationHTML = (data: OrderEmailData) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta name="x-apple-disable-message-reformatting">
-      <title>Order Confirmation #${order.id} - A2Z BOOKSHOP</title>
+      <title>Order Confirmation ${order.orderNumber || `#${order.id}`} - A2Z BOOKSHOP</title>
       <style>
         * { box-sizing:border-box; }
         body { margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;-webkit-text-size-adjust:100%; }
@@ -546,7 +546,7 @@ const generateOrderConfirmationHTML = (data: OrderEmailData) => {
               <tr>
                 <td class="badge-cell">
                   <span class="badge-label">Order ID</span>
-                  <span class="badge-value">#${order.id}</span>
+                  <span class="badge-value">${order.orderNumber || `#${order.id}`}</span>
                 </td>
                 <td class="badge-cell">
                   <span class="badge-label">Date</span>
@@ -873,7 +873,7 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Update #${order.id} — A2Z BOOKSHOP</title>
+  <title>Order Update ${order.orderNumber || `#${order.id}`} — A2Z BOOKSHOP</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:32px 16px;">
@@ -931,7 +931,7 @@ const generateStatusUpdateHTML = (data: StatusUpdateEmailData) => {
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding:12px 0;font-size:14px;color:#64748b;border-bottom:1px solid #f1f5f9;">Order ID</td>
-                        <td style="padding:12px 0;font-size:14px;color:#0f172a;font-weight:600;text-align:right;border-bottom:1px solid #f1f5f9;">#${order.id}</td>
+                        <td style="padding:12px 0;font-size:14px;color:#0f172a;font-weight:600;text-align:right;border-bottom:1px solid #f1f5f9;">${order.orderNumber || `#${order.id}`}</td>
                       </tr>
                       <tr>
                         <td style="padding:12px 0;font-size:14px;color:#64748b;border-bottom:1px solid #f1f5f9;">Order Date</td>
@@ -1063,7 +1063,7 @@ const generateOrderCancellationHTML = (data: CancellationEmailData): string => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="x-apple-disable-message-reformatting">
-  <title>Order Cancelled #${order.id} — A2Z BOOKSHOP</title>
+  <title>Order Cancelled ${order.orderNumber || `#${order.id}`} — A2Z BOOKSHOP</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:32px 16px;">
@@ -1092,7 +1092,7 @@ const generateOrderCancellationHTML = (data: CancellationEmailData): string => {
                 <tr>
                   <td style="text-align:center;padding:0 8px;">
                     <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Order ID</span>
-                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">#${order.id}</span>
+                    <span style="display:block;font-size:15px;font-weight:700;color:#0f172a;">${order.orderNumber || `#${order.id}`}</span>
                   </td>
                   <td style="text-align:center;padding:0 8px;">
                     <span style="display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px;">Placed On</span>
@@ -1207,22 +1207,22 @@ export const sendOrderCancellationEmail = async (data: CancellationEmailData): P
     }
 
     const htmlContent = generateOrderCancellationHTML(data);
-    const orderId = data.order.id;
+    const orderId = data.order.orderNumber || `#${data.order.id}`;
 
     const customerMailOptions = {
       from: { name: 'A2Z BOOKSHOP Support', address: getZohoEmail('support') },
       to: data.customerEmail,
-      subject: `Order #${orderId} Has Been Cancelled — A2Z BOOKSHOP`,
+      subject: `Order ${orderId} Has Been Cancelled — A2Z BOOKSHOP`,
       html: htmlContent,
-      text: `Hi ${data.customerName}, your order #${orderId} has been successfully cancelled. Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}. If payment was made, a refund will be processed within 5–7 business days. For help, contact support@a2zbookshop.com`,
+      text: `Hi ${data.customerName}, your order ${orderId} has been successfully cancelled. Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}. If payment was made, a refund will be processed within 5–7 business days. For help, contact support@a2zbookshop.com`,
     };
 
     const adminMailOptions = {
       from: { name: 'A2Z BOOKSHOP System', address: getZohoEmail('admin') },
       to: getZohoEmail('admin'),
-      subject: `Order #${orderId} Cancelled — ${data.cancelledByCustomer ? 'Customer Request' : 'Admin Action'}`,
+      subject: `Order ${orderId} Cancelled — ${data.cancelledByCustomer ? 'Customer Request' : 'Admin Action'}`,
       html: htmlContent,
-      text: `Order #${orderId} cancelled for customer: ${data.customerEmail}. Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}.`,
+      text: `Order ${orderId} cancelled for customer: ${data.customerEmail}. Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}.`,
     };
 
     await Promise.all([
@@ -1230,7 +1230,7 @@ export const sendOrderCancellationEmail = async (data: CancellationEmailData): P
       transport.sendMail(adminMailOptions),
     ]);
 
-    console.log(`Cancellation emails sent for order #${orderId}`);
+    console.log(`Cancellation emails sent for order ${orderId}`);
     return true;
   } catch (error) {
     console.error('Error sending cancellation email:', error);
@@ -1256,9 +1256,9 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
         address: getZohoEmail('orders')
       },
       to: data.customerEmail,
-      subject: `Order Confirmation #${data.order.id} - A2Z BOOKSHOP`,
+      subject: `Order Confirmation ${data.order.orderNumber || `#${data.order.id}`} - A2Z BOOKSHOP`,
       html: htmlContent,
-      text: `Thank you for your order #${data.order.id}! Your order total is $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}. We'll process your order within 1-2 business days and send you tracking information once it ships.`
+      text: `Thank you for your order ${data.order.orderNumber || `#${data.order.id}`}! Your order total is $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}. We'll process your order within 1-2 business days and send you tracking information once it ships.`
     };
 
     // Copy to admin
@@ -1268,9 +1268,9 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
         address: getZohoEmail('admin')
       },
       to: getZohoEmail('admin'),
-      subject: `New Order #${data.order.id} - Admin Copy`,
+      subject: `New Order ${data.order.orderNumber || `#${data.order.id}`} - Admin Copy`,
       html: htmlContent,
-      text: `New order received from ${data.customerEmail}. Order #${data.order.id}, Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}`
+      text: `New order received from ${data.customerEmail}. Order ${data.order.orderNumber || `#${data.order.id}`}, Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}`
     };
 
     // Build recipient list: primary account email + optional notification email
@@ -1285,7 +1285,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
       transporter.sendMail(adminMailOptions)
     ]);
 
-    console.log(`Order confirmation emails sent for order #${data.order.id} to: ${customerRecipients.join(', ')}`);
+    console.log(`Order confirmation emails sent for order ${data.order.orderNumber || `#${data.order.id}`} to: ${customerRecipients.join(', ')}`);
     return true;
   } catch (error) {
     console.error('Error sending order confirmation email:', error);
@@ -1310,9 +1310,9 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
         address: getZohoEmail('support')
       },
       to: data.customerEmail,
-      subject: `Order Status Update - Order #${data.order.id}`,
+      subject: `Order Status Update - Order ${data.order.orderNumber || `#${data.order.id}`}`,
       html: htmlContent,
-      text: `Your order #${data.order.id} status has been updated to: ${data.newStatus}. ${data.trackingNumber ? `Tracking: ${data.trackingNumber}` : ''}`
+      text: `Your order ${data.order.orderNumber || `#${data.order.id}`} status has been updated to: ${data.newStatus}. ${data.trackingNumber ? `Tracking: ${data.trackingNumber}` : ''}`
     };
 
     // Copy to admin
@@ -1322,9 +1322,9 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
         address: getZohoEmail('admin')
       },
       to: getZohoEmail('admin'),
-      subject: `Order Status Updated - Order #${data.order.id}`,
+      subject: `Order Status Updated - Order ${data.order.orderNumber || `#${data.order.id}`}`,
       html: htmlContent,
-      text: `Order #${data.order.id} status updated to: ${data.newStatus} for customer: ${data.customerEmail}`
+      text: `Order ${data.order.orderNumber || `#${data.order.id}`} status updated to: ${data.newStatus} for customer: ${data.customerEmail}`
     };
 
     // Send both emails
@@ -1332,7 +1332,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
       transporter.sendMail(customerMailOptions),
       transporter.sendMail(adminMailOptions)
     ]);
-    console.log(`Status update email sent for order #${data.order.id}, new status: ${data.newStatus}`);
+    console.log(`Status update email sent for order ${data.order.orderNumber || `#${data.order.id}`}, new status: ${data.newStatus}`);
     return true;
   } catch (error) {
     console.error('Error sending status update email:', error);

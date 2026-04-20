@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Package, Gift, Upload, X, ImagePlus, BookOpen, BookMarked, Pen, Hash, DollarSign, AlignLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Gift, Upload, X, ImagePlus, BookOpen, BookMarked, Pen, Hash, DollarSign, AlignLeft, ChevronRight, Sparkles, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { GiftCategory } from "../../../../shared/schema";
@@ -29,6 +29,10 @@ interface CategoryForm {
 
 export default function GiftCategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [customTypeMode, setCustomTypeMode] = useState(false);
+  const [isManageTypesOpen, setIsManageTypesOpen] = useState(false);
+  const [renamingType, setRenamingType] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const [editingCategory, setEditingCategory] = useState<GiftCategory | null>(null);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [uploadedImage2, setUploadedImage2] = useState<File | null>(null);
@@ -45,6 +49,11 @@ export default function GiftCategoriesPage() {
   // Fetch gift categories
   const { data: categories = [], isLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/admin/gift-categories"],
+  });
+
+  // Fetch distinct types from DB
+  const { data: dbTypes = [] } = useQuery<string[]>({
+    queryKey: ["/api/admin/gift-category-types"],
   });
 
   // Form state
@@ -110,6 +119,36 @@ export default function GiftCategoriesPage() {
     },
   });
 
+  const renameTypeMutation = useMutation({
+    mutationFn: async ({ oldType, newType }: { oldType: string; newType: string }) => {
+      return apiRequest('PUT', '/api/admin/gift-category-types/rename', { oldType, newType });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/gift-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/gift-category-types"] });
+      setRenamingType(null);
+      setRenameValue("");
+      toast({ title: "Success", description: "Type renamed successfully!" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to rename type", variant: "destructive" });
+    },
+  });
+
+  const deleteTypeMutation = useMutation({
+    mutationFn: async (type: string) => {
+      return apiRequest('DELETE', `/api/admin/gift-category-types/${encodeURIComponent(type)}`);
+    },
+    onSuccess: (_, type) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/gift-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/gift-category-types"] });
+      toast({ title: "Success", description: `All categories of type "${type}" deleted.` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete type", variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setForm({
       name: "",
@@ -131,6 +170,7 @@ export default function GiftCategoriesPage() {
     setImagePreview('');
     setImagePreview2('');
     setImagePreview3('');
+    setCustomTypeMode(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (fileInputRef2.current) fileInputRef2.current.value = '';
     if (fileInputRef3.current) fileInputRef3.current.value = '';
@@ -157,6 +197,7 @@ export default function GiftCategoriesPage() {
     setUploadedImage(null);
     setUploadedImage2(null);
     setUploadedImage3(null);
+    setCustomTypeMode(false);
     setIsDialogOpen(true);
   };
 
@@ -470,6 +511,16 @@ export default function GiftCategoriesPage() {
             </div>
           </div>
 
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsManageTypesOpen(true)}
+              className="w-full sm:w-auto border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Types
+            </Button>
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -508,15 +559,48 @@ export default function GiftCategoriesPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="type" className="text-sm font-medium text-gray-700">Type <span className="text-red-400">*</span></Label>
-                    <Input
-                      id="type"
-                      value={form.type}
-                      onChange={(e) => setForm({ ...form, type: e.target.value })}
-                      placeholder="e.g., novel, bookmark, tote_bag"
-                      required
-                      className="rounded-lg border-gray-200 focus-visible:ring-indigo-400 h-10"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">💡 Suggestions: novel, notebook, bookmark, tote_bag, stationery, journal, reading_light, poster, mug, calendar</p>
+                    {!customTypeMode ? (
+                      <select
+                        id="type"
+                        value={form.type}
+                        onChange={(e) => {
+                          if (e.target.value === "__custom__") {
+                            setCustomTypeMode(true);
+                            setForm({ ...form, type: "" });
+                          } else {
+                            setForm({ ...form, type: e.target.value });
+                          }
+                        }}
+                        required
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      >
+                        <option value="" disabled>Select a type…</option>
+                        {dbTypes.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                        <option value="__custom__">+ Enter new type…</option>
+                      </select>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          id="type"
+                          value={form.type}
+                          onChange={(e) => setForm({ ...form, type: e.target.value })}
+                          placeholder="Enter new type"
+                          required
+                          autoFocus
+                          className="rounded-lg border-gray-200 focus-visible:ring-indigo-400 h-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-10 px-3 text-xs shrink-0"
+                          onClick={() => { setCustomTypeMode(false); setForm({ ...form, type: dbTypes[0] || "" }); }}
+                        >
+                          Back
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -673,7 +757,83 @@ export default function GiftCategoriesPage() {
               </form>
             </DialogContent>
           </Dialog>
-        </div>
+          </div>
+
+          {/* ── Manage Types Dialog ── */}
+          <Dialog open={isManageTypesOpen} onOpenChange={setIsManageTypesOpen}>
+            <DialogContent className="max-w-md rounded-2xl p-0 gap-0">
+              <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100">
+                <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Settings className="w-4 h-4 text-gray-600" />
+                  </span>
+                  Manage Types
+                </DialogTitle>
+              </DialogHeader>
+              <div className="px-6 py-5 space-y-3">
+                {dbTypes.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">No types yet.</p>
+                )}
+                {dbTypes.map((t) => (
+                  <div key={t} className="flex items-center gap-2">
+                    {renamingType === t ? (
+                      <>
+                        <Input
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          autoFocus
+                          className="h-9 text-sm rounded-lg border-gray-200 focus-visible:ring-indigo-400 flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          className="h-9 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                          disabled={!renameValue.trim() || renameValue.trim() === t || renameTypeMutation.isPending}
+                          onClick={() => renameTypeMutation.mutate({ oldType: t, newType: renameValue.trim() })}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 px-3 rounded-lg"
+                          onClick={() => { setRenamingType(null); setRenameValue(""); }}
+                        >
+                          ✕
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg px-3 py-2">{t}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 px-3 rounded-lg border-gray-200 text-gray-600 hover:bg-gray-50"
+                          onClick={() => { setRenamingType(t); setRenameValue(t); }}
+                        >
+                          <Pen className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 px-3 rounded-lg border-red-200 text-red-600 hover:bg-red-50"
+                          disabled={deleteTypeMutation.isPending}
+                          onClick={() => {
+                            if (confirm(`Delete all categories with type "${t}"? This cannot be undone.`)) {
+                              deleteTypeMutation.mutate(t);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+        </div>{/* end flex header row */}
 
         {/* Stats strip */}
         <div className="relative mt-5 flex flex-wrap gap-3">

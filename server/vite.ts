@@ -78,7 +78,9 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Serve all static assets EXCEPT index.html so that every HTML-page
+  // request falls through to the catch-all below, which runs SSR meta injection.
+  app.use(express.static(distPath, { index: false }));
 
   // fall through to index.html — inject SSR meta before sending
   app.use("*", async (req, res) => {

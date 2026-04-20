@@ -58,6 +58,7 @@ const BookRequestsPage    = lazy(() => import("@/pages/admin/BookRequestsPage"))
 const AnalyticsPage       = lazy(() => import("@/pages/admin/AnalyticsPage"));
 // const GiftManagementPage  = lazy(() => import("@/pages/admin/GiftManagementPage")); // DEPRECATED
 const AuditLogPage        = lazy(() => import("@/pages/admin/AuditLogPage"));
+const BillCreatorPage     = lazy(() => import("@/pages/admin/BillCreatorPage"));
 
 // Minimal inline spinner shown while a lazy chunk is downloading
 function PageLoader() {
@@ -139,6 +140,7 @@ function AppRouter() {
         <Route path="/admin/settings"><AdminProtectedRoute><SettingsPage /></AdminProtectedRoute></Route>
         <Route path="/admin/account"><AdminProtectedRoute><AdminAccountPage /></AdminProtectedRoute></Route>
         <Route path="/admin/audit-trail"><AdminProtectedRoute><AuditLogPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/bill-creator"><AdminProtectedRoute><BillCreatorPage /></AdminProtectedRoute></Route>
 
         <Route component={NotFound} />
       </Switch>

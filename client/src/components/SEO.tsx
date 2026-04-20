@@ -16,7 +16,7 @@ interface SEOProps {
 
 export default function SEO({
   title = 'A2Z BOOKSHOP - Your Online Book Store',
-  description = 'Discover thousands of books at A2Z Bookshop. Buy new and used books online with fast shipping. Fiction, non-fiction, bestsellers, and more.',
+  description = 'A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children\'s, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.',
   keywords = 'books, online bookstore, buy books, new books, used books, fiction, non-fiction, bestsellers',
   image = 'https://a2zbookshop.com/logo.jpeg',
   url = 'https://a2zbookshop.com',

@@ -81,6 +81,11 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   const fetchLocationFromAPI = async (): Promise<LocationData | null> => {
+    // 1. Try browser Geolocation API first — GPS/Wi-Fi based, far more accurate than IP
+    const browserLocation = await getBrowserGeolocation();
+    if (browserLocation) return browserLocation;
+
+    // 2. Fall back to IP-based geolocation (used when permission is denied/unavailable)
     try {
       const response = await Promise.race([
         fetch("https://ipapi.co/json/"),
@@ -111,7 +116,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         const data = await response.json();
         if (data.country) {
           return {
-            country: getCountryName(data.country),
+            country: data.country_name || data.country,
             countryCode: data.country,
             city: data.city,
           };
@@ -122,6 +127,50 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return null;
+  };
+
+  // Use the browser's native Geolocation API, then reverse-geocode with OpenStreetMap
+  const getBrowserGeolocation = (): Promise<LocationData | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+
+      const timer = setTimeout(() => resolve(null), 8000);
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          clearTimeout(timer);
+          try {
+            const { latitude, longitude } = position.coords;
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              { headers: { "Accept-Language": "en" } }
+            );
+            if (!res.ok) { resolve(null); return; }
+            const data = await res.json();
+            const addr = data.address || {};
+            const countryCode = (addr.country_code || "").toUpperCase();
+            const country = addr.country || "";
+            const city =
+              addr.city || addr.town || addr.village || addr.county || null;
+            if (country && countryCode) {
+              resolve({ country, countryCode, city });
+            } else {
+              resolve(null);
+            }
+          } catch {
+            resolve(null);
+          }
+        },
+        () => {
+          clearTimeout(timer);
+          resolve(null); // permission denied — fall back to IP
+        },
+        { timeout: 7000, maximumAge: 3600000 } // cache for 1 hour
+      );
+    });
   };
 
   const timeout = (ms: number) =>

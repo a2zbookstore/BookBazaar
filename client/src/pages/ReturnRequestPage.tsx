@@ -272,7 +272,7 @@ export default function ReturnRequestPage() {
                           </Badge>
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          Order #{req.order.id} · {format(new Date(req.createdAt), "dd MMM yyyy")}
+                          Order {req.order.orderNumber || `#${req.order.id}`} · {format(new Date(req.createdAt), "dd MMM yyyy")}
                         </p>
                       </div>
                       {/* Right: refund amount */}
@@ -394,7 +394,7 @@ export default function ReturnRequestPage() {
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2 flex-wrap min-w-0">
                                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 flex-shrink-0">Order</p>
-                                <p className="text-base font-bold text-gray-900 flex-shrink-0">#{order.id}</p>
+                                <p className="text-base font-bold text-gray-900 flex-shrink-0">{order.orderNumber || `#${order.id}`}</p>
                                 <Badge className="bg-green-100 text-green-800 px-2 py-0.5 text-xs rounded-full flex-shrink-0">Delivered</Badge>
                                 {/* ── Days-left return window badge ── */}
                                 <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 border ${isUrgent
@@ -467,7 +467,7 @@ export default function ReturnRequestPage() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Returning From</p>
               </div>
               <div className="px-4 py-3 flex justify-between items-center text-sm">
-                <span className="font-semibold text-gray-900">Order #{selectedOrder.id}</span>
+                <span className="font-semibold text-gray-900">{selectedOrder.orderNumber || `Order #${selectedOrder.id}`}</span>
                 <span className="text-gray-500">{format(new Date(selectedOrder.createdAt), "dd MMM yyyy")}</span>
               </div>
             </div>

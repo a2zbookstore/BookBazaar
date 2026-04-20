@@ -108,6 +108,7 @@ export const bookCategories = pgTable("book_categories", {
 // Orders table
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
+  orderNumber: varchar("order_number", { length: 50 }).unique(), // e.g. BB-20260419-000042
   userId: varchar("user_id").references(() => users.id),
   customerEmail: varchar("customer_email").notNull(),
   customerName: varchar("customer_name").notNull(),
