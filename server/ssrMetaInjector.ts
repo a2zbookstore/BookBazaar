@@ -18,90 +18,6 @@ import { extractBookIdFromSlug, generateBookSlug } from "./slugUtils";
 
 const BASE_URL = "https://a2zbookshop.com";
 
-/**
- * Category-specific SEO meta data.
- * Each key is the category ID from the DB.  Title, description & keywords are
- * crafted so that Google surfaces these pages when users search for those
- * topics (e.g. "buy NFPA books online", "DSM-5 books").
- */
-const CATEGORY_SEO: Record<number, { title: string; description: string; keywords: string }> = {
-  11: {
-    title: "NFPA Books — Fire Protection & Electrical Codes | A2Z BOOKSHOP",
-    description: "Buy NFPA books online — NFPA 70 (NEC), NFPA 72, NFPA 101 Life Safety Code & more. New & used editions at the best prices with worldwide shipping.",
-    keywords: "NFPA books, NFPA 70, National Electrical Code, NEC 2026, NFPA 72, NFPA 101, fire protection books, fire safety codes, buy NFPA online",
-  },
-  13: {
-    title: "DSM Books — Diagnostic & Statistical Manual | A2Z BOOKSHOP",
-    description: "Shop DSM books online — DSM-5, DSM-5-TR and related diagnostic manuals. New & used copies at great prices. Fast worldwide delivery.",
-    keywords: "DSM books, DSM-5, DSM-5-TR, diagnostic manual, mental health books, psychiatry books, buy DSM online",
-  },
-  12: {
-    title: "Electrical Engineering Books | A2Z BOOKSHOP",
-    description: "Browse electrical engineering books — NEC handbooks, wiring guides, power systems & more. New & used at the best prices with worldwide shipping.",
-    keywords: "electrical books, electrical engineering, NEC handbook, wiring books, power systems, buy electrical books online",
-  },
-  18: {
-    title: "ICC Books — International Building & Fire Codes | A2Z BOOKSHOP",
-    description: "Buy ICC code books online — International Building Code (IBC), International Fire Code (IFC), IRC & more. Best prices, worldwide delivery.",
-    keywords: "ICC books, International Building Code, IBC, IFC, IRC, building codes, fire codes, buy ICC books online",
-  },
-  17: {
-    title: "Medical Books — Nursing, Pharmacy & Clinical | A2Z BOOKSHOP",
-    description: "Shop medical books online — nursing guides, pharmacy references, clinical manuals & NCLEX prep. New & used at the best prices. Fast worldwide shipping.",
-    keywords: "medical books, nursing books, pharmacy books, clinical books, NCLEX prep, buy medical books online",
-  },
-  20: {
-    title: "Business & Management Books | A2Z BOOKSHOP",
-    description: "Browse business management books — leadership, marketing, finance, entrepreneurship & MBA textbooks. Best prices, worldwide delivery.",
-    keywords: "business books, management books, MBA textbooks, leadership books, marketing books, buy business books online",
-  },
-  19: {
-    title: "Engineering Books — Civil, Mechanical & More | A2Z BOOKSHOP",
-    description: "Shop engineering books online — civil, mechanical, structural & FE exam prep. New & used editions at great prices. Worldwide shipping.",
-    keywords: "engineering books, civil engineering, mechanical engineering, FE exam prep, structural engineering, buy engineering books",
-  },
-  1: {
-    title: "Fiction Books — Novels, Thrillers & Literary Fiction | A2Z BOOKSHOP",
-    description: "Explore fiction books — bestselling novels, thrillers, mystery, sci-fi, fantasy & literary fiction. New & used at the best prices with worldwide shipping.",
-    keywords: "fiction books, novels, thrillers, mystery books, sci-fi, fantasy, literary fiction, buy fiction online",
-  },
-  2: {
-    title: "Non-Fiction Books — Biographies, Self-Help & More | A2Z BOOKSHOP",
-    description: "Browse non-fiction books — biographies, memoirs, self-help, psychology, politics & history. Best prices, worldwide delivery.",
-    keywords: "non-fiction books, biographies, self-help books, psychology books, memoirs, buy non-fiction online",
-  },
-  4: {
-    title: "History Books — World History & Civilizations | A2Z BOOKSHOP",
-    description: "Shop history books — world history, ancient civilizations, wars, biographies & political history. New & used at great prices.",
-    keywords: "history books, world history, ancient history, war books, political history, buy history books online",
-  },
-  3: {
-    title: "Science Books — Physics, Biology & Chemistry | A2Z BOOKSHOP",
-    description: "Browse science books — physics, biology, chemistry, earth science & popular science. New & used editions with worldwide shipping.",
-    keywords: "science books, physics books, biology books, chemistry books, popular science, buy science books online",
-  },
-  5: {
-    title: "Technology Books — Programming, IT & Cybersecurity | A2Z BOOKSHOP",
-    description: "Shop technology books — programming, Python, data science, IT networking, cybersecurity & more. Best prices with worldwide delivery.",
-    keywords: "technology books, programming books, Python books, data science, IT books, cybersecurity, buy tech books online",
-  },
-  8: {
-    title: "Romance Books — Contemporary & Classic Romance | A2Z BOOKSHOP",
-    description: "Explore romance books — contemporary, historical, romantic suspense & classic romance novels. New & used at great prices.",
-    keywords: "romance books, romance novels, contemporary romance, historical romance, buy romance books online",
-  },
-  23: {
-    title: "Novels & Comic Books — Graphic Novels & Manga | A2Z BOOKSHOP",
-    description: "Browse novels, comic books, graphic novels & manga. New & used editions at the best prices with worldwide shipping.",
-    keywords: "novels, comic books, graphic novels, manga, buy comics online, buy novels online",
-  },
-  22: {
-    title: "Social Science Books — Sociology, Psychology & Education | A2Z BOOKSHOP",
-    description: "Shop social science books — sociology, psychology, education, diversity & social justice. New & used at great prices.",
-    keywords: "social science books, sociology books, psychology, education books, diversity, buy social science books online",
-  },
-};
-
 /** Escape a string for use inside an HTML attribute value (double-quoted). */
 function ea(s: string): string {
   return s
@@ -355,11 +271,11 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
   if (urlPath === "/") {
     const prerenderedHtml = await buildHomepagePrerender();
     return {
-      title: "A2Z BOOKSHOP — Buy Books Online | New & Used Books | Worldwide Shipping",
+      title: "A2Z BOOKSHOP - Buy Books Online | New & Used Books | Worldwide Shipping",
       description:
-        "A2Z Bookshop (a2zbookshop.com) — Your trusted online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
+        "A2Z Bookshop — India's trusted online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
       keywords:
-        "a2z, a2z bookshop, a2zbookshop, a2z book shop, a2z books, a to z bookshop, a-to-z bookshop, a2z book store, a2zbookshop.com, buy books online, online bookstore, new books, used books, fiction, non-fiction, bestsellers, trending books, book store worldwide",
+        "buy books online, online bookstore, new books, used books, fiction, non-fiction, bestsellers, trending books, book store worldwide, a2z bookshop",
       ogImage: `${BASE_URL}/logo.jpeg`,
       canonical: BASE_URL,
       type: "website",
@@ -370,17 +286,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "A2Z BOOKSHOP",
-          alternateName: [
-            "A2Z Bookshop",
-            "A2Z Book Shop",
-            "a2zbookshop",
-            "a2z bookshop",
-            "a2z books",
-            "a2z book store",
-            "A to Z Bookshop",
-            "a-to-z bookshop",
-            "a2zbookshop.com",
-          ],
+          alternateName: ["A2Z Bookshop", "A2Z Book Shop"],
           url: BASE_URL,
           potentialAction: {
             "@type": "SearchAction",
@@ -396,24 +302,14 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
           "@context": "https://schema.org",
           "@type": "Organization",
           name: "A2Z BOOKSHOP",
-          alternateName: [
-            "A2Z Bookshop",
-            "A2Z Book Shop",
-            "a2zbookshop",
-            "a2z bookshop",
-            "a2z books",
-            "a2z book store",
-            "A to Z Bookshop",
-            "a-to-z bookshop",
-            "a2zbookshop.com",
-          ],
+          alternateName: ["A2Z Bookshop", "A2Z Book Shop"],
           url: BASE_URL,
           logo: `${BASE_URL}/logo.jpeg`,
           image: [
             `${BASE_URL}/logo.jpeg`,
             `${BASE_URL}/favicon.png`,
           ],
-          description: "A2Z Bookshop — Your trusted online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children's, academic & more. Secure checkout & worldwide shipping.",
+          description: "A2Z Bookshop — India's trusted online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children's, academic & more. Secure checkout & worldwide shipping.",
           contactPoint: {
             "@type": "ContactPoint",
             contactType: "Customer Service",
@@ -442,79 +338,51 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
             {
               "@type": "SiteNavigationElement",
               position: 2,
-              name: "NFPA Books",
-              description: "Buy NFPA books — NEC, NFPA 72, NFPA 101 Life Safety Code & fire protection codes",
-              url: `${BASE_URL}/catalog?categoryId=11`,
-            },
-            {
-              "@type": "SiteNavigationElement",
-              position: 3,
-              name: "DSM Books",
-              description: "Shop DSM-5, DSM-5-TR and diagnostic manuals for mental health professionals",
-              url: `${BASE_URL}/catalog?categoryId=13`,
-            },
-            {
-              "@type": "SiteNavigationElement",
-              position: 4,
-              name: "Medical Books",
-              description: "Nursing, pharmacy, clinical manuals & NCLEX prep at the best prices",
-              url: `${BASE_URL}/catalog?categoryId=17`,
-            },
-            {
-              "@type": "SiteNavigationElement",
-              position: 5,
-              name: "ICC Books",
-              description: "International Building Code, Fire Code & construction code books",
-              url: `${BASE_URL}/catalog?categoryId=18`,
-            },
-            {
-              "@type": "SiteNavigationElement",
-              position: 6,
-              name: "Engineering Books",
-              description: "Civil, mechanical, structural engineering & FE exam prep books",
-              url: `${BASE_URL}/catalog?categoryId=19`,
-            },
-            {
-              "@type": "SiteNavigationElement",
-              position: 7,
               name: "Bestsellers",
               description: "Shop our bestselling books — top reads from around the world",
               url: `${BASE_URL}/catalog?bestseller=true`,
             },
             {
               "@type": "SiteNavigationElement",
-              position: 8,
+              position: 3,
               name: "New Arrivals",
               description: "Explore our latest book arrivals — fresh stock added regularly",
               url: `${BASE_URL}/catalog?newArrival=true`,
             },
             {
               "@type": "SiteNavigationElement",
-              position: 9,
-              name: "Electrical Books",
-              description: "NEC handbooks, wiring guides, power systems & electrical engineering",
-              url: `${BASE_URL}/catalog?categoryId=12`,
-            },
-            {
-              "@type": "SiteNavigationElement",
-              position: 10,
-              name: "Technology Books",
-              description: "Programming, Python, data science, IT & cybersecurity books",
-              url: `${BASE_URL}/catalog?categoryId=5`,
-            },
-            {
-              "@type": "SiteNavigationElement",
-              position: 11,
+              position: 4,
               name: "Gift Books & Sets",
               description: "Curated gift books and box sets — perfect for every book lover",
               url: `${BASE_URL}/gift-items`,
             },
             {
               "@type": "SiteNavigationElement",
-              position: 12,
+              position: 5,
+              name: "Track Your Order",
+              description: "Track the delivery status of your book order",
+              url: `${BASE_URL}/track-order`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 6,
               name: "Contact Us",
               description: "Get in touch with A2Z BOOKSHOP for inquiries or support",
               url: `${BASE_URL}/contact`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 7,
+              name: "About Us",
+              description: "Learn about A2Z BOOKSHOP — your premier destination for books",
+              url: `${BASE_URL}/about`,
+            },
+            {
+              "@type": "SiteNavigationElement",
+              position: 8,
+              name: "Request a Book",
+              description: "Can't find a book? Request it and we'll source it for you",
+              url: `${BASE_URL}/request-book`,
             },
           ],
         },
@@ -539,9 +407,8 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     let metaTitle = "All Books — Browse Our Complete Collection | A2Z BOOKSHOP";
     let metaDesc =
       "Browse thousands of books across all categories — fiction, non-fiction, bestsellers, children's & academic. Best prices with worldwide shipping.";
-    const metaKeywordsDefault =
+    const metaKeywords =
       "buy books online, book catalog, fiction books, non-fiction books, bestsellers, international online bookstore, book store worldwide";
-    let metaKeywords = metaKeywordsDefault;
     let canonical = `${BASE_URL}/catalog`;
 
     if (search) {
@@ -576,25 +443,6 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       canonical = `${BASE_URL}/catalog?boxSet=true`;
     } else if (categoryId) {
       canonical = `${BASE_URL}/catalog?categoryId=${categoryId}`;
-      // Look up category-specific SEO data
-      const catSeo = CATEGORY_SEO[categoryId];
-      if (catSeo) {
-        metaTitle = catSeo.title;
-        metaDesc = catSeo.description;
-        metaKeywords = catSeo.keywords;
-        heading = catSeo.title.split(" | ")[0]; // Use title before pipe as heading
-      } else {
-        // Fallback: try to fetch category name from DB
-        try {
-          const allCats = await storage.getCategories();
-          const cat = allCats.find((c: any) => c.id === categoryId);
-          if (cat) {
-            heading = `${cat.name} — Books`;
-            metaTitle = `${cat.name} Books | A2Z BOOKSHOP`;
-            metaDesc = `Browse ${cat.name} books at A2Z Bookshop. Best prices with worldwide shipping.`;
-          }
-        } catch {}
-      }
     }
 
     const { html: prerenderedHtml, total } = await buildCatalogPrerender(
@@ -603,26 +451,8 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       30
     );
 
-    if (total > 0 && !search && !categoryId && !featured && !bestseller && !trending && !newArrival && !boxSet) {
+    if (total > 0 && !search && !categoryId) {
       metaDesc = `Browse ${total}+ books at A2Z Bookshop — fiction, non-fiction, bestsellers & more. Secure checkout, worldwide shipping.`;
-    } else if (total > 0 && categoryId) {
-      // Append book count to category description
-      const catSeo = CATEGORY_SEO[categoryId];
-      if (!catSeo) {
-        metaDesc = `Browse ${total}+ books in this category at A2Z Bookshop. Best prices, worldwide shipping.`;
-      }
-    }
-
-    // Build breadcrumb — add category name as 3rd level when on a category page
-    const breadcrumbItems: object[] = [
-      { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
-      { "@type": "ListItem", position: 2, name: "Catalog", item: `${BASE_URL}/catalog` },
-    ];
-    if (categoryId) {
-      const catTitle = heading.split(" — ")[0] || heading;
-      breadcrumbItems.push({
-        "@type": "ListItem", position: 3, name: catTitle, item: canonical,
-      });
     }
 
     return {
@@ -645,7 +475,10 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         {
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
-          itemListElement: breadcrumbItems,
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+            { "@type": "ListItem", position: 2, name: "Catalog", item: `${BASE_URL}/catalog` },
+          ],
         },
       ],
       prerenderedHtml: prerenderedHtml || undefined,
@@ -691,7 +524,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Learn about A2Z BOOKSHOP, your premier destination for rare, collectible, and contemporary books. Quality guaranteed, fast shipping, and exceptional customer service.",
       keywords:
-        "about a2z bookshop, a2zbookshop, a2z books, a2z book shop, international online bookstore, rare books, collectible books, global book seller",
+        "about a2z bookshop, international online bookstore, rare books, collectible books, global book seller",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/about`,
       type: "website",
@@ -719,7 +552,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Get in touch with A2Z BOOKSHOP. Contact our customer service team for book inquiries, orders, shipping questions, or general assistance.",
       keywords:
-        "contact a2z bookshop, a2zbookshop, a2z book shop, book store contact, customer service, book inquiries",
+        "contact a2z bookshop, book store contact, customer service, book inquiries",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/contact`,
       type: "website",
@@ -745,7 +578,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Find answers to common questions about ordering, payment, shipping, returns, and more at A2Z BOOKSHOP.",
       keywords:
-        "a2z bookshop faq, a2zbookshop faq, online bookstore questions, shipping faq, return policy, payment methods",
+        "a2z bookshop faq, online bookstore questions, shipping faq, return policy, payment methods",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/faq`,
       type: "website",
@@ -771,7 +604,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Learn about our shipping options, delivery times, and costs at A2Z BOOKSHOP. Fast and reliable book delivery worldwide.",
       keywords:
-        "a2z bookshop shipping, a2zbookshop shipping, international book delivery, worldwide shipping rates, delivery time, free shipping",
+        "a2z bookshop shipping, international book delivery, worldwide shipping rates, delivery time, free shipping",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/shipping-info`,
       type: "website",
@@ -797,7 +630,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Read our return policy at A2Z BOOKSHOP. Easy returns. Customer satisfaction guaranteed.",
       keywords:
-        "a2z bookshop return policy, a2zbookshop returns, book return, refund policy, return books online",
+        "a2z bookshop return policy, book return, refund policy, return books online",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/return-policy`,
       type: "website",
@@ -823,7 +656,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Learn about our order cancellation policy at A2Z BOOKSHOP.",
       keywords:
-        "a2z bookshop cancellation, a2zbookshop cancel order, cancel order, order cancellation policy",
+        "a2z bookshop cancellation, cancel order, order cancellation policy",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/cancellation-policy`,
       type: "website",
@@ -838,7 +671,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       title: "Terms and Conditions | A2Z BOOKSHOP",
       description:
         "Read the terms and conditions for using A2Z BOOKSHOP, your online book store.",
-      keywords: "a2z bookshop terms, a2zbookshop terms, terms of service, conditions of use",
+      keywords: "a2z bookshop terms, terms of service, conditions of use",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/terms-and-conditions`,
       type: "website",
@@ -853,7 +686,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       title: "Privacy Policy | A2Z BOOKSHOP",
       description:
         "Read our privacy policy to understand how A2Z BOOKSHOP collects, uses, and protects your personal data.",
-      keywords: "a2z bookshop privacy, a2zbookshop privacy, privacy policy, data protection",
+      keywords: "a2z bookshop privacy, privacy policy, data protection",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/privacy-policy`,
       type: "website",
@@ -869,7 +702,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Browse our curated selection of gift books and box sets at A2Z BOOKSHOP. Perfect gifts for every book lover.",
       keywords:
-        "gift books, book gifts, box sets, book sets, gift ideas for book lovers worldwide, a2z bookshop, a2zbookshop",
+        "gift books, book gifts, box sets, book sets, gift ideas for book lovers worldwide",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/gift-items`,
       type: "website",
@@ -895,7 +728,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Track the delivery status of your book order at A2Z BOOKSHOP. Enter your order number to get real-time updates.",
       keywords:
-        "track order, order tracking, delivery status, a2z bookshop order, a2zbookshop",
+        "track order, order tracking, delivery status, a2z bookshop order",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/track-order`,
       type: "website",
@@ -921,7 +754,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Can't find the book you're looking for? Request it at A2Z BOOKSHOP and we'll source it for you. Any title, any author.",
       keywords:
-        "request book, book request, find a book, source books, a2z bookshop, a2zbookshop",
+        "request book, book request, find a book, source books, a2z bookshop",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/request-book`,
       type: "website",
@@ -947,7 +780,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Initiate a return or check your refund status at A2Z BOOKSHOP. Hassle-free returns with customer satisfaction guaranteed.",
       keywords:
-        "returns, refunds, book return, return request, a2z bookshop returns, a2zbookshop",
+        "returns, refunds, book return, return request, a2z bookshop returns",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/returns`,
       type: "website",
@@ -983,11 +816,11 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
  */
 function resolveDefaultMeta(urlPath: string): PageMeta {
   return {
-    title: "A2Z BOOKSHOP — Buy Books Online | New & Used Books | Worldwide Shipping",
+    title: "A2Z BOOKSHOP — Your Online Book Store",
     description:
-      "A2Z Bookshop (a2zbookshop.com) — Your trusted online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
+      "A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
     keywords:
-      "a2z, a2z bookshop, a2zbookshop, a2z book shop, a2z books, books, online bookstore, buy books worldwide, new books, used books, fiction, non-fiction, bestsellers",
+      "books, online bookstore, buy books worldwide, new books, used books, fiction, non-fiction, bestsellers",
     ogImage: `${BASE_URL}/favicon.png`,
     canonical: `${BASE_URL}${urlPath}`,
     type: "website",
@@ -1043,7 +876,6 @@ export async function injectSSRMeta(
       .join("\n");
 
     const headBlock = `    <!-- SSR meta start -->
-    <meta charset="UTF-8" />
     <title>${et(meta.title)}</title>
     <meta name="title" content="${ea(meta.title)}">
     <meta name="description" content="${ea(meta.description)}">
