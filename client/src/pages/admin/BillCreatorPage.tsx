@@ -163,6 +163,10 @@ export default function BillCreatorPage() {
   const setField = (field: keyof CustomerInfo, value: string) =>
     setCustomer((prev) => ({ ...prev, [field]: value }));
 
+  // ── Bill date ────────────────────────────
+  const today = new Date().toISOString().split("T")[0];
+  const [billDate, setBillDate] = useState(today);
+
   // ── Financials ───────────────────────────
   const [shipping, setShipping] = useState(0);
   const [taxRate, setTaxRate] = useState(0); // percentage
@@ -203,6 +207,7 @@ export default function BillCreatorPage() {
         total,
         paymentMethod,
         note: billNote,
+        billDate,
       };
 
       const res = await fetch("/api/admin/generate-bill", {
@@ -576,6 +581,15 @@ export default function BillCreatorPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="bill-date">Bill Date</Label>
+                  <Input
+                    id="bill-date"
+                    type="date"
+                    value={billDate}
+                    onChange={(e) => setBillDate(e.target.value)}
+                  />
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="shipping-cost">Shipping ($)</Label>
                   <Input

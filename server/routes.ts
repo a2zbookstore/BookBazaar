@@ -1167,13 +1167,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total = 0,
         paymentMethod = 'Cash',
         note = '',
+        billDate: billDateInput,
       } = req.body;
 
       if (!Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: 'At least one item is required' });
       }
 
-      const billDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const parsedDate = billDateInput ? new Date(billDateInput) : new Date();
+      const billDate = (isNaN(parsedDate.getTime()) ? new Date() : parsedDate)
+        .toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       const billNumber = `ADM-${Date.now().toString().slice(-8)}`;
 
       const shippingLines = customer
