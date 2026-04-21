@@ -47,11 +47,11 @@ export async function generateSitemap() {
   </url>`;
     });
 
-    // Add category pages
+    // Add category pages (each category gets its own indexed page)
     categories.forEach((category: any) => {
       sitemap += `
   <url>
-    <loc>${baseUrl}/catalog?category=${encodeURIComponent(category.name)}</loc>
+    <loc>${baseUrl}/catalog?categoryId=${category.id}</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>`;
