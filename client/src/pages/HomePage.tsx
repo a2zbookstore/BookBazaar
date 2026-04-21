@@ -255,7 +255,9 @@ export default function HomePage() {
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
+      "@id": "https://a2zbookshop.com/#website",
       "name": "A2Z BOOKSHOP",
+      "alternateName": ["A2Z Bookshop", "A2Z Book Shop", "a2z bookshop", "a2z books", "A to Z Bookshop"],
       "url": "https://a2zbookshop.com",
       "description": "Buy books online at best prices. Fiction, non-fiction, bestsellers and more.",
       "potentialAction": {
@@ -269,7 +271,7 @@ export default function HomePage() {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "A2Z BOOKSHOP",
-      "alternateName": "A2Z Book Shop",
+      "alternateName": ["A2Z Bookshop", "A2Z Book Shop", "a2z bookshop", "a2z books", "A to Z Bookshop"],
       "url": "https://a2zbookshop.com",
       "logo": "https://a2zbookshop.com/logo.jpeg",
       "image": "https://a2zbookshop.com/logo.jpeg",

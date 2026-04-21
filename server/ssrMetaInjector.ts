@@ -369,17 +369,16 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         {
           "@context": "https://schema.org",
           "@type": "WebSite",
+          "@id": `${BASE_URL}/#website`,
           name: "A2Z BOOKSHOP",
           alternateName: [
             "A2Z Bookshop",
             "A2Z Book Shop",
-            "a2zbookshop",
             "a2z bookshop",
             "a2z books",
             "a2z book store",
             "A to Z Bookshop",
             "a-to-z bookshop",
-            "a2zbookshop.com",
           ],
           url: BASE_URL,
           potentialAction: {
@@ -399,13 +398,11 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
           alternateName: [
             "A2Z Bookshop",
             "A2Z Book Shop",
-            "a2zbookshop",
             "a2z bookshop",
             "a2z books",
             "a2z book store",
             "A to Z Bookshop",
             "a-to-z bookshop",
-            "a2zbookshop.com",
           ],
           url: BASE_URL,
           logo: `${BASE_URL}/logo.jpeg`,
@@ -1069,8 +1066,9 @@ ${schemaScripts}
     let result = html.replace(/<title>[^<]*<\/title>/, "");
     result = result.replace(/<meta name="description"[^>]*>/i, "");
     result = result.replace(/<meta name="robots"[^>]*>/i, "");
-    // Remove the static Organization JSON-LD from index.html — SSR injects per-route schemas
+    // Remove the static JSON-LD schemas from index.html — SSR injects per-route schemas
     result = result.replace(/<script type="application\/ld\+json" id="static-org-schema">[\s\S]*?<\/script>/i, "");
+    result = result.replace(/<script type="application\/ld\+json" id="static-website-schema">[\s\S]*?<\/script>/i, "");
 
     // Inject our block just before </head>
     result = result.replace("</head>", `${headBlock}\n  </head>`);
