@@ -81,6 +81,8 @@ interface Visitor {
   utmSource: string | null;
   utmMedium: string | null;
   utmCampaign: string | null;
+  ipAddress: string | null;
+  isBot: boolean;
 }
 
 interface VisitorDetail {
@@ -147,6 +149,7 @@ interface GroupedVisitor {
   userFirstName: string | null;
   userLastName: string | null;
   ipAddress: string | null;
+  isBot: boolean;
   totalSessions: number;
   totalPageViews: number;
   firstSeen: string;
@@ -183,6 +186,11 @@ interface ActiveUser {
   currentPage: string | null;
   country: string | null;
   city: string | null;
+  deviceType: string | null;
+  browser: string | null;
+  ipAddress: string | null;
+  isBot: boolean;
+  isGuest: boolean;
 }
 
 export default function AnalyticsPage() {
@@ -491,15 +499,23 @@ export default function AnalyticsPage() {
                     </div>
                   )}
 
+                  {/* Bot badge */}
+                  {s.isBot && (
+                    <div className={`absolute ${isLive ? 'top-12' : 'top-4'} right-5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-400/25 text-red-200 text-[10px] font-semibold`}>
+                      BOT / CRAWLER
+                    </div>
+                  )}
+
                   {/* Avatar + name */}
                   <div className="flex items-center gap-3 relative z-10">
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-lg font-bold shrink-0">
-                      {s.userId ? (s.userFirstName?.[0] || s.userEmail?.[0] || 'U').toUpperCase() : '?'}
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold shrink-0 ${s.isBot ? 'bg-red-400/30' : 'bg-white/20'}`}>
+                      {s.isBot ? '🤖' : s.userId ? (s.userFirstName?.[0] || s.userEmail?.[0] || 'U').toUpperCase() : '?'}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-bold text-base leading-tight">{s.userId ? displayName : 'Anonymous Visitor'}</p>
+                      <p className="font-bold text-base leading-tight">{s.isBot ? 'Bot / Crawler' : s.userId ? displayName : 'Anonymous Visitor'}</p>
                       {s.userEmail && <p className="text-white/70 text-xs mt-0.5 truncate">{s.userEmail}</p>}
-                      {!s.userId && <p className="text-white/50 text-xs mt-0.5">Guest session</p>}
+                      {!s.userId && !s.isBot && <p className="text-white/50 text-xs mt-0.5">Guest session</p>}
+                      {s.ipAddress && <p className="text-white/50 text-xs mt-0.5 font-mono">IP: {s.ipAddress}</p>}
                     </div>
                   </div>
 
@@ -819,24 +835,56 @@ export default function AnalyticsPage() {
           <div>
             <div className="flex items-center gap-1.5 mb-2">
               <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-xs font-semibold text-gray-700">Logged-in users ({activeUsers?.length ?? 0})</span>
+              <span className="text-xs font-semibold text-gray-700">
+                Live users ({activeUsers?.filter(u => !u.isBot).length ?? 0})
+                {activeUsers && activeUsers.length > 0 && (
+                  <span className="text-gray-400 font-normal ml-1">
+                    · {activeUsers.filter(u => !u.isGuest && !u.isBot).length} logged-in · {activeUsers.filter(u => u.isGuest && !u.isBot).length} guest
+                    {activeUsers.filter(u => u.isBot).length > 0 && (
+                      <span className="text-red-400"> · {activeUsers.filter(u => u.isBot).length} bot</span>
+                    )}
+                  </span>
+                )}
+              </span>
             </div>
             {activeUsers && activeUsers.length > 0 ? (
-              <div className="space-y-1.5">
-                {activeUsers.slice(0, 8).map((user, i) => (
+              <div className="space-y-1.5 max-h-[320px] overflow-y-auto">
+                {activeUsers.slice(0, 20).map((user, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedVisitor(user.sessionId)}
-                    className="w-full flex items-start gap-2 bg-white rounded-xl px-3 py-2 border border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer text-left"
+                    className={`w-full flex items-start gap-2 bg-white rounded-xl px-3 py-2 border transition-all cursor-pointer text-left ${
+                      user.isBot
+                        ? 'border-red-100 hover:border-red-300 hover:bg-red-50'
+                        : user.isGuest
+                          ? 'border-amber-100 hover:border-amber-300 hover:bg-amber-50'
+                          : 'border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50'
+                    }`}
                   >
                     <span className="relative flex h-1.5 w-1.5 mt-1.5 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${user.isBot ? 'bg-red-400' : user.isGuest ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                      <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${user.isBot ? 'bg-red-500' : user.isGuest ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-medium text-gray-700 block truncate">
-                        {getUserDisplayName(user.userFirstName, user.userLastName, user.userEmail)}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-gray-700 truncate">
+                          {user.isBot
+                            ? `Bot${user.browser ? ` · ${user.browser}` : ''}${user.deviceType ? ` · ${user.deviceType}` : ''}`
+                            : user.isGuest
+                              ? `Guest${user.browser ? ` · ${user.browser}` : ''}${user.deviceType ? ` · ${user.deviceType}` : ''}`
+                              : getUserDisplayName(user.userFirstName, user.userLastName, user.userEmail)
+                          }
+                        </span>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${
+                          user.isBot
+                            ? 'bg-red-100 text-red-700'
+                            : user.isGuest
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {user.isBot ? 'BOT' : user.isGuest ? 'GUEST' : 'USER'}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-[10px] text-violet-500 truncate">{user.currentPage || '/'}</span>
                         {user.country && (
@@ -851,7 +899,7 @@ export default function AnalyticsPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-400 italic">No logged-in users active right now</p>
+              <p className="text-xs text-gray-400 italic">No active users right now</p>
             )}
           </div>
         </div>
@@ -1090,23 +1138,34 @@ export default function AnalyticsPage() {
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                   >
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                      group.isLoggedIn ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"
+                      group.isBot ? "bg-red-100 text-red-700" : group.isLoggedIn ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"
                     }`}>
-                      {group.isLoggedIn
-                        ? (group.userFirstName?.[0] || group.userEmail?.[0] || 'U').toUpperCase()
-                        : '?'}
+                      {group.isBot
+                        ? '🤖'
+                        : group.isLoggedIn
+                          ? (group.userFirstName?.[0] || group.userEmail?.[0] || 'U').toUpperCase()
+                          : '?'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-gray-800">
-                          {group.isLoggedIn
-                            ? getUserDisplayName(group.userFirstName, group.userLastName, group.userEmail)
-                            : 'Guest Visitor'}
+                          {group.isBot
+                            ? 'Bot / Crawler'
+                            : group.isLoggedIn
+                              ? getUserDisplayName(group.userFirstName, group.userLastName, group.userEmail)
+                              : 'Guest Visitor'}
                         </span>
-                        {group.isLoggedIn && (
+                        {group.isBot ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[10px] font-semibold">
+                            BOT
+                          </span>
+                        ) : group.isLoggedIn ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold">
                             <UserCheck className="w-3 h-3" /> Logged in
                           </span>
+                        ) : null}
+                        {group.ipAddress && (
+                          <span className="text-[10px] text-gray-400 font-mono">{group.ipAddress}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap text-[10px] text-gray-400">

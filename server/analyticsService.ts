@@ -9,7 +9,7 @@ import {
   type InsertSession,
   type InsertEvent
 } from "@shared/schema";
-import { eq, sql, and, gte, lte, desc, isNotNull } from "drizzle-orm";
+import { eq, sql, and, gte, lte, desc, isNotNull, isNull } from "drizzle-orm";
 import type { Request } from "express";
 import { nanoid } from "nanoid";
 
@@ -55,6 +55,34 @@ function parseUserAgent(userAgent: string) {
   return { deviceType, browser, os };
 }
 
+// Detect bots/crawlers from user-agent string
+function detectBot(userAgent: string): boolean {
+  if (!userAgent) return true;
+  const ua = userAgent.toLowerCase();
+  const botPatterns = [
+    'bot', 'crawl', 'spider', 'slurp', 'mediapartners', 'facebookexternalhit',
+    'linkedinbot', 'twitterbot', 'whatsapp', 'telegrambot', 'discordbot',
+    'bingpreview', 'yandex', 'baidu', 'duckduckbot', 'sogou', 'exabot',
+    'ia_archiver', 'archive.org', 'semrush', 'ahrefs', 'mj12bot', 'dotbot',
+    'petalbot', 'bytespider', 'gptbot', 'chatgpt', 'claudebot', 'anthropic',
+    'applebot', 'dataforseo', 'serpstat', 'screaming frog', 'sitebulb',
+    'lighthouse', 'pagespeed', 'gtmetrix', 'pingdom', 'uptimerobot',
+    'headlesschrome', 'phantomjs', 'puppeteer', 'playwright', 'selenium',
+    'curl', 'wget', 'httpx', 'python-requests', 'go-http-client', 'java/',
+    'axios', 'node-fetch', 'undici', 'libwww', 'lwp-trivial', 'scrapy',
+  ];
+  return botPatterns.some(pattern => ua.includes(pattern));
+}
+
+// Extract IP from request
+function getRequestIp(req: Request): string {
+  return (
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    'unknown'
+  );
+}
+
 // Get or create session
 export async function getOrCreateSession(req: Request): Promise<string> {
   // Get session ID from cookie or create new one
@@ -79,6 +107,8 @@ export async function getOrCreateSession(req: Request): Promise<string> {
     const userAgent = req.headers['user-agent'] || '';
     const { deviceType, browser, os } = parseUserAgent(userAgent);
     const referrer = req.headers['referer'] || req.headers['referrer'] || '';
+    const ipAddress = getRequestIp(req);
+    const isBot = detectBot(userAgent);
     
     // Parse UTM parameters
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -89,8 +119,12 @@ export async function getOrCreateSession(req: Request): Promise<string> {
     await db.insert(analyticsSessions).values({
       sessionId,
       userId: getRequestUserId(req),
+      deviceType,
       browser,
       os,
+      ipAddress,
+      userAgent,
+      isBot,
       landingPage: req.path,
       referrer,
       utmSource,
@@ -138,7 +172,7 @@ export async function updateSessionHeartbeat(
     const currentUserId = getRequestUserId(req);
 
     const existing = await db
-      .select({ userId: analyticsSessions.userId, country: analyticsSessions.country, city: analyticsSessions.city })
+      .select({ userId: analyticsSessions.userId, country: analyticsSessions.country, city: analyticsSessions.city, ipAddress: analyticsSessions.ipAddress })
       .from(analyticsSessions)
       .where(eq(analyticsSessions.sessionId, sessionId))
       .limit(1);
@@ -156,6 +190,18 @@ export async function updateSessionHeartbeat(
     // backfill userId if user has since logged in
     if (currentUserId && !existing[0].userId) {
       updatePayload.userId = currentUserId;
+    }
+    // backfill ipAddress if not yet stored (e.g. sessions created before migration)
+    if (!existing[0].ipAddress) {
+      const ipAddr = getRequestIp(req);
+      if (ipAddr) {
+        updatePayload.ipAddress = ipAddr;
+      }
+      const ua = req.headers['user-agent'] || '';
+      if (ua) {
+        updatePayload.userAgent = ua;
+        updatePayload.isBot = detectBot(ua);
+      }
     }
     // backfill country/city from client-detected location if not yet stored
     const clientLocation = (req as any).userLocation;
@@ -452,7 +498,7 @@ export async function getEventAnalytics(startDate: Date, endDate: Date) {
 
 // Get visitors grouped by identity (userId for logged-in, IP for guests)
 export async function getGroupedVisitors(startDate: Date, endDate: Date, limit = 200) {
-  // Fetch all sessions in range with user info and their first IP from page views
+  // Fetch all sessions in range with user info
   const sessions = await db
     .select({
       sessionId: analyticsSessions.sessionId,
@@ -473,12 +519,8 @@ export async function getGroupedVisitors(startDate: Date, endDate: Date, limit =
       utmSource: analyticsSessions.utmSource,
       utmMedium: analyticsSessions.utmMedium,
       utmCampaign: analyticsSessions.utmCampaign,
-      // get first IP for this session from page_views
-      ipAddress: sql<string>`(
-        SELECT ip_address FROM analytics_page_views
-        WHERE session_id = ${analyticsSessions.sessionId}
-        ORDER BY created_at ASC LIMIT 1
-      )`,
+      ipAddress: analyticsSessions.ipAddress,
+      isBot: analyticsSessions.isBot,
     })
     .from(analyticsSessions)
     .leftJoin(users, eq(analyticsSessions.userId, users.id))
@@ -500,6 +542,7 @@ export async function getGroupedVisitors(startDate: Date, endDate: Date, limit =
     userFirstName: string | null;
     userLastName: string | null;
     ipAddress: string | null;
+    isBot: boolean;
     totalSessions: number;
     totalPageViews: number;
     firstSeen: string;
@@ -541,6 +584,7 @@ export async function getGroupedVisitors(startDate: Date, endDate: Date, limit =
         userFirstName: s.userFirstName,
         userLastName: s.userLastName,
         ipAddress: s.userId ? null : (s.ipAddress || null),
+        isBot: !!s.isBot,
         totalSessions: 0,
         totalPageViews: 0,
         firstSeen: s.firstVisit?.toISOString?.() ?? String(s.firstVisit),
@@ -675,7 +719,7 @@ export async function getActiveLoggedInUsers() {
 
   // Get all active sessions for logged-in users, then deduplicate by userId
   // keeping only the most-recently-active session per user
-  const rows = await db
+  const loggedInRows = await db
     .select({
       userId: analyticsSessions.userId,
       userEmail: users.email,
@@ -685,6 +729,11 @@ export async function getActiveLoggedInUsers() {
       sessionId: analyticsSessions.sessionId,
       country: analyticsSessions.country,
       city: analyticsSessions.city,
+      deviceType: analyticsSessions.deviceType,
+      browser: analyticsSessions.browser,
+      ipAddress: analyticsSessions.ipAddress,
+      isBot: analyticsSessions.isBot,
+      isGuest: sql<boolean>`false`,
       currentPage: sql<string>`(
         SELECT page_path FROM analytics_page_views
         WHERE session_id = ${analyticsSessions.sessionId}
@@ -703,15 +752,48 @@ export async function getActiveLoggedInUsers() {
     .limit(100);
 
   // Deduplicate: one entry per userId, keep the most recent session
-  const seen = new Map<string, typeof rows[0]>();
-  for (const row of rows) {
+  const seen = new Map<string, typeof loggedInRows[0]>();
+  for (const row of loggedInRows) {
     if (!row.userId) continue;
     if (!seen.has(row.userId)) {
       seen.set(row.userId, row);
     }
   }
+  const loggedIn = Array.from(seen.values()).slice(0, 20);
 
-  return Array.from(seen.values()).slice(0, 20);
+  // Get active guest sessions (no userId)
+  const guestRows = await db
+    .select({
+      userId: analyticsSessions.userId,
+      userEmail: sql<string | null>`null`,
+      userFirstName: sql<string | null>`null`,
+      userLastName: sql<string | null>`null`,
+      lastActivity: analyticsSessions.lastActivity,
+      sessionId: analyticsSessions.sessionId,
+      country: analyticsSessions.country,
+      city: analyticsSessions.city,
+      deviceType: analyticsSessions.deviceType,
+      browser: analyticsSessions.browser,
+      ipAddress: analyticsSessions.ipAddress,
+      isBot: analyticsSessions.isBot,
+      isGuest: sql<boolean>`true`,
+      currentPage: sql<string>`(
+        SELECT page_path FROM analytics_page_views
+        WHERE session_id = ${analyticsSessions.sessionId}
+        ORDER BY created_at DESC LIMIT 1
+      )`,
+    })
+    .from(analyticsSessions)
+    .where(
+      and(
+        gte(analyticsSessions.lastActivity, windowAgo),
+        isNull(analyticsSessions.userId)
+      )
+    )
+    .orderBy(desc(analyticsSessions.lastActivity))
+    .limit(20);
+
+  return [...loggedIn, ...guestRows];
 }
 
 // Get detailed information for a specific visitor/session
@@ -738,6 +820,8 @@ export async function getVisitorDetail(sessionId: string) {
       utmSource: analyticsSessions.utmSource,
       utmMedium: analyticsSessions.utmMedium,
       utmCampaign: analyticsSessions.utmCampaign,
+      ipAddress: analyticsSessions.ipAddress,
+      isBot: analyticsSessions.isBot,
     })
     .from(analyticsSessions)
     .leftJoin(users, eq(analyticsSessions.userId, users.id))
