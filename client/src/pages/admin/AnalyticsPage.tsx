@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays } from "date-fns";
+import { format, subDays, startOfDay, endOfDay, startOfToday, startOfYesterday, endOfYesterday } from "date-fns";
 import {
   Users, Eye, TrendingUp, Globe, Monitor, Smartphone, Tablet, Clock,
   MousePointer, Database, Trash2, RefreshCw, UserCheck, UserX,
-  BarChart3, ChevronDown, ChevronRight,
+  BarChart3, ChevronDown, ChevronRight, CalendarDays,
 } from "lucide-react";
 import {
   AreaChart, Area,
@@ -16,6 +16,8 @@ import {
 } from "recharts";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -184,7 +186,10 @@ interface ActiveUser {
 }
 
 export default function AnalyticsPage() {
-  const [dateRange, setDateRange] = useState(30); // days
+  const [activePreset, setActivePreset] = useState<string>('30d');
+  const [customFrom, setCustomFrom] = useState<Date | undefined>(undefined);
+  const [customTo, setCustomTo] = useState<Date | undefined>(undefined);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isCleaningUp, setIsCleaningUp] = useState(false);
@@ -199,8 +204,55 @@ export default function AnalyticsPage() {
     });
   };
 
-  const startDate = useMemo(() => subDays(new Date(), dateRange), [dateRange]);
-  const endDate = useMemo(() => new Date(), []);
+  const DATE_PRESETS: { key: string; label: string }[] = [
+    { key: 'today', label: 'Today' },
+    { key: 'yesterday', label: 'Yesterday' },
+    { key: '7d', label: '7 days' },
+    { key: '30d', label: '30 days' },
+    { key: '90d', label: '90 days' },
+    { key: 'custom', label: 'Custom' },
+  ];
+
+  const { startDate, endDate } = useMemo(() => {
+    switch (activePreset) {
+      case 'today':
+        return { startDate: startOfToday(), endDate: endOfDay(new Date()) };
+      case 'yesterday':
+        return { startDate: startOfYesterday(), endDate: endOfYesterday() };
+      case '7d':
+        return { startDate: startOfDay(subDays(new Date(), 7)), endDate: new Date() };
+      case '90d':
+        return { startDate: startOfDay(subDays(new Date(), 90)), endDate: new Date() };
+      case 'custom':
+        return {
+          startDate: customFrom ? startOfDay(customFrom) : startOfDay(subDays(new Date(), 30)),
+          endDate: customTo ? endOfDay(customTo) : endOfDay(new Date()),
+        };
+      default: // 30d
+        return { startDate: startOfDay(subDays(new Date(), 30)), endDate: new Date() };
+    }
+  }, [activePreset, customFrom, customTo]);
+
+  const handlePresetClick = (key: string) => {
+    setActivePreset(key);
+    if (key === 'custom') {
+      setCalendarOpen(true);
+    }
+  };
+
+  const dateRangeLabel = useMemo(() => {
+    switch (activePreset) {
+      case 'today': return 'Today';
+      case 'yesterday': return 'Yesterday';
+      case '7d': return 'Last 7 days';
+      case '90d': return 'Last 90 days';
+      case 'custom':
+        if (customFrom && customTo) return `${format(customFrom, 'MMM d')} – ${format(customTo, 'MMM d')}`;
+        if (customFrom) return `Since ${format(customFrom, 'MMM d')}`;
+        return 'Custom range';
+      default: return 'Last 30 days';
+    }
+  }, [activePreset, customFrom, customTo]);
 
   // Fetch analytics overview
   const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery<AnalyticsOverview>({
@@ -615,19 +667,88 @@ export default function AnalyticsPage() {
             </div>
           </div>
           <div className="flex items-center flex-wrap gap-2">
-            {([7, 30, 90] as const).map((d) => (
+            {DATE_PRESETS.map((p) => (
               <button
-                key={d}
-                onClick={() => setDateRange(d)}
+                key={p.key}
+                onClick={() => handlePresetClick(p.key)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  dateRange === d
+                  activePreset === p.key
                     ? "bg-white text-violet-700 shadow-sm"
                     : "bg-white/20 text-white hover:bg-white/30"
                 }`}
               >
-                {d === 7 ? "Last 7 days" : d === 30 ? "Last 30 days" : "Last 90 days"}
+                {p.key === 'custom' && activePreset === 'custom' && customFrom
+                  ? `${format(customFrom, 'MMM d')} – ${customTo ? format(customTo, 'MMM d') : 'now'}`
+                  : p.label}
               </button>
             ))}
+
+            {/* Custom date range popover */}
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/20 text-white text-xs font-semibold hover:bg-white/30 transition-all"
+                  onClick={() => setCalendarOpen(true)}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end" sideOffset={8}>
+                <div className="p-3 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] font-medium text-gray-500 block mb-1">From</label>
+                      <div className="text-xs font-semibold text-gray-700 px-2 py-1 rounded-md bg-gray-50 border">
+                        {customFrom ? format(customFrom, 'MMM d, yyyy') : 'Select start'}
+                      </div>
+                    </div>
+                    <span className="text-gray-300 mt-4">→</span>
+                    <div className="flex-1">
+                      <label className="text-[10px] font-medium text-gray-500 block mb-1">To</label>
+                      <div className="text-xs font-semibold text-gray-700 px-2 py-1 rounded-md bg-gray-50 border">
+                        {customTo ? format(customTo, 'MMM d, yyyy') : 'Select end'}
+                      </div>
+                    </div>
+                  </div>
+                  <Calendar
+                    mode="range"
+                    selected={customFrom && customTo ? { from: customFrom, to: customTo } : customFrom ? { from: customFrom, to: undefined } : undefined}
+                    onSelect={(range: any) => {
+                      setCustomFrom(range?.from);
+                      setCustomTo(range?.to);
+                      if (range?.from) setActivePreset('custom');
+                    }}
+                    numberOfMonths={2}
+                    disabled={{ after: new Date() }}
+                    className="rounded-md border-0"
+                  />
+                  <div className="flex justify-end gap-2 pt-1 border-t">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        setCustomFrom(undefined);
+                        setCustomTo(undefined);
+                        setActivePreset('30d');
+                        setCalendarOpen(false);
+                      }}
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="text-xs h-7 bg-violet-600 hover:bg-violet-700"
+                      onClick={() => setCalendarOpen(false)}
+                      disabled={!customFrom}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <button
               onClick={handleRefresh}
               disabled={isRefreshing || isLoading}
@@ -739,10 +860,10 @@ export default function AnalyticsPage() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {([
-          { label: "Total Visitors",   value: overview?.totalVisitors ?? 0,     icon: Users,      sub: `Last ${dateRange} days`,  gradient: "from-violet-400 to-purple-500",  bg: "bg-violet-50",  iconCls: "text-violet-600"  },
-          { label: "Total Page Views", value: overview?.totalPageViews ?? 0,    icon: Eye,        sub: `Last ${dateRange} days`,  gradient: "from-blue-400 to-indigo-500",    bg: "bg-blue-50",    iconCls: "text-blue-600"    },
-          { label: "New Visitors",     value: overview?.newVisitors ?? 0,       icon: TrendingUp, sub: overview && overview.totalVisitors > 0 ? `${Math.round((overview.newVisitors / overview.totalVisitors) * 100)}% of total` : `Last ${dateRange} days`, gradient: "from-emerald-400 to-teal-500", bg: "bg-emerald-50", iconCls: "text-emerald-600" },
-          { label: "Returning",        value: overview?.returningVisitors ?? 0, icon: UserCheck,  sub: overview && overview.totalVisitors > 0 ? `${Math.round((overview.returningVisitors / overview.totalVisitors) * 100)}% of total` : `Last ${dateRange} days`, gradient: "from-amber-400 to-orange-500", bg: "bg-amber-50", iconCls: "text-amber-600" },
+          { label: "Total Visitors",   value: overview?.totalVisitors ?? 0,     icon: Users,      sub: dateRangeLabel,  gradient: "from-violet-400 to-purple-500",  bg: "bg-violet-50",  iconCls: "text-violet-600"  },
+          { label: "Total Page Views", value: overview?.totalPageViews ?? 0,    icon: Eye,        sub: dateRangeLabel,  gradient: "from-blue-400 to-indigo-500",    bg: "bg-blue-50",    iconCls: "text-blue-600"    },
+          { label: "New Visitors",     value: overview?.newVisitors ?? 0,       icon: TrendingUp, sub: overview && overview.totalVisitors > 0 ? `${Math.round((overview.newVisitors / overview.totalVisitors) * 100)}% of total` : dateRangeLabel, gradient: "from-emerald-400 to-teal-500", bg: "bg-emerald-50", iconCls: "text-emerald-600" },
+          { label: "Returning",        value: overview?.returningVisitors ?? 0, icon: UserCheck,  sub: overview && overview.totalVisitors > 0 ? `${Math.round((overview.returningVisitors / overview.totalVisitors) * 100)}% of total` : dateRangeLabel, gradient: "from-amber-400 to-orange-500", bg: "bg-amber-50", iconCls: "text-amber-600" },
         ] as const).map(({ label, value, icon: Icon, sub, gradient, bg, iconCls }) => (
           <div key={label} className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-200 p-4 sm:p-5">
             <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${gradient} rounded-t-2xl`} />
@@ -771,7 +892,7 @@ export default function AnalyticsPage() {
             <TrendingUp className="w-4 h-4 text-violet-600" />
           </div>
           <h2 className="font-semibold text-gray-800">Traffic Over Time</h2>
-          <span className="ml-auto text-xs text-gray-400">Last {dateRange} days</span>
+          <span className="ml-auto text-xs text-gray-400">{dateRangeLabel}</span>
         </div>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={260}>
