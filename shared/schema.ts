@@ -801,3 +801,24 @@ export const insertEventSchema = createInsertSchema(analyticsEvents).omit({
 });
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+
+// Security Events table - tracks suspicious activity and blocked requests
+export const securityEvents = pgTable("security_events", {
+  id: serial("id").primaryKey(),
+  ip: varchar("ip", { length: 100 }).notNull(),
+  path: varchar("path", { length: 500 }).notNull(),
+  userAgent: text("user_agent"),
+  eventType: varchar("event_type", { length: 100 }).notNull(), // BLOCKED_IP, SENSITIVE_FILE_ACCESS, RATE_LIMIT_EXCEEDED, AUTO_BLOCKED
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_security_events_ip").on(table.ip),
+  index("idx_security_events_type").on(table.eventType),
+  index("idx_security_events_created").on(table.createdAt),
+]);
+
+export const insertSecurityEventSchema = createInsertSchema(securityEvents).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
+export type SecurityEvent = typeof securityEvents.$inferSelect;

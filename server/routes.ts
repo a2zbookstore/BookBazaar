@@ -2467,74 +2467,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Logout failed" });
     }
   });
-
-  // Admin authentication routes
+  // DEPRECATED: Old admin authentication routes (kept for backward compatibility)
+  // Admin access is now based on user role, not separate admin authentication
+  // Users with role="admin" in the users table can access admin panel
+  
   app.post("/api/admin/login", adminLoginRateLimit, async (req, res) => {
-    try {
-      const { username, password } = req.body;
-
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password required" });
-      }
-
-      const admin = await storage.getAdminByUsername(username);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      // Verify password with bcrypt (supports both bcrypt and legacy SHA-256 hashes)
-      const isAdminPasswordValid = admin.passwordHash.startsWith('$2')
-        ? await bcrypt.compare(password, admin.passwordHash)
-        : crypto.createHash('sha256').update(password).digest('hex') === admin.passwordHash;
-
-      if (!isAdminPasswordValid) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      // Upgrade legacy SHA-256 hash to bcrypt on successful login
-      if (!admin.passwordHash.startsWith('$2')) {
-        const upgradedHash = await bcrypt.hash(password, 12);
-        await storage.updateAdminPassword(admin.id, upgradedHash);
-      }
-
-      // Update last login
-      await storage.updateAdminLastLogin(admin.id);
-
-      // Set admin session
-      (req.session as any).adminId = admin.id;
-      (req.session as any).isAdmin = true;
-
-      // Save session before responding
-      req.session.save((err: any) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session save failed" });
-        }
-
-        res.json({
-          success: true,
-          admin: {
-            id: admin.id,
-            username: admin.username,
-            name: admin.name,
-            email: admin.email
-          }
-        });
-      });
-    } catch (error) {
-      console.error("Admin login error:", error);
-      res.status(500).json({ message: "Login failed" });
-    }
+    return res.status(410).json({ 
+      message: "Admin login method has changed. Please login as a user with admin role.",
+      deprecated: true 
+    });
   });
 
   app.post("/api/admin/logout", async (req, res) => {
-    try {
-      (req.session as any).adminId = null;
-      (req.session as any).isAdmin = false;
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Admin logout error:", error);
-      res.status(500).json({ message: "Logout failed" });
-    }
+    return res.status(410).json({ 
+      message: "Admin logout method has changed. Please use regular user logout.",
+      deprecated: true 
+    });
   });
 
   app.post("/api/admin/change-password", async (req, res) => {
@@ -2590,26 +2538,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin session check route
+  // Admin session check route - now checks if logged-in user has admin role
   app.get("/api/admin/user", async (req, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
+      // Check if user is logged in (either via email or Replit auth)
+      const userId = (req.session as any)?.userId;
+      const isCustomerAuth = (req.session as any)?.isCustomerAuth;
+      
+      let user = null;
+      
+      // Get user from email-based authentication
+      if (userId && isCustomerAuth) {
+        user = await storage.getUser(userId);
+      }
+      // Get user from Replit authentication
+      else if (req.isAuthenticated && req.isAuthenticated()) {
+        const replitUserId = req.user.claims.sub;
+        user = await storage.getUser(replitUserId);
+      }
+      
+      // Check if user exists and has admin role
+      if (!user || user.role !== "admin") {
+        return res.status(403).json({ 
+          message: "Access denied. Admin privileges required.",
+          requiresAdminRole: true 
+        });
       }
 
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
+      // Return user info for admin
       res.json({
-        id: admin.id,
-        username: admin.username,
-        name: admin.name,
-        email: admin.email
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role
       });
     } catch (error) {
       console.error("Admin session check error:", error);
@@ -6302,6 +6264,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: error instanceof Error ? error.message : "Failed to restore record"
       });
+    }
+  });
+
+  // Security Events Routes (Admin only)
+  app.get("/api/admin/security-events", requireAdminAuth, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const eventType = req.query.eventType as string;
+      const ip = req.query.ip as string;
+
+      const { db } = await import("./db");
+      const { securityEvents } = await import("@shared/schema");
+      const { desc, and, eq, sql } = await import("drizzle-orm");
+
+      const conditions = [];
+      if (eventType) conditions.push(eq(securityEvents.eventType, eventType));
+      if (ip) conditions.push(eq(securityEvents.ip, ip));
+
+      const events = await db
+        .select()
+        .from(securityEvents)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(securityEvents.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      const total = await db.select({ count: sql<number>`count(*)` }).from(securityEvents);
+
+      res.json({
+        events,
+        total: total[0]?.count || 0,
+        limit,
+        offset,
+      });
+    } catch (error) {
+      console.error("Error fetching security events:", error);
+      res.status(500).json({ message: "Failed to fetch security events" });
+    }
+  });
+
+  // Get security event statistics
+  app.get("/api/admin/security-stats", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { db } = await import("./db");
+      const { securityEvents } = await import("@shared/schema");
+      const { sql } = await import("drizzle-orm");
+
+      // Get counts by event type
+      const eventTypeCounts = await db
+        .select({
+          eventType: securityEvents.eventType,
+          count: sql<number>`count(*)`,
+        })
+        .from(securityEvents)
+        .groupBy(securityEvents.eventType);
+
+      // Get top attacking IPs
+      const topIPs = await db
+        .select({
+          ip: securityEvents.ip,
+          count: sql<number>`count(*)`,
+        })
+        .from(securityEvents)
+        .groupBy(securityEvents.ip)
+        .orderBy(sql`count(*) DESC`)
+        .limit(10);
+
+      // Get events from last 24 hours
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentEvents = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(securityEvents)
+        .where(sql`created_at > ${oneDayAgo}`);
+
+      // Get count of UNIQUE blocked IPs
+      const uniqueBlockedIPs = await db
+        .select({ count: sql<number>`count(distinct ip)` })
+        .from(securityEvents)
+        .where(sql`event_type IN ('BLOCKED_IP', 'AUTO_BLOCKED')`);
+
+      res.json({
+        eventTypeCounts,
+        topIPs,
+        last24Hours: recentEvents[0]?.count || 0,
+        uniqueBlockedIPs: uniqueBlockedIPs[0]?.count || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching security stats:", error);
+      res.status(500).json({ message: "Failed to fetch security statistics" });
+    }
+  });
+
+  // Block an IP address
+  app.post("/api/admin/security/block-ip", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { ip } = req.body;
+
+      if (!ip) {
+        return res.status(400).json({ message: "IP address is required" });
+      }
+
+      const { blockIP } = await import("./securityMiddleware");
+      blockIP(ip);
+
+      // Log this action
+      const { db } = await import("./db");
+      const { securityEvents } = await import("@shared/schema");
+      await db.insert(securityEvents).values({
+        ip,
+        path: '',
+        userAgent: 'Admin manual block',
+        eventType: 'BLOCKED_IP',
+      });
+
+      res.json({ message: `IP ${ip} has been blocked` });
+    } catch (error) {
+      console.error("Error blocking IP:", error);
+      res.status(500).json({ message: "Failed to block IP" });
+    }
+  });
+
+  // Unblock an IP address
+  app.post("/api/admin/security/unblock-ip", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { ip } = req.body;
+
+      if (!ip) {
+        return res.status(400).json({ message: "IP address is required" });
+      }
+
+      const { unblockIP } = await import("./securityMiddleware");
+      unblockIP(ip);
+
+      res.json({ message: `IP ${ip} has been unblocked` });
+    } catch (error) {
+      console.error("Error unblocking IP:", error);
+      res.status(500).json({ message: "Failed to unblock IP" });
     }
   });
 

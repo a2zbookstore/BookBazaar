@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { SecretAdminAccess } from "@/components/SecretAdminAccess";
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Send } from "lucide-react";
 import { useState } from "react";
+import DOMPurify from 'isomorphic-dompurify';
 import { useToast } from "@/hooks/use-toast";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/hooks/useAuth";
@@ -386,7 +387,12 @@ export default function Footer() {
         title={modalData?.title || ""}
       >
         {modalData && (
-          <div dangerouslySetInnerHTML={{ __html: modalData.content }} />
+          <div dangerouslySetInnerHTML={{ 
+            __html: DOMPurify.sanitize(modalData.content, {
+              ALLOWED_TAGS: ['h3', 'h4', 'p', 'ul', 'li', 'div', 'span', 'strong', 'br'],
+              ALLOWED_ATTR: ['class', 'style']
+            })
+          }} />
         )}
       </Modal>
     </footer>
