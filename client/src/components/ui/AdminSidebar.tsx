@@ -20,6 +20,7 @@ import {
   BarChart2,
   ClipboardList,
   Receipt,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,7 @@ const menuSections = [
     title: "System",
     items: [
       { href: "/admin/audit-trail", icon: FileText, label: "Audit Trail" },
+      { href: "/admin/security", icon: Shield, label: "Security" },
       { href: "/admin/shipping", icon: Truck, label: "Shipping" },
       { href: "/admin/settings", icon: Settings, label: "Settings" },
       { href: "/admin/account", icon: User, label: "Account" },

@@ -1,13 +1,55 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
+import helmet from 'helmet';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { cleanupOldAnalytics } from "./analyticsCleanup";
+import { securityMiddleware } from "./securityMiddleware";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Helmet security headers - including CSP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "js.stripe.com",
+        "www.paypal.com",
+        "checkout.razorpay.com",
+        "'unsafe-inline'" // TODO: Remove after fixing inline scripts
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:", "res.cloudinary.com"],
+      connectSrc: ["'self'", "api.stripe.com", "api.paypal.com"],
+      frameSrc: ["js.stripe.com", "www.paypal.com"],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  frameguard: { action: 'deny' },
+  hidePoweredBy: true,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  ieNoOpen: true,
+  noSniff: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  xssFilter: true
+}));
+
+// Security middleware - MUST be after helmet
+app.use(securityMiddleware);
 
 // Add CORS headers for development — restrict to localhost only
 if (process.env.NODE_ENV === 'development') {

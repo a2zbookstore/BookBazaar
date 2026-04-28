@@ -6,6 +6,22 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 
+/**
+ * Sanitizes email addresses to prevent header injection attacks
+ */
+function sanitizeEmail(email: string): string {
+  if (!email || typeof email !== 'string') return '';
+  return email.replace(/[\r\n\0]/g, '').trim().toLowerCase();
+}
+
+/**
+ * Validates email format
+ */
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
 // Request password reset
 export async function requestPasswordReset(req: Request, res: Response) {
   try {
@@ -15,8 +31,14 @@ export async function requestPasswordReset(req: Request, res: Response) {
       return res.status(400).json({ message: 'Email is required' });
     }
 
+    // Sanitize and validate email
+    const sanitizedEmail = sanitizeEmail(email);
+    if (!isValidEmail(sanitizedEmail)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
     // Find user by email
-    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const user = await db.select().from(users).where(eq(users.email, sanitizedEmail)).limit(1);
 
     if (user.length === 0) {
       // Don't reveal if email exists or not for security
@@ -40,7 +62,7 @@ export async function requestPasswordReset(req: Request, res: Response) {
 
     // Send password reset email using Zoho Mail
     const emailSent = await sendPasswordResetEmail({
-      to: email,
+      to: sanitizedEmail,
       name: `${user[0].firstName} ${user[0].lastName}`,
       resetUrl
     });

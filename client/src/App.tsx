@@ -38,7 +38,6 @@ const PrivacyPolicyPage   = lazy(() => import("@/pages/PrivacyPolicyPage"));
 const LoginPage           = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage        = lazy(() => import("@/pages/RegisterPage"));
 const ResetPasswordPage   = lazy(() => import("@/pages/ResetPasswordPage"));
-const AdminLoginPage      = lazy(() => import("@/pages/AdminLoginPage"));
 const NotFound            = lazy(() => import("@/pages/NotFound"));
 
 // Admin pages — each is a separate chunk; only loaded when admin visits them
@@ -59,8 +58,9 @@ const AnalyticsPage       = lazy(() => import("@/pages/admin/AnalyticsPage"));
 // const GiftManagementPage  = lazy(() => import("@/pages/admin/GiftManagementPage")); // DEPRECATED
 const AuditLogPage        = lazy(() => import("@/pages/admin/AuditLogPage"));
 const BillCreatorPage     = lazy(() => import("@/pages/admin/BillCreatorPage"));
+const SecurityPage        = lazy(() => import("@/pages/admin/SecurityPage"));
 
-// Minimal inline spinner shown while a lazy chunk is downloading
+// Animated book-themed loader shown while a lazy chunk is downloading
 function PageLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -118,12 +118,11 @@ function AppRouter() {
         <Route path="/terms-and-conditions" component={() => <Layout><TermsAndConditionsPage /></Layout>} />
         <Route path="/faq" component={() => <Layout><FAQPage /></Layout>} />
         <Route path="/privacy-policy" component={() => <Layout><PrivacyPolicyPage /></Layout>} />
-        <Route path="/admin-login" component={AdminLoginPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
         <Route path="/reset-password" component={ResetPasswordPage} />
 
-        {/* Admin routes */}
+        {/* Admin routes - now require user to be logged in with admin role */}
         <Route path="/admin"><AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute></Route>
         <Route path="/admin/inventory"><AdminProtectedRoute><InventoryPageNew /></AdminProtectedRoute></Route>
         <Route path="/admin/orders"><AdminProtectedRoute><OrdersPage /></AdminProtectedRoute></Route>
@@ -140,6 +139,7 @@ function AppRouter() {
         <Route path="/admin/settings"><AdminProtectedRoute><SettingsPage /></AdminProtectedRoute></Route>
         <Route path="/admin/account"><AdminProtectedRoute><AdminAccountPage /></AdminProtectedRoute></Route>
         <Route path="/admin/audit-trail"><AdminProtectedRoute><AuditLogPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/security"><AdminProtectedRoute><SecurityPage /></AdminProtectedRoute></Route>
         <Route path="/admin/bill-creator"><AdminProtectedRoute><BillCreatorPage /></AdminProtectedRoute></Route>
 
         <Route component={NotFound} />

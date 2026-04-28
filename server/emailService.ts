@@ -1,6 +1,27 @@
 import nodemailer from 'nodemailer';
 import { Order, OrderItem, Book } from '../shared/schema';
 
+/**
+ * Sanitizes email addresses to prevent header injection attacks
+ */
+function sanitizeEmail(email: string): string {
+  if (!email || typeof email !== 'string') return '';
+  
+  // Remove newlines, carriage returns, and null bytes to prevent header injection
+  return email
+    .replace(/[\r\n\0]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Validates email format
+ */
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
 // Zoho Mail Configuration - Single SMTP account with alias addresses
 // All emails authenticate with info@a2zbookshop.com but send from different aliases
 
@@ -1200,6 +1221,13 @@ const generateOrderCancellationHTML = (data: CancellationEmailData): string => {
 // Send order cancellation email
 export const sendOrderCancellationEmail = async (data: CancellationEmailData): Promise<boolean> => {
   try {
+    // Sanitize and validate email
+    const sanitizedEmail = sanitizeEmail(data.customerEmail);
+    if (!isValidEmail(sanitizedEmail)) {
+      console.error('Invalid customer email for cancellation:', data.customerEmail);
+      return false;
+    }
+
     const transport = createTransporter();
     if (!transport) {
       console.log('Email transporter not available - skipping cancellation email');
@@ -1211,7 +1239,7 @@ export const sendOrderCancellationEmail = async (data: CancellationEmailData): P
 
     const customerMailOptions = {
       from: { name: 'A2Z BOOKSHOP Support', address: getZohoEmail('support') },
-      to: data.customerEmail,
+      to: sanitizedEmail,
       subject: `Order ${orderId} Has Been Cancelled — A2Z BOOKSHOP`,
       html: htmlContent,
       text: `Hi ${data.customerName}, your order ${orderId} has been successfully cancelled. Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}. If payment was made, a refund will be processed within 5–7 business days. For help, contact support@a2zbookshop.com`,
@@ -1241,6 +1269,13 @@ export const sendOrderCancellationEmail = async (data: CancellationEmailData): P
 // Send order confirmation email
 export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<boolean> => {
   try {
+    // Sanitize and validate customer email
+    const sanitizedEmail = sanitizeEmail(data.customerEmail);
+    if (!isValidEmail(sanitizedEmail)) {
+      console.error('Invalid customer email for order confirmation:', data.customerEmail);
+      return false;
+    }
+
     const transporter = createTransporter();
     if (!transporter) {
       console.log('Email transporter not available - skipping order confirmation email');
@@ -1255,7 +1290,7 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
         name: 'A2Z BOOKSHOP Orders',
         address: getZohoEmail('orders')
       },
-      to: data.customerEmail,
+      to: sanitizedEmail,
       subject: `Order Confirmation ${data.order.orderNumber || `#${data.order.id}`} - A2Z BOOKSHOP`,
       html: htmlContent,
       text: `Thank you for your order ${data.order.orderNumber || `#${data.order.id}`}! Your order total is $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}. We'll process your order within 1-2 business days and send you tracking information once it ships.`
@@ -1270,13 +1305,16 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
       to: getZohoEmail('admin'),
       subject: `New Order ${data.order.orderNumber || `#${data.order.id}`} - Admin Copy`,
       html: htmlContent,
-      text: `New order received from ${data.customerEmail}. Order ${data.order.orderNumber || `#${data.order.id}`}, Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}`
+      text: `New order received from ${sanitizedEmail}. Order ${data.order.orderNumber || `#${data.order.id}`}, Total: $${(parseFloat(String(data.order.total ?? 0)) || 0).toFixed(2)}`
     };
 
     // Build recipient list: primary account email + optional notification email
-    const customerRecipients: string[] = [data.customerEmail];
-    if (data.notificationEmail && data.notificationEmail.toLowerCase() !== data.customerEmail.toLowerCase()) {
-      customerRecipients.push(data.notificationEmail);
+    const customerRecipients: string[] = [sanitizedEmail];
+    if (data.notificationEmail) {
+      const sanitizedNotificationEmail = sanitizeEmail(data.notificationEmail);
+      if (isValidEmail(sanitizedNotificationEmail) && sanitizedNotificationEmail !== sanitizedEmail) {
+        customerRecipients.push(sanitizedNotificationEmail);
+      }
     }
 
     // Send to all customer recipients + admin
@@ -1296,6 +1334,13 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
 // Send status update email
 export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promise<boolean> => {
   try {
+    // Sanitize and validate email
+    const sanitizedEmail = sanitizeEmail(data.customerEmail);
+    if (!isValidEmail(sanitizedEmail)) {
+      console.error('Invalid customer email for status update:', data.customerEmail);
+      return false;
+    }
+
     const transporter = createTransporter();
     if (!transporter) {
       console.log('Email transporter not available - skipping status update email');
@@ -1309,7 +1354,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
         name: 'A2Z BOOKSHOP Support',
         address: getZohoEmail('support')
       },
-      to: data.customerEmail,
+      to: sanitizedEmail,
       subject: `Order Status Update - Order ${data.order.orderNumber || `#${data.order.id}`}`,
       html: htmlContent,
       text: `Your order ${data.order.orderNumber || `#${data.order.id}`} status has been updated to: ${data.newStatus}. ${data.trackingNumber ? `Tracking: ${data.trackingNumber}` : ''}`
@@ -1324,7 +1369,7 @@ export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promis
       to: getZohoEmail('admin'),
       subject: `Order Status Updated - Order ${data.order.orderNumber || `#${data.order.id}`}`,
       html: htmlContent,
-      text: `Order ${data.order.orderNumber || `#${data.order.id}`} status updated to: ${data.newStatus} for customer: ${data.customerEmail}`
+      text: `Order ${data.order.orderNumber || `#${data.order.id}`} status updated to: ${data.newStatus} for customer: ${sanitizedEmail}`
     };
 
     // Send both emails
@@ -2050,6 +2095,13 @@ export const sendEmail = async (params: {
   emailType?: 'orders' | 'support' | 'notifications' | 'admin';
 }): Promise<boolean> => {
   try {
+    // Sanitize and validate recipient email
+    const sanitizedTo = sanitizeEmail(params.to);
+    if (!isValidEmail(sanitizedTo)) {
+      console.error('Invalid email address in sendEmail:', params.to);
+      return false;
+    }
+
     const emailType = params.emailType || 'notifications';
     const transporter = createTransporter();
     if (!transporter) {
@@ -2062,7 +2114,7 @@ export const sendEmail = async (params: {
         name: 'A2Z BOOKSHOP',
         address: getZohoEmail(emailType)
       },
-      to: params.to,
+      to: sanitizedTo,
       subject: params.subject,
       text: params.text,
       html: params.html

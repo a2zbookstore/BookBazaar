@@ -1,16 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "./useAuth";
 
 export function useAdminAuth() {
-  const { data: admin, isLoading } = useQuery({
-    queryKey: ["/api/admin/user"],
-    retry: false,
-    staleTime: 0,           // always re-validate on mount
-    refetchOnWindowFocus: true,
-  });
+  const { user, isLoading } = useAuth();
+  
+  // User must be logged in AND have admin role
+  const isAdmin = user?.role === "admin";
 
   return {
-    admin,
+    admin: isAdmin ? user : null,
     isLoading,
-    isAuthenticated: !!admin,
+    isAuthenticated: isAdmin,
   };
 }
