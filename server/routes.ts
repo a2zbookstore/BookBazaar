@@ -13,6 +13,7 @@ import { BookImporter } from "./bookImporter";
 import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail, sendReturnRequestEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
+import { generateGoogleProductFeed, generateGoogleProductFeedCSV } from "./productFeed";
 import {
   getOrCreateSession,
   trackPageView,
@@ -470,6 +471,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const robotsTxt = generateRobotsTxt();
     res.header('Content-Type', 'text/plain');
     res.send(robotsTxt);
+  });
+
+  // Google Merchant Center Product Feed (RSS format)
+  app.get('/product-feed.xml', async (req, res) => {
+    try {
+      const feed = await generateGoogleProductFeed();
+      res.header('Content-Type', 'application/rss+xml; charset=utf-8');
+      res.send(feed);
+    } catch (error) {
+      console.error('Error generating product feed:', error);
+      res.status(500).send('Error generating product feed');
+    }
+  });
+
+  // Google Merchant Center Product Feed (CSV format)
+  app.get('/product-feed.csv', async (req, res) => {
+    try {
+      const csv = await generateGoogleProductFeedCSV();
+      res.header('Content-Type', 'text/csv; charset=utf-8');
+      res.header('Content-Disposition', 'attachment; filename="a2zbookshop-products.csv"');
+      res.send(csv);
+    } catch (error) {
+      console.error('Error generating CSV product feed:', error);
+      res.status(500).send('Error generating CSV product feed');
+    }
   });
 
   // Auth middleware

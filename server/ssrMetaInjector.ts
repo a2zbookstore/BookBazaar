@@ -294,10 +294,20 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
               book.condition === "New"
                 ? "https://schema.org/NewCondition"
                 : "https://schema.org/UsedCondition",
-            seller: { "@type": "Organization", name: "A2Z BOOKSHOP" },
+            seller: { 
+              "@type": "Organization", 
+              name: "A2Z BOOKSHOP",
+              url: "https://a2zbookshop.com"
+            },
+            priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
           },
         };
         if (book.isbn) bookSchema.isbn = book.isbn;
+        if (book.publisher) bookSchema.publisher = { "@type": "Organization", name: book.publisher };
+        if (book.publishedYear) bookSchema.datePublished = String(book.publishedYear);
+        if (book.pages) bookSchema.numberOfPages = book.pages;
+        if (book.language) bookSchema.inLanguage = book.language;
+        if (book.binding) bookSchema.bookFormat = book.binding === "Hardcover" ? "https://schema.org/Hardcover" : "https://schema.org/Paperback";
         const bookCategories = (book as any).categories as
           | Array<{ name: string }>
           | undefined;
