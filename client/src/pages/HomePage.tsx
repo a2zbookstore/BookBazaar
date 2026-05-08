@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Book, Category } from "@/types";
-import { Library } from "lucide-react";
+import { Library, Clock, Sparkles, Search } from "lucide-react";
 import BannerCarousel from "@/components/BannerCarousel";
 import BookCarousel from "@/components/BookCarousel";
+import LuckyDrawSpinner from "@/components/LuckyDrawSpinner";
+import { useBrowsingHistory } from "@/hooks/useBrowsingHistory";
 
 interface CategoryCarouselProps {
   category: Category;
@@ -324,17 +326,28 @@ export default function HomePage() {
     queryKey: ["/api/categories"],
   });
 
+  // ── Browsing history & personalisation ──
+  const {
+    recentlyViewed,
+    suggestedBooks,
+    recentSearches,
+    hasHistory,
+  } = useBrowsingHistory();
+
   return (
     <div className="sm:px-8">
       <SEO
         title="A2Z BOOKSHOP - Buy Books Online | New & Used Books"
         description="A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping."
-        keywords="buy books online, online bookstore India, new books, used books, fiction books, non-fiction books, bestsellers, trending books, book store"
+        keywords="buy books online, online bookstore india, a2z bookshop, a2z book shop, a2z books, a to z bookshop, a2zbookshop, new books, used books, second hand books, pre owned books, cheap books, affordable books, discount books, fiction books, non fiction books, nonfiction books, children books, kids books, academic books, textbooks, bestsellers, trending books, book shop, book store, bookshop, bookstore, books online, order books online, book delivery india, buy books india, international book delivery, worldwide book shipping, english books online, buy novels online, buy story books, school books online, college books online, buy paperback books, buy hardcover books"
         image="https://a2zbookshop.com/logo.svg"
         url="https://a2zbookshop.com"
         type="website"
         structuredData={structuredData}
       />
+
+      {/* Lucky Draw Spinner Widget */}
+      {/* <LuckyDrawSpinner /> */}
 
       <div className="hidden md:block my-8">
         <BannerCarousel
@@ -345,6 +358,91 @@ export default function HomePage() {
           height="h-48 md:h-64"
         />
       </div>
+
+      {/* ── Personalised: For You ── */}
+      {false && (
+        <div className="mb-8">
+          {/* Recently Viewed */}
+          {recentlyViewed.length > 0 && (
+            <div
+              className="
+                w-full mb-6 p-4 md:p-6
+                rounded-2xl
+                bg-gradient-to-br from-white/80 via-orange-50/20 to-amber-50/40
+                backdrop-blur-xl
+                border border-orange-200/20
+                shadow-[0_8px_32px_rgba(31,38,135,0.12),0_2px_8px_rgba(0,0,0,0.08)]
+                relative overflow-hidden
+              "
+            >
+              <div className="relative z-10 flex items-center justify-between gap-4 mb-6 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-white via-white to-orange-50 border border-orange-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-orange-500" />
+                  <h3 className="text-xl sm:text-2xl font-bookerly font-extrabold text-slate-800">
+                    Recently Viewed
+                  </h3>
+                </div>
+              </div>
+              <div className="h-px w-full mb-5 bg-gradient-to-r from-transparent via-orange-200 to-transparent" />
+              <BookCarousel
+                books={recentlyViewed}
+                emptyMessage=""
+                showEmptyBrowseButton={false}
+                isLoading={false}
+              />
+            </div>
+          )}
+
+          {/* Recommended For You */}
+          {suggestedBooks.length > 0 && (
+            <div
+              className="
+                w-full mb-6 p-4 md:p-6
+                rounded-2xl
+                bg-gradient-to-br from-white/80 via-purple-50/20 to-violet-50/40
+                backdrop-blur-xl
+                border border-purple-200/20
+                shadow-[0_8px_32px_rgba(31,38,135,0.12),0_2px_8px_rgba(0,0,0,0.08)]
+                relative overflow-hidden
+              "
+            >
+              <div className="relative z-10 flex items-center justify-between gap-4 mb-6 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-white via-white to-purple-50 border border-purple-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5 text-purple-500" />
+                  <h3 className="text-xl sm:text-2xl font-bookerly font-extrabold text-slate-800">
+                    Recommended For You
+                  </h3>
+                  <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-medium hidden sm:inline-flex">
+                    Based on your browsing
+                  </span>
+                </div>
+              </div>
+              <div className="h-px w-full mb-5 bg-gradient-to-r from-transparent via-purple-200 to-transparent" />
+              <BookCarousel
+                books={suggestedBooks}
+                emptyMessage=""
+                showEmptyBrowseButton={false}
+                isLoading={false}
+              />
+            </div>
+          )}
+
+          {/* Recent Searches */}
+          {recentSearches.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mb-6 px-1">
+              <Search className="w-4 h-4 text-gray-400 shrink-0" />
+              <span className="text-sm text-gray-500">Recent searches:</span>
+              {recentSearches.map((q) => (
+                <Link key={q} href={`/catalog?search=${encodeURIComponent(q)}`}>
+                  <span className="text-sm px-3 py-1 bg-white border border-gray-200 hover:border-primary-aqua hover:text-primary-aqua rounded-full cursor-pointer transition-colors shadow-sm">
+                    {q}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Category-Based Carousels */}
       {categories.length > 0 && categories

@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Book card ribbon badge animations */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes badgeGlint {
+  0%   { left: -80%; }
+  40%, 100% { left: 160%; }
+}
+
+.badge-tag {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-tag::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+  animation: badgeGlint 2.8s ease-in-out infinite;
+}
+
+.badge-featured {
+  animation: slideInLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.badge-bestseller {
+  animation: slideInLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
 @keyframes cart-slide {
   0% {
     transform: translateX(-10px);

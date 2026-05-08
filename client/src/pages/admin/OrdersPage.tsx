@@ -469,24 +469,24 @@ export default function OrdersPage() {
 
       {/* ── Update Status Dialog ── */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden">
+        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
           <DialogHeader className="sr-only">
             <DialogTitle>Update Order</DialogTitle>
           </DialogHeader>
           {/* hero */}
-          <div className="bg-gradient-to-br from-violet-600 to-purple-700 p-5 text-white">
+          <div className="bg-gradient-to-br from-violet-600 to-purple-700 p-5 text-white shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-white/20 rounded-xl">
                 <Edit className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">Update Order {(ordersData?.orders || []).find((o: Order) => o.id === selectedOrderId)?.orderNumber || `#${selectedOrderId}`}</h3>
+                <h3 className="font-bold text-lg">Update Order {((ordersData as any)?.orders || []).find((o: Order) => o.id === selectedOrderId)?.orderNumber || `#${selectedOrderId}`}</h3>
                 <p className="text-sm text-violet-200">Change status, carrier & tracking</p>
               </div>
             </div>
           </div>
 
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-4 overflow-y-auto flex-1">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Order Status</Label>
               <Select value={newStatus || undefined} onValueChange={setNewStatus}>

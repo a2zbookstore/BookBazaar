@@ -18,6 +18,8 @@ export function useAnalyticsHeartbeat() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const sendHeartbeat = (currentPage: string) => {
+    // Don't track admin page visits
+    if (currentPage.startsWith("/admin")) return;
     // fire-and-forget, never block the UI
     fetch("/api/analytics/heartbeat", {
       method: "POST",

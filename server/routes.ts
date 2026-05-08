@@ -9,6 +9,7 @@ import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
+import { passport } from "./oauthService";
 import { BookImporter } from "./bookImporter";
 import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail, sendReturnRequestEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
@@ -438,6 +439,24 @@ const adminLoginRateLimit = rateLimit({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Helper function to safely get user ID from request
+  // Handles both OAuth users (user object directly) and Replit users (user.claims.sub)
+  const getUserId = (req: any): string | null => {
+    if (!req.user) return null;
+    
+    // OAuth users (Google/Facebook) have the user object directly
+    if (req.user.id && !req.user.claims) {
+      return req.user.id;
+    }
+    
+    // Replit users have claims.sub
+    if (req.user.claims && req.user.claims.sub) {
+      return req.user.claims.sub;
+    }
+    
+    return null;
+  };
+
   // Test Cloudinary connection on startup
   CloudinaryService.testConnection().then((success) => {
     if (success) {
@@ -474,6 +493,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth middleware
   await setupAuth(app);
+
+  // OAuth Routes - Google and Facebook Authentication
+  // Google OAuth - Initiate
+  app.get('/api/auth/google', (req, res, next) => {
+    const redirect = (req.query.redirect as string) || '/';
+    // Store redirect in session
+    (req.session as any).oauthRedirect = redirect;
+    passport.authenticate('google', { 
+      scope: ['profile', 'email'] 
+    })(req, res, next);
+  });
+
+  // Google OAuth - Callback
+  app.get('/api/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
+    (req: any, res) => {
+      // Transfer guest cart items after successful Google login
+      const guestCartItems = (req.session as any).cartItems || [];
+      if (guestCartItems.length > 0 && req.user) {
+        const userId = req.user.id;
+        Promise.all(guestCartItems.map((guestItem: any) =>
+          storage.addToCart({
+            userId: userId,
+            bookId: guestItem.bookId,
+            quantity: guestItem.quantity
+          })
+        )).catch((error) => {
+          console.error('Error transferring guest cart after Google login:', error);
+        });
+        // Clear guest cart from session
+        (req.session as any).cartItems = [];
+      }
+      
+      // Redirect to stored location or home
+      const redirectUrl = (req.session as any).oauthRedirect || '/';
+      delete (req.session as any).oauthRedirect;
+      res.redirect(redirectUrl);
+    }
+  );
+
+  // Facebook OAuth - Initiate
+  app.get('/api/auth/facebook', (req, res, next) => {
+    const redirect = (req.query.redirect as string) || '/';
+    // Store redirect in session
+    (req.session as any).oauthRedirect = redirect;
+    passport.authenticate('facebook', { 
+      scope: ['email'] 
+    })(req, res, next);
+  });
+
+  // Facebook OAuth - Callback
+  app.get('/api/auth/facebook/callback',
+    passport.authenticate('facebook', { failureRedirect: '/login?error=facebook_auth_failed' }),
+    (req: any, res) => {
+      // Transfer guest cart items after successful Facebook login
+      const guestCartItems = (req.session as any).cartItems || [];
+      if (guestCartItems.length > 0 && req.user) {
+        const userId = req.user.id;
+        Promise.all(guestCartItems.map((guestItem: any) =>
+          storage.addToCart({
+            userId: userId,
+            bookId: guestItem.bookId,
+            quantity: guestItem.quantity
+          })
+        )).catch((error) => {
+          console.error('Error transferring guest cart after Facebook login:', error);
+        });
+        // Clear guest cart from session
+        (req.session as any).cartItems = [];
+      }
+      
+      // Redirect to stored location or home
+      const redirectUrl = (req.session as any).oauthRedirect || '/';
+      delete (req.session as any).oauthRedirect;
+      res.redirect(redirectUrl);
+    }
+  );
 
   // Analytics tracking middleware - tracks only actual page routes
   app.use(async (req: any, res, next) => {
@@ -712,8 +808,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Check for Replit authentication
-      if (req.isAuthenticated && req.isAuthenticated()) {
+      // Check for OAuth authentication (Google/Facebook)
+      if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+        // OAuth users have the user object directly
+        if (!req.user.claims) {
+          const safeUser = {
+            id: req.user.id,
+            email: req.user.email,
+            phone: req.user.phone,
+            firstName: req.user.firstName,
+            lastName: req.user.lastName,
+            profileImageUrl: req.user.profileImageUrl,
+            role: req.user.role,
+            isEmailVerified: req.user.isEmailVerified,
+            createdAt: req.user.createdAt,
+            updatedAt: req.user.updatedAt
+          };
+          return res.json(safeUser);
+        }
+        
+        // Replit users have claims
         const replitUserId = req.user.claims.sub;
         const user = await storage.getUser(replitUserId);
         if (user) {
@@ -742,7 +856,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const { firstName, lastName, email } = req.body;
 
       // Get current user data to preserve existing fields
@@ -837,10 +955,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.session as any).userId;
       const isCustomerAuth = (req.session as any).isCustomerAuth;
 
-      // Also allow Replit auth
+      // Also allow Replit auth or OAuth
       let resolvedUserId = userId;
       if (!resolvedUserId && req.isAuthenticated && req.isAuthenticated()) {
-        resolvedUserId = req.user.claims.sub;
+        resolvedUserId = getUserId(req);
       }
 
       if (!resolvedUserId || (!isCustomerAuth && !(req.isAuthenticated && req.isAuthenticated()))) {
@@ -1064,39 +1182,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let order;
       let isAuthorized = false;
 
-      // Check for admin session authentication FIRST
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
+      // Get user from either email-based or Replit authentication
+      const userId = (req.session as any)?.userId;
+      const isCustomerAuth = (req.session as any)?.isCustomerAuth;
+      const isReplitAuth = req.isAuthenticated && req.isAuthenticated();
+      
+      let user = null;
+      
+      if (userId && isCustomerAuth) {
+        user = await storage.getUser(userId);
+      } else if (isReplitAuth && (req.user as any)?.claims?.sub) {
+        user = await storage.getUser((req.user as any).claims.sub);
+      }
 
-      if (adminId && isAdmin) {
+      // Check if admin
+      if (user && user.role === "admin") {
         // Admin can access any order
-        const admin = await storage.getAdminById(adminId);
-        if (admin && admin.isActive) {
-          order = await storage.getOrderById(parseInt(id));
-          if (order) {
-            isAuthorized = true;
-          }
+        order = await storage.getOrderById(parseInt(id));
+        if (order) {
+          isAuthorized = true;
         }
       }
 
       // If not authorized as admin, check for session-based customer authentication
-      if (!isAuthorized) {
-        const sessionUserId = (req.session as any).userId;
-        const isCustomerAuth = (req.session as any).isCustomerAuth;
-
-        if (sessionUserId && isCustomerAuth) {
-          order = await storage.getOrderById(parseInt(id));
-          if (order && order.userId === sessionUserId) {
-            isAuthorized = true;
-          }
+      if (!isAuthorized && userId && isCustomerAuth) {
+        order = await storage.getOrderById(parseInt(id));
+        if (order && order.userId === userId) {
+          isAuthorized = true;
         }
       }
 
       // If still not authorized, check for Replit authentication
-      if (!isAuthorized && req.isAuthenticated && req.isAuthenticated()) {
-        const userId = (req.user as any).claims.sub;
+      if (!isAuthorized && isReplitAuth && (req.user as any)?.claims?.sub) {
+        const replitUserId = (req.user as any).claims.sub;
         order = await storage.getOrderById(parseInt(id));
-        if (order && order.userId === userId) {
+        if (order && order.userId === replitUserId) {
           isAuthorized = true;
         }
       }
@@ -1384,42 +1504,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let order;
       let isAuthorized = false;
 
-      // Check for admin session authentication FIRST
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
+      // Get user from either email-based or Replit authentication
+      const userId = (req.session as any)?.userId;
+      const isCustomerAuth = (req.session as any)?.isCustomerAuth;
+      const isReplitAuth = req.isAuthenticated && req.isAuthenticated();
+      const sessionCustomerEmail = (req.session as any).customerEmail;
+      
+      let user = null;
+      
+      if (userId && isCustomerAuth) {
+        user = await storage.getUser(userId);
+      } else if (isReplitAuth && (req.user as any)?.claims?.sub) {
+        user = await storage.getUser((req.user as any).claims.sub);
+      }
 
-      if (adminId && isAdmin) {
+      // Check if admin
+      if (user && user.role === "admin") {
         // Admin can access any order invoice
-        const admin = await storage.getAdminById(adminId);
-        if (admin && admin.isActive) {
-          order = await storage.getOrderById(parseInt(id));
-          if (order) {
-            isAuthorized = true;
-          }
+        order = await storage.getOrderById(parseInt(id));
+        if (order) {
+          isAuthorized = true;
         }
       }
 
       // Check for session-based customer authentication
-      if (!isAuthorized) {
-        const sessionUserId = (req.session as any).userId;
-        const isCustomerAuth = (req.session as any).isCustomerAuth;
-        const sessionCustomerEmail = (req.session as any).customerEmail;
-
-        if (sessionUserId && isCustomerAuth) {
-          order = await storage.getOrderById(parseInt(id));
-          if (order && (order.userId === sessionUserId ||
-            (sessionCustomerEmail && order.customerEmail?.toLowerCase() === sessionCustomerEmail.toLowerCase()))) {
-            isAuthorized = true;
-          }
+      if (!isAuthorized && userId && isCustomerAuth) {
+        order = await storage.getOrderById(parseInt(id));
+        if (order && (order.userId === userId ||
+          (sessionCustomerEmail && order.customerEmail?.toLowerCase() === sessionCustomerEmail.toLowerCase()))) {
+          isAuthorized = true;
         }
       }
 
       // Check for Replit authentication
-      if (!isAuthorized && req.isAuthenticated && req.isAuthenticated()) {
-        const userId = (req.user as any).claims.sub;
+      if (!isAuthorized && isReplitAuth && (req.user as any)?.claims?.sub) {
+        const replitUserId = (req.user as any).claims.sub;
         const userEmail = (req.user as any).email;
         order = await storage.getOrderById(parseInt(id));
-        if (order && (order.userId === userId ||
+        if (order && (order.userId === replitUserId ||
           (userEmail && order.customerEmail?.toLowerCase() === userEmail.toLowerCase()))) {
           isAuthorized = true;
         }
@@ -2485,12 +2607,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.post("/api/admin/change-password", async (req, res) => {
+  app.post("/api/admin/change-password", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      if (!adminId) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
+      const user = req.adminUser;
 
       const { currentPassword, newPassword } = req.body;
 
@@ -2498,23 +2617,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Current and new password required" });
       }
 
-      const admin = await storage.getAdminById(adminId);
-      if (!admin) {
-        return res.status(404).json({ message: "Admin not found" });
+      // Verify current password from user
+      if (!user.passwordHash) {
+        return res.status(400).json({ message: "Cannot change password for this account type" });
       }
 
-      // Verify current password
-      const currentAdminPasswordValid = admin.passwordHash.startsWith('$2')
-        ? await bcrypt.compare(currentPassword, admin.passwordHash)
-        : crypto.createHash('sha256').update(currentPassword).digest('hex') === admin.passwordHash;
+      const currentPasswordValid = user.passwordHash.startsWith('$2')
+        ? await bcrypt.compare(currentPassword, user.passwordHash)
+        : crypto.createHash('sha256').update(currentPassword).digest('hex') === user.passwordHash;
 
-      if (!currentAdminPasswordValid) {
+      if (!currentPasswordValid) {
         return res.status(401).json({ message: "Current password is incorrect" });
       }
 
       // Update password with bcrypt
       const newPasswordHash = await bcrypt.hash(newPassword, 12);
-      await storage.updateAdminPassword(adminId, newPasswordHash);
+      await storage.updateUserPassword(user.id, newPasswordHash);
 
       res.json({ success: true, message: "Password updated successfully" });
     } catch (error) {
@@ -2551,10 +2669,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId && isCustomerAuth) {
         user = await storage.getUser(userId);
       }
-      // Get user from Replit authentication
+      // Get user from Replit or OAuth authentication
       else if (req.isAuthenticated && req.isAuthenticated()) {
-        const replitUserId = req.user.claims.sub;
-        user = await storage.getUser(replitUserId);
+        const authenticatedUserId = getUserId(req);
+        if (authenticatedUserId) {
+          user = await storage.getUser(authenticatedUserId);
+        }
       }
       
       // Check if user exists and has admin role
@@ -2593,8 +2713,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId = sessionUserId;
         user = await storage.getUser(userId);
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
-        user = await storage.getUser(userId);
+        userId = getUserId(req);
+        if (userId) {
+          user = await storage.getUser(userId);
+        }
       }
 
       const {
@@ -2823,11 +2945,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wishlist routes
   app.get("/api/wishlist", async (req: any, res) => {
     try {
-      if (!req.session?.userId) {
+      const userId = (req.session as any)?.userId || getUserId(req);
+      if (!userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
-      const wishlistItems = await storage.getWishlistItems(req.session.userId);
+      const wishlistItems = await storage.getWishlistItems(userId);
       res.json(wishlistItems);
     } catch (error) {
       console.error("Error fetching wishlist:", error);
@@ -2837,7 +2960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/wishlist", async (req: any, res) => {
     try {
-      if (!req.session?.userId) {
+      const userId = (req.session as any)?.userId || getUserId(req);
+      if (!userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
@@ -2847,7 +2971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const wishlistItem = await storage.addToWishlist({
-        userId: req.session.userId,
+        userId,
         bookId: parseInt(bookId)
       });
 
@@ -2860,7 +2984,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/wishlist/:bookId", async (req: any, res) => {
     try {
-      if (!req.session?.userId) {
+      const userId = (req.session as any)?.userId || getUserId(req);
+      if (!userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
@@ -2869,7 +2994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid book ID" });
       }
 
-      await storage.removeFromWishlist(req.session.userId, bookId);
+      await storage.removeFromWishlist(userId, bookId);
       res.json({ success: true });
     } catch (error) {
       console.error("Error removing from wishlist:", error);
@@ -2879,7 +3004,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/wishlist/check/:bookId", async (req: any, res) => {
     try {
-      if (!req.session?.userId) {
+      const userId = (req.session as any)?.userId || getUserId(req);
+      if (!userId) {
         return res.json({ inWishlist: false });
       }
 
@@ -2888,7 +3014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid book ID" });
       }
 
-      const inWishlist = await storage.isInWishlist(req.session.userId, bookId);
+      const inWishlist = await storage.isInWishlist(userId, bookId);
       res.json({ inWishlist });
     } catch (error) {
       console.error("Error checking wishlist:", error);
@@ -2924,20 +3050,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only store settings routes
-  app.get('/api/settings/store', async (req: any, res) => {
+  app.get('/api/settings/store', requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const settings = await storage.getStoreSettings();
       res.json(settings);
     } catch (error) {
@@ -2946,20 +3060,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/settings/store', async (req: any, res) => {
+  app.put('/api/settings/store', requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const { storeName, storeEmail, storeDescription, storePhone, currency, storeAddress } = req.body;
 
       const updatedSettings = await storage.upsertStoreSettings({
@@ -2979,20 +3081,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shipping rates routes
-  app.get('/api/shipping-rates', async (req: any, res) => {
+  app.get('/api/shipping-rates', requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const rates = await storage.getShippingRates();
       res.json(rates);
     } catch (error) {
@@ -3019,20 +3109,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/shipping-rates', async (req: any, res) => {
+  app.post('/api/shipping-rates', requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const { countryCode, countryName, shippingCost, minDeliveryDays, maxDeliveryDays, isDefault, isActive } = req.body;
 
       const newRate = await storage.createShippingRate({
@@ -3052,20 +3130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/shipping-rates/:id', async (req: any, res) => {
+  app.put('/api/shipping-rates/:id', requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const { id } = req.params;
       const { countryCode, countryName, shippingCost, minDeliveryDays, maxDeliveryDays, isDefault, isActive } = req.body;
 
@@ -3086,20 +3152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/shipping-rates/:id', async (req: any, res) => {
+  app.delete('/api/shipping-rates/:id', requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const { id } = req.params;
       await storage.deleteShippingRate(parseInt(id));
       res.json({ message: "Shipping rate deleted successfully" });
@@ -3109,20 +3163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/shipping-rates/:id/set-default', async (req: any, res) => {
+  app.post('/api/shipping-rates/:id/set-default', requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const { id } = req.params;
       await storage.setDefaultShippingRate(parseInt(id));
       res.json({ message: "Default shipping rate updated successfully" });
@@ -3181,7 +3223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       const user = await storage.getUser(userId);
@@ -3225,7 +3267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       const user = await storage.getUser(userId);
@@ -3284,7 +3326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       const user = await storage.getUser(userId);
@@ -3405,28 +3447,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/books", async (req: any, res) => {
+  app.post("/api/books", requireAdminAuth, async (req: any, res) => {
     try {
-      // Check admin session first
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (adminId && isAdmin) {
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
-      } else if (req.isAuthenticated && req.isAuthenticated()) {
-        // Fallback to Replit auth
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        if (user?.role !== "admin") {
-          return res.status(403).json({ message: "Admin access required" });
-        }
-      } else {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
       const { categoryIds, ...bookBody } = req.body;
       const bookData = insertBookSchema.parse(bookBody);
       const book = await storage.createBook(bookData);
@@ -3445,28 +3467,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/books/:id", async (req: any, res) => {
+  app.put("/api/books/:id", requireAdminAuth, async (req: any, res) => {
     try {
-      // Check admin session first
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (adminId && isAdmin) {
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
-      } else if (req.isAuthenticated && req.isAuthenticated()) {
-        // Fallback to Replit auth
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        if (user?.role !== "admin") {
-          return res.status(403).json({ message: "Admin access required" });
-        }
-      } else {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
       const id = parseInt(req.params.id);
       const { categoryIds, ...bookBody } = req.body;
       const bookData = insertBookSchema.partial().parse(bookBody);
@@ -3486,28 +3488,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/books/:id", async (req: any, res) => {
+  app.delete("/api/books/:id", requireAdminAuth, async (req: any, res) => {
     try {
-      // Check admin session first
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (adminId && isAdmin) {
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
-      } else if (req.isAuthenticated && req.isAuthenticated()) {
-        // Fallback to Replit auth
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        if (user?.role !== "admin") {
-          return res.status(403).json({ message: "Admin access required" });
-        }
-      } else {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid book ID" });
@@ -3516,7 +3498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get IP address for audit logging
       const ipAddress = req.ip || req.connection?.remoteAddress;
 
-      await storage.deleteBook(id, adminId, ipAddress);
+      await storage.deleteBook(id, req.adminUser.id, ipAddress);
       res.json({ message: "Book deleted successfully" });
     } catch (error) {
       console.error("Error deleting book:", error);
@@ -3531,28 +3513,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image upload route for book covers
-  app.post("/api/books/upload-image", imageUpload.single('image'), async (req: any, res) => {
+  app.post("/api/books/upload-image", imageUpload.single('image'), requireAdminAuth, async (req: any, res) => {
     try {
-      // Check admin session first
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (adminId && isAdmin) {
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
-      } else if (req.isAuthenticated && req.isAuthenticated()) {
-        // Fallback to Replit auth
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        if (user?.role !== "admin") {
-          return res.status(403).json({ message: "Admin access required" });
-        }
-      } else {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
       }
@@ -3619,28 +3581,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Banner image upload route
-  app.post("/api/banners/upload", imageUpload.single('image'), async (req: any, res) => {
+  app.post("/api/banners/upload", imageUpload.single('image'), requireAdminAuth, async (req: any, res) => {
     try {
-      // Check admin session first
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (adminId && isAdmin) {
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
-      } else if (req.isAuthenticated && req.isAuthenticated()) {
-        // Fallback to Replit auth
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        if (user?.role !== "admin") {
-          return res.status(403).json({ message: "Admin access required" });
-        }
-      } else {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
       }
@@ -3723,7 +3665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       console.log("Cart - userId:", userId, "sessionUserId:", sessionUserId, "isCustomerAuth:", isCustomerAuth);
@@ -3826,7 +3768,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       console.log("Cart ADD - userId:", userId, "sessionUserId:", sessionUserId);
@@ -3895,7 +3837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       if (userId) {
@@ -3934,7 +3876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       if (userId) {
@@ -3975,7 +3917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       if (userId) {
@@ -4006,7 +3948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
 
@@ -4052,7 +3994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       if (!userId || typeof userId !== 'string') {
@@ -4071,17 +4013,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders routes
   app.get("/api/orders", async (req: any, res) => {
     try {
-      // Check for admin session authentication first
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
+      // Resolve user from session (email auth) OR passport OAuth
+      const sessionUserId = (req.session as any)?.userId;
+      const isCustomerAuth = (req.session as any)?.isCustomerAuth;
+      const oauthUserId = getUserId(req);
 
-      if (adminId && isAdmin) {
-        // Admin can see all orders
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
+      let user = null;
+      let userIdToUse: string | null = null;
 
+      if (sessionUserId && isCustomerAuth) {
+        user = await storage.getUser(sessionUserId);
+        userIdToUse = sessionUserId;
+      } else if (oauthUserId) {
+        user = await storage.getUser(oauthUserId);
+        userIdToUse = oauthUserId;
+      }
+
+      // If not authenticated at all, return 401
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // If user has admin role, they can see all orders
+      if (user.role === "admin") {
         const options: any = {};
         // Add query parameters
         if (req.query.status) options.status = req.query.status as string;
@@ -4092,15 +4046,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(result);
       }
 
-      // Check for regular user authentication
-      if (!req.isAuthenticated || !req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-
-      const options: any = { userId }; // Regular users can only see their own orders
+      // Regular users can only see their own orders
+      const options: any = { userId: userIdToUse }; // Regular users can only see their own orders
 
       // Add query parameters
       if (req.query.status) options.status = req.query.status as string;
@@ -4123,28 +4070,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // Check for admin session authentication
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
+      // Resolve user from session (email auth) OR passport OAuth
+      const sessionUserIdForOrder = (req.session as any)?.userId;
+      const isCustomerAuthForOrder = (req.session as any)?.isCustomerAuth;
+      const oauthUserIdForOrder = getUserId(req);
 
-      if (adminId && isAdmin) {
-        // Admin can access any order
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
-        return res.json(order);
+      let user = null;
+      let userIdToUse: string | null = null;
+
+      if (sessionUserIdForOrder && isCustomerAuthForOrder) {
+        user = await storage.getUser(sessionUserIdForOrder);
+        userIdToUse = sessionUserIdForOrder;
+      } else if (oauthUserIdForOrder) {
+        user = await storage.getUser(oauthUserIdForOrder);
+        userIdToUse = oauthUserIdForOrder;
       }
 
-      // Check for regular user authentication
-      if (!req.isAuthenticated || !req.isAuthenticated()) {
+      // If not authenticated at all, return 401
+      if (!user) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = req.user.claims.sub;
+      // If user has admin role, they can access any order
+      if (user.role === "admin") {
+        return res.json(order);
+      }
 
-      // Check if user can access this order
-      if (order.userId !== userId) {
+      // Regular users can only access their own orders
+      if (order.userId !== userIdToUse) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -4155,49 +4108,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/orders/:id/status", async (req: any, res) => {
+  app.put("/api/orders/:id/status", requireAdminAuth, async (req: any, res) => {
     try {
-      // Use exact same authentication pattern as GET /api/orders
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
+      const id = parseInt(req.params.id);
+      const { status, trackingNumber, shippingCarrier, notes } = req.body;
 
-      if (adminId && isAdmin) {
-        const admin = await storage.getAdminById(adminId);
-        if (!admin || !admin.isActive) {
-          return res.status(401).json({ message: "Admin account inactive" });
-        }
+      const updatedOrder = await storage.updateOrderStatus(id, status, {
+        trackingNumber,
+        shippingCarrier,
+        notes
+      });
 
-        const id = parseInt(req.params.id);
-        const { status, trackingNumber, shippingCarrier, notes } = req.body;
-
-        const updatedOrder = await storage.updateOrderStatus(id, status, {
+      // Send status update email to customer
+      try {
+        await sendStatusUpdateEmail({
+          order: updatedOrder,
+          customerEmail: updatedOrder.customerEmail,
+          customerName: updatedOrder.customerName,
+          newStatus: status,
           trackingNumber,
           shippingCarrier,
           notes
         });
-
-        // Send status update email to customer
-        try {
-          await sendStatusUpdateEmail({
-            order: updatedOrder,
-            customerEmail: updatedOrder.customerEmail,
-            customerName: updatedOrder.customerName,
-            newStatus: status,
-            trackingNumber,
-            shippingCarrier,
-            notes
-          });
-          console.log(`Status update email sent for order #${id}, new status: ${status}`);
-        } catch (emailError) {
-          console.error("Failed to send status update email:", emailError);
-          // Don't fail the status update if email fails
-        }
-
-        return res.json(updatedOrder);
+        console.log(`Status update email sent for order #${id}, new status: ${status}`);
+      } catch (emailError) {
+        console.error("Failed to send status update email:", emailError);
+        // Don't fail the status update if email fails
       }
 
-      // If not admin, deny access
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.json(updatedOrder);
     } catch (error) {
       console.error("Error updating order status:", error);
       res.status(500).json({ message: "Failed to update order status" });
@@ -4220,8 +4159,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId = sessionUserId;
         userEmail = sessionCustomerEmail;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
-        userEmail = req.user.email;
+        userId = getUserId(req);
+        userEmail = req.user?.email;
       }
 
       if (!userId && !userEmail) {
@@ -4367,20 +4306,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/contact", async (req: any, res) => {
+  app.get("/api/contact", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const messages = await storage.getContactMessages();
       res.json(messages);
     } catch (error) {
@@ -4389,20 +4316,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/contact/:id/status", async (req: any, res) => {
+  app.put("/api/contact/:id/status", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const id = parseInt(req.params.id);
       const { status } = req.body;
 
@@ -4454,7 +4369,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Legacy export route (keeping for backward compatibility)
   app.get('/api/books/export', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
@@ -4514,7 +4432,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
@@ -4596,21 +4517,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // New admin route for book importing with automatic image fetching
-  app.post('/api/admin/import-books', upload.single('file'), async (req: any, res) => {
+  app.post('/api/admin/import-books', upload.single('file'), requireAdminAuth, async (req: any, res) => {
     try {
-      // Check admin authentication
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
@@ -4879,7 +4787,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/books/template', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
@@ -4970,7 +4881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Also check by email for orders placed before authentication
         email = sessionCustomerEmail;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       } else {
         // Guest user - require email parameter
         email = req.query.email;
@@ -5035,7 +4946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       }
 
       const returnRequest = await storage.createReturnRequest({
@@ -5082,7 +4993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionUserId && isCustomerAuth) {
         userId = sessionUserId;
       } else if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = getUserId(req);
       } else {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5129,20 +5040,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes - Get all return requests
-  app.get("/api/admin/returns", async (req: any, res) => {
+  app.get("/api/admin/returns", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const status = req.query.status;
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -5156,20 +5055,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route - Update return request status
-  app.put("/api/admin/returns/:id/status", async (req: any, res) => {
+  app.put("/api/admin/returns/:id/status", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const { id } = req.params;
       const { status, adminNotes } = req.body;
 
@@ -5210,20 +5097,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route - Process refund
-  app.post("/api/admin/returns/:id/refund", async (req: any, res) => {
+  app.post("/api/admin/returns/:id/refund", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const { id } = req.params;
       const { refundMethod, refundReason } = req.body;
 
@@ -5250,7 +5125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         refundAmount: returnRequest.totalRefundAmount,
         refundMethod,
         refundReason,
-        processedBy: adminId,
+        processedBy: req.adminUser?.id,
       });
 
       let refundResult = null;
@@ -5428,20 +5303,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test SMTP configuration endpoint
-  app.post("/api/test-smtp", async (req: any, res) => {
+  app.post("/api/test-smtp", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const result = await testEmailConfiguration();
       if (result) {
         // Also test order confirmation email with admin copy
@@ -5647,18 +5510,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new coupon (Admin only)
   app.post("/api/admin/coupons", requireAdminAuth, async (req: any, res) => {
     try {
-      const adminId = (req.session as any)?.adminId;
-      if (!adminId) {
+      const adminUser = req.adminUser;
+      if (!adminUser) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
 
       console.log('Coupon creation request body:', req.body);
-      console.log('Admin ID:', adminId);
+      console.log('Admin ID:', adminUser.id);
 
       // Convert date strings to Date objects
       const requestData = {
         ...req.body,
-        createdBy: adminId,
+        createdBy: adminUser.id,
         startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
         endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
       };
@@ -5717,10 +5580,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/coupons/:id", requireAdminAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const adminId = (req.session as any)?.adminId;
+      const adminUser = req.adminUser;
       const ipAddress = req.ip || req.connection?.remoteAddress;
 
-      await storage.deleteCoupon(id, adminId, ipAddress);
+      await storage.deleteCoupon(id, adminUser.id, ipAddress);
       res.json({ message: "Coupon deleted successfully" });
     } catch (error) {
       console.error("Error deleting coupon:", error);
@@ -5940,21 +5803,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/book-requests", async (req: any, res) => {
+  app.get("/api/book-requests", requireAdminAuth, async (req: any, res) => {
     try {
-      // Admin authentication required
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const options: any = {};
       if (req.query.status) options.status = req.query.status as string;
       if (req.query.limit) options.limit = parseInt(req.query.limit as string);
@@ -5968,21 +5818,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/book-requests/:id", async (req: any, res) => {
+  app.get("/api/book-requests/:id", requireAdminAuth, async (req: any, res) => {
     try {
-      // Admin authentication required
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const id = parseInt(req.params.id);
       const bookRequest = await storage.getBookRequestById(id);
 
@@ -5997,21 +5834,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/book-requests/:id", async (req: any, res) => {
+  app.put("/api/book-requests/:id", requireAdminAuth, async (req: any, res) => {
     try {
-      // Admin authentication required
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const id = parseInt(req.params.id);
       const { status, adminNotes } = req.body;
 
@@ -6019,7 +5843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status) updates.status = status;
       if (adminNotes !== undefined) updates.adminNotes = adminNotes;
       if (status && !updates.processedBy) {
-        updates.processedBy = adminId;
+        updates.processedBy = req.adminUser.id;
         updates.processedAt = new Date();
       }
 
@@ -6061,21 +5885,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/book-requests/:id", async (req: any, res) => {
+  app.delete("/api/book-requests/:id", requireAdminAuth, async (req: any, res) => {
     try {
-      // Admin authentication required
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin authentication required" });
-      }
-
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       const id = parseInt(req.params.id);
       await storage.deleteBookRequest(id);
 
@@ -6087,19 +5898,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Insert banner API
-  app.post("/api/banners", async (req: any, res) => {
+  app.post("/api/banners", requireAdminAuth, async (req: any, res) => {
     try {
-      // Admin check
-      const adminId = (req.session as any).adminId;
-      const isAdmin = (req.session as any).isAdmin;
-      if (!adminId || !isAdmin) {
-        return res.status(401).json({ message: "Admin login required" });
-      }
-      const admin = await storage.getAdminById(adminId);
-      if (!admin || !admin.isActive) {
-        return res.status(401).json({ message: "Admin account inactive" });
-      }
-
       if (!Array.isArray(req.body.image_urls) || req.body.image_urls.length === 0) {
         return res.status(400).json({ message: "image_urls must be a non-empty array" });
       }
@@ -6241,15 +6041,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/audit/restore/:auditLogId", requireAdminAuth, async (req: any, res) => {
     try {
       const auditLogId = parseInt(req.params.auditLogId);
-      const adminId = (req.session as any)?.adminId;
+      const adminUser = req.adminUser;
       const ipAddress = req.ip || req.connection?.remoteAddress;
 
-      if (!adminId) {
+      if (!adminUser) {
         return res.status(401).json({ message: "Admin authentication required" });
       }
 
       const { restoreFromAudit } = await import("./auditLog");
-      const result = await restoreFromAudit(auditLogId, adminId, ipAddress);
+      const result = await restoreFromAudit(auditLogId, adminUser.id, ipAddress);
 
       if (result.success) {
         res.json({

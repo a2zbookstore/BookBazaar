@@ -294,10 +294,20 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
               book.condition === "New"
                 ? "https://schema.org/NewCondition"
                 : "https://schema.org/UsedCondition",
-            seller: { "@type": "Organization", name: "A2Z BOOKSHOP" },
+            seller: { 
+              "@type": "Organization", 
+              name: "A2Z BOOKSHOP",
+              url: "https://a2zbookshop.com"
+            },
+            priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
           },
         };
         if (book.isbn) bookSchema.isbn = book.isbn;
+        if (book.publisher) bookSchema.publisher = { "@type": "Organization", name: book.publisher };
+        if (book.publishedYear) bookSchema.datePublished = String(book.publishedYear);
+        if (book.pages) bookSchema.numberOfPages = book.pages;
+        if (book.language) bookSchema.inLanguage = book.language;
+        if (book.binding) bookSchema.bookFormat = book.binding === "Hardcover" ? "https://schema.org/Hardcover" : "https://schema.org/Paperback";
         const bookCategories = (book as any).categories as
           | Array<{ name: string }>
           | undefined;
@@ -537,7 +547,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
     let metaDesc =
       "Browse thousands of books across all categories — fiction, non-fiction, bestsellers, children's & academic. Best prices with worldwide shipping.";
     const metaKeywordsDefault =
-      "buy books online, book catalog, fiction books, non-fiction books, bestsellers, international online bookstore, book store worldwide";
+      "buy books online, book catalog, online bookstore, books for sale, fiction books, non-fiction books, bestsellers, new books, used books, textbooks, academic books, children's books, rare books, cheap books, discounted books, book deals, international bookstore, worldwide book shipping, book shopping, order books online, bookshop catalog, a2zbookshop";
     let metaKeywords = metaKeywordsDefault;
     let canonical = `${BASE_URL}/catalog`;
 
@@ -688,7 +698,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Learn about A2Z BOOKSHOP, your premier destination for rare, collectible, and contemporary books. Quality guaranteed, fast shipping, and exceptional customer service.",
       keywords:
-        "about a2z bookshop, a2zbookshop, a2z books, a2z book shop, international online bookstore, rare books, collectible books, global book seller",
+        "about a2z bookshop, a2zbookshop, online bookstore, book seller, rare books dealer, collectible books, out of print books, international book store, worldwide book shipping, trusted book retailer, book specialists, new and used books, premium bookstore, quality books online",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/about`,
       type: "website",
@@ -716,7 +726,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Get in touch with A2Z BOOKSHOP. Contact our customer service team for book inquiries, orders, shipping questions, or general assistance.",
       keywords:
-        "contact a2z bookshop, a2zbookshop, a2z book shop, book store contact, customer service, book inquiries",
+        "contact a2z bookshop, customer service, book inquiries, book help, order support, shipping questions, book questions, get help buying books, bookstore customer care, book store email, bookstore phone number, contact online bookstore",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/contact`,
       type: "website",
@@ -742,7 +752,7 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
       description:
         "Find answers to common questions about ordering, payment, shipping, returns, and more at A2Z BOOKSHOP.",
       keywords:
-        "a2z bookshop faq, a2zbookshop faq, online bookstore questions, shipping faq, return policy, payment methods",
+        "bookstore faq, buy books online questions, book shipping questions, book returns, book payment methods, international book delivery, used book conditions, rare book questions, textbook orders, how to order books online, book store help, customer service books",
       ogImage: `${BASE_URL}/favicon.png`,
       canonical: `${BASE_URL}/faq`,
       type: "website",
@@ -750,8 +760,72 @@ async function resolvePageMeta(url: string): Promise<PageMeta> {
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          name: "FAQ — A2Z BOOKSHOP",
-          url: `${BASE_URL}/faq`,
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What payment methods do you accept?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "We accept all major credit cards (Visa, MasterCard, American Express, Discover), PayPal, Razorpay for international customers, and bank transfers. All payments are processed securely through encrypted connections."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I place an order?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Simply browse our catalog, add books to your cart, and proceed to checkout. You can create an account for faster future orders or checkout as a guest. We'll send you an order confirmation email with tracking information."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How long does shipping take?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Domestic orders: 3-7 business days standard, 1-3 days express. International orders: 7-14 business days. Rare books may require additional processing time for careful packaging."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Do you ship internationally?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, we ship to over 200 countries worldwide. International orders may be subject to customs duties and taxes, which are the customer's responsibility. We provide all necessary customs documentation."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do you grade book conditions?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "We use industry-standard grading: New (brand new), Like New (minimal wear), Very Good (light wear, all pages intact), Good (moderate wear but readable), Fair (heavy wear but complete). Each book's condition is clearly marked."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I return a book if I'm not satisfied?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, we offer a 30-day return policy. Books must be returned in the same condition as received. Contact our customer service team to initiate a return and receive a prepaid return label."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Do you sell rare and collectible books?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes! We specialize in rare, out-of-print, and collectible books. Each rare book comes with detailed condition descriptions, provenance information when available, and authenticity guarantees."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can you help me find a specific book?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Absolutely! Our book specialists can help locate hard-to-find titles. Use our Book Request form or email us with the title, author, and any other details. We'll search our network of book dealers worldwide."
+              }
+            }
+          ]
         },
         {
           "@context": "https://schema.org",
@@ -984,16 +1058,101 @@ function resolveDefaultMeta(urlPath: string): PageMeta {
     description:
       "A2Z Bookshop (a2zbookshop.com) — Your trusted online bookstore for new & used books. Browse 1000s of titles — fiction, non-fiction, children's, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.",
     keywords:
-      "a2z, a2z bookshop, a2zbookshop, a2z book shop, a2z books, books, online bookstore, buy books worldwide, new books, used books, fiction, non-fiction, bestsellers",
+      "buy books online, online bookstore, books for sale, new books, used books, second hand books, cheap books online, discount books, book store online, bookshop, buy textbooks, academic books, fiction books, non-fiction books, bestselling books, rare books, collectible books, book deals, free shipping books, worldwide book delivery, NFPA books, medical books, engineering books, DSM books, nursing books, electrical code books, international shipping books, a2z bookshop, a2zbookshop",
     ogImage: `${BASE_URL}/favicon.png`,
     canonical: `${BASE_URL}${urlPath}`,
     type: "website",
     noindex: false,
-    structuredData: {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      url: `${BASE_URL}${urlPath}`,
-    },
+    structuredData: [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        url: `${BASE_URL}${urlPath}`,
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Where can I buy books online?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You can buy books online at A2Z Bookshop (a2zbookshop.com). We offer new and used books across all genres with worldwide shipping and secure payment options."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you sell used books?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, A2Z Bookshop sells both new and used books in various conditions (Like New, Very Good, Good, Fair). All conditions are clearly marked on each book listing."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you ship books internationally?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, we ship books worldwide from India. We offer international shipping to USA, UK, Canada, Australia, and over 200+ countries with tracking."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of books do you sell?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A2Z Bookshop sells fiction, non-fiction, textbooks, academic books, NFPA codes, medical books, engineering books, DSM manuals, children's books, bestsellers, rare books, and more."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What payment methods do you accept?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We accept PayPal, Stripe (credit/debit cards), and Razorpay for secure online payments. All transactions are encrypted and secure."
+            }
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "A2Z BOOKSHOP",
+        "image": `${BASE_URL}/logo.jpeg`,
+        "@id": BASE_URL,
+        "url": BASE_URL,
+        "telephone": "",
+        "priceRange": "₹₹",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 28.6139,
+          "longitude": 77.2090
+        },
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ],
+          "opens": "00:00",
+          "closes": "23:59"
+        },
+        "sameAs": [
+          "https://www.instagram.com/a2zbookshop",
+          "https://www.facebook.com/a2zbookshop"
+        ]
+      }
+    ],
   };
 }
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Cross, Search, X } from "lucide-react";
 import { useSearch } from "wouter";
+import { useBrowsingHistory } from "@/hooks/useBrowsingHistory";
 
 interface SearchInputProps {
   placeholder?: string;
@@ -33,6 +34,7 @@ export default function SearchInput({
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
   const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0, width: 0 });
   const search = useSearch();
+  const { trackSearch } = useBrowsingHistory();
 
 
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
@@ -113,6 +115,7 @@ export default function SearchInput({
     if (searchQuery.trim()) {
       setShowSuggestions(false);
       const searchTerm = searchQuery.trim();
+      trackSearch(searchTerm);
       if (onSearch) {
         onSearch(searchTerm);
       } else {
