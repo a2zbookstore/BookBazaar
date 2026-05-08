@@ -37,7 +37,8 @@ export const users = pgTable("users", {
   role: varchar("role").default("customer"), // customer, admin
   passwordHash: varchar("password_hash"), // For email-based authentication
   isEmailVerified: boolean("is_email_verified").default(false),
-  authProvider: varchar("auth_provider").default("email"), // email, phone, replit
+  authProvider: varchar("auth_provider").default("email"), // email, phone, replit, google, facebook
+  oauthProviderId: varchar("oauth_provider_id"), // OAuth provider's user ID (e.g., Google ID, Facebook ID)
   resetToken: varchar("reset_token"),
   resetTokenExpiry: timestamp("reset_token_expiry"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -822,3 +823,23 @@ export const insertSecurityEventSchema = createInsertSchema(securityEvents).omit
 });
 export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
 export type SecurityEvent = typeof securityEvents.$inferSelect;
+
+// Blocked IPs table - persistent IP blocking with expiration support
+export const blockedIps = pgTable("blocked_ips", {
+  ip: varchar("ip", { length: 100 }).primaryKey(),
+  reason: text("reason").notNull(),
+  blockedAt: timestamp("blocked_at").defaultNow(),
+  blockedUntil: timestamp("blocked_until"), // NULL = permanent block
+  autoBlocked: boolean("auto_blocked").default(false),
+  attackCount: integer("attack_count").default(0),
+  lastAttempt: timestamp("last_attempt"),
+}, (table) => [
+  index("idx_blocked_ips_blocked_until").on(table.blockedUntil),
+  index("idx_blocked_ips_auto_blocked").on(table.autoBlocked),
+]);
+
+export const insertBlockedIpSchema = createInsertSchema(blockedIps).omit({
+  blockedAt: true,
+});
+export type InsertBlockedIp = z.infer<typeof insertBlockedIpSchema>;
+export type BlockedIp = typeof blockedIps.$inferSelect;

@@ -17,7 +17,7 @@ interface SEOProps {
 export default function SEO({
   title = 'A2Z BOOKSHOP - Your Online Book Store',
   description = 'A2Z Bookshop — your global online bookstore for new & used books. Browse 1000s of titles across fiction, non-fiction, children\'s, academic & more. Filter by genre, condition or price. Secure checkout via PayPal, Stripe & Razorpay. Worldwide shipping.',
-  keywords = 'books, online bookstore, buy books, new books, used books, fiction, non-fiction, bestsellers',
+  keywords = 'books, online bookstore, buy books online, new books, used books, second hand books, pre-owned books, cheap books, affordable books, discount books, fiction books, non fiction books, children books, academic books, bestsellers, trending books, book shop, book store, bookshop, bookstore, a2z bookshop, a2z book shop, a2z books, a to z bookshop, a2zbookshop, books india, online bookstore india, buy books india, international book delivery, worldwide book shipping, buy books worldwide, order books online, book delivery, books online india, english books online',
   image = 'https://a2zbookshop.com/logo.jpeg',
   url = 'https://a2zbookshop.com',
   type = 'website',

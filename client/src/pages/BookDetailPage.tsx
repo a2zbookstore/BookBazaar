@@ -16,6 +16,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { extractBookIdFromSlug, generateBookSlug } from "@/lib/slugUtils";
 import BookCarousel from "@/components/BookCarousel";
 import RelatedBooks from "./RealtedBooks";
+import { useBrowsingHistory } from "@/hooks/useBrowsingHistory";
 
 // Image helper function
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -59,6 +60,14 @@ export default function BookDetailPage() {
       setLocation(`/books/${correctSlug}`, { replace: true });
     }
   }, [book, slugOrId, setLocation]);
+
+  // Track browsing history
+  const { trackBookView } = useBrowsingHistory();
+  useEffect(() => {
+    if (book) {
+      trackBookView(book.id, book.categoryId);
+    }
+  }, [book?.id]);
 
   // Convert price + shipping whenever currency or book changes
   useEffect(() => {

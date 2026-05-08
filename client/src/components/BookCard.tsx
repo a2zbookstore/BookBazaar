@@ -177,16 +177,19 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
             }}
           />
-          {book.featured && (
-            <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-amber-500 text-white text-[8px] sm:text-xs px-1 py-0 sm:px-2 sm:py-1">
-              Featured
-            </Badge>
-          )}
-          {book.bestseller && (
-            <Badge className="absolute top-6 left-1 sm:top-8 sm:left-2 bg-purple-500 text-white text-[8px] sm:text-xs px-1 py-0 sm:px-2 sm:py-1">
-              Bestseller
-            </Badge>
-          )}
+          {/* Stacked ribbon badges with spring + glint animation */}
+          <div className="absolute top-2 left-0 flex flex-col gap-1.5 z-10">
+            {book.featured && (
+              <div className="badge-tag badge-featured inline-flex items-center gap-1 bg-amber-500 text-white font-bold text-[9px] sm:text-[11px] px-2 py-0.5 sm:px-3 sm:py-1 rounded-r-md shadow-md">
+                <span className="text-[8px] sm:text-[10px]">✦</span> Featured
+              </div>
+            )}
+            {book.bestseller && (
+              <div className="badge-tag badge-bestseller inline-flex items-center gap-1 bg-purple-600 text-white font-bold text-[9px] sm:text-[11px] px-2 py-0.5 sm:px-3 sm:py-1 rounded-r-md shadow-md">
+                <span className="text-[8px] sm:text-[10px]">★</span> Bestseller
+              </div>
+            )}
+          </div>
         </div>
 
         {/* book-details */}

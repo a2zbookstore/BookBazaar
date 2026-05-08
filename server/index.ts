@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import helmet from 'helmet';
+import "./oauthService";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { cleanupOldAnalytics } from "./analyticsCleanup";
