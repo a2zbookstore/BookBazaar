@@ -11,7 +11,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID;
 const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET;
-const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
+const BASE_URL = (process.env.BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
 console.log('OAuth Configuration:');
 console.log('- Google OAuth:', GOOGLE_CLIENT_ID ? '✓ Configured' : '✗ Not configured');
@@ -59,11 +59,13 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
           if (existingUser) {
             // Update existing user with OAuth info if not already set
             if (!existingUser.oauthProviderId) {
+              // Preserve authProvider for email/phone users so password login still works
+              const keepExistingProvider = existingUser.authProvider === 'email' || existingUser.authProvider === 'phone';
               await db
                 .update(users)
                 .set({
                   oauthProviderId: profile.id,
-                  authProvider: 'google',
+                  ...(keepExistingProvider ? {} : { authProvider: 'google' as const }),
                   isEmailVerified: true,
                   profileImageUrl: existingUser.profileImageUrl || profile.photos?.[0]?.value,
                   updatedAt: new Date(),
@@ -141,11 +143,13 @@ if (FACEBOOK_APP_ID && FACEBOOK_APP_SECRET) {
           if (existingUser) {
             // Update existing user with OAuth info if not already set
             if (!existingUser.oauthProviderId) {
+              // Preserve authProvider for email/phone users so password login still works
+              const keepExistingProvider = existingUser.authProvider === 'email' || existingUser.authProvider === 'phone';
               await db
                 .update(users)
                 .set({
                   oauthProviderId: profile.id,
-                  authProvider: 'facebook',
+                  ...(keepExistingProvider ? {} : { authProvider: 'facebook' as const }),
                   isEmailVerified: true,
                   profileImageUrl: existingUser.profileImageUrl || profile.photos?.[0]?.value,
                   updatedAt: new Date(),

@@ -2507,11 +2507,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.getUserByPhone(phone);
       }
 
-      if (!user || (user.authProvider !== "email" && user.authProvider !== "phone")) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      if (!user.passwordHash) {
+      // Allow password login for any user who has a password set, regardless of authProvider
+      if (!user || !user.passwordHash) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
