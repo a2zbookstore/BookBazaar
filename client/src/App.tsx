@@ -81,16 +81,8 @@ function AppRouter() {
   // Keep analytics session alive and backfill userId as user navigates (SPA)
   useAnalyticsHeartbeat();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-aqua"></div>
-          <p className="mt-4 text-secondary-black">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // Do NOT block the full page on auth loading — public pages (home, catalog, etc.)
+  // should render immediately. AdminProtectedRoute handles its own loading state.
 
   return (
     <Suspense fallback={<PageLoader />}>

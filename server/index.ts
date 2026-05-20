@@ -26,7 +26,15 @@ app.use(helmet({
       ],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "res.cloudinary.com"],
-      connectSrc: ["'self'", "api.stripe.com", "api.paypal.com"],
+      connectSrc: [
+        "'self'",
+        "api.stripe.com",
+        "api.paypal.com",
+        "api.exchangerate-api.com",
+        "ipapi.co",
+        "ipinfo.io",
+        "nominatim.openstreetmap.org",
+      ],
       frameSrc: ["js.stripe.com", "www.paypal.com"],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
@@ -84,6 +92,19 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
   }
 }));
 app.use('/attached_assets', express.static(path.join(process.cwd(), 'attached_assets')));
+
+// Serve favicon / icon files with explicit public Cache-Control BEFORE the
+// session middleware registers.  This prevents a session cookie from being
+// attached to favicon responses, which would otherwise force
+// "Cache-Control: private" and stop Google's favicon crawler from caching
+// and showing the site icon next to search results.
+const FAVICON_RE = /^\/(favicon[^/]*\.(ico|png|jpeg)|logo\.jpeg|manifest\.json|robots\.txt)$/i;
+app.use((req, res, next) => {
+  if (FAVICON_RE.test(req.path)) {
+    res.set('Cache-Control', 'public, max-age=86400');
+  }
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

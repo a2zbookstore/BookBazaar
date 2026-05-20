@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { Star, Truck, Clock, ShoppingCart } from "lucide-react";
+import { Star, Truck, Clock, ShoppingCart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalContext } from "@/contexts/GlobalContext";
@@ -33,6 +33,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   const { shippingRate, shippingCost: shipCost, isLoading: isShippingLoading } = useShipping();
   const [, setLocation] = useLocation();
   const [displayPrice, setDisplayPrice] = useState<string>('');
+  const [displayCostPrice, setDisplayCostPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
   const [shippingCost, setShippingCost] = useState<string>('');
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -74,8 +75,26 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
         } else {
           setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
         }
+      } catch (error) {
+        setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+      }
 
-        // Convert shipping cost if available from location-based shipping
+      // Cost price conversion — isolated so it never affects the main price
+      try {
+        if (book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price)) {
+          const convertedCost = await convertPrice(parseFloat(book.costPrice));
+          setDisplayCostPrice(convertedCost
+            ? formatAmount(convertedCost.convertedAmount, userCurrency)
+            : formatAmount(parseFloat(book.costPrice), 'USD'));
+        } else {
+          setDisplayCostPrice('');
+        }
+      } catch {
+        setDisplayCostPrice('');
+      }
+
+      // Shipping conversion — isolated so it never affects the main price
+      try {
         if (shipCost !== undefined) {
           if (shipCost === 0) {
             setShippingCost('Free Delivery');
@@ -88,20 +107,20 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
             }
           }
         }
-      } catch (error) {
-        setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+      } catch {
         if (shipCost !== undefined) {
-          if (shipCost === 0) {
-            setShippingCost('Free Delivery');
-          } else {
-            setShippingCost(formatAmount(shipCost, 'USD'));
-          }
+          setShippingCost(shipCost === 0 ? 'Free Delivery' : formatAmount(shipCost, 'USD'));
         }
-      } finally {
-        setIsConverting(false);
       }
+
+      setIsConverting(false);
     } else {
       setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+      if (book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price)) {
+        setDisplayCostPrice(formatAmount(parseFloat(book.costPrice), 'USD'));
+      } else {
+        setDisplayCostPrice('');
+      }
       if (shipCost !== undefined) {
         if (shipCost === 0) {
           setShippingCost('Free Delivery');
@@ -160,12 +179,36 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
     setLocation(`/checkout/buyNow/${book.id}/1`);
   }
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const slug = generateBookSlug(book.title, book.id);
+    const url = `${window.location.origin}/books/${slug}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: book.title, url });
+      } catch (_) {
+        // user cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", description: "Book link copied to clipboard." });
+    }
+  };
+
   return (
     <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-xl w-full">
-      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10">
+      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10 flex flex-col items-center gap-1">
+        <button
+          onClick={handleShare}
+          className="p-1 rounded-full bg-white/80 hover:bg-white shadow text-gray-500 hover:text-primary-aqua transition-colors"
+          aria-label="Share book"
+        >
+          <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        </button>
         <WishlistHeart bookId={book.id} />
       </div>
-      <Link to={`/books/${generateBookSlug(book.title, book.id)}`} className="block min-w-0">
+      <a href={`/books/${generateBookSlug(book.title, book.id)}`} target="_blank" rel="noopener noreferrer" className="block min-w-0">
 
         {/* image container */}
         <div className="relative bg-white p-2 sm:p-4 h-[180px] sm:h-[260px] flex items-center justify-center overflow-hidden">
@@ -200,7 +243,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           <p className="text-[9px] sm:text-sm text-gray-600 mb-1 sm:mb-2 truncate">{book.author}</p>
 
           <div className="flex items-center justify-between mb-1 sm:mb-2">
-            <div className="text-xs sm:text-lg font-bold text-secondary-aqua min-w-0 truncate">
+            <div className="min-w-0 truncate">
               {isGift ? (
                 <span>
                   <span className="text-xs text-gray-400 line-through mr-2">
@@ -213,7 +256,21 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
                   <span className="text-sm">
                     <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
                   </span>) : (
-                  displayPrice || formatAmount(parseFloat(book.price), 'USD')
+                  <span className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="text-xs sm:text-lg font-bold text-secondary-aqua">
+                      {displayPrice || formatAmount(parseFloat(book.price), 'USD')}
+                    </span>
+                    {displayCostPrice && (
+                      <span className="text-[9px] sm:text-sm text-gray-400 line-through">
+                        {displayCostPrice}
+                      </span>
+                    )}
+                    {book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price) && (
+                      <span className="text-[9px] sm:text-xs font-bold text-white bg-green-500 px-1 py-0.5 rounded">
+                        {Math.round(((parseFloat(book.costPrice) - parseFloat(book.price)) / parseFloat(book.costPrice)) * 100)}% off
+                      </span>
+                    )}
+                  </span>
 
                 )
               )}
@@ -284,7 +341,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
             </div>
           </div>
         </div>
-      </Link>
+      </a>
 
       {/* Buttons */}
       <div className="flex gap-1 sm:gap-2 px-2 sm:px-4 pb-2 sm:pb-4 min-w-0">

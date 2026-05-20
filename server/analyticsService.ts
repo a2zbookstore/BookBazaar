@@ -12,6 +12,7 @@ import {
 import { eq, sql, and, gte, lte, desc, isNotNull, isNull } from "drizzle-orm";
 import type { Request } from "express";
 import { nanoid } from "nanoid";
+import geoip from "geoip-lite";
 
 // Resolve userId from either email/phone session auth (req.session.userId)
 // or Replit OAuth (req.user.id) — whichever is present.
@@ -83,6 +84,47 @@ function getRequestIp(req: Request): string {
   );
 }
 
+// ISO 3166-1 alpha-2 → full country name (matches what client-side detection sends,
+// so the DB always stores consistent full names regardless of detection method).
+const ISO_TO_COUNTRY: Record<string, string> = {
+  AF:'Afghanistan', AL:'Albania', DZ:'Algeria', AR:'Argentina', AU:'Australia',
+  AT:'Austria', BD:'Bangladesh', BE:'Belgium', BR:'Brazil', CA:'Canada',
+  CL:'Chile', CN:'China', CO:'Colombia', HR:'Croatia', CZ:'Czech Republic',
+  DK:'Denmark', EG:'Egypt', FI:'Finland', FR:'France', DE:'Germany',
+  GH:'Ghana', GR:'Greece', HK:'Hong Kong', HU:'Hungary', IN:'India',
+  ID:'Indonesia', IR:'Iran', IQ:'Iraq', IE:'Ireland', IL:'Israel',
+  IT:'Italy', JP:'Japan', JO:'Jordan', KE:'Kenya', KW:'Kuwait',
+  MY:'Malaysia', MX:'Mexico', MA:'Morocco', NP:'Nepal', NL:'Netherlands',
+  NZ:'New Zealand', NG:'Nigeria', NO:'Norway', OM:'Oman', PK:'Pakistan',
+  PE:'Peru', PH:'Philippines', PL:'Poland', PT:'Portugal', QA:'Qatar',
+  RO:'Romania', RU:'Russia', SA:'Saudi Arabia', SG:'Singapore',
+  ZA:'South Africa', KR:'South Korea', ES:'Spain', LK:'Sri Lanka',
+  SE:'Sweden', CH:'Switzerland', TW:'Taiwan', TH:'Thailand', TR:'Turkey',
+  UA:'Ukraine', AE:'United Arab Emirates', GB:'United Kingdom',
+  US:'United States', VE:'Venezuela', VN:'Vietnam',
+};
+
+// Resolve country + city from IP address using the local MaxMind database.
+// Returns null values when the IP is private/unknown.
+// Country is stored as a full name (e.g. "United States") to stay consistent
+// with the full names sent by client-side geolocation.
+function lookupIpLocation(ip: string): { country: string | null; city: string | null } {
+  if (!ip || ip === 'unknown') return { country: null, city: null };
+  // Strip IPv6-mapped IPv4 prefix (::ffff:1.2.3.4)
+  const cleanIp = ip.replace(/^::ffff:/, '');
+  try {
+    const geo = geoip.lookup(cleanIp);
+    if (!geo) return { country: null, city: null };
+    const countryCode = geo.country || '';
+    return {
+      country: ISO_TO_COUNTRY[countryCode] || countryCode || null,
+      city: geo.city || null,
+    };
+  } catch {
+    return { country: null, city: null };
+  }
+}
+
 // Get or create session
 export async function getOrCreateSession(req: Request): Promise<string> {
   // Get session ID from cookie or create new one
@@ -106,7 +148,8 @@ export async function getOrCreateSession(req: Request): Promise<string> {
     // Create new session
     const userAgent = req.headers['user-agent'] || '';
     const { deviceType, browser, os } = parseUserAgent(userAgent);
-    const referrer = req.headers['referer'] || req.headers['referrer'] || '';
+    const rawReferrer = req.headers['referer'] || req.headers['referrer'] || '';
+    const referrer = Array.isArray(rawReferrer) ? rawReferrer[0] : rawReferrer;
     const ipAddress = getRequestIp(req);
     const isBot = detectBot(userAgent);
     
@@ -116,6 +159,12 @@ export async function getOrCreateSession(req: Request): Promise<string> {
     const utmMedium = url.searchParams.get('utm_medium') || undefined;
     const utmCampaign = url.searchParams.get('utm_campaign') || undefined;
     
+    // Resolve country/city: prefer any client-provided location, then IP lookup
+    const clientLocation = (req as any).userLocation;
+    const ipLocation = lookupIpLocation(ipAddress);
+    const country = clientLocation?.country || ipLocation.country || null;
+    const city = clientLocation?.city || ipLocation.city || null;
+
     await db.insert(analyticsSessions).values({
       sessionId,
       userId: getRequestUserId(req),
@@ -130,8 +179,8 @@ export async function getOrCreateSession(req: Request): Promise<string> {
       utmSource,
       utmMedium,
       utmCampaign,
-      country: (req as any).userLocation?.country || null,
-      city: (req as any).userLocation?.city || null,
+      country,
+      city,
     });
   } else {
     // Update last activity and backfill userId if user just logged in
@@ -426,9 +475,14 @@ export async function getAnalyticsOverview(startDate: Date, endDate: Date) {
 // Get real-time visitors (last 5 minutes)
 export async function getRealTimeVisitors() {
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-  
+
+  // Count unique humans: logged-in users deduplicated by userId (so the same
+  // account open in multiple tabs / browsers / incognito counts as ONE person),
+  // guests counted by sessionId (best we can do without an account).
   const activeVisitors = await db
-    .select({ count: sql<number>`count(distinct ${analyticsSessions.sessionId})` })
+    .select({
+      count: sql<number>`count(distinct CASE WHEN ${analyticsSessions.userId} IS NOT NULL THEN ${analyticsSessions.userId} ELSE ${analyticsSessions.sessionId} END)`,
+    })
     .from(analyticsSessions)
     .where(gte(analyticsSessions.lastActivity, fiveMinutesAgo));
   

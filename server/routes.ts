@@ -11,9 +11,10 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { passport } from "./oauthService";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail, sendReturnRequestEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail, sendReturnRequestEmail, sendContactReplyEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
+import { generateGoogleProductFeed, generateGoogleProductFeedCSV } from "./productFeed";
 import {
   getOrCreateSession,
   trackPageView,
@@ -491,6 +492,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send(robotsTxt);
   });
 
+  // Google Merchant Center Product Feed Routes
+  app.get('/product-feed.xml', async (req, res) => {
+    try {
+      const feed = await generateGoogleProductFeed({ includeOutOfStock: false });
+      res.header('Content-Type', 'application/rss+xml; charset=UTF-8');
+      res.header('Cache-Control', 'public, max-age=3600');
+      res.send(feed);
+    } catch (error) {
+      console.error('Error generating product feed (XML):', error);
+      res.status(500).send('Error generating product feed');
+    }
+  });
+
+  app.get('/product-feed.csv', async (req, res) => {
+    try {
+      const feed = await generateGoogleProductFeedCSV({ includeOutOfStock: false });
+      res.header('Content-Type', 'text/csv; charset=UTF-8');
+      res.header('Content-Disposition', 'attachment; filename="product-feed.csv"');
+      res.header('Cache-Control', 'public, max-age=3600');
+      res.send(feed);
+    } catch (error) {
+      console.error('Error generating product feed (CSV):', error);
+      res.status(500).send('Error generating product feed');
+    }
+  });
+
   // Auth middleware
   await setupAuth(app);
 
@@ -526,10 +553,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (req.session as any).cartItems = [];
       }
       
-      // Redirect to stored location or home
+      // Save session to DB before redirecting so the next request finds the user
       const redirectUrl = (req.session as any).oauthRedirect || '/';
       delete (req.session as any).oauthRedirect;
-      res.redirect(redirectUrl);
+      req.session.save((err) => {
+        if (err) console.error('Session save error after Google login:', err);
+        res.redirect(redirectUrl);
+      });
     }
   );
 
@@ -564,10 +594,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (req.session as any).cartItems = [];
       }
       
-      // Redirect to stored location or home
+      // Save session to DB before redirecting so the next request finds the user
       const redirectUrl = (req.session as any).oauthRedirect || '/';
       delete (req.session as any).oauthRedirect;
-      res.redirect(redirectUrl);
+      req.session.save((err) => {
+        if (err) console.error('Session save error after Facebook login:', err);
+        res.redirect(redirectUrl);
+      });
     }
   );
 
@@ -3377,6 +3410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sortBy,
         sortOrder,
         includeOutOfStock,
+        includeHidden,
       } = req.query;
 
       const options = {
@@ -3390,6 +3424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         search: search as string,
         titleOnly: titleOnly === "true" ? true : undefined,
         includeOutOfStock: includeOutOfStock === "true" ? true : undefined,
+        includeHidden: includeHidden === "true" ? true : undefined,
         minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,
@@ -3482,6 +3517,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error updating book:", error);
       res.status(500).json({ message: "Failed to update book" });
+    }
+  });
+
+  app.patch("/api/books/:id/visibility", requireAdminAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid book ID" });
+      const book = await storage.getBookById(id);
+      if (!book) return res.status(404).json({ message: "Book not found" });
+      const updated = await storage.updateBook(id, { isHidden: !book.isHidden });
+      res.json({ id: updated.id, isHidden: updated.isHidden });
+    } catch (error) {
+      console.error("Error toggling book visibility:", error);
+      res.status(500).json({ message: "Failed to update visibility" });
     }
   });
 
@@ -4327,6 +4376,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating contact message status:", error);
       res.status(500).json({ message: "Failed to update message status" });
+    }
+  });
+
+  app.post("/api/contact/:id/reply", requireAdminAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid message id" });
+
+      const { replyMessage } = req.body;
+      if (!replyMessage || typeof replyMessage !== "string" || replyMessage.trim().length === 0) {
+        return res.status(400).json({ message: "Reply message is required" });
+      }
+      if (replyMessage.length > 5000) {
+        return res.status(400).json({ message: "Reply message too long (max 5000 characters)" });
+      }
+
+      const messages = await storage.getContactMessages();
+      const original = messages.find((m) => m.id === id);
+      if (!original) return res.status(404).json({ message: "Message not found" });
+
+      const sent = await sendContactReplyEmail({
+        to: original.email,
+        customerName: `${original.firstName} ${original.lastName}`,
+        originalSubject: original.subject,
+        originalMessage: original.message,
+        replyMessage: replyMessage.trim(),
+      });
+
+      if (!sent) {
+        return res.status(502).json({ message: "Failed to send email. Please check email service configuration." });
+      }
+
+      const updated = await storage.updateContactMessageStatus(id, "replied");
+      res.json({ message: "Reply sent successfully", contactMessage: updated });
+    } catch (error) {
+      console.error("Error sending contact reply:", error);
+      res.status(500).json({ message: "Failed to send reply" });
     }
   });
 

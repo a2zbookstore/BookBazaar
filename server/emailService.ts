@@ -2085,6 +2085,104 @@ export const sendReturnRequestEmail = async (data: ReturnRequestEmailData): Prom
   }
 };
 
+// Reply to a customer contact message
+export const sendContactReplyEmail = async (params: {
+  to: string;
+  customerName: string;
+  originalSubject: string;
+  originalMessage: string;
+  replyMessage: string;
+}): Promise<boolean> => {
+  const { to, customerName, originalSubject, originalMessage, replyMessage } = params;
+
+  const sanitizedTo = sanitizeEmail(to);
+  if (!isValidEmail(sanitizedTo)) {
+    console.error('Invalid recipient email in sendContactReplyEmail:', to);
+    return false;
+  }
+
+  const subject = `Re: ${originalSubject}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; }
+        .wrapper { width: 100%; background: #f1f5f9; padding: 32px 0; }
+        .card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.09); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f766e 100%); padding: 40px 32px; text-align: center; }
+        .header .logo { color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 0.05em; margin: 0 0 6px; }
+        .header .tagline { color: #94a3b8; font-size: 12px; }
+        .body { padding: 32px; }
+        .greeting { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 16px; }
+        .reply-box { background: #f8fafc; border-left: 4px solid #0f766e; border-radius: 8px; padding: 20px 24px; margin-bottom: 24px; }
+        .reply-box p { font-size: 15px; color: #334155; line-height: 1.7; white-space: pre-wrap; margin: 0; }
+        .divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+        .original-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+        .original-box { background: #f1f5f9; border-radius: 8px; padding: 16px 20px; }
+        .original-box p { font-size: 13px; color: #64748b; line-height: 1.6; white-space: pre-wrap; margin: 0; }
+        .footer { background: #f8fafc; padding: 20px 32px; text-align: center; border-top: 1px solid #e2e8f0; }
+        .footer p { font-size: 12px; color: #94a3b8; margin: 0; }
+        .footer a { color: #0f766e; text-decoration: none; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="card">
+          <div class="header">
+            <p class="logo">A2Z BOOKSHOP</p>
+            <p class="tagline">Your trusted book destination</p>
+          </div>
+          <div class="body">
+            <p class="greeting">Dear ${customerName},</p>
+            <div class="reply-box">
+              <p>${replyMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            </div>
+            <hr class="divider" />
+            <p class="original-label">Your original message</p>
+            <div class="original-box">
+              <p>${originalMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            </div>
+          </div>
+          <div class="footer">
+            <p>This email was sent by <strong>A2Z BOOKSHOP</strong> support team.<br>
+            Visit us at <a href="https://www.a2zbookshop.com">www.a2zbookshop.com</a></p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Dear ${customerName},\n\n${replyMessage}\n\n---\nYour original message:\n${originalMessage}\n\n-- A2Z BOOKSHOP Support Team`;
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.log('Email transporter not available');
+    return false;
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: { name: 'A2Z BOOKSHOP Support', address: getZohoEmail('support') },
+      to: sanitizedTo,
+      subject,
+      text,
+      html,
+    });
+    console.log('Contact reply sent:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending contact reply email:', error);
+    return false;
+  }
+};
+
 // Generic email sending function
 export const sendEmail = async (params: {
   to: string;

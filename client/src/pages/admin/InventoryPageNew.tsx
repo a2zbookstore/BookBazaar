@@ -4,7 +4,7 @@ import {
   Plus, Search, Edit, Trash2, Package, Upload, Download,
   FileText, CloudUpload, ChevronDown, X, BookOpen, Filter,
   SlidersHorizontal, RefreshCw, Image as ImageIcon, Star, Zap,
-  TrendingUp, Tag, ChevronLeft, ChevronRight,
+  TrendingUp, Tag, ChevronLeft, ChevronRight, Eye, EyeOff,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ interface BooksResponse { books: Book[]; total: number; }
 
 interface BookForm {
   title: string; author: string; isbn: string; categoryIds: number[];
-  description: string; condition: string; binding: string; price: string;
+  description: string; condition: string; binding: string; price: string; costPrice: string;
   stock: number; imageUrl: string; imageUrl2: string; imageUrl3: string;
   publishedYear: number | null; publisher: string; pages: number | null;
   language: string; edition: string; weight: string; dimensions: string;
@@ -54,7 +54,7 @@ const CONDITION_STYLES: Record<string, string> = {
 
 const EMPTY_FORM: BookForm = {
   title: "", author: "", isbn: "", categoryIds: [], description: "",
-  condition: "Good", binding: "Softcover", price: "", stock: 1,
+  condition: "Good", binding: "Softcover", price: "", costPrice: "", stock: 1,
   imageUrl: "", imageUrl2: "", imageUrl3: "",
   publishedYear: null, publisher: "", pages: null, language: "English",
   edition: "", weight: "", dimensions: "",
@@ -109,6 +109,8 @@ export default function InventoryPageNew() {
   queryParams.set("offset", ((currentPage - 1) * itemsPerPage).toString());
   queryParams.set("sortBy", "updatedAt");
   queryParams.set("sortOrder", "desc");
+  queryParams.set("includeOutOfStock", "true");
+  queryParams.set("includeHidden", "true");
 
   const { data: booksResponse, isLoading, error } = useQuery<BooksResponse>({
     queryKey: ["/api/books", { search, categoryId: selectedCategory, condition: selectedCondition, limit: itemsPerPage, offset: (currentPage - 1) * itemsPerPage }],
@@ -142,6 +144,7 @@ export default function InventoryPageNew() {
         categoryId: data.categoryIds[0] || null, categoryIds: data.categoryIds,
         description: data.description || "", condition: data.condition, binding: data.binding,
         price: data.price?.trim() ? parseFloat(data.price).toString() : "0",
+        costPrice: data.costPrice?.trim() ? parseFloat(data.costPrice).toString() : null,
         stock: data.stock || 0, imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null, publisher: data.publisher || "",
         pages: data.pages || null, language: data.language || "English",
@@ -168,6 +171,7 @@ export default function InventoryPageNew() {
         categoryId: data.categoryIds[0] || null, categoryIds: data.categoryIds,
         description: data.description || "", condition: data.condition, binding: data.binding,
         price: data.price?.trim() ? parseFloat(data.price).toString() : "0",
+        costPrice: data.costPrice?.trim() ? parseFloat(data.costPrice).toString() : null,
         stock: data.stock || 0, imageUrl: data.imageUrl || "",
         publishedYear: data.publishedYear || null, publisher: data.publisher || "",
         pages: data.pages || null, language: data.language || "English",
@@ -197,13 +201,21 @@ export default function InventoryPageNew() {
     onError: (e: Error) => { setDeletingBookId(null); toast({ title: "Error", description: e.message, variant: "destructive" }); },
   });
 
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async (id: number) => apiRequest("PATCH", `/api/books/${id}/visibility`),
+    onSuccess: async (_, id) => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+    },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
   const handleEdit = (book: Book) => {
     setEditingBook(book);
     setBookForm({
       title: book.title || "", author: book.author || "", isbn: book.isbn || "",
       categoryIds: book.categories?.map(c => c.id) ?? (book.categoryId ? [book.categoryId] : []),
       description: book.description || "", condition: book.condition || "Good",
-      binding: book.binding || "Softcover", price: book.price?.toString() || "",
+      binding: book.binding || "Softcover", price: book.price?.toString() || "", costPrice: book.costPrice?.toString() || "",
       stock: book.stock || 1, imageUrl: book.imageUrl || "",
       imageUrl2: book.imageUrl2 || "", imageUrl3: book.imageUrl3 || "",
       publishedYear: book.publishedYear || null, publisher: book.publisher || "",
@@ -454,7 +466,7 @@ export default function InventoryPageNew() {
               {books.map((book, idx) => (
                 <div
                   key={book.id}
-                  className="group flex items-center gap-4 px-5 py-4 hover:bg-gray-50/80 transition-colors"
+                  className={`group flex items-center gap-4 px-5 py-4 hover:bg-gray-50/80 transition-colors ${book.isHidden ? "opacity-50" : ""}`}
                 >
                   {/* Rank */}
                   <span className="hidden sm:flex w-6 text-xs font-semibold text-secondary-black/50 shrink-0 tabular-nums">
@@ -517,13 +529,26 @@ export default function InventoryPageNew() {
                       {/* Price + Stock + Actions */}
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right hidden sm:block">
+                          {book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price) && (
+                            <p className="text-[10px] text-gray-400 line-through">${parseFloat(book.costPrice).toFixed(2)}</p>
+                          )}
                           <p className="font-bold text-sm text-primary-aqua">${book.price}</p>
                           <p className={`text-[10px] font-semibold mt-0.5 ${book.stock === 0 ? "text-red-500" : book.stock <= 5 ? "text-amber-600" : "text-emerald-600"}`}>
                             {book.stock === 0 ? "Out of stock" : `${book.stock} in stock`}
                           </p>
+                          {book.isHidden && (
+                            <p className="text-[10px] font-semibold text-gray-400 mt-0.5">Hidden</p>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => toggleVisibilityMutation.mutate(book.id)}
+                            title={book.isHidden ? "Unhide listing" : "Hide listing"}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${book.isHidden ? "border-amber-300 text-amber-500 bg-amber-50 hover:bg-amber-100" : "border-gray-200 text-secondary-black hover:border-amber-300 hover:text-amber-500 hover:bg-amber-50"}`}
+                          >
+                            {book.isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </button>
                           <button
                             onClick={() => handleEdit(book)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua hover:bg-cyan-50 transition-all"
@@ -711,8 +736,12 @@ export default function InventoryPageNew() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="price" className="text-xs font-semibold text-secondary-black uppercase tracking-wide">Price ($) *</Label>
+                <Label htmlFor="price" className="text-xs font-semibold text-secondary-black uppercase tracking-wide">Selling Price ($) *</Label>
                 <Input id="price" type="number" step="0.01" min="0" value={bookForm.price} onChange={e => setBookForm(p => ({ ...p, price: e.target.value }))} required className="mt-1 bg-white" />
+              </div>
+              <div>
+                <Label htmlFor="costPrice" className="text-xs font-semibold text-secondary-black uppercase tracking-wide">Cost Price ($)</Label>
+                <Input id="costPrice" type="number" step="0.01" min="0" placeholder="Original / MRP" value={bookForm.costPrice} onChange={e => setBookForm(p => ({ ...p, costPrice: e.target.value }))} className="mt-1 bg-white" />
               </div>
             </div>
 

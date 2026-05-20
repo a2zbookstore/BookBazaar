@@ -95,6 +95,8 @@ export interface IStorage {
     offset?: number;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
+    includeOutOfStock?: boolean;
+    includeHidden?: boolean;
   }): Promise<{ books: (Book & { categories: Category[] })[]; total: number }>;
   getBookById(id: number): Promise<(Book & { category?: Category; categories?: Category[] }) | undefined>;
   createBook(book: InsertBook): Promise<Book>;
@@ -440,6 +442,7 @@ export class DatabaseStorage implements IStorage {
     search?: string;
     titleOnly?: boolean;
     includeOutOfStock?: boolean;
+    includeHidden?: boolean;
     minPrice?: number;
     maxPrice?: number;
     limit?: number;
@@ -458,6 +461,7 @@ export class DatabaseStorage implements IStorage {
       search,
       titleOnly,
       includeOutOfStock,
+      includeHidden,
       minPrice,
       maxPrice,
       limit = 12,
@@ -471,6 +475,11 @@ export class DatabaseStorage implements IStorage {
     // Exclude out of stock books unless explicitly included (for admin inventory)
     if (!includeOutOfStock) {
       conditions.push(sql`${books.stock} > 0`);
+    }
+
+    // Exclude hidden books unless explicitly requested (admin only)
+    if (!includeHidden) {
+      conditions.push(sql`(${books.isHidden} IS NULL OR ${books.isHidden} = false)`);
     }
 
     if (categoryId) conditions.push(
@@ -503,8 +512,7 @@ export class DatabaseStorage implements IStorage {
           or(
             sql`${normalizeField(books.title)} LIKE ${`%${normalizedSearchTerm}%`}`,
             sql`${normalizeField(books.author)} LIKE ${`%${normalizedSearchTerm}%`}`,
-            sql`${normalizeField(books.isbn)} LIKE ${`%${normalizedSearchTerm}%`}`,
-            sql`${normalizeField(books.description)} LIKE ${`%${normalizedSearchTerm}%`}`
+            sql`${normalizeField(books.isbn)} LIKE ${`%${normalizedSearchTerm}%`}`
           )
         );
       }
@@ -597,38 +605,35 @@ export class DatabaseStorage implements IStorage {
         .where(baseWhereClause)
         .limit(500); // Limit for performance
       
-      // Apply fuzzy matching in JavaScript with more lenient thresholds
+      // Apply fuzzy matching — threshold 0.70 to avoid false positives (e.g. "chinese"≈"chimneys", "motivational"≈"international")
       const fuzzyMatches = allBooks
         .map(book => {
           let score = 0;
           
           if (titleOnly) {
-            // Check title and publisher for fuzzy match (lower threshold for partial matches)
-            if (fuzzyMatch(searchTerm, book.title, 0.55)) {
+            // Check title and publisher for fuzzy match
+            if (fuzzyMatch(searchTerm, book.title, 0.70)) {
               score = Math.max(score, getFuzzyMatchScore(searchTerm, book.title));
             }
-            if (book.publisher && fuzzyMatch(searchTerm, book.publisher, 0.55)) {
+            if (book.publisher && fuzzyMatch(searchTerm, book.publisher, 0.70)) {
               score = Math.max(score, getFuzzyMatchScore(searchTerm, book.publisher));
             }
           } else {
-            // Check all fields for fuzzy match (more lenient thresholds)
-            if (fuzzyMatch(searchTerm, book.title, 0.55)) {
+            // Check title, author, ISBN for fuzzy match (description excluded to avoid false positives)
+            if (fuzzyMatch(searchTerm, book.title, 0.70)) {
               score = Math.max(score, getFuzzyMatchScore(searchTerm, book.title) * 1.2); // Boost title matches
             }
-            if (fuzzyMatch(searchTerm, book.author, 0.55)) {
+            if (fuzzyMatch(searchTerm, book.author, 0.70)) {
               score = Math.max(score, getFuzzyMatchScore(searchTerm, book.author) * 1.1); // Boost author matches
             }
             if (book.isbn && fuzzyMatch(searchTerm, book.isbn, 0.7)) {
               score = Math.max(score, getFuzzyMatchScore(searchTerm, book.isbn));
             }
-            if (book.description && fuzzyMatch(searchTerm, book.description, 0.5)) {
-              score = Math.max(score, getFuzzyMatchScore(searchTerm, book.description) * 0.8); // Lower weight for description
-            }
           }
           
           return { book, score };
         })
-        .filter(item => item.score > 0)
+        .filter(item => item.score >= 50) // Minimum score to cut off marginal fuzzy matches
         .sort((a, b) => b.score - a.score);
       
       console.log('Fuzzy search found', fuzzyMatches.length, 'matches');
@@ -764,17 +769,17 @@ export class DatabaseStorage implements IStorage {
   async getSearchSuggestions(query: string): Promise<string[]> {
     const searchTerm = query.toLowerCase();
 
-    // Get unique suggestions from titles and authors with exact matches
+    // Get unique suggestions from titles and authors with exact matches (in-stock only)
     const titleSuggestions = await db
       .selectDistinct({ value: books.title })
       .from(books)
-      .where(sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`)
+      .where(and(sql`LOWER(${books.title}) LIKE ${`%${searchTerm}%`}`, sql`${books.stock} > 0`))
       .limit(8);
 
     const authorSuggestions = await db
       .selectDistinct({ value: books.author })
       .from(books)
-      .where(sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`)
+      .where(and(sql`LOWER(${books.author}) LIKE ${`%${searchTerm}%`}`, sql`${books.stock} > 0`))
       .limit(8);
 
     // Combine exact match suggestions
@@ -800,15 +805,17 @@ export class DatabaseStorage implements IStorage {
     if (uniqueExactMatches.length < 2) {
       console.log('Very few exact matches, adding fuzzy suggestions...');
       
-      // Get titles and authors for fuzzy matching
+      // Get titles and authors for fuzzy matching (in-stock only)
       const allTitles = await db
         .selectDistinct({ value: books.title })
         .from(books)
+        .where(sql`${books.stock} > 0`)
         .limit(250);
       
       const allAuthors = await db
         .selectDistinct({ value: books.author })
         .from(books)
+        .where(sql`${books.stock} > 0`)
         .limit(250);
 
       // Find fuzzy matches with balanced threshold
@@ -816,14 +823,14 @@ export class DatabaseStorage implements IStorage {
         query,
         allTitles.map(t => t.value),
         5,
-        0.55 // Balanced threshold - not too strict, not too lenient
+        0.65 // Stricter threshold to avoid unrelated suggestions
       );
       
       const fuzzyAuthorMatches = findBestFuzzyMatches(
         query,
         allAuthors.map(a => a.value),
         3,
-        0.55
+        0.65
       );
 
       // Combine: exact matches first (highest priority), then fuzzy
