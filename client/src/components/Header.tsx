@@ -12,7 +12,7 @@ import ProfileMenu from "./ui/profileMenu";
 
 export default function Header() {
     const [location, setLocation] = useLocation();
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
     const { cartCount, isCartAnimating, wishlistCount } = useGlobalContext();
     const [isScrolled, setIsScrolled] = useState(false);
 
@@ -114,7 +114,10 @@ export default function Header() {
                                 </span>
                             )}
                         </Link> 
-                        {isAuthenticated ? (
+                        {isLoading ? (
+                            // Placeholder to prevent layout shift while auth resolves
+                            <div className="w-20 h-9" />
+                        ) : isAuthenticated ? (
                             <ProfileMenu user={user} />
                         ) : (
                             <div className="flex items-center gap-2">

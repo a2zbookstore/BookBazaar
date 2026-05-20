@@ -125,7 +125,6 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/callback", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, async () => {
       // Transfer guest cart items after successful Replit login
@@ -148,7 +147,11 @@ export async function setupAuth(app: Express) {
           }
         }
       }
-      next();
+      // Save session before redirecting so the next request finds the user
+      req.session.save((err) => {
+        if (err) console.error('Session save error after Replit login:', err);
+        res.redirect("/");
+      });
     });
   });
 

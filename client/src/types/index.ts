@@ -9,6 +9,8 @@ export interface Book {
   condition: string;
   binding?: string;
   price: string;
+  costPrice?: string;
+  isHidden?: boolean;
   stock: number;
   imageUrl?: string;
   imageUrl2?: string;

@@ -80,7 +80,24 @@ export function serveStatic(app: Express) {
 
   // Serve all static assets EXCEPT index.html so that every HTML-page
   // request falls through to the catch-all below, which runs SSR meta injection.
-  app.use(express.static(distPath, { index: false }));
+  // Explicit Cache-Control headers are required: without them Google App Engine
+  // defaults to "Cache-Control: private" which blocks Google's favicon service
+  // from caching and displaying the site icon in search results.
+  app.use(express.static(distPath, {
+    index: false,
+    setHeaders: (res, filePath) => {
+      // Favicon / image assets — 24 h public cache so Google can index them
+      if (/\.(ico|png|jpg|jpeg|svg|webp|gif)$/.test(filePath)) {
+        res.set('Cache-Control', 'public, max-age=86400');
+      // Hashed JS / CSS bundles — safe to cache for 1 year (content-addressed)
+      } else if (/\.(js|css|woff|woff2|ttf|eot)$/.test(filePath)) {
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+      // manifest.json, robots.txt, sitemap.xml — 1 h public cache
+      } else if (/\.(json|txt|xml)$/.test(filePath)) {
+        res.set('Cache-Control', 'public, max-age=3600');
+      }
+    },
+  }));
 
   // fall through to index.html — inject SSR meta before sending
   app.use("*", async (req, res) => {

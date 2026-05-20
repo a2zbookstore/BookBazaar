@@ -1,7 +1,7 @@
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Star, ShoppingCart, Truck, Shield, RotateCcw, BadgeDollarSign, Minus, Plus, Clock, Pen } from "lucide-react";
+import { Star, ShoppingCart, Truck, Shield, RotateCcw, BadgeDollarSign, Minus, Plus, Clock, Pen, Share2 } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import SEO, { generateBookStructuredData, generateBreadcrumbStructuredData } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ export default function BookDetailPage() {
   const { userCurrency, convertPrice, formatAmount } = useCurrency();
   const [expanded, setExpanded] = useState(false);
   const [displayPrice, setDisplayPrice] = useState<string>('');
+  const [displayCostPrice, setDisplayCostPrice] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
 
   const { data: book, isLoading } = useQuery<Book>({
@@ -80,25 +81,46 @@ export default function BookDetailPage() {
           setDisplayPrice(converted
             ? formatAmount(converted.convertedAmount, userCurrency)
             : formatAmount(parseFloat(book.price), 'USD'));
-
-          if (shipCost !== undefined) {
-            if (shipCost === 0) {
-              setShippingCost('Free Delivery');
-            } else {
-              const convertedShipping = await convertPrice(shipCost);
-              setShippingCost(convertedShipping
-                ? formatAmount(convertedShipping.convertedAmount, userCurrency)
-                : formatAmount(shipCost, 'USD'));
-            }
-          }
         } else {
           setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
-          if (shipCost !== undefined) {
-            setShippingCost(shipCost === 0 ? 'Free Delivery' : formatAmount(shipCost, 'USD'));
-          }
         }
       } catch {
         setDisplayPrice(formatAmount(parseFloat(book.price), 'USD'));
+      }
+
+      // Cost price — isolated so failures never affect the main price
+      try {
+        if (book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price)) {
+          if (userCurrency !== 'USD') {
+            const convertedCost = await convertPrice(parseFloat(book.costPrice));
+            setDisplayCostPrice(convertedCost
+              ? formatAmount(convertedCost.convertedAmount, userCurrency)
+              : formatAmount(parseFloat(book.costPrice), 'USD'));
+          } else {
+            setDisplayCostPrice(formatAmount(parseFloat(book.costPrice), 'USD'));
+          }
+        } else {
+          setDisplayCostPrice('');
+        }
+      } catch {
+        setDisplayCostPrice('');
+      }
+
+      // Shipping — isolated
+      try {
+        if (shipCost !== undefined) {
+          if (shipCost === 0) {
+            setShippingCost('Free Delivery');
+          } else if (userCurrency !== 'USD') {
+            const convertedShipping = await convertPrice(shipCost);
+            setShippingCost(convertedShipping
+              ? formatAmount(convertedShipping.convertedAmount, userCurrency)
+              : formatAmount(shipCost, 'USD'));
+          } else {
+            setShippingCost(formatAmount(shipCost, 'USD'));
+          }
+        }
+      } catch {
         if (shipCost !== undefined) {
           setShippingCost(shipCost === 0 ? 'Free Delivery' : formatAmount(shipCost, 'USD'));
         }
@@ -107,7 +129,7 @@ export default function BookDetailPage() {
       }
     };
     run();
-  }, [book?.price, userCurrency, shipCost, convertPrice, formatAmount]);
+  }, [book?.price, book?.costPrice, userCurrency, shipCost, convertPrice, formatAmount]);
 
   const handleAddToCart = async () => {
     if (!book) return;
@@ -130,6 +152,22 @@ export default function BookDetailPage() {
   const handleBuyNow = async () => {
     setLocation(`/checkout/buyNow/${book?.id}/${quantity}`);
   }
+
+  const handleShare = async () => {
+    if (!book) return;
+    const slug = generateBookSlug(book.title, book.id);
+    const url = `${window.location.origin}/books/${slug}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: book.title, url });
+      } catch (_) {
+        // user cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", description: "Book link copied to clipboard." });
+    }
+  };
 
   const getConditionColor = (condition: string) => {
     switch (condition.toLowerCase()) {
@@ -299,9 +337,19 @@ export default function BookDetailPage() {
           {/* Book Details */}
           <div className="space-y-6">
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bookerly font-bold text-base-black mb-1 sm:mb-2 break-words">
-                {book.title}
-              </h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bookerly font-bold text-base-black mb-1 sm:mb-2 break-words">
+                  {book.title}
+                </h1>
+                <button
+                  onClick={handleShare}
+                  className="flex-shrink-0 mt-1 p-2 rounded-full bg-gray-100 hover:bg-primary-aqua hover:text-white text-gray-500 transition-colors shadow-sm"
+                  aria-label="Share this book"
+                  title="Share this book"
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
+              </div>
 
               <p className="text-sm sm:text-base lg:text-xl text-secondary-black mb-3 sm:mb-4 truncate">
                 by {book.author}
@@ -351,10 +399,20 @@ export default function BookDetailPage() {
 
             {/* Price and Stock */}
             <div className="space-y-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <span className="text-3xl font-bold text-primary-aqua">
                   {isConverting ? '...' : (displayPrice || `$${parseFloat(book.price).toFixed(2)}`)}
                 </span>
+                {displayCostPrice && (
+                  <span className="text-lg text-gray-400 line-through">
+                    {displayCostPrice}
+                  </span>
+                )}
+                {book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price) && (
+                  <span className="text-sm font-bold text-white bg-green-500 px-2 py-1 rounded-md">
+                    {Math.round(((parseFloat(book.costPrice) - parseFloat(book.price)) / parseFloat(book.costPrice)) * 100)}% off
+                  </span>
+                )}
                 {book.stock > 0 && book.stock <= 5 && (
                   <span className="text-sm text-abe-red font-medium">
                     Only {book.stock} left in stock!

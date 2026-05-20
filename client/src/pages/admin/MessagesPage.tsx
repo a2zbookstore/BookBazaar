@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Mail, CheckCircle, Reply, Clock, User, MessageSquare,
-  Inbox, MailOpen, MailCheck, Search, Filter, AtSign, CalendarDays, ChevronDown, ChevronUp,
+  Inbox, MailOpen, MailCheck, Search, Filter, AtSign, CalendarDays, ChevronDown, ChevronUp, Send, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -28,6 +29,8 @@ export default function MessagesPage() {
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [replyOpenId, setReplyOpenId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
 
   const { data: contactMessages = [], isLoading } = useQuery<ContactMessage[]>({
     queryKey: ["/api/contact"],
@@ -45,6 +48,25 @@ export default function MessagesPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: async ({ id, replyMessage }: { id: number; replyMessage: string }) => {
+      await apiRequest("POST", `/api/contact/${id}/reply`, { replyMessage });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contact"] });
+      setReplyOpenId(null);
+      setReplyText("");
+      toast({ title: "Reply sent", description: "Your reply has been delivered to the customer." });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to send reply",
+        description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
     },
@@ -291,19 +313,64 @@ export default function MessagesPage() {
                         <Button
                           size="sm"
                           onClick={() => {
-                            const subj = `Re: ${message.subject}`;
-                            const body = `Dear ${message.firstName},\n\nThank you for contacting A2Z BOOKSHOP.\n\n\n\nBest regards,\nA2Z BOOKSHOP Team`;
-                            window.open(`mailto:${message.email}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`);
-                            if (message.status !== "replied") {
-                              updateStatusMutation.mutate({ id: message.id, status: "replied" });
+                            if (replyOpenId === message.id) {
+                              setReplyOpenId(null);
+                              setReplyText("");
+                            } else {
+                              setReplyOpenId(message.id);
+                              setReplyText(`Dear ${message.firstName},\n\nThank you for contacting A2Z BOOKSHOP.\n\n\n\nBest regards,\nA2Z BOOKSHOP Team`);
                             }
                           }}
                           className="rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm h-8 text-xs px-3"
                         >
                           <Reply className="w-3.5 h-3.5 mr-1.5" />
-                          Reply via Email
+                          {replyOpenId === message.id ? "Cancel Reply" : "Reply to Customer"}
                         </Button>
                       </div>
+
+                      {/* ── Inline reply composer ── */}
+                      {replyOpenId === message.id && (
+                        <div className="rounded-xl border border-sky-200 bg-sky-50/50 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-semibold text-sky-700">Replying to {message.firstName} {message.lastName}</p>
+                              <p className="text-xs text-sky-500">{message.email}</p>
+                            </div>
+                            <button
+                              onClick={() => { setReplyOpenId(null); setReplyText(""); }}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <Textarea
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value)}
+                            rows={6}
+                            placeholder="Write your reply here…"
+                            className="text-sm rounded-lg border-sky-200 focus-visible:ring-sky-400 resize-y bg-white"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => { setReplyOpenId(null); setReplyText(""); }}
+                              className="rounded-xl h-8 text-xs px-3 border-gray-200"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              disabled={replyMutation.isPending || !replyText.trim()}
+                              onClick={() => replyMutation.mutate({ id: message.id, replyMessage: replyText })}
+                              className="rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm h-8 text-xs px-3"
+                            >
+                              <Send className="w-3.5 h-3.5 mr-1.5" />
+                              {replyMutation.isPending ? "Sending…" : "Send Reply"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
