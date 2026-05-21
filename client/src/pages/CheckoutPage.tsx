@@ -685,6 +685,7 @@ export default function CheckoutPage() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "A2Z BOOKSHOP",
+        image: "https://a2zbookshop.com/favicon.jpeg",
         description: paymentDescription,
         order_id: orderData.id,
         handler: async (response: any) => {
