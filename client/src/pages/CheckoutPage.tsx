@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, Globe, CheckCircle, ScrollText, MapPinPlusInside, UserPen, ChevronDown } from "lucide-react";
 import { PaymentSpinner } from "@/components/PaymentSpinner";
 import StripeCheckoutForm from "@/components/StripeCheckoutForm";
+import PayPalCheckoutButton from "@/components/PayPalCheckoutButton";
 import { Book } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { staticCoupons } from "@/constant/staticCoupons";
@@ -688,6 +689,18 @@ export default function CheckoutPage() {
         image: "https://a2zbookshop.com/favicon.jpeg",
         description: paymentDescription,
         order_id: orderData.id,
+        config: {
+          display: {
+            blocks: {
+              apple_pay_block: {
+                name: "Apple Pay",
+                instruments: [{ method: "wallet", wallets: ["apple_pay"] }],
+              },
+            },
+            sequence: ["block.apple_pay_block"],
+            preferences: { show_default_blocks: true },
+          },
+        },
         handler: async (response: any) => {
           console.log("Razorpay payment response:", response);
           setIsProcessing(true);
@@ -845,6 +858,193 @@ export default function CheckoutPage() {
       setSpinnerMessage("Processing payment...");
     } finally {
       // Only kill the spinner here if the modal never opened (error before open)
+      if (!modalOpened) {
+        setIsProcessing(false);
+        setSpinnerMessage("Processing payment...");
+      }
+    }
+  };
+
+  const handleRazorpayUpiPayment = async () => {
+    if (!(razorpayConfig as any)?.key_id) {
+      toast({
+        title: "Payment Error",
+        description: "Razorpay configuration not available",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!window.Razorpay) {
+      toast({
+        title: "Payment Error",
+        description: "Razorpay payment system not loaded. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Calculate INR amount
+    let inrAmount: number;
+    if (userCurrency === "INR") {
+      inrAmount = convertedAmounts.total;
+    } else if (exchangeRates && exchangeRates["INR"]) {
+      inrAmount = Math.round(total * exchangeRates["INR"] * 100) / 100;
+    } else {
+      toast({
+        title: "Payment Error",
+        description: "Could not determine INR amount. Please select INR as your currency and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (inrAmount < 1) {
+      toast({
+        title: "Minimum Amount Required",
+        description: "UPI payments require a minimum of ₹1.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    setSpinnerMessage("Preparing UPI payment...");
+    setPaymentMethod("razorpay");
+    let modalOpened = false;
+
+    try {
+      const orderResponse = await apiRequest("POST", "/api/razorpay/order", {
+        amount: inrAmount,
+        currency: "INR",
+        receipt: `upi_${Date.now()}`,
+        international: false,
+      });
+
+      const orderData = await orderResponse.json();
+
+      const options = {
+        key: (razorpayConfig as any).key_id,
+        amount: orderData.amount,
+        currency: "INR",
+        name: "A2Z BOOKSHOP",
+        image: "https://a2zbookshop.com/favicon.jpeg",
+        description: "Book Order Payment via UPI",
+        order_id: orderData.id,
+        config: {
+          display: {
+            blocks: {
+              upi_block: {
+                name: "Pay via UPI",
+                instruments: [{ method: "upi" }],
+              },
+              apple_pay_block: {
+                name: "Apple Pay",
+                instruments: [{ method: "wallet", wallets: ["apple_pay"] }],
+              },
+            },
+            sequence: ["block.upi_block", "block.apple_pay_block"],
+            preferences: { show_default_blocks: true },
+          },
+        },
+        handler: async (response: any) => {
+          setIsProcessing(true);
+          setSpinnerMessage("Verifying your UPI payment...");
+          try {
+            const verifyResult = await apiRequest("POST", "/api/razorpay/verify", {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              orderData: {
+                customerName,
+                customerEmail,
+                customerPhone,
+                shippingAddress,
+                billingAddress: sameBillingAddress ? shippingAddress : billingAddress,
+                subtotal: subtotal.toFixed(2),
+                shipping: checkoutShippingCost.toFixed(2),
+                tax: tax.toFixed(2),
+                total: total.toFixed(2),
+                paymentMethod: "upi",
+                notificationEmail: notificationEmail || undefined,
+                couponId: appliedCoupon?.id ?? null,
+                couponDiscountAmount: appliedCoupon?.id ? calculateDiscount() : null,
+                items: cartItems.map((item) => ({
+                  bookId: item.book.id,
+                  quantity: item.quantity,
+                  price: item.book.price,
+                  title: item.book.title,
+                  author: item.book.author,
+                })),
+              },
+            });
+
+            const verifyData = await verifyResult.json();
+
+            if (verifyData.status === "success") {
+              setSpinnerMessage("Completing your order...");
+              clearCart();
+              queryClient.invalidateQueries({ queryKey: ["/api/orders", "pending"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/my-orders"] });
+              toast({
+                title: "Payment Successful!",
+                description: `Your order ${verifyData.orderNumber || `#${verifyData.orderId}`} has been placed successfully.`,
+              });
+              setLocation(`/orders/${verifyData.orderId}?email=${encodeURIComponent(customerEmail)}`);
+            } else {
+              throw new Error(verifyData.message || "UPI payment verification failed");
+            }
+          } catch (error: any) {
+            console.error("UPI payment verification error:", error);
+            setIsProcessing(false);
+            toast({
+              title: "Payment Verification Failed",
+              description: error.message || "Could not verify UPI payment. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          name: customerName,
+          email: customerEmail,
+          contact: customerPhone,
+          method: "upi",
+        },
+        theme: { color: "#7C3AED" },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "UPI payment was cancelled.",
+              variant: "destructive",
+            });
+          },
+        },
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on("payment.failed", (response: any) => {
+        setIsProcessing(false);
+        toast({
+          title: "UPI Payment Failed",
+          description: response.error?.description || "UPI payment could not be processed. Please try again.",
+          variant: "destructive",
+        });
+      });
+      modalOpened = true;
+      razorpayInstance.open();
+    } catch (error: any) {
+      console.error("UPI payment error:", error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to initiate UPI payment.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      setSpinnerMessage("Processing payment...");
+    } finally {
       if (!modalOpened) {
         setIsProcessing(false);
         setSpinnerMessage("Processing payment...");
@@ -1191,6 +1391,34 @@ export default function CheckoutPage() {
                         </Label>
                       </div>
                     </div>
+
+                    <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#7C3AED]/30 bg-[#7C3AED]/5">
+                      <RadioGroupItem value="upi" id="upi" />
+                      <div className="flex items-center space-x-2 flex-1">
+                        <svg className="w-5 h-5 text-[#7C3AED]" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                        </svg>
+                        <Label htmlFor="upi" className="flex-1 cursor-pointer">
+                          <span className="font-semibold text-[#7C3AED]">UPI</span> - Unified Payments Interface
+                          <Badge variant="secondary" className="ml-2 bg-[#7C3AED]/10 text-[#7C3AED]">India</Badge>
+                          <p className="text-xs text-gray-500 mt-1">GPay, PhonePe, Paytm, BHIM &amp; more · Charged in ₹ INR</p>
+                        </Label>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#003087]/30 bg-[#003087]/5">
+                      <RadioGroupItem value="paypal" id="paypal" />
+                      <div className="flex items-center space-x-2 flex-1">
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                          <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.648-8.993 6.648H9.39l-1.532 9.688h3.261c.524 0 .968-.381 1.05-.9l.043-.218.837-5.308.054-.294c.082-.519.526-.9 1.05-.9h.662c4.302 0 7.666-1.748 8.648-6.797.41-2.098.203-3.847-.84-5.132z" fill="#009cde"/>
+                        </svg>
+                        <Label htmlFor="paypal" className="flex-1 cursor-pointer">
+                          <span className="font-semibold text-[#003087]">PayPal</span> - Pay with PayPal
+                          <Badge variant="secondary" className="ml-2 bg-[#003087]/10 text-[#003087]">Secure</Badge>
+                          <p className="text-xs text-gray-500 mt-1">Pay via your PayPal account or saved cards · Redirects to PayPal</p>
+                        </Label>
+                      </div>
+                    </div>
                   </div>
                 </RadioGroup>
 
@@ -1254,6 +1482,59 @@ export default function CheckoutPage() {
                       >
                         {isProcessing ? "Processing..." : "Pay with International Card"}
                       </Button>
+                    </div>
+                  )}
+
+                  {paymentMethod === "upi" && isFormValid && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">
+                        Pay instantly using any UPI app — GPay, PhonePe, Paytm, BHIM, and more. Amount will be charged in Indian Rupees (₹).
+                      </p>
+                      <Button
+                        onClick={handleRazorpayUpiPayment}
+                        disabled={isProcessing}
+                        className="w-full bg-[#7C3AED] hover:brightness-110 hover:shadow-md active:scale-[0.98] text-white rounded-full touch-target mobile-button transition-all duration-200"
+                      >
+                        {isProcessing ? "Processing..." : "Pay with UPI"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {paymentMethod === "paypal" && isFormValid && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">
+                        You will be redirected to PayPal to complete your payment securely. Supports PayPal balance, bank accounts, and saved cards.
+                      </p>
+                      <PayPalCheckoutButton
+                        amount={total}
+                        currency="USD"
+                        customerData={{
+                          name: customerName,
+                          email: customerEmail,
+                          phone: customerPhone,
+                          shippingAddress: {
+                            street: shippingAddress.street,
+                            city: shippingAddress.city,
+                            state: shippingAddress.state || "",
+                            zip: shippingAddress.zip,
+                            country: shippingAddress.country,
+                          },
+                        }}
+                        cartItems={cartItems}
+                        onSuccess={(orderId) => {
+                          clearCart();
+                          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                          queryClient.invalidateQueries({ queryKey: ["/api/my-orders"] });
+                        }}
+                        onError={(error) => {
+                          toast({
+                            title: "PayPal Error",
+                            description: error.message || "Failed to initiate PayPal payment.",
+                            variant: "destructive",
+                          });
+                        }}
+                        disabled={isProcessing}
+                      />
                     </div>
                   )}
 
