@@ -5,6 +5,7 @@ import {
   FileText, CloudUpload, ChevronDown, X, BookOpen, Filter,
   SlidersHorizontal, RefreshCw, Image as ImageIcon, Star, Zap,
   TrendingUp, Tag, ChevronLeft, ChevronRight, Eye, EyeOff,
+  ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,12 @@ export default function InventoryPageNew() {
   const [deletingBookId, setDeletingBookId] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("updatedAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [selectedBinding, setSelectedBinding] = useState<string>("");
+  const [stockFilter, setStockFilter] = useState<string>("");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
 
   const [bookForm, setBookForm] = useState<BookForm>(EMPTY_FORM);
 
@@ -105,15 +112,18 @@ export default function InventoryPageNew() {
   if (search) queryParams.set("search", search);
   if (selectedCategory) queryParams.set("categoryId", selectedCategory);
   if (selectedCondition) queryParams.set("condition", selectedCondition);
+  if (selectedBinding) queryParams.set("binding", selectedBinding);
+  if (minPrice) queryParams.set("minPrice", minPrice);
+  if (maxPrice) queryParams.set("maxPrice", maxPrice);
   queryParams.set("limit", itemsPerPage.toString());
   queryParams.set("offset", ((currentPage - 1) * itemsPerPage).toString());
-  queryParams.set("sortBy", "updatedAt");
-  queryParams.set("sortOrder", "desc");
-  queryParams.set("includeOutOfStock", "true");
+  queryParams.set("sortBy", sortBy);
+  queryParams.set("sortOrder", sortOrder);
+  queryParams.set("includeOutOfStock", stockFilter === "outOfStock" ? "true" : stockFilter === "inStock" ? "false" : "true");
   queryParams.set("includeHidden", "true");
 
   const { data: booksResponse, isLoading, error } = useQuery<BooksResponse>({
-    queryKey: ["/api/books", { search, categoryId: selectedCategory, condition: selectedCondition, limit: itemsPerPage, offset: (currentPage - 1) * itemsPerPage }],
+    queryKey: ["/api/books", { search, categoryId: selectedCategory, condition: selectedCondition, binding: selectedBinding, minPrice, maxPrice, sortBy, sortOrder, stockFilter, limit: itemsPerPage, offset: (currentPage - 1) * itemsPerPage }],
     queryFn: async () => {
       const res = await fetch(`/api/books?${queryParams.toString()}`, { credentials: "include" });
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
@@ -302,7 +312,24 @@ export default function InventoryPageNew() {
     } finally { setIsMigrating(false); }
   };
 
-  const activeFiltersCount = [selectedCategory, selectedCondition].filter(Boolean).length;
+  const activeFiltersCount = [selectedCategory, selectedCondition, selectedBinding, stockFilter, minPrice, maxPrice].filter(Boolean).length;
+
+  const handleSortChange = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      // Name/Author default to A→Z (asc), dates default to newest first (desc), price/stock default to low→high (asc)
+      const ascFields = ["title", "author", "price", "stock"];
+      setSortOrder(ascFields.includes(field) ? "asc" : "desc");
+    }
+    setCurrentPage(1);
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortBy !== field) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortOrder === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+  };
 
   return (
     <div className="space-y-6">
@@ -355,67 +382,142 @@ export default function InventoryPageNew() {
       {/* ── Search & Filter Bar ── */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-black" />
-              <Input
-                placeholder="Search by title, author, or ISBN…"
-                value={search}
-                onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-                className="pl-9 bg-gray-50 border-gray-100 focus:bg-white"
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-black hover:text-base-black">
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+          <div className="flex flex-col gap-3">
+            {/* Row 1: Search + Filter toggle */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-black" />
+                <Input
+                  placeholder="Search by title, author, or ISBN…"
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+                  className="pl-9 bg-gray-50 border-gray-100 focus:bg-white"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-black hover:text-base-black">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filters toggle */}
+              <button
+                onClick={() => setShowFilters(v => !v)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${showFilters ? "bg-primary-aqua text-white border-primary-aqua" : "border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua"}`}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters {activeFiltersCount > 0 && <span className="bg-amber-400 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center text-[10px]">{activeFiltersCount}</span>}
+              </button>
             </div>
 
-            {/* Filters toggle on mobile */}
-            <button
-              onClick={() => setShowFilters(v => !v)}
-              className={`sm:hidden flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${showFilters ? "bg-primary-aqua text-white border-primary-aqua" : "border-gray-200 text-secondary-black hover:border-primary-aqua hover:text-primary-aqua"}`}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters {activeFiltersCount > 0 && <span className="bg-amber-400 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{activeFiltersCount}</span>}
-            </button>
-
-            {/* Desktop filters always visible, mobile toggle */}
-            <div className={`flex gap-2 ${showFilters ? "flex" : "hidden sm:flex"}`}>
-              <Select value={selectedCategory || undefined} onValueChange={v => { setSelectedCategory(v === "all" ? "" : v); setCurrentPage(1); }}>
-                <SelectTrigger className="w-44 bg-gray-50 border-gray-100">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedCondition || undefined} onValueChange={v => { setSelectedCondition(v === "all" ? "" : v); setCurrentPage(1); }}>
-                <SelectTrigger className="w-44 bg-gray-50 border-gray-100">
-                  <SelectValue placeholder="All Conditions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Conditions</SelectItem>
-                  <SelectItem value="New">New</SelectItem>
-                  <SelectItem value="Like New">Like New</SelectItem>
-                  <SelectItem value="Very Good">Very Good</SelectItem>
-                  <SelectItem value="Good">Good</SelectItem>
-                  <SelectItem value="Acceptable">Acceptable</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {activeFiltersCount > 0 && (
+            {/* Row 2: Sort buttons */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-secondary-black font-medium mr-1">Sort:</span>
+              {[
+                { field: "updatedAt", label: "Recent" },
+                { field: "title", label: "Name" },
+                { field: "price", label: "Price" },
+                { field: "stock", label: "Stock" },
+                { field: "author", label: "Author" },
+                { field: "createdAt", label: "Date Added" },
+              ].map(({ field, label }) => (
                 <button
-                  onClick={() => { setSelectedCategory(""); setSelectedCondition(""); setCurrentPage(1); }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 text-red-500 text-sm hover:bg-red-50 transition-colors whitespace-nowrap"
+                  key={field}
+                  onClick={() => handleSortChange(field)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                    sortBy === field
+                      ? "bg-primary-aqua text-white shadow-sm"
+                      : "bg-gray-100 text-secondary-black hover:bg-gray-200"
+                  }`}
                 >
-                  <X className="h-3.5 w-3.5" /> Clear
+                  {label}
+                  <SortIcon field={field} />
                 </button>
-              )}
+              ))}
             </div>
+
+            {/* Row 3: Expanded filters (collapsible) */}
+            {showFilters && (
+              <div className="flex flex-wrap gap-2 pt-1 border-t border-gray-100">
+                <Select value={selectedCategory || undefined} onValueChange={v => { setSelectedCategory(v === "all" ? "" : v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-40 bg-gray-50 border-gray-100 h-9 text-xs">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedCondition || undefined} onValueChange={v => { setSelectedCondition(v === "all" ? "" : v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-36 bg-gray-50 border-gray-100 h-9 text-xs">
+                    <SelectValue placeholder="All Conditions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Conditions</SelectItem>
+                    <SelectItem value="New">New</SelectItem>
+                    <SelectItem value="Like New">Like New</SelectItem>
+                    <SelectItem value="Very Good">Very Good</SelectItem>
+                    <SelectItem value="Good">Good</SelectItem>
+                    <SelectItem value="Acceptable">Acceptable</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedBinding || undefined} onValueChange={v => { setSelectedBinding(v === "all" ? "" : v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-36 bg-gray-50 border-gray-100 h-9 text-xs">
+                    <SelectValue placeholder="All Bindings" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Bindings</SelectItem>
+                    <SelectItem value="Softcover">Softcover</SelectItem>
+                    <SelectItem value="Hardcover">Hardcover</SelectItem>
+                    <SelectItem value="Spiral">Spiral</SelectItem>
+                    <SelectItem value="Board Book">Board Book</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={stockFilter || undefined} onValueChange={v => { setStockFilter(v === "all" ? "" : v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-36 bg-gray-50 border-gray-100 h-9 text-xs">
+                    <SelectValue placeholder="All Stock" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Stock</SelectItem>
+                    <SelectItem value="inStock">In Stock</SelectItem>
+                    <SelectItem value="outOfStock">Out of Stock</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Price range */}
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="number"
+                    placeholder="Min $"
+                    value={minPrice}
+                    onChange={e => { setMinPrice(e.target.value); setCurrentPage(1); }}
+                    className="w-20 h-9 text-xs bg-gray-50 border-gray-100"
+                    min="0"
+                  />
+                  <span className="text-xs text-secondary-black">–</span>
+                  <Input
+                    type="number"
+                    placeholder="Max $"
+                    value={maxPrice}
+                    onChange={e => { setMaxPrice(e.target.value); setCurrentPage(1); }}
+                    className="w-20 h-9 text-xs bg-gray-50 border-gray-100"
+                    min="0"
+                  />
+                </div>
+
+                {activeFiltersCount > 0 && (
+                  <button
+                    onClick={() => { setSelectedCategory(""); setSelectedCondition(""); setSelectedBinding(""); setStockFilter(""); setMinPrice(""); setMaxPrice(""); setCurrentPage(1); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-xs hover:bg-red-50 transition-colors whitespace-nowrap"
+                  >
+                    <X className="h-3 w-3" /> Clear All
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

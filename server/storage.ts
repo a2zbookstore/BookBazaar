@@ -434,6 +434,7 @@ export class DatabaseStorage implements IStorage {
   async getBooks(options: {
     categoryId?: number;
     condition?: string;
+    binding?: string;
     featured?: boolean;
     bestseller?: boolean;
     trending?: boolean;
@@ -453,6 +454,7 @@ export class DatabaseStorage implements IStorage {
     const {
       categoryId,
       condition,
+      binding,
       featured,
       bestseller,
       trending,
@@ -486,6 +488,7 @@ export class DatabaseStorage implements IStorage {
       sql`(${books.categoryId} = ${categoryId} OR ${books.id} IN (SELECT book_id FROM book_categories WHERE category_id = ${categoryId}))`
     );
     if (condition) conditions.push(eq(books.condition, condition));
+    if (binding) conditions.push(eq(books.binding, binding));
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
     if (bestseller !== undefined) conditions.push(eq(books.bestseller, bestseller));
     if (trending !== undefined) conditions.push(eq(books.trending, trending));
@@ -531,9 +534,9 @@ export class DatabaseStorage implements IStorage {
 
     const sortColumns: Record<string, any> = {
       id: books.id,
-      title: books.title,
-      author: books.author,
-      price: books.price,
+      title: sql`LOWER(${books.title})`,
+      author: sql`LOWER(${books.author})`,
+      price: sql`CAST(${books.price} AS NUMERIC)`,
       stock: books.stock,
       publishedYear: books.publishedYear,
       publisher: books.publisher,
@@ -543,7 +546,7 @@ export class DatabaseStorage implements IStorage {
       newArrival: books.newArrival,
       boxSet: books.boxSet,
       createdAt: books.createdAt,
-      updatedAt: books.updatedAt,
+      updatedAt: sql`COALESCE(${books.updatedAt}, ${books.createdAt})`,
     };
     let orderExpr;
     if (sortBy && sortColumns[sortBy]) {
