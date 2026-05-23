@@ -88,7 +88,7 @@ const statusLabels = {
 };
 
 export default function MyOrdersPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
@@ -157,6 +157,7 @@ export default function MyOrdersPage() {
   const CANCELABLE_STATUSES = ["pending", "confirmed"];
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!user) {
       toast({
         title: "Login Required",
@@ -166,7 +167,7 @@ export default function MyOrdersPage() {
       setLocation("/login?redirect=/");
       return;
     }
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   if (!isAuthenticated) {
     return (

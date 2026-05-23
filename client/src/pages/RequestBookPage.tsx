@@ -20,7 +20,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 const RequestBookPage = () => {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [, setLocation] = useLocation();
 
 
@@ -43,6 +43,7 @@ const RequestBookPage = () => {
   });
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!user) {
       toast({
         title: "Login Required",
@@ -52,7 +53,7 @@ const RequestBookPage = () => {
       setLocation("/login?redirect=/");
       return;
     }
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   const createBookRequestMutation = useMutation({
     mutationFn: async (data: InsertBookRequest) => {

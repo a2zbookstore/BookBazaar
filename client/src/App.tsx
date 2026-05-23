@@ -35,6 +35,7 @@ const CancellationPolicyPage = lazy(() => import("@/pages/CancellationPolicyPage
 const TermsAndConditionsPage = lazy(() => import("@/pages/TermsAndConditionsPage"));
 const FAQPage             = lazy(() => import("@/pages/FAQPage"));
 const PrivacyPolicyPage   = lazy(() => import("@/pages/PrivacyPolicyPage"));
+const DataDeletionPage    = lazy(() => import("@/pages/DataDeletionPage"));
 const LoginPage           = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage        = lazy(() => import("@/pages/RegisterPage"));
 const ResetPasswordPage   = lazy(() => import("@/pages/ResetPasswordPage"));
@@ -110,6 +111,7 @@ function AppRouter() {
         <Route path="/terms-and-conditions" component={() => <Layout><TermsAndConditionsPage /></Layout>} />
         <Route path="/faq" component={() => <Layout><FAQPage /></Layout>} />
         <Route path="/privacy-policy" component={() => <Layout><PrivacyPolicyPage /></Layout>} />
+        <Route path="/data-deletion" component={() => <Layout><DataDeletionPage /></Layout>} />
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
         <Route path="/reset-password" component={ResetPasswordPage} />

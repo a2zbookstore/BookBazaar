@@ -91,7 +91,7 @@ function CheckoutItemPrice({ bookPrice, quantity }: { bookPrice: number; quantit
 
 export default function CheckoutPage() {
   const [location, setLocation] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { cartItems: cartContent, cartCount, clearCart, isLoading: isCartLoading } = useGlobalContext();
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
   const { shippingCost, shippingRate } = useShipping();
@@ -399,6 +399,7 @@ export default function CheckoutPage() {
 
   // Pre-fill user data
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!user) {
       setLocation("/login?redirect=/");
       return;
@@ -407,7 +408,7 @@ export default function CheckoutPage() {
       setCustomerName(`${user.firstName || ""} ${user.lastName || ""}`.trim());
       setCustomerEmail(user.email || "");
     }
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   // Validation handlers
   const handleNameChange = (value: string) => {
