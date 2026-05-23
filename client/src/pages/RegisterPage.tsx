@@ -214,8 +214,8 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="relative">
-                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm mb-2 sm:mb-4 shadow-lg">
-                    <User className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white backdrop-blur-sm mb-2 sm:mb-4 shadow-lg overflow-hidden">
+                    <img src="/favicon.jpeg" alt="A2Z Bookshop Logo" className="w-full h-full object-contain" />
                   </div>
                   <CardTitle className="text-2xl sm:text-4xl font-extrabold text-white drop-shadow-lg">
                     Join Us Today!

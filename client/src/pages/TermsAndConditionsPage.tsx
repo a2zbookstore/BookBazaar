@@ -1,189 +1,205 @@
 import SEO from "@/components/SEO";
-import { FileText, Shield, CreditCard, Truck, Scale, Mail } from "lucide-react";
 
 export default function TermsAndConditionsPage() {
   return (
     <>
       <SEO
-        title="Terms and Conditions"
-        description="Read the terms and conditions for shopping at A2Z BOOKSHOP. Understand our policies, user agreements, and legal information."
-        keywords="terms and conditions, user agreement, legal terms, bookstore policies"
-        url="https://a2zbookshop.com/terms"
+        title="Terms & Conditions | A2Z BOOKSHOP"
+        description="Read our Terms and Conditions for using A2Z BOOKSHOP, including ordering, payments, shipping, returns, and intellectual property."
+        keywords="terms and conditions, terms of service, user agreement, A2Z BOOKSHOP terms"
+        url="https://a2zbookshop.com/terms-and-conditions"
         type="website"
       />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30">
-        <div className="container-custom py-12">
-          <div className="max-w-5xl mx-auto">
-            {/* Hero Section */}
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 mb-6 shadow-lg shadow-indigo-500/30">
-                <FileText className="h-8 w-8 text-white" />
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4">
-                Terms and Conditions
-              </h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                A2Z BOOKSHOP - Online Bookstore
+      <div className="min-h-screen bg-gray-50">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+          {/* Header */}
+          <div className="mb-10 sm:mb-14">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+              Terms & Conditions
+            </h1>
+            <p className="text-base sm:text-lg text-gray-600 max-w-3xl">
+              These terms govern your use of A2Z BOOKSHOP and any orders you place with us. Please read them carefully.
+            </p>
+            <p className="text-sm text-gray-500 mt-2">Last updated: January 2025</p>
+          </div>
+
+          {/* Terms Sections */}
+          <div className="space-y-6 sm:space-y-8">
+            {/* 1. General */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">1. About Us</h2>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                A2Z BOOKSHOP (accessible at a2zbookshop.com) is an online bookstore that sells new and curated second-hand books.
+                By placing an order on our website, you agree to be bound by these Terms & Conditions. If you disagree with any
+                part, please refrain from using our services.
               </p>
-              <p className="text-sm text-gray-500 mt-2">Last updated: June 18, 2025</p>
             </div>
 
-            {/* Quick Overview */}
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-aqua to-cyan-500 flex items-center justify-center mb-4 shadow-lg shadow-cyan-500/30">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">Secure Shopping</h3>
-                <p className="text-sm text-gray-600">Your privacy and data security are our top priorities</p>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center mb-4 shadow-lg shadow-cyan-500/30">
-                  <CreditCard className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">Fair Pricing</h3>
-                <p className="text-sm text-gray-600">Transparent pricing with no hidden fees</p>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
-                  <Truck className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">Reliable Delivery</h3>
-                <p className="text-sm text-gray-600">Worldwide shipping with tracking</p>
-              </div>
+            {/* 2. Ordering */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">2. Ordering & Accounts</h2>
+              <ul className="space-y-3 text-sm sm:text-base text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>You must be at least 18 years old or have parental/guardian consent to place an order.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>All information provided during account creation or checkout must be accurate and complete.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>An order is confirmed only after you receive a confirmation email from us.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>We reserve the right to cancel any order if the item is out of stock or if we detect fraudulent activity.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>You are responsible for maintaining the confidentiality of your account credentials.</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Main Content Sections */}
-            <div className="space-y-6">
-              {/* Acceptance */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Acceptance of Terms</h2>
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  By accessing and using the A2Z BOOKSHOP website (a2zbookshop.com), you accept and agree to be bound by the terms and provision of this agreement. 
-                  If you do not agree to abide by the above, please do not use this service.
-                </p>
-                <p className="text-gray-700 leading-relaxed">
-                  These Terms and Conditions constitute a legally binding agreement between you and A2Z BOOKSHOP regarding your use of our online bookstore services.
-                </p>
-              </div>
-
-              {/* Ordering */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Book Sales and Ordering</h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Product Information</h3>
-                    <p className="text-gray-700">We strive to provide accurate descriptions and images. However, minor variations may occur. Prices and availability subject to change without notice.</p>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Order Process</h3>
-                    <p className="text-gray-700">Orders are confirmed via email. We reserve the right to refuse or cancel orders at our discretion. All sales final unless covered by our return policy.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Payment Terms</h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Accepted Methods</h3>
-                    <p className="text-gray-700">We accept major credit cards, PayPal, and Razorpay. All transactions are encrypted and secure. Payment is due at time of order.</p>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Currency</h3>
-                    <p className="text-gray-700">Prices displayed in multiple currencies. Conversion rates updated regularly. Final charge based on exchange rate at time of processing.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Shipping */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Shipping and Delivery</h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Delivery Times</h3>
-                    <p className="text-gray-700">Estimated delivery times are guidelines only. Actual delivery may vary. International shipments subject to customs delays.</p>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Risk of Loss</h3>
-                    <p className="text-gray-700">Risk of loss passes to buyer upon delivery to carrier. We're not responsible for delayed or lost packages, but will assist in claims.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Returns */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Returns and Refunds</h2>
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  We offer a 30-day return guarantee for items in original condition. Digital downloads and personalized items are non-returnable. 
-                  See our Return Policy page for complete details.
-                </p>
-                <p className="text-gray-700 leading-relaxed">
-                  Refunds processed to original payment method within 3-5 business days of receiving returned items. Shipping costs non-refundable unless error on our part.
-                </p>
-              </div>
-
-              {/* Privacy & Liability */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Privacy & Limitation of Liability</h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Privacy</h3>
-                    <p className="text-gray-700">Your personal information is protected per our Privacy Policy. We never sell your data to third parties.</p>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-2">Liability</h3>
-                    <p className="text-gray-700">Our liability limited to the purchase price paid. We're not liable for indirect, incidental, or consequential damages.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dispute Resolution */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Dispute Resolution</h2>
-                <div className="flex items-start gap-4">
-                  <Scale className="h-6 w-6 text-indigo-500 flex-shrink-0 mt-1" />
-                  <div>
-                    <p className="text-gray-700 leading-relaxed mb-3">
-                      Any disputes arising from these terms shall be governed by the laws of the jurisdiction where A2Z BOOKSHOP operates.
-                    </p>
-                    <p className="text-gray-700 leading-relaxed">
-                      We encourage resolution through direct communication before pursuing formal legal action.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            {/* 3. Pricing */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">3. Pricing & Payments</h2>
+              <ul className="space-y-3 text-sm sm:text-base text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>All prices are listed in the currency you select and include applicable taxes unless stated otherwise.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>We accept payments via credit/debit cards, UPI, PayPal, Apple Pay, and other methods displayed at checkout.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>Prices may change at any time, but changes will not affect orders that have already been confirmed.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>In the event of a pricing error, we'll contact you before processing the order.</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Contact Section */}
-            <div className="mt-12 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 p-8 text-white shadow-xl shadow-indigo-500/30">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-              <div className="relative">
-                <div className="flex items-center gap-3 mb-4">
-                  <Mail className="h-8 w-8" />
-                  <h2 className="text-2xl font-bold">Contact Information</h2>
-                </div>
-                <p className="text-indigo-100 mb-4">
-                  Questions about our terms? Our team is here to help.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <a href="mailto:legal@a2zbookshop.com" className="inline-flex items-center px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
-                    Email Legal Team
-                  </a>
-                  <a href="tel:1-800-BOOKS-24" className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold hover:bg-white/20 transition-colors border border-white/30">
-                    1-800-BOOKS-24
-                  </a>
-                </div>
-              </div>
+            {/* 4. Shipping */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">4. Shipping & Delivery</h2>
+              <ul className="space-y-3 text-sm sm:text-base text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>Delivery timelines are estimates and not guarantees. Delays may occur due to weather, customs, or carrier issues.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>Risk of loss passes to you upon delivery. Please ensure someone is available to receive the package.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>International orders may be subject to customs duties or import taxes, which are the buyer's responsibility.</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Footer Note */}
-            <div className="mt-8 text-center text-sm text-gray-500">
-              <p>© 2025 A<span className="text-red-600">2</span>Z BOOKSHOP. All rights reserved.</p>
-              <p className="mt-2">Last updated: June 18, 2025 | Version 1.0</p>
+            {/* 5. Returns & Refunds */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">5. Returns & Refunds</h2>
+              <ul className="space-y-3 text-sm sm:text-base text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>Returns are accepted within 7 days of delivery, subject to our Return Policy.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>Refunds are processed to the original payment method within 3–10 business days.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">•</span>
+                  <span>Books must be returned in the condition they were received.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* 6. Intellectual Property */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">6. Intellectual Property</h2>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                All content on a2zbookshop.com — including text, images, logos, and design — is the property of A2Z BOOKSHOP
+                or its content suppliers and is protected by intellectual property laws. You may not reproduce, distribute,
+                or create derivative works from our content without explicit written permission.
+              </p>
+            </div>
+
+            {/* 7. User Conduct */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">7. User Conduct</h2>
+              <p className="text-sm sm:text-base text-gray-700 mb-3">You agree not to:</p>
+              <ul className="space-y-2 text-sm sm:text-base text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold mt-0.5">✗</span>
+                  <span>Use our website for any unlawful purpose</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold mt-0.5">✗</span>
+                  <span>Attempt to gain unauthorized access to our systems</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold mt-0.5">✗</span>
+                  <span>Submit false or misleading information</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold mt-0.5">✗</span>
+                  <span>Interfere with the website's operation or other users' experience</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* 8. Limitation of Liability */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">8. Limitation of Liability</h2>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                To the fullest extent permitted by law, A2Z BOOKSHOP shall not be liable for any indirect, incidental,
+                special, or consequential damages arising from your use of our website or the purchase of products.
+                Our total liability is limited to the amount you paid for the specific order in question.
+              </p>
+            </div>
+
+            {/* 9. Governing Law */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">9. Governing Law</h2>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                These terms shall be governed by and construed in accordance with the laws of India.
+                Any disputes arising from these terms or your use of the website shall be subject to the exclusive
+                jurisdiction of the courts in India.
+              </p>
+            </div>
+
+            {/* 10. Changes */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">10. Changes to These Terms</h2>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                We may update these Terms & Conditions from time to time. Changes will be posted on this page with an
+                updated "Last updated" date. Continued use of the website after changes constitutes acceptance of the new terms.
+              </p>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="rounded-xl bg-gray-900 p-6 sm:p-8 mt-10 sm:mt-14">
+            <h3 className="text-xl font-bold text-gray-100 mb-2">Questions About These Terms?</h3>
+            <p className="text-gray-300 mb-4 text-sm sm:text-base">
+              If anything is unclear, feel free to reach out. We're happy to explain.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a href="mailto:support@a2zbookshop.com" className="inline-flex items-center justify-center px-5 py-2.5 bg-primary-aqua text-gray-900 rounded-lg font-semibold text-sm hover:bg-cyan-400 transition-colors">
+                support@a2zbookshop.com
+              </a>
+              <a href="tel:+14145956843" className="inline-flex items-center justify-center px-5 py-2.5 border border-gray-600 text-gray-300 rounded-lg font-semibold text-sm hover:border-gray-400 hover:text-gray-100 transition-colors">
+                +1 (414) 595-6843
+              </a>
             </div>
           </div>
         </div>

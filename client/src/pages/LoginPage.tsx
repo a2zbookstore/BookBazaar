@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { setIsAuthTransitioning } = useGlobalContext();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [showEmailPassword, setShowEmailPassword] = useState(false);
   const [showPhonePassword, setShowPhonePassword] = useState(false);
   const [loginType, setLoginType] = useState("email");
@@ -27,6 +29,13 @@ export default function LoginPage() {
   const [isForgotDialogOpen, setIsForgotDialogOpen] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
   const redirect = params.get("redirect") || "/";
+
+  // If user is already logged in, redirect them away from login page
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      setLocation(redirect);
+    }
+  }, [authLoading, isAuthenticated, redirect, setLocation]);
 
   // Handle OAuth errors from URL parameters
   useEffect(() => {
@@ -51,9 +60,9 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Handle closing the modal
+  // Handle closing the modal - always go to home for guests
   const handleClose = () => {
-    setLocation(redirect);
+    setLocation("/");
   };
 
   // Ensure modal is open when component mounts
@@ -247,8 +256,8 @@ export default function LoginPage() {
                   </Button>
                 </div>
                 <div className="relative">
-                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm mb-2 sm:mb-4 shadow-lg">
-                    <LogIn className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white backdrop-blur-sm mb-2 sm:mb-4 shadow-lg overflow-hidden">
+                    <img src="/favicon.jpeg" alt="A2Z Bookshop Logo" className="w-full h-full object-contain" />
                   </div>
                   <CardTitle className="text-2xl sm:text-4xl font-extrabold text-white drop-shadow-lg">
                     Welcome Back!

@@ -104,7 +104,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 /* ═══════════════════════════════════════════ PAGE ═══════════════════════════════════════════ */
 export default function ReturnRequestPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -120,11 +120,12 @@ export default function ReturnRequestPage() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!user) {
       toast({ title: "Login Required", description: "Please log in to request a return.", variant: "destructive" });
       setLocation("/login?redirect=/");
     }
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   useEffect(() => {
     if (user) {

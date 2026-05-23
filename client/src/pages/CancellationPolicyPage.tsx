@@ -1,254 +1,169 @@
 import SEO from "@/components/SEO";
-import { Clock, CheckCircle, XCircle, AlertCircle, Mail, Phone } from "lucide-react";
 
 export default function CancellationPolicyPage() {
   return (
     <>
       <SEO
-        title="Cancellation Policy"
-        description="Learn about A2Z BOOKSHOP's order cancellation policy. Understand timeframes, refunds, and how to cancel your book order."
-        keywords="cancellation policy, cancel order, order cancellation, refund policy"
+        title="Cancellation Policy | A2Z BOOKSHOP"
+        description="Learn about A2Z BOOKSHOP's order cancellation policy. Cancel before shipping for a full refund."
+        keywords="cancel order, order cancellation, refund, A2Z BOOKSHOP cancellation"
         url="https://a2zbookshop.com/cancellation-policy"
         type="website"
       />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30">
-        <div className="container-custom py-12">
-          <div className="max-w-5xl mx-auto">
-            {/* Hero Section */}
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-red-500 mb-6 shadow-lg shadow-orange-500/30">
-                <Clock className="h-8 w-8 text-white" />
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4">
-                Cancellation Policy
-              </h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Understanding your rights and options for order cancellations
-              </p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+          {/* Header */}
+          <div className="mb-10 sm:mb-14">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+              Cancellation Policy
+            </h1>
+            <p className="text-base sm:text-lg text-gray-600 max-w-3xl">
+              Changed your mind? No problem — you can cancel your order as long as it hasn't shipped yet.
+            </p>
+          </div>
+
+          {/* Quick Answer */}
+          <div className="rounded-xl bg-gray-900 p-6 sm:p-8 mb-10 sm:mb-14">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-100 mb-3">The Simple Rule</h2>
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+              If your order hasn't shipped yet, you can cancel it for a <strong className="text-gray-100">full refund</strong>. Once it's shipped,
+              you'll need to use our return policy instead.
+            </p>
+          </div>
+
+          {/* Before vs After Shipping */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10 sm:mb-14">
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Before Shipping</h3>
+              <ul className="space-y-3 text-sm text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  <span>Cancel anytime before we ship</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  <span>Full refund — no questions asked</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  <span>Refund processed to original payment method</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  <span>No cancellation fee</span>
+                </li>
+              </ul>
             </div>
-
-            {/* Quick Cancellation Alert */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-8 text-white mb-12 shadow-xl shadow-green-500/30">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-              <div className="relative flex items-start gap-4">
-                <CheckCircle className="h-8 w-8 flex-shrink-0" />
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">Quick Cancellation</h2>
-                  <p className="text-green-50 text-lg">
-                    Orders can be cancelled free of charge within <strong>2 hours</strong> of placing your order, before processing begins.
-                  </p>
-                </div>
-              </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">After Shipping</h3>
+              <ul className="space-y-3 text-sm text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold mt-0.5">✗</span>
+                  <span>Cannot cancel once dispatched</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">→</span>
+                  <span>You can refuse delivery (if applicable)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">→</span>
+                  <span>Use our 7-day return policy after delivery</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary-aqua font-bold mt-0.5">→</span>
+                  <span>Return shipping may be your responsibility</span>
+                </li>
+              </ul>
             </div>
+          </div>
 
-            {/* Cancellation Windows */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-12 hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300">
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">Cancellation Time Windows</h2>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="rounded-xl p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                    <h3 className="text-lg font-bold text-green-900">Within 2 Hours</h3>
-                  </div>
-                  <p className="text-green-700 font-medium mb-3">Free Cancellation</p>
-                  <ul className="space-y-2 text-sm text-green-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-500">•</span>
-                      <span>100% refund guaranteed</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-500">•</span>
-                      <span>Instant processing</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-500">•</span>
-                      <span>No cancellation fee</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-500">•</span>
-                      <span>Simple online process</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="rounded-xl p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <AlertCircle className="h-6 w-6 text-yellow-600" />
-                    <h3 className="text-lg font-bold text-yellow-900">2-24 Hours</h3>
-                  </div>
-                  <p className="text-yellow-700 font-medium mb-3">Limited Options</p>
-                  <ul className="space-y-2 text-sm text-yellow-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-yellow-500">•</span>
-                      <span>Subject to availability</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-yellow-500">•</span>
-                      <span>Possible processing fee</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-yellow-500">•</span>
-                      <span>Contact customer service</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-yellow-500">•</span>
-                      <span>May be in processing</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="rounded-xl p-6 bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <XCircle className="h-6 w-6 text-red-600" />
-                    <h3 className="text-lg font-bold text-red-900">After 24 Hours</h3>
-                  </div>
-                  <p className="text-red-700 font-medium mb-3">Use Return Policy</p>
-                  <ul className="space-y-2 text-sm text-red-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-500">•</span>
-                      <span>Order likely shipped</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-500">•</span>
-                      <span>Cannot cancel directly</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-500">•</span>
-                      <span>Use 30-day return policy</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-500">•</span>
-                      <span>Receive and return item</span>
-                    </li>
-                  </ul>
-                </div>
+          {/* How to Cancel */}
+          <div className="mb-10 sm:mb-14">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">How to Cancel Your Order</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
+                <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm mb-3">1</div>
+                <h4 className="font-bold text-gray-900 mb-2">Email or Call Us</h4>
+                <p className="text-sm text-gray-600">Contact us with your order number. Mention you'd like to cancel.</p>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
+                <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm mb-3">2</div>
+                <h4 className="font-bold text-gray-900 mb-2">We Confirm</h4>
+                <p className="text-sm text-gray-600">If the order hasn't shipped, we'll cancel it immediately and confirm via email.</p>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
+                <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm mb-3">3</div>
+                <h4 className="font-bold text-gray-900 mb-2">Get Your Money Back</h4>
+                <p className="text-sm text-gray-600">Refund hits your account within 3–7 business days depending on payment method.</p>
               </div>
             </div>
+          </div>
 
-            {/* How to Cancel */}
-            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 p-8 mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">How to Cancel Your Order</h2>
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Method 1: Online Cancellation</h3>
-                  <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <ol className="space-y-3">
-                      <li className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary-aqua to-cyan-500 text-white flex items-center justify-center text-sm font-bold">1</span>
-                        <span className="text-gray-700">Visit your account order history page</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary-aqua to-cyan-500 text-white flex items-center justify-center text-sm font-bold">2</span>
-                        <span className="text-gray-700">Find the order you want to cancel</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary-aqua to-cyan-500 text-white flex items-center justify-center text-sm font-bold">3</span>
-                        <span className="text-gray-700">Click the "Cancel Order" button (if available)</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary-aqua to-cyan-500 text-white flex items-center justify-center text-sm font-bold">4</span>
-                        <span className="text-gray-700">Select your cancellation reason</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary-aqua to-cyan-500 text-white flex items-center justify-center text-sm font-bold">5</span>
-                        <span className="text-gray-700">Confirm - you'll receive an email confirmation</span>
-                      </li>
-                    </ol>
-                  </div>
-                </div>
+          {/* Refund Timeline */}
+          <div className="mb-10 sm:mb-14">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">Refund Timeline</h2>
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-100">
+                    <th className="text-left p-4 font-bold text-gray-900">Payment Method</th>
+                    <th className="text-left p-4 font-bold text-gray-900">Refund Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="p-4 text-gray-700">UPI / Wallets</td>
+                    <td className="p-4 text-gray-700">1–3 business days</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 text-gray-700">Credit/Debit Cards</td>
+                    <td className="p-4 text-gray-700">5–7 business days</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 text-gray-700">PayPal</td>
+                    <td className="p-4 text-gray-700">2–3 business days</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 text-gray-700">International Bank Transfer</td>
+                    <td className="p-4 text-gray-700">7–10 business days</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Method 2: Contact Customer Service</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <a href="mailto:orders@a2zbookshop.com" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-primary-aqua hover:shadow-lg transition-all">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-aqua to-cyan-500 flex items-center justify-center">
-                        <Mail className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-900">Email</div>
-                        <div className="text-sm text-gray-600">orders@a2zbookshop.com</div>
-                      </div>
-                    </a>
-                    <a href="tel:1-800-BOOKS-24" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-primary-aqua hover:shadow-lg transition-all">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                        <Phone className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-900">Phone</div>
-                        <div className="text-sm text-gray-600">1-800-BOOKS-24</div>
-                      </div>
-                    </a>
-                  </div>
-                </div>
+          {/* Important Notes */}
+          <div className="mb-10 sm:mb-14">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Good to Know</h2>
+            <div className="space-y-3">
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base">Partial Cancellations</h4>
+                <p className="text-gray-600 text-sm">If you ordered multiple books and only want to cancel some, just let us know which ones. We'll cancel those and keep the rest.</p>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base">Coupon & Discount Codes</h4>
+                <p className="text-gray-600 text-sm">If you used a promo code on a cancelled order, the code may be voided. Contact us and we'll try to reissue it for your next order.</p>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base">Pre-orders</h4>
+                <p className="text-gray-600 text-sm">Pre-orders can be cancelled anytime before the release date at no charge.</p>
               </div>
             </div>
+          </div>
 
-            {/* Refund Information */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-12 hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Refund Processing</h2>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-4">Refund Timeline</h4>
-                  <ul className="space-y-3 text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>Within 2 hours: Instant refund</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>Credit cards: 3-5 business days</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>PayPal: 1-2 business days</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>Bank transfers: 5-7 business days</span>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-4">Refund Amounts</h4>
-                  <ul className="space-y-3 text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>Within 2 hours: 100% refund</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>2-24 hours: May have processing fee</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>Shipped orders: Use return policy</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-aqua font-bold">•</span>
-                      <span>Shipping costs may be deducted</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact CTA */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 p-8 text-white shadow-xl shadow-orange-500/30">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-              <div className="relative">
-                <h3 className="text-2xl font-bold mb-2">Need Help with Cancellation?</h3>
-                <p className="text-orange-50 mb-4">
-                  Our customer service team is here to help with any cancellation requests or questions.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <a href="mailto:orders@a2zbookshop.com" className="inline-flex items-center px-6 py-3 bg-white text-orange-600 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
-                    Email Us
-                  </a>
-                  <a href="tel:1-800-BOOKS-24" className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold hover:bg-white/20 transition-colors border border-white/30">
-                    1-800-BOOKS-24
-                  </a>
-                </div>
-              </div>
+          {/* Contact */}
+          <div className="rounded-xl bg-gray-900 p-6 sm:p-8">
+            <h3 className="text-xl font-bold text-gray-100 mb-2">Want to Cancel an Order?</h3>
+            <p className="text-gray-300 mb-4 text-sm sm:text-base">
+              The sooner you let us know, the better. Reach out and we'll help you right away.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a href="mailto:support@a2zbookshop.com" className="inline-flex items-center justify-center px-5 py-2.5 bg-primary-aqua text-gray-900 rounded-lg font-semibold text-sm hover:bg-cyan-400 transition-colors">
+                support@a2zbookshop.com
+              </a>
+              <a href="tel:+14145956843" className="inline-flex items-center justify-center px-5 py-2.5 border border-gray-600 text-gray-300 rounded-lg font-semibold text-sm hover:border-gray-400 hover:text-gray-100 transition-colors">
+                +1 (414) 595-6843
+              </a>
             </div>
           </div>
         </div>
