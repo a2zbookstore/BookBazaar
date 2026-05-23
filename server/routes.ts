@@ -3396,6 +3396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const {
         categoryId,
         condition,
+        binding,
         featured,
         bestseller,
         trending,
@@ -3416,6 +3417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const options = {
         categoryId: categoryId ? parseInt(categoryId as string) : undefined,
         condition: condition as string,
+        binding: binding as string,
         featured: featured === "true" ? true : featured === "false" ? false : undefined,
         bestseller: bestseller === "true" ? true : bestseller === "false" ? false : undefined,
         trending: trending === "true" ? true : trending === "false" ? false : undefined,
