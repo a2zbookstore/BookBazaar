@@ -109,7 +109,7 @@ export default function ReturnPolicyPage() {
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-start gap-2">
                     <span className="text-primary-aqua font-bold mt-0.5">•</span>
-                    <span>Original payment method (credit card, UPI, PayPal, etc.)</span>
+                    <span>Original payment method (credit/debit card, PayPal, etc.)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary-aqua font-bold mt-0.5">•</span>
@@ -122,7 +122,7 @@ export default function ReturnPolicyPage() {
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-start gap-2">
                     <span className="text-primary-aqua font-bold mt-0.5">•</span>
-                    <span>UPI / Wallets: 1–3 business days</span>
+                    <span>Bank Transfer / Digital Wallets: 1–3 business days</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary-aqua font-bold mt-0.5">•</span>

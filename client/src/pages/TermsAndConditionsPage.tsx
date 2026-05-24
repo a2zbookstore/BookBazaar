@@ -72,7 +72,7 @@ export default function TermsAndConditionsPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary-aqua font-bold mt-0.5">•</span>
-                  <span>We accept payments via credit/debit cards, UPI, PayPal, Apple Pay, and other methods displayed at checkout.</span>
+                  <span>We accept payments via credit/debit cards, PayPal, Apple Pay, and other methods displayed at checkout.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary-aqua font-bold mt-0.5">•</span>
@@ -171,9 +171,9 @@ export default function TermsAndConditionsPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">9. Governing Law</h2>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                These terms shall be governed by and construed in accordance with the laws of India.
-                Any disputes arising from these terms or your use of the website shall be subject to the exclusive
-                jurisdiction of the courts in India.
+                These terms shall be governed by and construed in accordance with applicable international laws and regulations.
+                Any disputes arising from these terms or your use of the website shall be resolved through good-faith negotiation,
+                and if necessary, through binding arbitration or the competent courts of the jurisdiction where A2Z BOOKSHOP operates.
               </p>
             </div>
 
