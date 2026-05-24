@@ -238,6 +238,7 @@ export interface IStorage {
   createBookRequest(bookRequest: InsertBookRequest): Promise<BookRequest>;
   updateBookRequest(id: number, updates: Partial<BookRequest>): Promise<BookRequest>;
   deleteBookRequest(id: number): Promise<void>;
+  deleteUserAccount(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2060,6 +2061,21 @@ export class DatabaseStorage implements IStorage {
   async removeForUser(userId: string) {
     const [deletedGift] = await db.delete(giftCart).where(eq(giftCart.userId, userId)).returning();
     return deletedGift;
+  }
+
+  async deleteUserAccount(userId: string): Promise<void> {
+    // 1. Delete rows with NOT NULL FK to users
+    await db.delete(cartItems).where(eq(cartItems.userId, userId));
+    await db.delete(wishlistItems).where(eq(wishlistItems.userId, userId));
+    await db.delete(giftCart).where(eq(giftCart.userId, userId));
+
+    // 2. Null-out nullable FKs so business records are preserved
+    await db.update(orders).set({ userId: null }).where(eq(orders.userId, userId));
+    await db.update(returnRequests).set({ userId: null }).where(eq(returnRequests.userId, userId));
+    await db.update(couponUsages).set({ userId: null }).where(eq(couponUsages.userId, userId));
+
+    // 3. Delete the user record
+    await db.delete(users).where(eq(users.id, userId));
   }
 
 }

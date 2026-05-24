@@ -552,7 +552,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Clear guest cart from session
         (req.session as any).cartItems = [];
       }
-      
+
+      // Passport 0.7 regenerates the session on logIn(), so we also stamp the
+      // userId/isCustomerAuth keys directly — these are checked first in
+      // /api/auth/user and are 100% reliable regardless of deserializer order.
+      if (req.user?.id) {
+        (req.session as any).userId = req.user.id;
+        (req.session as any).isCustomerAuth = true;
+      }
+
       // Save session to DB before redirecting so the next request finds the user
       const redirectUrl = (req.session as any).oauthRedirect || '/';
       delete (req.session as any).oauthRedirect;
@@ -594,7 +602,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Clear guest cart from session
         (req.session as any).cartItems = [];
       }
-      
+
+      // Passport 0.7 regenerates the session on logIn(), so we also stamp the
+      // userId/isCustomerAuth keys directly — these are checked first in
+      // /api/auth/user and are 100% reliable regardless of deserializer order.
+      if (req.user?.id) {
+        (req.session as any).userId = req.user.id;
+        (req.session as any).isCustomerAuth = true;
+      }
+
       // Save session to DB before redirecting so the next request finds the user
       const redirectUrl = (req.session as any).oauthRedirect || '/';
       delete (req.session as any).oauthRedirect;
@@ -2619,6 +2635,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Logout error:", error);
       res.status(500).json({ message: "Logout failed" });
+    }
+  });
+
+  // Delete own account — requires active session
+  app.delete("/api/auth/account", async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+
+      if (!userId || !isCustomerAuth) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Prevent admins from self-deleting via this endpoint
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      if (currentUser.role === "admin") {
+        return res.status(403).json({ message: "Admin accounts cannot be deleted via this endpoint" });
+      }
+
+      await storage.deleteUserAccount(userId);
+
+      // Destroy session after deletion
+      req.logout(() => {
+        req.session.destroy(() => {
+          res.clearCookie("connect.sid");
+          res.json({ success: true, message: "Account deleted successfully" });
+        });
+      });
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      res.status(500).json({ message: "Failed to delete account" });
     }
   });
   // DEPRECATED: Old admin authentication routes (kept for backward compatibility)

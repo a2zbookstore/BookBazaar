@@ -54,21 +54,34 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     initLocation();
   }, []);
 
-  const initLocation = async () => {
-    const manual = getManualLocationFromStorage();
+  const FETCHED_LOCATION_KEY = "fetched_location_cache";
+  const FETCHED_LOCATION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+  const initLocation = async () => {
+    // 1. Prefer manual selection (user explicitly chose a country)
+    const manual = getManualLocationFromStorage();
     if (manual) {
       setManualLocation(manual);
       return;
     }
 
+    // 2. Use cached auto-detected location to avoid re-prompting for permission
+    const cached = getCachedFetchedLocation();
+    if (cached) {
+      setFetchedLocation(cached);
+      return;
+    }
+
+    // 3. Fetch fresh (triggers geolocation permission prompt if not yet granted)
     const fetched = await fetchLocationFromAPI();
     if (fetched) {
+      saveFetchedLocationToCache(fetched);
       setFetchedLocation(fetched);
     } else {
       setManualLocation({ country: "United States", countryCode: "US" });
     }
   };
+
   const getManualLocationFromStorage = (): {
     country: string;
     countryCode: string;
@@ -78,6 +91,32 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
+    }
+  };
+
+  const getCachedFetchedLocation = (): LocationData | null => {
+    try {
+      const stored = localStorage.getItem(FETCHED_LOCATION_KEY);
+      if (!stored) return null;
+      const { data, timestamp } = JSON.parse(stored);
+      if (Date.now() - timestamp > FETCHED_LOCATION_TTL_MS) {
+        localStorage.removeItem(FETCHED_LOCATION_KEY);
+        return null;
+      }
+      return data as LocationData;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveFetchedLocationToCache = (data: LocationData) => {
+    try {
+      localStorage.setItem(
+        FETCHED_LOCATION_KEY,
+        JSON.stringify({ data, timestamp: Date.now() })
+      );
+    } catch {
+      // localStorage quota exceeded — silently ignore
     }
   };
   const fetchLocationFromAPI = async (): Promise<LocationData | null> => {
@@ -179,7 +218,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     );
 
   const setFetchedLocation = (data: LocationData) => {
-
+    saveFetchedLocationToCache(data);
     setLocation({
       source: "fetched_user_location",
       country: data.country,
