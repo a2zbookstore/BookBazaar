@@ -39,6 +39,7 @@ const DataDeletionPage    = lazy(() => import("@/pages/DataDeletionPage"));
 const LoginPage           = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage        = lazy(() => import("@/pages/RegisterPage"));
 const ResetPasswordPage   = lazy(() => import("@/pages/ResetPasswordPage"));
+const AuthCallbackPage    = lazy(() => import("@/pages/AuthCallbackPage"));
 const NotFound            = lazy(() => import("@/pages/NotFound"));
 
 // Admin pages — each is a separate chunk; only loaded when admin visits them
@@ -115,6 +116,7 @@ function AppRouter() {
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
         <Route path="/reset-password" component={ResetPasswordPage} />
+        <Route path="/auth-callback" component={AuthCallbackPage} />
 
         {/* Admin routes - now require user to be logged in with admin role */}
         <Route path="/admin"><AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute></Route>

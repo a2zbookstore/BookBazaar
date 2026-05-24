@@ -26,7 +26,7 @@ export default function ShippingInfoPage() {
           <div className="rounded-xl bg-gray-900 p-6 sm:p-8 mb-10 sm:mb-14">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-100 mb-3">We Ship Worldwide</h2>
             <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-              Whether you're in the UK, USA, India, Australia, or anywhere else — we'll get your books to you.
+              Whether you're in the UK, USA, Canada, Australia, or anywhere else — we'll get your books to you.
               Shipping costs and delivery times are calculated at checkout based on your location.
             </p>
           </div>
@@ -36,9 +36,9 @@ export default function ShippingInfoPage() {
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">Estimated Delivery Times</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Domestic (India)</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">USA & Canada</h3>
                 <p className="text-2xl font-bold text-primary-aqua mb-2">3–7 business days</p>
-                <p className="text-sm text-gray-600">Fast delivery across all Indian states and territories</p>
+                <p className="text-sm text-gray-600">Reliable delivery across North America</p>
               </div>
               <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-1">UK & USA</h3>

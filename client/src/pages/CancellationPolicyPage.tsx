@@ -112,7 +112,7 @@ export default function CancellationPolicyPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   <tr>
-                    <td className="p-4 text-gray-700">UPI / Wallets</td>
+                    <td className="p-4 text-gray-700">Bank Transfer / Digital Wallets</td>
                     <td className="p-4 text-gray-700">1–3 business days</td>
                   </tr>
                   <tr>

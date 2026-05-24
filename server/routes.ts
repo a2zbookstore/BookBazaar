@@ -558,7 +558,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       delete (req.session as any).oauthRedirect;
       req.session.save((err) => {
         if (err) console.error('Session save error after Google login:', err);
-        res.redirect(redirectUrl);
+        const safe = redirectUrl.startsWith('/') ? redirectUrl : '/';
+        res.redirect(`/auth-callback?to=${encodeURIComponent(safe)}`);
       });
     }
   );
@@ -599,7 +600,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       delete (req.session as any).oauthRedirect;
       req.session.save((err) => {
         if (err) console.error('Session save error after Facebook login:', err);
-        res.redirect(redirectUrl);
+        const safe = redirectUrl.startsWith('/') ? redirectUrl : '/';
+        res.redirect(`/auth-callback?to=${encodeURIComponent(safe)}`);
       });
     }
   );

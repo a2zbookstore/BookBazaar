@@ -7,7 +7,7 @@ const faqCategories = [
     title: "Ordering & Payments",
     questions: [
       { q: "How do I place an order?", a: "Browse our collection, add books to your cart, and proceed to checkout. You can pay using credit/debit cards, UPI, PayPal, Apple Pay, or other methods shown at checkout." },
-      { q: "What payment methods do you accept?", a: "We accept Visa, Mastercard, American Express, UPI (for India), PayPal, Apple Pay, and bank transfers. All payments are processed securely." },
+      { q: "What payment methods do you accept?", a: "We accept Visa, Mastercard, American Express, PayPal, Apple Pay, and bank transfers. All payments are processed securely." },
       { q: "Can I pay in my local currency?", a: "Yes! We support multiple currencies including INR, USD, GBP, EUR, AUD, and more. Select your preferred currency from the currency selector on the site." },
       { q: "Is it safe to enter my card details?", a: "Absolutely. All payments are processed through Stripe and PayPal's secure payment infrastructure. We never store your full card details on our servers." },
       { q: "Will I receive an order confirmation?", a: "Yes, you'll receive an email confirmation immediately after placing your order with all the details including your order number." },
@@ -17,7 +17,7 @@ const faqCategories = [
     title: "Shipping & Delivery",
     questions: [
       { q: "Do you ship internationally?", a: "Yes! We ship to 100+ countries worldwide. Shipping costs and delivery times are calculated at checkout based on your location." },
-      { q: "How long will delivery take?", a: "Domestic (India): 3–7 business days. UK & USA: 5–10 business days. Rest of World: 7–14 business days. These are estimates and may vary." },
+      { q: "How long will delivery take?", a: "USA & Canada: 3–7 business days. UK & Europe: 5–10 business days. Rest of World: 7–14 business days. These are estimates and may vary." },
       { q: "How can I track my order?", a: "Once your order ships, we'll email you a tracking number. You can also check your order status from your account dashboard or our Track Order page." },
       { q: "Do you offer free shipping?", a: "We occasionally run free shipping promotions. Standard shipping costs are calculated based on order weight and destination — always shown before you pay." },
       { q: "What if my package is lost?", a: "Contact us with your order number and we'll investigate with the carrier. If it's confirmed lost, we'll send a replacement or issue a full refund." },
