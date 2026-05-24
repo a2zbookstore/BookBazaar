@@ -2646,9 +2646,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", async (req, res) => {
     try {
       req.logout(() => {
-        (req.session as any).userId = null;
-        (req.session as any).isCustomerAuth = false;
-        res.json({ success: true });
+        req.session.destroy((err) => {
+          if (err) console.error("Session destroy error on logout:", err);
+          res.clearCookie("connect.sid");
+          res.json({ success: true });
+        });
       });
     } catch (error) {
       console.error("Logout error:", error);
