@@ -533,7 +533,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google OAuth - Callback
-  app.get('/api/auth/google/callback', 
+  app.get('/api/auth/google/callback',
+    // Capture oauthRedirect BEFORE passport.authenticate() calls session.regenerate(),
+    // which wipes all custom session keys including oauthRedirect.
+    (req: any, _res, next) => {
+      req._oauthRedirect = (req.session as any).oauthRedirect || '/';
+      next();
+    },
     passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
     (req: any, res) => {
       // Transfer guest cart items after successful Google login
@@ -559,13 +565,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user?.id) {
         (req.session as any).userId = req.user.id;
         (req.session as any).isCustomerAuth = true;
+        console.log('[Google OAuth] ✅ user set on session:', req.user.id);
+      } else {
+        console.log('[Google OAuth] ❌ req.user missing after passport.authenticate:', req.user);
       }
 
-      // Save session to DB before redirecting so the next request finds the user
-      const redirectUrl = (req.session as any).oauthRedirect || '/';
-      delete (req.session as any).oauthRedirect;
+      // Use redirect URL captured before session.regenerate() wiped it
+      const redirectUrl = req._oauthRedirect || '/';
       req.session.save((err) => {
-        if (err) console.error('Session save error after Google login:', err);
+        if (err) console.error('[Google OAuth] ❌ Session save error:', err);
+        else console.log('[Google OAuth] ✅ Session saved, redirecting to /auth-callback');
         const safe = redirectUrl.startsWith('/') ? redirectUrl : '/';
         res.redirect(`/auth-callback?to=${encodeURIComponent(safe)}`);
       });
@@ -584,6 +593,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Facebook OAuth - Callback
   app.get('/api/auth/facebook/callback',
+    // Capture oauthRedirect BEFORE passport.authenticate() calls session.regenerate(),
+    // which wipes all custom session keys including oauthRedirect.
+    (req: any, _res, next) => {
+      req._oauthRedirect = (req.session as any).oauthRedirect || '/';
+      next();
+    },
     passport.authenticate('facebook', { failureRedirect: '/login?error=facebook_auth_failed' }),
     (req: any, res) => {
       // Transfer guest cart items after successful Facebook login
@@ -609,13 +624,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user?.id) {
         (req.session as any).userId = req.user.id;
         (req.session as any).isCustomerAuth = true;
+        console.log('[FB OAuth] ✅ user set on session:', req.user.id);
+      } else {
+        console.log('[FB OAuth] ❌ req.user is missing after passport.authenticate:', req.user);
       }
 
-      // Save session to DB before redirecting so the next request finds the user
-      const redirectUrl = (req.session as any).oauthRedirect || '/';
-      delete (req.session as any).oauthRedirect;
+      // Use redirect URL captured before session.regenerate() wiped it
+      const redirectUrl = req._oauthRedirect || '/';
       req.session.save((err) => {
-        if (err) console.error('Session save error after Facebook login:', err);
+        if (err) console.error('[FB OAuth] ❌ Session save error:', err);
+        else console.log('[FB OAuth] ✅ Session saved, redirecting to /auth-callback');
         const safe = redirectUrl.startsWith('/') ? redirectUrl : '/';
         res.redirect(`/auth-callback?to=${encodeURIComponent(safe)}`);
       });
