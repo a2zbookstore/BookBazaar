@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
@@ -16,7 +17,8 @@ import { Order } from '@/types';
 import {
     User, Camera, Shield, Settings, ShoppingBag, Heart,
     Mail, Phone, Calendar, CheckCircle2, XCircle, Lock,
-    Eye, EyeOff, AlertCircle, Pencil, Save, X, Star, RefreshCw, SendHorizonal
+    Eye, EyeOff, AlertCircle, Pencil, Save, X, Star, RefreshCw, SendHorizonal,
+    Trash2
 } from 'lucide-react';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -36,6 +38,7 @@ const MyProfile: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
     const { toast } = useToast();
     const queryClient = useQueryClient();
+    const navigate = useLocation()[1];
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Orders & wishlist counts
@@ -277,6 +280,30 @@ const MyProfile: React.FC = () => {
         return (p.length >= 6 ? 1 : 0) + (p.length >= 10 ? 1 : 0) +
             (/[A-Z]/.test(p) || /[0-9]/.test(p) ? 1 : 0) + (/[^a-zA-Z0-9]/.test(p) ? 1 : 0);
     })();
+
+    // ── Delete account ────────────────────────────────────────────────────────
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText !== 'DELETE') return;
+        setDeleting(true);
+        try {
+            const res = await fetch('/api/auth/account', {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to delete account');
+            queryClient.clear();
+            toast({ title: 'Account deleted', description: 'Your account has been permanently deleted.' });
+            navigate('/');
+        } catch (err: any) {
+            toast({ title: 'Delete failed', description: err.message, variant: 'destructive' });
+            setDeleting(false);
+        }
+    };
 
     const [activeTab, setActiveTab] = useState('profile');
 
@@ -887,6 +914,31 @@ const MyProfile: React.FC = () => {
                                                 </div>
                                             </CardContent>
                                         </Card>
+
+                                        {/* ── Danger Zone ─────────────────────────────────────────── */}
+                                        <Card className="border border-red-200 shadow-sm rounded-2xl overflow-hidden">
+                                            <CardHeader className="bg-gradient-to-r from-red-50 to-rose-50/40 border-b border-red-100 pb-4">
+                                                <CardTitle className="text-lg font-bold text-red-700 flex items-center gap-2">
+                                                    <Trash2 className="w-5 h-5" /> Danger Zone
+                                                </CardTitle>
+                                                <CardDescription className="text-red-500 text-sm">Irreversible actions — proceed with caution</CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="p-6 md:p-8">
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                    <div>
+                                                        <p className="font-semibold text-gray-800">Delete My Account</p>
+                                                        <p className="text-sm text-gray-500 mt-0.5">Permanently removes your account and all associated data. Your order history is retained for our records but unlinked from your identity.</p>
+                                                    </div>
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => { setShowDeleteModal(true); setDeleteConfirmText(''); }}
+                                                        className="shrink-0 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 gap-2 rounded-full"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" /> Delete Account
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
                                     </div>
                                 )}
                             </motion.div>
@@ -894,6 +946,88 @@ const MyProfile: React.FC = () => {
                     </Tabs>
                 </div>
             </div>
+
+            {/* ── Delete Account Confirmation Modal ───────────────────────── */}
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <motion.div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !deleting && setShowDeleteModal(false)} />
+                        <motion.div
+                            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5"
+                            initial={{ scale: 0.92, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.92, opacity: 0, y: 20 }}
+                            transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        >
+                            <button
+                                onClick={() => !deleting && setShowDeleteModal(false)}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                                    <Trash2 className="w-6 h-6 text-red-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Delete your account?</h2>
+                                    <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 space-y-1">
+                                <p className="font-semibold">What will be deleted:</p>
+                                <ul className="list-disc list-inside space-y-0.5 text-red-600">
+                                    <li>Your profile and personal information</li>
+                                    <li>Your cart and wishlist items</li>
+                                    <li>Your login credentials</li>
+                                </ul>
+                                <p className="text-red-500 text-xs pt-1">Order history is retained for business records but unlinked from your identity.</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold text-gray-700">
+                                    Type <span className="font-mono text-red-600">DELETE</span> to confirm
+                                </Label>
+                                <Input
+                                    value={deleteConfirmText}
+                                    onChange={e => setDeleteConfirmText(e.target.value)}
+                                    placeholder="DELETE"
+                                    className="border-red-200 focus-visible:border-red-400 focus-visible:ring-red-200"
+                                    disabled={deleting}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-1">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    disabled={deleting}
+                                    className="flex-1 rounded-full"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleDeleteAccount}
+                                    disabled={deleteConfirmText !== 'DELETE' || deleting}
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-full gap-2"
+                                >
+                                    {deleting
+                                        ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                        : <Trash2 className="w-4 h-4" />}
+                                    {deleting ? 'Deleting…' : 'Delete Forever'}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 };

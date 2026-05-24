@@ -27,9 +27,9 @@ function CategoryCarousel({ category, variant = 'default' }: CategoryCarouselPro
       hover: "before:from-gray-500/3 before:via-slate-500/3 before:to-gray-500/3"
     },
     warm: {
-      container: "bg-gradient-to-br from-white/80 via-amber-50/20 to-orange-50/40 border-amber-200/20",
-      glow: "from-amber-100/25 via-transparent to-orange-100/25",
-      hover: "before:from-amber-500/4 before:via-orange-500/4 before:to-amber-500/4"
+      container: "bg-gradient-to-br from-white/80 via-emerald-50/20 to-teal-50/40 border-emerald-200/20",
+      glow: "from-emerald-100/25 via-transparent to-teal-100/25",
+      hover: "before:from-emerald-500/4 before:via-teal-500/4 before:to-emerald-500/4"
     },
     cool: {
       container: "bg-gradient-to-br from-white/80 via-blue-50/20 to-indigo-50/40 border-blue-200/20",
@@ -539,21 +539,21 @@ export default function HomePage() {
         className="
           w-full mb-8 p-4 md:p-6
           rounded-2xl
-          bg-gradient-to-br from-white/80 via-amber-50/20 to-orange-50/40
+          bg-gradient-to-br from-white/80 via-violet-50/20 to-purple-50/40
           backdrop-blur-xl
-          border border-amber-200/20
+          border border-violet-200/20
           shadow-[0_8px_32px_rgba(31,38,135,0.15),0_2px_8px_rgba(0,0,0,0.1)]
           hover:shadow-[0_12px_48px_rgba(31,38,135,0.2),0_4px_16px_rgba(0,0,0,0.15)]
           relative overflow-hidden
           transition-all duration-500 ease-out
           before:absolute before:inset-0 before:rounded-2xl 
-          before:bg-gradient-to-br before:from-amber-500/4 before:via-orange-500/4 before:to-amber-500/4
+          before:bg-gradient-to-br before:from-violet-500/4 before:via-purple-500/4 before:to-violet-500/4
           before:opacity-0 before:transition-opacity before:duration-500
           hover:before:opacity-100
         "
       >
         {/* Soft background glow */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-amber-100/25 via-transparent to-orange-100/25" />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-violet-100/25 via-transparent to-purple-100/25" />
 
         <div className="
           relative z-10
