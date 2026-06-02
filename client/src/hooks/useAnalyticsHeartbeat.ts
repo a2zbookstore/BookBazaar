@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useUserLocation } from "@/contexts/userLocationContext";
 
-const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
+const HEARTBEAT_INTERVAL_MS = 30_000;       // 30 seconds
+const INACTIVITY_TIMEOUT_MS = 5 * 60_000;  // 5 minutes — suppress heartbeats after this
 
 /**
  * Sends a periodic heartbeat to the server so that:
@@ -10,16 +11,30 @@ const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
  * 2. `userId` gets backfilled on the analytics session once the user logs in
  * 3. `country`/`city` get stored in the session from client-side geo detection
  *
+ * Heartbeats are suppressed when the user has been idle for 5+ minutes so that
+ * open-but-abandoned tabs no longer appear as "online" in the admin analytics panel.
  * Also fires immediately on mount and on every client-side route change.
  */
 export function useAnalyticsHeartbeat() {
   const [location] = useLocation();
   const { location: userLocation } = useUserLocation();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Tracks the timestamp of the last meaningful user interaction
+  const lastActivityRef = useRef<number>(Date.now());
+
+  // Stamp lastActivityRef on any real user interaction
+  useEffect(() => {
+    const markActive = () => { lastActivityRef.current = Date.now(); };
+    const events = ["mousemove", "keydown", "scroll", "touchstart", "click"] as const;
+    events.forEach((e) => window.addEventListener(e, markActive, { passive: true }));
+    return () => events.forEach((e) => window.removeEventListener(e, markActive));
+  }, []);
 
   const sendHeartbeat = (currentPage: string) => {
     // Don't track admin page visits
     if (currentPage.startsWith("/admin")) return;
+    // Suppress heartbeat if user has been idle beyond the inactivity threshold
+    if (Date.now() - lastActivityRef.current >= INACTIVITY_TIMEOUT_MS) return;
     // fire-and-forget, never block the UI
     fetch("/api/analytics/heartbeat", {
       method: "POST",
@@ -36,8 +51,9 @@ export function useAnalyticsHeartbeat() {
     });
   };
 
-  // Fire on every route change
+  // Navigation counts as activity — fire immediately on every route change
   useEffect(() => {
+    lastActivityRef.current = Date.now();
     sendHeartbeat(location);
   }, [location]);
 

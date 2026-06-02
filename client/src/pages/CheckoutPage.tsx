@@ -1401,7 +1401,7 @@ export default function CheckoutPage() {
                         </svg>
                         <Label htmlFor="upi" className="flex-1 cursor-pointer">
                           <span className="font-semibold text-[#7C3AED]">UPI</span> - Unified Payments Interface
-                          <Badge variant="secondary" className="ml-2 bg-[#7C3AED]/10 text-[#7C3AED]">India</Badge>
+                          <Badge variant="secondary" className="ml-2 bg-[#7C3AED]/10 text-[#7C3AED]">UPI</Badge>
                           <p className="text-xs text-gray-500 mt-1">GPay, PhonePe, Paytm, BHIM &amp; more · Charged in ₹ INR</p>
                         </Label>
                       </div>

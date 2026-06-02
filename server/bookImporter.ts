@@ -7,19 +7,35 @@ import { InsertBook } from '@shared/schema';
 import { CloudinaryService } from './cloudinaryService';
 
 interface BookRow {
+  id?: number;
   title?: string;
   author?: string;
   isbn?: string;
   price?: number;
+  costPrice?: number;
   category?: string;
+  categories?: string; // comma-separated for multi-category
+  subcategory?: string;
   condition?: string;
+  binding?: string;
   description?: string;
   publisher?: string;
   publishedYear?: number;
   pages?: number;
   language?: string;
+  edition?: string;
+  weight?: number;
+  dimensions?: string;
   stock?: number;
   featured?: boolean;
+  bestseller?: boolean;
+  trending?: boolean;
+  newArrival?: boolean;
+  boxSet?: boolean;
+  isHidden?: boolean;
+  imageUrl?: string;
+  imageUrl2?: string;
+  imageUrl3?: string;
 }
 
 interface BookCoverData {
@@ -111,16 +127,23 @@ export class BookImporter {
     success: number;
     failed: number;
     errors: string[];
+    created: number;
+    updated: number;
   }> {
     const results = {
       success: 0,
       failed: 0,
-      errors: [] as string[]
+      errors: [] as string[],
+      created: 0,
+      updated: 0,
     };
 
     try {
-      // Read Excel file
-      const workbook = XLSX.readFile(filePath);
+      // Read Excel/CSV file
+      const ext = filePath.split('.').pop()?.toLowerCase();
+      const workbook = ext === 'csv'
+        ? XLSX.readFile(filePath, { type: 'file', raw: false })
+        : XLSX.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -133,9 +156,12 @@ export class BookImporter {
       const headers = data[0] as string[];
       const rows = data.slice(1) as any[][];
 
-      // Get all categories for mapping
+      // Get all categories and subcategories for mapping
       const categories = await storage.getCategories();
       const categoryMap = new Map(categories.map(cat => [cat.name.toLowerCase(), cat.id]));
+
+      const allSubcategories = await storage.getSubCategories();
+      const subcategoryMap = new Map(allSubcategories.map(sub => [sub.name.toLowerCase(), sub]));
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -149,25 +175,47 @@ export class BookImporter {
             const normalizedHeader = header.toLowerCase().trim();
             
             switch (normalizedHeader) {
+              case 'id':
+                bookData.id = parseInt(value) || undefined;
+                break;
               case 'title':
-              case 'name': // Support for your Excel format
+              case 'name':
                 bookData.title = value?.toString().trim();
                 break;
               case 'author':
                 bookData.author = value?.toString().trim();
                 break;
               case 'isbn':
-              case 'item code': // Support for your Excel format
+              case 'item code':
+              case 'item_code':
                 bookData.isbn = value?.toString().trim();
                 break;
               case 'price':
+              case 'selling price':
+              case 'selling_price':
                 bookData.price = parseFloat(value) || 0;
+                break;
+              case 'cost price':
+              case 'cost_price':
+              case 'costprice':
+                bookData.costPrice = parseFloat(value) || undefined;
                 break;
               case 'category':
                 bookData.category = value?.toString().trim();
                 break;
+              case 'categories':
+                bookData.categories = value?.toString().trim();
+                break;
+              case 'subcategory':
+              case 'sub_category':
+              case 'sub category':
+                bookData.subcategory = value?.toString().trim();
+                break;
               case 'condition':
                 bookData.condition = value?.toString().trim() || 'Good';
+                break;
+              case 'binding':
+                bookData.binding = value?.toString().trim() || 'No Binding';
                 break;
               case 'description':
                 bookData.description = value?.toString().trim();
@@ -176,20 +224,70 @@ export class BookImporter {
                 bookData.publisher = value?.toString().trim();
                 break;
               case 'published_year':
+              case 'published year':
               case 'year':
-                bookData.publishedYear = parseInt(value) || null;
+                bookData.publishedYear = parseInt(value) || undefined;
                 break;
               case 'pages':
-                bookData.pages = parseInt(value) || null;
+                bookData.pages = parseInt(value) || undefined;
                 break;
               case 'language':
                 bookData.language = value?.toString().trim() || 'English';
                 break;
+              case 'edition':
+                bookData.edition = value?.toString().trim();
+                break;
+              case 'weight':
+                bookData.weight = parseFloat(value) || undefined;
+                break;
+              case 'dimensions':
+                bookData.dimensions = value?.toString().trim();
+                break;
               case 'stock':
+              case 'quantity':
+              case 'qty':
                 bookData.stock = parseInt(value) || 1;
                 break;
               case 'featured':
-                bookData.featured = Boolean(value) || false;
+                bookData.featured = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1;
+                break;
+              case 'bestseller':
+              case 'best_seller':
+              case 'best seller':
+                bookData.bestseller = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1;
+                break;
+              case 'trending':
+                bookData.trending = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1;
+                break;
+              case 'new_arrival':
+              case 'new arrival':
+              case 'newarrival':
+                bookData.newArrival = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1;
+                break;
+              case 'box_set':
+              case 'box set':
+              case 'boxset':
+                bookData.boxSet = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1;
+                break;
+              case 'hidden':
+              case 'is_hidden':
+              case 'is hidden':
+                bookData.isHidden = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1;
+                break;
+              case 'image_url_2':
+              case 'image url 2':
+              case 'imageurl2':
+                bookData.imageUrl2 = value?.toString().trim();
+                break;
+              case 'image_url':
+              case 'image url':
+              case 'imageurl':
+                bookData.imageUrl = value?.toString().trim();
+                break;
+              case 'image_url_3':
+              case 'image url 3':
+              case 'imageurl3':
+                bookData.imageUrl3 = value?.toString().trim();
                 break;
             }
           });
@@ -244,18 +342,51 @@ export class BookImporter {
           bookData.language = bookData.language || 'English';
           bookData.description = bookData.description || `${bookData.title} - A comprehensive book in our collection.`;
 
-          // Get category ID
+          // Get category ID - resolve from primary category or first of multi-category list
           let categoryId = 1; // Default to first category
+          let resolvedCategoryIds: number[] = [];
+
+          // Handle comma-separated multi-category column first
+          if (bookData.categories) {
+            const categoryNames = bookData.categories.split(',').map(s => s.trim().toLowerCase());
+            for (const catName of categoryNames) {
+              const foundId = categoryMap.get(catName);
+              if (foundId) resolvedCategoryIds.push(foundId);
+            }
+          }
+
+          // Fall back to single category column
           if (bookData.category) {
             const foundCategoryId = categoryMap.get(bookData.category.toLowerCase());
             if (foundCategoryId) {
               categoryId = foundCategoryId;
+              if (!resolvedCategoryIds.includes(foundCategoryId)) {
+                resolvedCategoryIds.push(foundCategoryId);
+              }
+            }
+          } else if (resolvedCategoryIds.length > 0) {
+            categoryId = resolvedCategoryIds[0];
+          }
+
+          // Resolve subcategory by name within parent category
+          let subCategoryId: number | null = null;
+          if (bookData.subcategory) {
+            const subNormalized = bookData.subcategory.toLowerCase();
+            const matchedSub = subcategoryMap.get(subNormalized);
+            if (matchedSub) {
+              // Optionally validate parent matches resolved categoryId
+              if (!categoryId || matchedSub.categoryId === categoryId) {
+                subCategoryId = matchedSub.id;
+              } else {
+                // Still use the subcategory even if parent differs
+                subCategoryId = matchedSub.id;
+              }
             }
           }
 
-          // Fetch book cover image if ISBN is provided
-          let imageUrl = null;
-          if (bookData.isbn) {
+          // Fetch book cover image if ISBN is provided and no image URL already given
+          let imageUrl = bookData.imageUrl || null;
+          if (!imageUrl && bookData.isbn) {
             console.log(`Fetching cover for ISBN: ${bookData.isbn}`);
             const coverData = await this.fetchBookCover(bookData.isbn);
             if (coverData) {
@@ -276,23 +407,57 @@ export class BookImporter {
             isbn: bookData.isbn || null,
             price: bookData.price.toString(),
             categoryId,
+            subCategoryId,
             condition: bookData.condition || 'Good',
+            binding: bookData.binding || 'No Binding',
             description: bookData.description || null,
             publisher: bookData.publisher || null,
             publishedYear: bookData.publishedYear || null,
             pages: bookData.pages || null,
             language: bookData.language || 'English',
+            edition: bookData.edition || null,
+            weight: bookData.weight != null ? bookData.weight.toString() : null,
+            dimensions: bookData.dimensions || null,
             stock: bookData.stock || 1,
             featured: bookData.featured || false,
-            imageUrl: imageUrl || null
+            bestseller: bookData.bestseller || false,
+            trending: bookData.trending || false,
+            newArrival: bookData.newArrival || false,
+            boxSet: bookData.boxSet || false,
+            isHidden: bookData.isHidden || false,
+            costPrice: bookData.costPrice != null ? bookData.costPrice.toString() : null,
+            imageUrl: imageUrl || null,
+            imageUrl2: bookData.imageUrl2 || null,
+            imageUrl3: bookData.imageUrl3 || null,
           };
 
-          // Save to database
-          const createdBook = await storage.createBook(insertBook);
-          results.success++;
-          
-          console.log(`✅ Successfully imported: ${bookData.title} by ${bookData.author}`);
-          console.log(`   Book ID: ${createdBook.id}, ISBN: ${bookData.isbn || 'N/A'}, Price: $${bookData.price}`);
+          // Save to database — update if id present, otherwise create
+          if (bookData.id && bookData.id > 0) {
+            await storage.updateBook(bookData.id, insertBook);
+
+            // Reassign multi-category via junction table
+            if (resolvedCategoryIds.length > 0) {
+              await storage.setBookCategories(bookData.id, resolvedCategoryIds);
+            }
+
+            results.success++;
+            results.updated++;
+
+            console.log(`✅ Successfully updated: ${bookData.title} by ${bookData.author} (ID: ${bookData.id})`);
+          } else {
+            const createdBook = await storage.createBook(insertBook);
+
+            // Assign multi-category via junction table if multiple categories provided
+            if (resolvedCategoryIds.length > 0) {
+              await storage.setBookCategories(createdBook.id, resolvedCategoryIds);
+            }
+
+            results.success++;
+            results.created++;
+
+            console.log(`✅ Successfully created: ${bookData.title} by ${bookData.author}`);
+            console.log(`   Book ID: ${createdBook.id}, ISBN: ${bookData.isbn || 'N/A'}, Price: $${bookData.price}`);
+          }
 
         } catch (error) {
           results.failed++;

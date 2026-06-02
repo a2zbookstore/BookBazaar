@@ -4,6 +4,7 @@ export interface Book {
   author: string;
   isbn?: string;
   categoryId?: number;
+  subCategoryId?: number;
   categories?: Category[];
   description?: string;
   condition: string;
@@ -39,6 +40,16 @@ export interface Category {
   description?: string;
   createdAt: string;
   sort_order?: number;
+}
+
+export interface SubCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  categoryId: number;
+  sort_order?: number;
+  createdAt: string;
 }
 
 export interface CartItem {

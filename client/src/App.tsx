@@ -61,6 +61,7 @@ const AnalyticsPage       = lazy(() => import("@/pages/admin/AnalyticsPage"));
 const AuditLogPage        = lazy(() => import("@/pages/admin/AuditLogPage"));
 const BillCreatorPage     = lazy(() => import("@/pages/admin/BillCreatorPage"));
 const SecurityPage        = lazy(() => import("@/pages/admin/SecurityPage"));
+const EmailCustomersPage  = lazy(() => import("@/pages/admin/EmailCustomersPage"));
 
 // Animated book-themed loader shown while a lazy chunk is downloading
 function PageLoader() {
@@ -137,6 +138,7 @@ function AppRouter() {
         <Route path="/admin/audit-trail"><AdminProtectedRoute><AuditLogPage /></AdminProtectedRoute></Route>
         <Route path="/admin/security"><AdminProtectedRoute><SecurityPage /></AdminProtectedRoute></Route>
         <Route path="/admin/bill-creator"><AdminProtectedRoute><BillCreatorPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/email-customers"><AdminProtectedRoute><EmailCustomersPage /></AdminProtectedRoute></Route>
 
         <Route component={NotFound} />
       </Switch>

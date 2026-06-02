@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Book, Category } from "@/types";
+import { Book, Category, SubCategory } from "@/types";
 import BannerUploadPage from "./BannerUploadPage";
 import CategoriesManagement from "@/components/admin/CategoriesManagement";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -37,7 +37,7 @@ const getImageSrc = (imageUrl: string | null | undefined): string => {
 interface BooksResponse { books: Book[]; total: number; }
 
 interface BookForm {
-  title: string; author: string; isbn: string; categoryIds: number[];
+  title: string; author: string; isbn: string; categoryIds: number[]; subCategoryId: number | null;
   description: string; condition: string; binding: string; price: string; costPrice: string;
   stock: number; imageUrl: string; imageUrl2: string; imageUrl3: string;
   publishedYear: number | null; publisher: string; pages: number | null;
@@ -54,7 +54,7 @@ const CONDITION_STYLES: Record<string, string> = {
 };
 
 const EMPTY_FORM: BookForm = {
-  title: "", author: "", isbn: "", categoryIds: [], description: "",
+  title: "", author: "", isbn: "", categoryIds: [], subCategoryId: null, description: "",
   condition: "Good", binding: "Softcover", price: "", costPrice: "", stock: 1,
   imageUrl: "", imageUrl2: "", imageUrl3: "",
   publishedYear: null, publisher: "", pages: null, language: "English",
@@ -134,6 +134,7 @@ export default function InventoryPageNew() {
   });
 
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+  const { data: allSubCategories = [] } = useQuery<SubCategory[]>({ queryKey: ["/api/subcategories"] });
 
   const books = booksResponse?.books || [];
   const totalBooks = booksResponse?.total || 0;
@@ -152,6 +153,7 @@ export default function InventoryPageNew() {
       const bookData = {
         title: data.title, author: data.author, isbn: data.isbn || "",
         categoryId: data.categoryIds[0] || null, categoryIds: data.categoryIds,
+        subCategoryId: data.subCategoryId || null,
         description: data.description || "", condition: data.condition, binding: data.binding,
         price: data.price?.trim() ? parseFloat(data.price).toString() : "0",
         costPrice: data.costPrice?.trim() ? parseFloat(data.costPrice).toString() : null,
@@ -179,6 +181,7 @@ export default function InventoryPageNew() {
       const bookData = {
         title: data.title, author: data.author, isbn: data.isbn || "",
         categoryId: data.categoryIds[0] || null, categoryIds: data.categoryIds,
+        subCategoryId: data.subCategoryId || null,
         description: data.description || "", condition: data.condition, binding: data.binding,
         price: data.price?.trim() ? parseFloat(data.price).toString() : "0",
         costPrice: data.costPrice?.trim() ? parseFloat(data.costPrice).toString() : null,
@@ -224,6 +227,7 @@ export default function InventoryPageNew() {
     setBookForm({
       title: book.title || "", author: book.author || "", isbn: book.isbn || "",
       categoryIds: book.categories?.map(c => c.id) ?? (book.categoryId ? [book.categoryId] : []),
+      subCategoryId: book.subCategoryId ?? null,
       description: book.description || "", condition: book.condition || "Good",
       binding: book.binding || "Softcover", price: book.price?.toString() || "", costPrice: book.costPrice?.toString() || "",
       stock: book.stock || 1, imageUrl: book.imageUrl || "",
@@ -267,24 +271,34 @@ export default function InventoryPageNew() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
+    e.target.value = ''; // reset so the same file can be re-selected
     setIsUploading(true);
     const fd = new FormData(); fd.append("file", file);
     try {
-      const res = await fetch("/api/books/import", { method: "POST", body: fd, credentials: "include" });
+      const res = await fetch("/api/admin/import-books", { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
       const results = await res.json();
       setImportResults(results);
-      toast({ title: "Import Complete", description: `${results.success} books imported` });
+      toast({ title: "Import Complete", description: `${results.success} books processed (${results.created ?? results.success} created, ${results.updated ?? 0} updated)` });
       queryClient.invalidateQueries({ queryKey: ["/api/books"] });
     } catch (err) {
       toast({ title: "Import Failed", description: err instanceof Error ? err.message : "Import failed", variant: "destructive" });
     } finally { setIsUploading(false); }
   };
 
-  const downloadTemplate = () => {
-    const csv = `title,author,isbn,condition,binding,price,stock,description,categoryId,publishedYear,publisher,pages,language,weight,dimensions,featured\n"The Great Gatsby","F. Scott Fitzgerald","9780743273565","Good","Softcover","12.99","5","A classic novel","1","1925","Scribner","180","English","0.3kg","20x13cm","false"`;
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    const a = document.createElement("a"); a.href = url; a.download = "book_import_template.csv"; a.click(); URL.revokeObjectURL(url);
+  const downloadTemplate = async () => {
+    try {
+      const res = await fetch("/api/books/template", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to download template");
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "book_import_template.xlsx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast({ title: "Download Failed", description: err instanceof Error ? err.message : "Failed", variant: "destructive" });
+    }
   };
 
   const exportBooks = async () => {
@@ -812,6 +826,28 @@ export default function InventoryPageNew() {
                     )}
                   </div>
                   <Button type="button" variant="outline" size="sm" className="shrink-0 mt-0" onClick={() => setIsCategoryDialogOpen(true)}>+ Add</Button>
+                </div>
+              </div>
+              {/* Subcategory */}
+              <div>
+                <Label className="text-xs font-semibold text-secondary-black uppercase tracking-wide">Subcategory</Label>
+                <div className="mt-1">
+                  <Select
+                    value={bookForm.subCategoryId ? String(bookForm.subCategoryId) : "none"}
+                    onValueChange={v => setBookForm(p => ({ ...p, subCategoryId: v === "none" ? null : Number(v) }))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {allSubCategories
+                        .filter(s => bookForm.categoryIds.length === 0 || bookForm.categoryIds.includes(s.categoryId))
+                        .map(s => (
+                          <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

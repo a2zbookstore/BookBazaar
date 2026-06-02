@@ -11,6 +11,7 @@ import {
   User,
   RotateCcw,
   Mail,
+  Send,
   Gift,
   Percent,
   X,
@@ -59,6 +60,7 @@ const menuSections = [
     items: [
       { href: "/admin/coupons", icon: Percent, label: "Coupons" },
       { href: "/admin/gift-categories", icon: Gift, label: "Gift Categories" },
+      { href: "/admin/email-customers", icon: Send, label: "Email Customers" },
       { href: "/admin/messages", icon: Mail, label: "Messages" },
     ],
   },
