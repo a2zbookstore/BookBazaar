@@ -3803,41 +3803,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Column definitions (key, header label, width)
       const cols = [
-        { key: 'title',         header: 'Title',          width: 32 },
-        { key: 'author',        header: 'Author',         width: 28 },
-        { key: 'isbn',          header: 'ISBN',           width: 18 },
-        { key: 'price',         header: 'Price',          width: 12 },
-        { key: 'costPrice',     header: 'Cost Price',     width: 14 },
-        { key: 'category',      header: 'Category',       width: 20 },
-        { key: 'categories',    header: 'Categories',     width: 30 },
-        { key: 'subcategory',   header: 'Subcategory',    width: 22 },
-        { key: 'condition',     header: 'Condition',      width: 18 },
-        { key: 'binding',       header: 'Binding',        width: 18 },
-        { key: 'description',   header: 'Description',    width: 50 },
-        { key: 'publisher',     header: 'Publisher',      width: 22 },
-        { key: 'publishedYear', header: 'Published Year', width: 16 },
-        { key: 'pages',         header: 'Pages',          width: 10 },
-        { key: 'language',      header: 'Language',       width: 14 },
-        { key: 'edition',       header: 'Edition',        width: 12 },
-        { key: 'weight',        header: 'Weight',         width: 12 },
-        { key: 'dimensions',    header: 'Dimensions',     width: 24 },
-        { key: 'stock',         header: 'Stock',          width: 10 },
-        { key: 'featured',      header: 'Featured',       width: 12 },
-        { key: 'bestseller',    header: 'Bestseller',     width: 13 },
-        { key: 'trending',      header: 'Trending',       width: 12 },
-        { key: 'newArrival',    header: 'New Arrival',    width: 13 },
-        { key: 'boxSet',        header: 'Box Set',        width: 11 },
-        { key: 'hidden',        header: 'Hidden',         width: 11 },
-        { key: 'imageUrl',      header: 'Image URL',      width: 36 },
-        { key: 'imageUrl2',     header: 'Image URL 2',    width: 36 },
-        { key: 'imageUrl3',     header: 'Image URL 3',    width: 36 },
+        { key: 'id',             header: 'ID',            width: 10 },
+        { key: 'title',          header: 'Title',         width: 32 },
+        { key: 'author',         header: 'Author',        width: 28 },
+        { key: 'isbn',           header: 'ISBN',          width: 18 },
+        { key: 'price',          header: 'Price',         width: 12 },
+        { key: 'cost price',     header: 'Cost Price',    width: 14 },
+        { key: 'category',       header: 'Category',      width: 20 },
+        { key: 'categories',     header: 'Categories',    width: 30 },
+        { key: 'subcategory',    header: 'Subcategory',   width: 22 },
+        { key: 'condition',      header: 'Condition',     width: 18 },
+        { key: 'binding',        header: 'Binding',       width: 18 },
+        { key: 'description',    header: 'Description',   width: 50 },
+        { key: 'publisher',      header: 'Publisher',     width: 22 },
+        { key: 'published year', header: 'Published Year',width: 16 },
+        { key: 'pages',          header: 'Pages',         width: 10 },
+        { key: 'language',       header: 'Language',      width: 14 },
+        { key: 'edition',        header: 'Edition',       width: 12 },
+        { key: 'weight',         header: 'Weight',        width: 12 },
+        { key: 'dimensions',     header: 'Dimensions',    width: 24 },
+        { key: 'stock',          header: 'Stock',         width: 10 },
+        { key: 'featured',       header: 'Featured',      width: 12 },
+        { key: 'bestseller',     header: 'Bestseller',    width: 13 },
+        { key: 'trending',       header: 'Trending',      width: 12 },
+        { key: 'new arrival',    header: 'New Arrival',   width: 13 },
+        { key: 'box set',        header: 'Box Set',       width: 11 },
+        { key: 'hidden',         header: 'Hidden',        width: 11 },
+        { key: 'image url',      header: 'Image URL',     width: 36 },
+        { key: 'image url 2',    header: 'Image URL 2',   width: 36 },
+        { key: 'image url 3',    header: 'Image URL 3',   width: 36 },
       ];
       ws.columns = cols;
 
       // Row 1 — decorative title banner
       ws.insertRow(1, []);
       const titleCell = ws.getCell('A1');
-      titleCell.value = '📚  BookBazaar — Bulk Import Template';
+      titleCell.value = 'BookBazaar - Bulk Import Template';
       titleCell.font = { name: 'Calibri', size: 15, bold: true, color: { argb: 'FFFFFFFF' } };
       titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
       titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
@@ -3859,15 +3860,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Row 3 — example data (light blue tint)
       const exampleData = {
+        id: '',
         title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', isbn: '9780743273565',
-        price: 12.99, costPrice: 7.50,
+        price: 12.99, 'cost price': 7.50,
         category: 'Fiction', categories: 'Fiction, Classics', subcategory: 'American Literature',
         condition: 'New', binding: 'Paperback',
         description: 'A story of the fabulously wealthy Jay Gatsby.',
-        publisher: 'Scribner', publishedYear: 2004, pages: 180, language: 'English', edition: '1st',
+        publisher: 'Scribner', 'published year': 2004, pages: 180, language: 'English', edition: '1st',
         weight: 0.25, dimensions: '19.8 x 12.9 x 1.1 cm', stock: 50,
-        featured: 'yes', bestseller: 'yes', trending: 'no', newArrival: 'no', boxSet: 'no', hidden: 'no',
-        imageUrl: '', imageUrl2: '', imageUrl3: '',
+        featured: 'yes', bestseller: 'yes', trending: 'no', 'new arrival': 'no', 'box set': 'no', hidden: 'no',
+        'image url': '', 'image url 2': '', 'image url 3': '',
       };
       const exRow = ws.addRow(exampleData);
       exRow.height = 20;
@@ -3911,7 +3913,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Title banner on ref sheet
       ref.insertRow(1, []);
       const refTitle = ref.getCell('A1');
-      refTitle.value = '📋  Column Reference — BookBazaar Bulk Import';
+      refTitle.value = 'Column Reference - BookBazaar Bulk Import';
       refTitle.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
       refTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
       refTitle.alignment = { horizontal: 'left', vertical: 'middle' };
@@ -3929,34 +3931,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const refData = [
-        [1,  'Title',         'title',         'YES', 'Book title'],
-        [2,  'Author',        'author',         'NO',  'Defaults to "Unknown Author" if blank'],
-        [3,  'ISBN',          'isbn',           'NO',  '10 or 13 digit ISBN'],
-        [4,  'Price',         'price',          'YES', 'Selling price — number e.g. 12.99'],
-        [5,  'Cost Price',    'cost price',     'NO',  'Cost / purchase price'],
-        [6,  'Category',      'category',       'NO',  'Primary category name (must match exactly)'],
-        [7,  'Categories',    'categories',     'NO',  'Comma-separated list for multi-category e.g. Fiction, Classics'],
-        [8,  'Subcategory',   'subcategory',    'NO',  'Subcategory name (must match existing)'],
-        [9,  'Condition',     'condition',      'NO',  'New / Used - Good / Used - Acceptable / Used - Poor'],
-        [10, 'Binding',       'binding',        'NO',  'Paperback / Hardcover / Mass Market Paperback / No Binding'],
-        [11, 'Description',   'description',    'NO',  'Full book description'],
-        [12, 'Publisher',     'publisher',      'NO',  'Publisher name'],
-        [13, 'Published Year','published year', 'NO',  '4-digit year e.g. 2023'],
-        [14, 'Pages',         'pages',          'NO',  'Number of pages'],
-        [15, 'Language',      'language',       'NO',  'Defaults to English'],
-        [16, 'Edition',       'edition',        'NO',  'e.g. 1st, 2nd, Revised'],
-        [17, 'Weight',        'weight',         'NO',  'Weight in kg e.g. 0.35'],
-        [18, 'Dimensions',    'dimensions',     'NO',  'e.g. 20.3 x 13.5 x 1.8 cm'],
-        [19, 'Stock',         'stock',          'NO',  'Units in stock (number)'],
-        [20, 'Featured',      'featured',       'NO',  'yes / no'],
-        [21, 'Bestseller',    'bestseller',     'NO',  'yes / no'],
-        [22, 'Trending',      'trending',       'NO',  'yes / no'],
-        [23, 'New Arrival',   'new arrival',    'NO',  'yes / no'],
-        [24, 'Box Set',       'box set',        'NO',  'yes / no'],
-        [25, 'Hidden',        'hidden',         'NO',  'yes = hidden from storefront; no = visible'],
-        [26, 'Image URL',     'image url',      'NO',  'Full URL to primary product image'],
-        [27, 'Image URL 2',   'image url 2',    'NO',  'Full URL to second product image'],
-        [28, 'Image URL 3',   'image url 3',    'NO',  'Full URL to third product image'],
+        [1,  'ID',            'id',             'NO',  'Leave blank for new books; fill with exported ID to update an existing book'],
+        [2,  'Title',        'title',          'YES', 'Book title'],
+        [3,  'Author',       'author',         'NO',  'Defaults to "Unknown Author" if blank'],
+        [4,  'ISBN',         'isbn',           'NO',  '10 or 13 digit ISBN'],
+        [5,  'Price',        'price',          'YES', 'Selling price — number e.g. 12.99'],
+        [6,  'Cost Price',   'cost price',     'NO',  'Cost / purchase price'],
+        [7,  'Category',     'category',       'NO',  'Primary category name (must match exactly)'],
+        [8,  'Categories',   'categories',     'NO',  'Comma-separated list for multi-category e.g. Fiction, Classics'],
+        [9,  'Subcategory',  'subcategory',    'NO',  'Subcategory name (must match existing)'],
+        [10, 'Condition',    'condition',      'NO',  'New / Used - Good / Used - Acceptable / Used - Poor'],
+        [11, 'Binding',      'binding',        'NO',  'Paperback / Hardcover / Mass Market Paperback / No Binding'],
+        [12, 'Description',  'description',    'NO',  'Full book description'],
+        [13, 'Publisher',    'publisher',      'NO',  'Publisher name'],
+        [14, 'Published Year','published year','NO',  '4-digit year e.g. 2023'],
+        [15, 'Pages',        'pages',          'NO',  'Number of pages'],
+        [16, 'Language',     'language',       'NO',  'Defaults to English'],
+        [17, 'Edition',      'edition',        'NO',  'e.g. 1st, 2nd, Revised'],
+        [18, 'Weight',       'weight',         'NO',  'Weight in kg e.g. 0.35'],
+        [19, 'Dimensions',   'dimensions',     'NO',  'e.g. 20.3 x 13.5 x 1.8 cm'],
+        [20, 'Stock',        'stock',          'NO',  'Units in stock (number)'],
+        [21, 'Featured',     'featured',       'NO',  'yes / no'],
+        [22, 'Bestseller',   'bestseller',     'NO',  'yes / no'],
+        [23, 'Trending',     'trending',       'NO',  'yes / no'],
+        [24, 'New Arrival',  'new arrival',    'NO',  'yes / no'],
+        [25, 'Box Set',      'box set',        'NO',  'yes / no'],
+        [26, 'Hidden',       'hidden',         'NO',  'yes = hidden from storefront; no = visible'],
+        [27, 'Image URL',    'image url',      'NO',  'Full URL to primary product image'],
+        [28, 'Image URL 2',  'image url 2',    'NO',  'Full URL to second product image'],
+        [29, 'Image URL 3',  'image url 3',    'NO',  'Full URL to third product image'],
       ];
 
       refData.forEach(([num, label, hdr, req, notes], i) => {
@@ -5398,13 +5401,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.setHeader('Content-Disposition', 'attachment; filename="inventory.csv"');
         res.send(csv);
       } else {
-        // Excel format
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+        // Excel format — styled with ExcelJS, identical layout to the import template
+        const wb = new ExcelJS.Workbook();
+        wb.creator = 'BookBazaar Admin';
 
-        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        const ws = wb.addWorksheet('Inventory', {
+          views: [{ state: 'frozen', ySplit: 2 }],
+        });
 
+        const exportCols = [
+          { key: 'id',             header: 'ID',            width: 10 },
+          { key: 'title',          header: 'Title',         width: 32 },
+          { key: 'author',         header: 'Author',        width: 28 },
+          { key: 'isbn',           header: 'ISBN',          width: 18 },
+          { key: 'price',          header: 'Price',         width: 12 },
+          { key: 'cost price',     header: 'Cost Price',    width: 14 },
+          { key: 'category',       header: 'Category',      width: 20 },
+          { key: 'categories',     header: 'Categories',    width: 30 },
+          { key: 'subcategory',    header: 'Subcategory',   width: 22 },
+          { key: 'condition',      header: 'Condition',     width: 18 },
+          { key: 'binding',        header: 'Binding',       width: 18 },
+          { key: 'description',    header: 'Description',   width: 50 },
+          { key: 'publisher',      header: 'Publisher',     width: 22 },
+          { key: 'published year', header: 'Published Year',width: 16 },
+          { key: 'pages',          header: 'Pages',         width: 10 },
+          { key: 'language',       header: 'Language',      width: 14 },
+          { key: 'edition',        header: 'Edition',       width: 12 },
+          { key: 'weight',         header: 'Weight',        width: 12 },
+          { key: 'dimensions',     header: 'Dimensions',    width: 24 },
+          { key: 'stock',          header: 'Stock',         width: 10 },
+          { key: 'featured',       header: 'Featured',      width: 12 },
+          { key: 'bestseller',     header: 'Bestseller',    width: 13 },
+          { key: 'trending',       header: 'Trending',      width: 12 },
+          { key: 'new arrival',    header: 'New Arrival',   width: 13 },
+          { key: 'box set',        header: 'Box Set',       width: 11 },
+          { key: 'hidden',         header: 'Hidden',        width: 11 },
+          { key: 'image url',      header: 'Image URL',     width: 36 },
+          { key: 'image url 2',    header: 'Image URL 2',   width: 36 },
+          { key: 'image url 3',    header: 'Image URL 3',   width: 36 },
+        ];
+        ws.columns = exportCols;
+
+        // Row 1 — title banner
+        ws.insertRow(1, []);
+        const expTitleCell = ws.getCell('A1');
+        expTitleCell.value = `BookBazaar - Inventory Export  (${exportData.length} books)`;
+        expTitleCell.font = { name: 'Calibri', size: 15, bold: true, color: { argb: 'FFFFFFFF' } };
+        expTitleCell.alignment = { horizontal: 'left', vertical: 'middle' };
+        expTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
+        ws.mergeCells(1, 1, 1, exportCols.length);
+        ws.getRow(1).height = 32;
+
+        // Row 2 — column headers
+        const expHeaderRow = ws.getRow(2);
+        expHeaderRow.height = 24;
+        expHeaderRow.eachCell((cell: any) => {
+          cell.font  = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E6DA4' } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+          cell.border = {
+            bottom: { style: 'medium', color: { argb: 'FF1E3A5F' } },
+            right:  { style: 'thin',   color: { argb: 'FF5B9BD5' } },
+          };
+        });
+
+        // Data rows with alternating fill
+        exportData.forEach((row, i) => {
+          const r = ws.addRow(row);
+          r.height = 18;
+          const bgColor = i % 2 === 0 ? 'FFFFFFFF' : 'FFF7FBFF';
+          r.eachCell({ includeEmpty: true }, (cell: any, colNum: number) => {
+            if (colNum > exportCols.length) return;
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+            cell.font = { name: 'Calibri', size: 10 };
+            cell.alignment = { vertical: 'middle' };
+            cell.border = { right: { style: 'hair', color: { argb: 'FFD9E1F2' } }, bottom: { style: 'hair', color: { argb: 'FFD9E1F2' } } };
+          });
+        });
+
+        const buffer = await wb.xlsx.writeBuffer();
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename="inventory.xlsx"');
         res.send(buffer);

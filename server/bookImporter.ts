@@ -146,15 +146,26 @@ export class BookImporter {
         : XLSX.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
       if (data.length < 2) {
         throw new Error('Excel file must have at least a header row and one data row');
       }
 
+      // Auto-detect header row: skip a banner row if row 1 contains no recognised column names.
+      // The styled template/export puts a decorative title in row 1 and real headers in row 2.
+      const KNOWN_HEADERS = new Set(['id','title','author','isbn','price','cost price','category','categories',
+        'subcategory','condition','binding','description','publisher','published year','pages','language',
+        'edition','weight','dimensions','stock','featured','bestseller','trending','new arrival',
+        'box set','hidden','image url','image url 2','image url 3']);
+      const firstRowIsHeader = (data[0] as string[]).some(
+        v => v && KNOWN_HEADERS.has(String(v).toLowerCase().trim())
+      );
+      const headerRowIndex = firstRowIsHeader ? 0 : 1;
+
       // Get headers
-      const headers = data[0] as string[];
-      const rows = data.slice(1) as any[][];
+      const headers = data[headerRowIndex] as string[];
+      const rows = data.slice(headerRowIndex + 1) as any[][];
 
       // Get all categories and subcategories for mapping
       const categories = await storage.getCategories();
@@ -165,7 +176,7 @@ export class BookImporter {
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const rowNumber = i + 2; // Excel row number (1-indexed + header)
+        const rowNumber = i + headerRowIndex + 2; // Excel row number
 
         try {
           // Map row data to book object
