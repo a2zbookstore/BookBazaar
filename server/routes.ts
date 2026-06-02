@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import rateLimit from "express-rate-limit";
@@ -32,11 +33,13 @@ import {
 } from "./analyticsService";
 import { cleanupOldAnalytics, getAnalyticsDbStats } from "./analyticsCleanup";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
 import {
   insertBookSchema,
   insertCategorySchema,
+  insertSubCategorySchema,
   insertContactMessageSchema,
   insertCartItemSchema,
   insertGiftCategorySchema,
@@ -534,10 +537,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google OAuth - Callback
   app.get('/api/auth/google/callback',
-    // Capture oauthRedirect BEFORE passport.authenticate() calls session.regenerate(),
-    // which wipes all custom session keys including oauthRedirect.
+    // Capture oauthRedirect AND analyticsSessionId BEFORE passport.authenticate() calls
+    // session.regenerate(), which wipes all custom session keys.
     (req: any, _res, next) => {
       req._oauthRedirect = (req.session as any).oauthRedirect || '/';
+      req._analyticsSessionId = (req.session as any).analyticsSessionId;
       next();
     },
     passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
@@ -570,6 +574,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('[Google OAuth] ❌ req.user missing after passport.authenticate:', req.user);
       }
 
+      // Restore analytics session ID so the existing guest session is reused rather than
+      // creating a new one — prevents the same person appearing as 2 visitors in real-time.
+      if (req._analyticsSessionId) {
+        (req.session as any).analyticsSessionId = req._analyticsSessionId;
+      }
+
       // Use redirect URL captured before session.regenerate() wiped it
       const redirectUrl = req._oauthRedirect || '/';
       req.session.save((err) => {
@@ -593,10 +603,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Facebook OAuth - Callback
   app.get('/api/auth/facebook/callback',
-    // Capture oauthRedirect BEFORE passport.authenticate() calls session.regenerate(),
-    // which wipes all custom session keys including oauthRedirect.
+    // Capture oauthRedirect AND analyticsSessionId BEFORE passport.authenticate() calls
+    // session.regenerate(), which wipes all custom session keys.
     (req: any, _res, next) => {
       req._oauthRedirect = (req.session as any).oauthRedirect || '/';
+      req._analyticsSessionId = (req.session as any).analyticsSessionId;
       next();
     },
     passport.authenticate('facebook', { failureRedirect: '/login?error=facebook_auth_failed' }),
@@ -627,6 +638,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('[FB OAuth] ✅ user set on session:', req.user.id);
       } else {
         console.log('[FB OAuth] ❌ req.user is missing after passport.authenticate:', req.user);
+      }
+
+      // Restore analytics session ID so the existing guest session is reused rather than
+      // creating a new one — prevents the same person appearing as 2 visitors in real-time.
+      if (req._analyticsSessionId) {
+        (req.session as any).analyticsSessionId = req._analyticsSessionId;
       }
 
       // Use redirect URL captured before session.regenerate() wiped it
@@ -2758,6 +2775,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── Admin: Send email to customer(s) ───────────────────────────────────
+  app.post("/api/admin/send-customer-email", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { subject, messageContent, recipients } = req.body;
+
+      // Validate inputs
+      if (!subject || typeof subject !== "string" || subject.trim().length === 0) {
+        return res.status(400).json({ message: "Subject is required" });
+      }
+      if (!messageContent || typeof messageContent !== "string" || messageContent.trim().length === 0) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+      if (!Array.isArray(recipients) || recipients.length === 0) {
+        return res.status(400).json({ message: "At least one recipient is required" });
+      }
+      if (recipients.length > 500) {
+        return res.status(400).json({ message: "Maximum 500 recipients per send" });
+      }
+
+      // Validate each recipient email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const validRecipients: string[] = [];
+      for (const r of recipients) {
+        const email = typeof r === "string" ? r.trim() : r?.email?.trim();
+        if (email && emailRegex.test(email) && email.length <= 254) {
+          validRecipients.push(email);
+        }
+      }
+
+      if (validRecipients.length === 0) {
+        return res.status(400).json({ message: "No valid recipient email addresses found" });
+      }
+
+      const cleanSubject = subject.trim().replace(/[\r\n\0]/g, "");
+      const year = new Date().getFullYear();
+
+      // Wrap the admin's message in the branded A2Z BOOKSHOP email template
+      const buildHtml = (content: string) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>${cleanSubject}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+    img { border: 0; display: block; max-width: 100%; }
+    table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    .email-wrapper { width: 100%; background: #f1f5f9; padding: 32px 16px; }
+    .email-card { width: 100%; max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 32px rgba(0,0,0,0.10); }
+    .email-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f766e 100%); padding: 48px 36px 36px; text-align: center; }
+    .email-header .brand { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: #94a3b8; }
+    .email-header h1 { margin: 0 0 10px; font-size: 28px; font-weight: 800; color: #ffffff; line-height: 1.25; }
+    .email-header .tagline { margin: 0; font-size: 15px; color: #cbd5e1; line-height: 1.6; }
+    .gradient-bar { height: 4px; background: linear-gradient(90deg, #0f766e, #0891b2, #6366f1); }
+    .email-body { padding: 36px 36px 28px; }
+    .email-body p { margin: 0 0 16px; font-size: 15px; color: #475569; line-height: 1.75; }
+    .email-body p:last-child { margin-bottom: 0; }
+    .email-body a { color: #0891b2; text-decoration: none; }
+    .email-body strong, .email-body b { color: #0f172a; }
+    .email-body h2, .email-body h3 { color: #0f172a; margin: 20px 0 10px; }
+    .email-body ul, .email-body ol { padding-left: 20px; margin: 0 0 16px; color: #475569; font-size: 15px; line-height: 1.75; }
+    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+    .bottom-bar { background: #1e293b; padding: 24px 36px; text-align: center; }
+    .bottom-bar .brand-name { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: #e2e8f0; letter-spacing: 1px; }
+    .bottom-bar .copy { margin: 0; font-size: 12px; color: #64748b; line-height: 1.6; }
+    .bottom-bar a { color: #60a5fa; text-decoration: none; }
+    @media only screen and (max-width: 640px) {
+      .email-wrapper { padding: 0 !important; }
+      .email-card { border-radius: 0 !important; }
+      .email-header { padding: 36px 20px 28px !important; }
+      .email-header h1 { font-size: 24px !important; }
+      .email-body { padding: 28px 20px 20px !important; }
+      .bottom-bar { padding: 20px 20px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-card">
+      <!-- Header -->
+      <div class="email-header">
+        <p class="brand">A2Z BOOKSHOP</p>
+        <h1>${cleanSubject}</h1>
+        <p class="tagline">A message from the A2Z BOOKSHOP team</p>
+      </div>
+      <!-- Gradient bar -->
+      <div class="gradient-bar"></div>
+      <!-- Admin message content -->
+      <div class="email-body">
+        ${content}
+        <hr class="divider">
+        <p style="font-size:13px;color:#94a3b8;text-align:center;margin:0;">
+          This email was sent to you by A2Z BOOKSHOP.<br>
+          For help, contact us at <a href="mailto:support@a2zbookshop.com">support@a2zbookshop.com</a>
+        </p>
+      </div>
+      <!-- Footer -->
+      <div class="bottom-bar">
+        <p class="brand-name">A2Z BOOKSHOP</p>
+        <p class="copy">
+          &copy; ${year} A2Z BOOKSHOP. All rights reserved.<br>
+          <a href="https://a2zbookshop.com">a2zbookshop.com</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+      const plainText = messageContent.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+
+      // Convert plain-text paragraphs to HTML if the message has no HTML tags
+      const contentHtml = messageContent.includes("<")
+        ? messageContent
+        : messageContent
+            .split(/\n\n+/)
+            .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+            .join("\n");
+      const results: { email: string; success: boolean }[] = [];
+
+      for (const email of validRecipients) {
+        try {
+          const sent = await sendEmail({
+            to: email,
+            subject: cleanSubject,
+            html: buildHtml(contentHtml),
+            text: `${cleanSubject}\n\n${plainText}\n\n---\nA2Z BOOKSHOP | a2zbookshop.com\nFor help: support@a2zbookshop.com`,
+            emailType: "support",
+          });
+          results.push({ email, success: sent });
+        } catch {
+          results.push({ email, success: false });
+        }
+      }
+
+      const successCount = results.filter((r) => r.success).length;
+      const failCount = results.length - successCount;
+
+      res.json({
+        success: true,
+        sent: successCount,
+        failed: failCount,
+        total: results.length,
+        results,
+      });
+    } catch (error) {
+      console.error("Error sending customer emails:", error);
+      res.status(500).json({ message: "Failed to send emails" });
+    }
+  });
+
   // Admin session check route - now checks if logged-in user has admin role
   app.get("/api/admin/user", async (req, res) => {
     try {
@@ -2861,7 +3031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const existingUser = await storage.getUserByEmail(customerEmail);
           if (!existingUser) {
             // Create new user account
-            const passwordHash = crypto.createHash('sha256').update(registerPassword).digest('hex');
+            const passwordHash = await bcrypt.hash(registerPassword, 12);
             const [firstName, ...lastNameParts] = customerName.split(' ');
             const lastName = lastNameParts.join(' ') || '';
 
@@ -3462,6 +3632,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Subcategories routes
+  app.get("/api/subcategories", async (req, res) => {
+    try {
+      const categoryId = req.query.categoryId ? Number(req.query.categoryId) : undefined;
+      const subs = await storage.getSubCategories(categoryId);
+      res.json(subs);
+    } catch (error) {
+      console.error("Error fetching subcategories:", error);
+      res.status(500).json({ message: "Failed to fetch subcategories" });
+    }
+  });
+
+  app.post("/api/createSubCategory", async (req: any, res) => {
+    try {
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      if (sessionUserId && isCustomerAuth) userId = sessionUserId;
+      else if (req.isAuthenticated && req.isAuthenticated()) userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") return res.status(403).json({ message: "Admin access required" });
+
+      const data = insertSubCategorySchema.parse(req.body);
+      // Auto-generate unique slug
+      let slug = (data.slug || data.name).toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').trim();
+      const all = await storage.getSubCategories();
+      if (all.some(s => s.slug === slug)) {
+        return res.status(400).json({ message: "Slug already exists" });
+      }
+      const sub = await storage.createSubCategory({ ...data, slug });
+      res.json(sub);
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      console.error("Error creating subcategory:", error);
+      res.status(500).json({ message: "Failed to create subcategory" });
+    }
+  });
+
+  app.post("/api/updateSubCategory", async (req: any, res) => {
+    try {
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      if (sessionUserId && isCustomerAuth) userId = sessionUserId;
+      else if (req.isAuthenticated && req.isAuthenticated()) userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") return res.status(403).json({ message: "Admin access required" });
+
+      const { id, ...rest } = req.body;
+      if (!id) return res.status(400).json({ message: "Subcategory id is required" });
+      const data = insertSubCategorySchema.parse(rest);
+      let slug = (data.slug || data.name).toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').trim();
+      const all = await storage.getSubCategories();
+      if (all.some(s => s.slug === slug && s.id !== id)) {
+        return res.status(400).json({ message: "Slug already exists" });
+      }
+      const updated = await storage.updateSubCategory(id, { ...data, slug });
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      console.error("Error updating subcategory:", error);
+      res.status(500).json({ message: "Failed to update subcategory" });
+    }
+  });
+
+  app.post("/api/deleteSubCategory", async (req: any, res) => {
+    try {
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+      if (sessionUserId && isCustomerAuth) userId = sessionUserId;
+      else if (req.isAuthenticated && req.isAuthenticated()) userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") return res.status(403).json({ message: "Admin access required" });
+
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ message: "Subcategory id is required" });
+      await storage.deleteSubCategory(id);
+      res.json({ success: true, message: "Subcategory deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting subcategory:", error);
+      res.status(500).json({ message: "Failed to delete subcategory" });
+    }
+  });
+
   // Books routes
   app.get("/api/books", async (req, res) => {
     try {
@@ -3533,6 +3788,205 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching search suggestions:", error);
       res.status(500).json({ message: "Failed to fetch suggestions" });
+    }
+  });
+
+  app.get('/api/books/template', requireAdminAuth, async (req: any, res) => {
+    try {
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'BookBazaar Admin';
+
+      // ── Sheet 1: Import Template ──────────────────────────────────────────
+      const ws = wb.addWorksheet('Import Template', {
+        views: [{ state: 'frozen', ySplit: 2 }], // freeze title row + header row
+      });
+
+      // Column definitions (key, header label, width)
+      const cols = [
+        { key: 'title',         header: 'Title',          width: 32 },
+        { key: 'author',        header: 'Author',         width: 28 },
+        { key: 'isbn',          header: 'ISBN',           width: 18 },
+        { key: 'price',         header: 'Price',          width: 12 },
+        { key: 'costPrice',     header: 'Cost Price',     width: 14 },
+        { key: 'category',      header: 'Category',       width: 20 },
+        { key: 'categories',    header: 'Categories',     width: 30 },
+        { key: 'subcategory',   header: 'Subcategory',    width: 22 },
+        { key: 'condition',     header: 'Condition',      width: 18 },
+        { key: 'binding',       header: 'Binding',        width: 18 },
+        { key: 'description',   header: 'Description',    width: 50 },
+        { key: 'publisher',     header: 'Publisher',      width: 22 },
+        { key: 'publishedYear', header: 'Published Year', width: 16 },
+        { key: 'pages',         header: 'Pages',          width: 10 },
+        { key: 'language',      header: 'Language',       width: 14 },
+        { key: 'edition',       header: 'Edition',        width: 12 },
+        { key: 'weight',        header: 'Weight',         width: 12 },
+        { key: 'dimensions',    header: 'Dimensions',     width: 24 },
+        { key: 'stock',         header: 'Stock',          width: 10 },
+        { key: 'featured',      header: 'Featured',       width: 12 },
+        { key: 'bestseller',    header: 'Bestseller',     width: 13 },
+        { key: 'trending',      header: 'Trending',       width: 12 },
+        { key: 'newArrival',    header: 'New Arrival',    width: 13 },
+        { key: 'boxSet',        header: 'Box Set',        width: 11 },
+        { key: 'hidden',        header: 'Hidden',         width: 11 },
+        { key: 'imageUrl',      header: 'Image URL',      width: 36 },
+        { key: 'imageUrl2',     header: 'Image URL 2',    width: 36 },
+        { key: 'imageUrl3',     header: 'Image URL 3',    width: 36 },
+      ];
+      ws.columns = cols;
+
+      // Row 1 — decorative title banner
+      ws.insertRow(1, []);
+      const titleCell = ws.getCell('A1');
+      titleCell.value = '📚  BookBazaar — Bulk Import Template';
+      titleCell.font = { name: 'Calibri', size: 15, bold: true, color: { argb: 'FFFFFFFF' } };
+      titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
+      ws.mergeCells(1, 1, 1, cols.length);
+      ws.getRow(1).height = 32;
+
+      // Row 2 — column headers (now pushed to row 2 after insert)
+      const headerRow = ws.getRow(2);
+      headerRow.height = 24;
+      headerRow.eachCell((cell: any) => {
+        cell.font  = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E6DA4' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+        cell.border = {
+          bottom: { style: 'medium', color: { argb: 'FF1E3A5F' } },
+          right:  { style: 'thin',   color: { argb: 'FF5B9BD5' } },
+        };
+      });
+
+      // Row 3 — example data (light blue tint)
+      const exampleData = {
+        title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', isbn: '9780743273565',
+        price: 12.99, costPrice: 7.50,
+        category: 'Fiction', categories: 'Fiction, Classics', subcategory: 'American Literature',
+        condition: 'New', binding: 'Paperback',
+        description: 'A story of the fabulously wealthy Jay Gatsby.',
+        publisher: 'Scribner', publishedYear: 2004, pages: 180, language: 'English', edition: '1st',
+        weight: 0.25, dimensions: '19.8 x 12.9 x 1.1 cm', stock: 50,
+        featured: 'yes', bestseller: 'yes', trending: 'no', newArrival: 'no', boxSet: 'no', hidden: 'no',
+        imageUrl: '', imageUrl2: '', imageUrl3: '',
+      };
+      const exRow = ws.addRow(exampleData);
+      exRow.height = 20;
+      exRow.eachCell((cell: any) => {
+        cell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF1F3864' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCE6F1' } };
+        cell.alignment = { vertical: 'middle', wrapText: false };
+        cell.border = { bottom: { style: 'thin', color: { argb: 'FFB8CCE4' } }, right: { style: 'hair', color: { argb: 'FFB8CCE4' } } };
+      });
+
+      // Label the example row in column A
+      const exLabelCell = ws.getCell(`A${exRow.number}`);
+      exLabelCell.note = '⬅ This is an example row — replace or delete it before importing.';
+
+      // Rows 4–53 — 50 blank data rows with alternating subtle fill
+      for (let i = 0; i < 50; i++) {
+        const r = ws.addRow({});
+        r.height = 18;
+        const bgColor = i % 2 === 0 ? 'FFFFFFFF' : 'FFF7FBFF';
+        r.eachCell({ includeEmpty: true }, (cell: any, colNum: number) => {
+          if (colNum > cols.length) return;
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+          cell.font = { name: 'Calibri', size: 10 };
+          cell.alignment = { vertical: 'middle' };
+          cell.border = { right: { style: 'hair', color: { argb: 'FFD9E1F2' } }, bottom: { style: 'hair', color: { argb: 'FFD9E1F2' } } };
+        });
+      }
+
+      // ── Sheet 2: Column Reference ─────────────────────────────────────────
+      const ref = wb.addWorksheet('Column Reference', {
+        views: [{ state: 'frozen', ySplit: 2 }],
+      });
+      ref.columns = [
+        { header: '#',                    key: 'num',    width: 6  },
+        { header: 'Column Name',          key: 'col',    width: 22 },
+        { header: 'Import Header (exact)',key: 'hdr',    width: 22 },
+        { header: 'Required?',            key: 'req',    width: 12 },
+        { header: 'Accepted Values / Notes', key: 'notes', width: 58 },
+      ];
+
+      // Title banner on ref sheet
+      ref.insertRow(1, []);
+      const refTitle = ref.getCell('A1');
+      refTitle.value = '📋  Column Reference — BookBazaar Bulk Import';
+      refTitle.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+      refTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
+      refTitle.alignment = { horizontal: 'left', vertical: 'middle' };
+      ref.mergeCells(1, 1, 1, 5);
+      ref.getRow(1).height = 30;
+
+      // Style header row on ref sheet
+      const refHeaderRow = ref.getRow(2);
+      refHeaderRow.height = 22;
+      refHeaderRow.eachCell((cell: any) => {
+        cell.font  = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E6DA4' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = { bottom: { style: 'medium', color: { argb: 'FF1E3A5F' } } };
+      });
+
+      const refData = [
+        [1,  'Title',         'title',         'YES', 'Book title'],
+        [2,  'Author',        'author',         'NO',  'Defaults to "Unknown Author" if blank'],
+        [3,  'ISBN',          'isbn',           'NO',  '10 or 13 digit ISBN'],
+        [4,  'Price',         'price',          'YES', 'Selling price — number e.g. 12.99'],
+        [5,  'Cost Price',    'cost price',     'NO',  'Cost / purchase price'],
+        [6,  'Category',      'category',       'NO',  'Primary category name (must match exactly)'],
+        [7,  'Categories',    'categories',     'NO',  'Comma-separated list for multi-category e.g. Fiction, Classics'],
+        [8,  'Subcategory',   'subcategory',    'NO',  'Subcategory name (must match existing)'],
+        [9,  'Condition',     'condition',      'NO',  'New / Used - Good / Used - Acceptable / Used - Poor'],
+        [10, 'Binding',       'binding',        'NO',  'Paperback / Hardcover / Mass Market Paperback / No Binding'],
+        [11, 'Description',   'description',    'NO',  'Full book description'],
+        [12, 'Publisher',     'publisher',      'NO',  'Publisher name'],
+        [13, 'Published Year','published year', 'NO',  '4-digit year e.g. 2023'],
+        [14, 'Pages',         'pages',          'NO',  'Number of pages'],
+        [15, 'Language',      'language',       'NO',  'Defaults to English'],
+        [16, 'Edition',       'edition',        'NO',  'e.g. 1st, 2nd, Revised'],
+        [17, 'Weight',        'weight',         'NO',  'Weight in kg e.g. 0.35'],
+        [18, 'Dimensions',    'dimensions',     'NO',  'e.g. 20.3 x 13.5 x 1.8 cm'],
+        [19, 'Stock',         'stock',          'NO',  'Units in stock (number)'],
+        [20, 'Featured',      'featured',       'NO',  'yes / no'],
+        [21, 'Bestseller',    'bestseller',     'NO',  'yes / no'],
+        [22, 'Trending',      'trending',       'NO',  'yes / no'],
+        [23, 'New Arrival',   'new arrival',    'NO',  'yes / no'],
+        [24, 'Box Set',       'box set',        'NO',  'yes / no'],
+        [25, 'Hidden',        'hidden',         'NO',  'yes = hidden from storefront; no = visible'],
+        [26, 'Image URL',     'image url',      'NO',  'Full URL to primary product image'],
+        [27, 'Image URL 2',   'image url 2',    'NO',  'Full URL to second product image'],
+        [28, 'Image URL 3',   'image url 3',    'NO',  'Full URL to third product image'],
+      ];
+
+      refData.forEach(([num, label, hdr, req, notes], i) => {
+        const r = ref.addRow({ num, col: label, hdr, req, notes });
+        r.height = 18;
+        const bg = i % 2 === 0 ? 'FFFFFFFF' : 'FFF0F4FA';
+        r.eachCell((cell: any) => {
+          cell.font = { name: 'Calibri', size: 10 };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+          cell.alignment = { vertical: 'middle', wrapText: false };
+          cell.border = { bottom: { style: 'hair', color: { argb: 'FFD9E1F2' } } };
+        });
+        // Highlight Required column
+        const reqCell = r.getCell('req');
+        if (req === 'YES') {
+          reqCell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFCC0000' } };
+        } else {
+          reqCell.font = { name: 'Calibri', size: 10, color: { argb: 'FF4F7F4F' } };
+        }
+        // Style the exact header column in monospace-ish
+        r.getCell('hdr').font = { name: 'Courier New', size: 10, color: { argb: 'FF1F3864' } };
+      });
+
+      const buffer = await wb.xlsx.writeBuffer();
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="book_import_template.xlsx"');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Template download error:", error);
+      res.status(500).json({ message: "Failed to download template" });
     }
   });
 
@@ -4680,12 +5134,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // Save the uploaded file temporarily
-      const tempFilePath = path.join(__dirname, '../temp', `import-${Date.now()}.xlsx`);
-      const tempDir = path.dirname(tempFilePath);
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
+      // Save the uploaded file temporarily, preserving the original extension
+      const originalExt = path.extname(req.file.originalname).toLowerCase() || '.xlsx';
+      const tempFilePath = path.join(os.tmpdir(), `import-${Date.now()}${originalExt}`);
       fs.writeFileSync(tempFilePath, req.file.buffer);
 
       // Process the file using BookImporter
@@ -4896,28 +5347,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
 
       const format = req.query.format || 'xlsx';
-      const { books } = await storage.getBooks({ limit: 10000, offset: 0 });
+      const { books } = await storage.getBooks({ limit: 10000, offset: 0, includeHidden: true, includeOutOfStock: true });
 
-      // Prepare data for export
-      const exportData = books.map(book => ({
+      // Build subcategory id → name map
+      const allSubcategories = await storage.getSubCategories();
+      const subcategoryNameMap = new Map(allSubcategories.map(s => [s.id, s.name]));
+
+      // Prepare data for export — columns match the import template exactly
+      const exportData = books.map(book => {
+        const bookCats = (book as any).categories as { name: string }[] ?? [];
+        const primaryCatName = bookCats.length > 0 ? bookCats[0].name : '';
+        const allCatNames = bookCats.map((c: { name: string }) => c.name).join(', ');
+        const subcategoryName = book.subCategoryId ? (subcategoryNameMap.get(book.subCategoryId) ?? '') : '';
+        return ({
+        id: book.id,
         title: book.title,
         author: book.author,
         isbn: book.isbn || '',
-        categoryId: book.categoryId || '',
-        description: book.description || '',
+        price: book.price,
+        'cost price': book.costPrice || '',
+        category: primaryCatName,
+        categories: allCatNames,
+        subcategory: subcategoryName,
         condition: book.condition,
         binding: book.binding || 'No Binding',
-        price: book.price,
-        stock: book.stock,
-        imageUrl: book.imageUrl || '',
-        publishedYear: book.publishedYear || '',
+        description: book.description || '',
         publisher: book.publisher || '',
+        'published year': book.publishedYear || '',
         pages: book.pages || '',
         language: book.language || 'English',
+        edition: book.edition || '',
         weight: book.weight || '',
         dimensions: book.dimensions || '',
-        featured: book.featured
-      }));
+        stock: book.stock,
+        featured: book.featured ? 'yes' : 'no',
+        bestseller: book.bestseller ? 'yes' : 'no',
+        trending: book.trending ? 'yes' : 'no',
+        'new arrival': book.newArrival ? 'yes' : 'no',
+        'box set': book.boxSet ? 'yes' : 'no',
+        hidden: book.isHidden ? 'yes' : 'no',
+        'image url': book.imageUrl || '',
+        'image url 2': book.imageUrl2 || '',
+        'image url 3': book.imageUrl3 || '',
+      });
+      });
 
       if (format === 'csv') {
         const csv = stringify(exportData, { header: true });
@@ -4939,85 +5412,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Export error:", error);
       res.status(500).json({ message: "Failed to export books" });
-    }
-  });
-
-  app.get('/api/books/template', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = getUserId(req);
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      const user = await storage.getUser(userId);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const format = req.query.format || 'xlsx';
-
-      // Template data with example and empty rows
-      const templateData = [
-        {
-          title: 'Example Book Title',
-          author: 'Example Author',
-          isbn: '9781234567890',
-          categoryId: '1',
-          description: 'Example book description',
-          condition: 'New',
-          binding: 'Softcover',
-          price: '19.99',
-          stock: '10',
-          imageUrl: 'https://example.com/image.jpg',
-          publishedYear: '2023',
-          publisher: 'Example Publisher',
-          pages: '300',
-          language: 'English',
-          weight: '0.5kg',
-          dimensions: '15x23cm',
-          featured: 'false'
-        },
-        // Empty row for user to fill
-        {
-          title: '',
-          author: '',
-          isbn: '',
-          categoryId: '',
-          description: '',
-          condition: 'New',
-          binding: 'No Binding',
-          price: '',
-          stock: '',
-          imageUrl: '',
-          publishedYear: '',
-          publisher: '',
-          pages: '',
-          language: 'English',
-          weight: '',
-          dimensions: '',
-          featured: 'false'
-        }
-      ];
-
-      if (format === 'csv') {
-        const csv = stringify(templateData, { header: true });
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename="import_template.csv"');
-        res.send(csv);
-      } else {
-        // Excel format
-        const worksheet = XLSX.utils.json_to_sheet(templateData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Import Template');
-
-        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename="import_template.xlsx"');
-        res.send(buffer);
-      }
-    } catch (error) {
-      console.error("Template download error:", error);
-      res.status(500).json({ message: "Failed to download template" });
     }
   });
 

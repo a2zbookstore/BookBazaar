@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Tag, Hash, AlignLeft, ArrowUpDown, Loader2, FolderOpen, X } from "lucide-react";
+import { Plus, Edit, Trash2, Tag, Hash, AlignLeft, ArrowUpDown, Loader2, FolderOpen, X, ChevronDown, ChevronRight, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Category } from "@/types";
+import { Category, SubCategory } from "@/types";
 
 interface CategoryForm {
     name: string;
@@ -22,6 +23,22 @@ const initialCategoryForm: CategoryForm = {
     name: "",
     slug: "",
     description: "",
+    sort_order: "",
+};
+
+interface SubCategoryForm {
+    name: string;
+    slug: string;
+    description: string;
+    categoryId: number | "";
+    sort_order?: number | "";
+}
+
+const initialSubCategoryForm: SubCategoryForm = {
+    name: "",
+    slug: "",
+    description: "",
+    categoryId: "",
     sort_order: "",
 };
 
@@ -95,6 +112,80 @@ const CategoryFormFields = ({
     </div>
 );
 
+/* ── subcategory form fields ── */
+const SubCategoryFormFields = ({
+    values, onChange, categories,
+}: {
+    values: SubCategoryForm;
+    onChange: (field: keyof SubCategoryForm, value: string) => void;
+    categories: Category[];
+}) => (
+    <div className="space-y-4">
+        <Field label="Parent Category" icon={<Tag className="h-3.5 w-3.5" />}>
+            <Select
+                value={values.categoryId ? String(values.categoryId) : ""}
+                onValueChange={(v) => onChange("categoryId", v)}
+                required
+            >
+                <SelectTrigger className="rounded-xl border-slate-200 h-10">
+                    <SelectValue placeholder="Select a category…" />
+                </SelectTrigger>
+                <SelectContent>
+                    {categories.map(c => (
+                        <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </Field>
+        {/* <Field label="Subcategory Name" icon={<Layers className="h-3.5 w-3.5" />}>
+            <div className="relative">
+                <Layers className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                    className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10"
+                    value={values.name}
+                    onChange={(e) => onChange("name", e.target.value)}
+                    required
+                    placeholder="e.g., Space Opera"
+                />
+
+            </div>
+        </Field> */}
+        <Field label="URL Slug" icon={<Hash className="h-3.5 w-3.5" />} hint="Auto-generated from name.">
+            <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                    className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10 font-mono text-sm"
+                    value={values.slug}
+                    onChange={(e) => onChange("slug", e.target.value)}
+                    placeholder="space-opera"
+                />
+            </div>
+        </Field>
+        <Field label="Description" icon={<AlignLeft className="h-3.5 w-3.5" />}>
+            <Textarea
+                className="rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 resize-none"
+                value={values.description}
+                onChange={(e) => onChange("description", e.target.value)}
+                rows={2}
+                placeholder="Optional description"
+            />
+        </Field>
+        <Field label="Sort Order" icon={<ArrowUpDown className="h-3.5 w-3.5" />} hint="Lower number = displayed first.">
+            <div className="relative">
+                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                    type="number"
+                    min={0}
+                    className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10"
+                    value={values.sort_order ?? ""}
+                    onChange={(e) => onChange("sort_order", e.target.value)}
+                    placeholder="e.g., 1"
+                />
+            </div>
+        </Field>
+    </div>
+);
+
 export default function CategoriesManagement() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -106,9 +197,28 @@ export default function CategoriesManagement() {
     const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
     const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null);
 
+    // Subcategory state
+    const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<number>>(new Set());
+    const [isSubCategoryDialogOpen, setIsSubCategoryDialogOpen] = useState(false);
+    const [subCategoryForm, setSubCategoryForm] = useState<SubCategoryForm>(initialSubCategoryForm);
+    const [editSubCategoryDialogOpen, setEditSubCategoryDialogOpen] = useState(false);
+    const [subCategoryToEdit, setSubCategoryToEdit] = useState<SubCategory | null>(null);
+    const [deleteSubLoadingId, setDeleteSubLoadingId] = useState<number | null>(null);
+
     const { data: categories = [], isFetching } = useQuery<Category[]>({
         queryKey: ["/api/categories"],
     });
+
+    const { data: allSubCategories = [] } = useQuery<SubCategory[]>({
+        queryKey: ["/api/subcategories"],
+    });
+
+    // Auto-expand all categories when they first load
+    useEffect(() => {
+        if (categories.length > 0) {
+            setExpandedCategoryIds(new Set(categories.map(c => c.id)));
+        }
+    }, [categories.length]);
 
     const createCategoryMutation = useMutation({
         mutationFn: async (data: CategoryForm) => {
@@ -154,6 +264,101 @@ export default function CategoriesManagement() {
             setDeleteLoadingId(null);
         },
     });
+
+    // ── Subcategory mutations ──
+    const createSubCategoryMutation = useMutation({
+        mutationFn: async (data: SubCategoryForm) => {
+            await apiRequest("POST", "/api/createSubCategory", {
+                ...data,
+                categoryId: Number(data.categoryId),
+                sort_order: (data.sort_order == null || String(data.sort_order) === "") ? undefined : Number(data.sort_order),
+            });
+        },
+        onSuccess: () => {
+            toast({ title: "Subcategory created", description: "The subcategory has been created successfully." });
+            setIsSubCategoryDialogOpen(false);
+            setSubCategoryForm(initialSubCategoryForm);
+            queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
+        },
+        onError: (error) => {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to create subcategory", variant: "destructive" });
+        },
+    });
+
+    const updateSubCategoryMutation = useMutation({
+        mutationFn: async (data: SubCategory & SubCategoryForm) => {
+            await apiRequest("POST", "/api/updateSubCategory", {
+                ...data,
+                categoryId: Number(data.categoryId),
+                sort_order: (data.sort_order == null || String(data.sort_order) === "") ? undefined : Number(data.sort_order),
+            });
+        },
+        onSuccess: () => {
+            toast({ title: "Subcategory updated", description: "The subcategory has been updated successfully." });
+            setEditSubCategoryDialogOpen(false);
+            setSubCategoryToEdit(null);
+            queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
+        },
+        onError: (error) => {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to update subcategory", variant: "destructive" });
+        },
+    });
+
+    const deleteSubCategoryMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await apiRequest("POST", "/api/deleteSubCategory", { id });
+        },
+        onSuccess: () => {
+            toast({ title: "Subcategory deleted", description: "The subcategory has been deleted successfully." });
+            setDeleteSubLoadingId(null);
+            queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
+        },
+        onError: (error) => {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to delete subcategory", variant: "destructive" });
+            setDeleteSubLoadingId(null);
+        },
+    });
+
+    const toSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    // Subcategory handlers
+    const toggleCategoryExpand = (id: number) => {
+        setExpandedCategoryIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+
+    const handleAddSubCategory = (categoryId: number) => {
+        setSubCategoryForm({ ...initialSubCategoryForm, categoryId });
+        setIsSubCategoryDialogOpen(true);
+    };
+
+    const handleSubCategorySubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const slug = subCategoryForm.slug || toSlug(subCategoryForm.name);
+        createSubCategoryMutation.mutate({ ...subCategoryForm, slug });
+    };
+
+    const handleEditSubCategory = (sub: SubCategory) => {
+        setSubCategoryToEdit({ ...sub });
+        setEditSubCategoryDialogOpen(true);
+    };
+
+    const handleEditSubCategorySubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!subCategoryToEdit) return;
+        const slug = subCategoryToEdit.slug || toSlug(subCategoryToEdit.name);
+        updateSubCategoryMutation.mutate({ ...subCategoryToEdit, slug } as any);
+    };
+
+    const handleDeleteSubCategory = (id: number) => {
+        if (window.confirm("Are you sure you want to delete this subcategory?")) {
+            setDeleteSubLoadingId(id);
+            deleteSubCategoryMutation.mutate(id);
+        }
+    };
 
     const handleNameChange = (name: string) => {
         setCategoryForm(prev => ({
@@ -225,50 +430,135 @@ export default function CategoriesManagement() {
                         </div>
                     ) : categories.length > 0 ? (
                         <div className="divide-y divide-gray-50">
-                            {categories.map((category, idx) => (
-                                <div
-                                    key={category.id}
-                                    className="flex items-center gap-4 px-5 py-4 hover:bg-indigo-50/30 transition-colors group"
-                                >
-                                    {/* Order badge */}
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 text-xs font-bold">
-                                        {category.sort_order ?? idx + 1}
-                                    </div>
+                            {categories.map((category, idx) => {
+                                const catSubs = allSubCategories.filter(s => s.categoryId === category.id);
+                                const isExpanded = expandedCategoryIds.has(category.id);
+                                return (
+                                <div key={category.id} className="border-b border-gray-50 last:border-0">
+                                    <div
+                                        className="flex items-center gap-4 px-5 py-4 hover:bg-indigo-50/30 transition-colors group cursor-pointer"
+                                        onClick={() => toggleCategoryExpand(category.id)}
+                                    >
+                                        {/* Expand icon */}
+                                        <div className="flex h-6 w-6 shrink-0 items-center justify-center text-gray-400">
+                                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                        </div>
 
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-gray-900 text-sm truncate">{category.name}</p>
-                                        <p className="text-xs text-gray-400 font-mono mt-0.5 truncate">/{category.slug}</p>
-                                        {category.description && (
-                                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">{category.description}</p>
+                                        {/* Order badge */}
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 text-xs font-bold">
+                                            {category.sort_order ?? idx + 1}
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-gray-900 text-sm truncate">{category.name}</p>
+                                            <p className="text-xs text-gray-400 font-mono mt-0.5 truncate">/{category.slug}</p>
+                                            {category.description && (
+                                                <p className="text-xs text-gray-500 mt-1 line-clamp-1">{category.description}</p>
+                                            )}
+                                        </div>
+
+                                        {/* Subcategory count badge */}
+                                        {catSubs.length > 0 && (
+                                            <span className="text-xs bg-violet-100 text-violet-700 rounded-full px-2 py-0.5 font-medium shrink-0">
+                                                {catSubs.length} sub
+                                            </span>
                                         )}
+
+                                        {/* Actions */}
+                                        <div
+                                            className="flex items-center gap-1.5 shrink-0"
+                                            onClick={e => e.stopPropagation()}
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleAddSubCategory(category.id)}
+                                                className="h-7 px-2 text-xs rounded-lg border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-400 gap-1"
+                                            >
+                                                <Plus className="h-3 w-3" /> Sub
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleEditClick(category)}
+                                                disabled={isFetching}
+                                                className="h-8 w-8 p-0 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors opacity-60 group-hover:opacity-100"
+                                            >
+                                                <Edit className="h-3.5 w-3.5" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleDeleteClick(category.id)}
+                                                disabled={deleteLoadingId === category.id || isFetching}
+                                                className="h-8 w-8 p-0 rounded-lg hover:bg-red-100 hover:text-red-700 transition-colors opacity-60 group-hover:opacity-100"
+                                            >
+                                                {deleteLoadingId === category.id
+                                                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    : <Trash2 className="h-3.5 w-3.5" />}
+                                            </Button>
+                                        </div>
                                     </div>
 
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-1.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleEditClick(category)}
-                                            disabled={isFetching}
-                                            className="h-8 w-8 p-0 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                                        >
-                                            <Edit className="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDeleteClick(category.id)}
-                                            disabled={deleteLoadingId === category.id || isFetching}
-                                            className="h-8 w-8 p-0 rounded-lg hover:bg-red-100 hover:text-red-700 transition-colors"
-                                        >
-                                            {deleteLoadingId === category.id
-                                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                                : <Trash2 className="h-3.5 w-3.5" />}
-                                        </Button>
-                                    </div>
+                                    {/* Subcategory panel */}
+                                    {isExpanded && (
+                                        <div className="bg-slate-50/60 border-t border-gray-100 px-5 pb-4 pt-3">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                                                    <Layers className="h-3 w-3" /> Subcategories
+                                                </p>
+                                                {/* <Button
+                                                    size="sm"
+                                                    onClick={() => handleAddSubCategory(category.id)}
+                                                    className="h-7 px-3 text-xs bg-violet-600 hover:bg-violet-700 text-white rounded-lg gap-1"
+                                                >
+                                                    <Plus className="h-3 w-3" /> Add Subcategory
+                                                </Button> */}
+                                            </div>
+                                            {catSubs.length === 0 ? (
+                                                <p className="text-xs text-gray-400 italic py-2">No subcategories yet. Click "Add Subcategory" to create one.</p>
+                                            ) : (
+                                                <div className="space-y-1">
+                                                    {catSubs.map(sub => (
+                                                        <div key={sub.id} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-gray-100 group/sub hover:border-violet-200 transition-colors">
+                                                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700 text-xs font-bold">
+                                                                {sub.sort_order ?? "–"}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium text-gray-800 truncate">{sub.name}</p>
+                                                                <p className="text-xs text-gray-400 font-mono truncate">/{sub.slug}</p>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 opacity-50 group-hover/sub:opacity-100 transition-opacity">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handleEditSubCategory(sub)}
+                                                                    className="h-6 w-6 p-0 rounded-md hover:bg-blue-100 hover:text-blue-700"
+                                                                >
+                                                                    <Edit className="h-3 w-3" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handleDeleteSubCategory(sub.id)}
+                                                                    disabled={deleteSubLoadingId === sub.id}
+                                                                    className="h-6 w-6 p-0 rounded-md hover:bg-red-100 hover:text-red-700"
+                                                                >
+                                                                    {deleteSubLoadingId === sub.id
+                                                                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                                                                        : <Trash2 className="h-3 w-3" />}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
@@ -366,6 +656,106 @@ export default function CategoriesManagement() {
                                     className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl h-10 shadow-md"
                                 >
                                     {updateCategoryMutation.isPending
+                                        ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Saving…</span>
+                                        : <span className="flex items-center gap-2"><Edit className="h-4 w-4" /> Save Changes</span>}
+                                </Button>
+                            </div>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Create Subcategory Dialog ── */}
+            <Dialog open={isSubCategoryDialogOpen} onOpenChange={setIsSubCategoryDialogOpen}>
+                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl overflow-hidden border-0 shadow-2xl">
+                    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-violet-950 px-6 pt-6 pb-5 text-white">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-3 text-white">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
+                                    <Layers className="h-5 w-5 text-violet-300" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-base">New Subcategory</p>
+                                    <p className="text-xs text-slate-400 font-normal">Add a subcategory to a category</p>
+                                </div>
+                            </DialogTitle>
+                        </DialogHeader>
+                    </div>
+                    <form onSubmit={handleSubCategorySubmit} className="px-6 py-5 space-y-4 bg-white">
+                        <SubCategoryFormFields
+                            values={subCategoryForm}
+                            categories={categories}
+                            onChange={(field, value) => {
+                                if (field === "name") {
+                                    setSubCategoryForm(prev => ({
+                                        ...prev,
+                                        name: value,
+                                        slug: prev.slug === toSlug(prev.name) ? toSlug(value) : prev.slug,
+                                    }));
+                                } else {
+                                    setSubCategoryForm(prev => ({ ...prev, [field]: value }));
+                                }
+                            }}
+                        />
+                        <div className="flex gap-3 pt-1">
+                            <Button type="button" variant="outline" onClick={() => setIsSubCategoryDialogOpen(false)} className="flex-none rounded-xl border-slate-200 text-slate-600 h-10 px-4">
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={createSubCategoryMutation.isPending}
+                                className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl h-10 shadow-md"
+                            >
+                                {createSubCategoryMutation.isPending
+                                    ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Creating…</span>
+                                    : <span className="flex items-center gap-2"><Plus className="h-4 w-4" /> Create Subcategory</span>}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Edit Subcategory Dialog ── */}
+            <Dialog open={editSubCategoryDialogOpen} onOpenChange={setEditSubCategoryDialogOpen}>
+                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl overflow-hidden border-0 shadow-2xl">
+                    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-violet-950 px-6 pt-6 pb-5 text-white">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-3 text-white">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
+                                    <Edit className="h-5 w-5 text-violet-300" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-base">Edit Subcategory</p>
+                                    <p className="text-xs text-slate-400 font-normal truncate max-w-[200px]">{subCategoryToEdit?.name}</p>
+                                </div>
+                            </DialogTitle>
+                        </DialogHeader>
+                    </div>
+                    {subCategoryToEdit && (
+                        <form onSubmit={handleEditSubCategorySubmit} className="px-6 py-5 space-y-4 bg-white">
+                            <SubCategoryFormFields
+                                values={{
+                                    name: subCategoryToEdit.name,
+                                    slug: subCategoryToEdit.slug,
+                                    description: subCategoryToEdit.description ?? "",
+                                    categoryId: subCategoryToEdit.categoryId,
+                                    sort_order: subCategoryToEdit.sort_order ?? "",
+                                }}
+                                categories={categories}
+                                onChange={(field, value) =>
+                                    setSubCategoryToEdit(prev => prev ? { ...prev, [field]: field === "categoryId" || field === "sort_order" ? (value === "" ? (field === "categoryId" ? prev.categoryId : undefined) : Number(value)) : value } as SubCategory : prev)
+                                }
+                            />
+                            <div className="flex gap-3 pt-1">
+                                <Button type="button" variant="outline" onClick={() => setEditSubCategoryDialogOpen(false)} className="flex-none rounded-xl border-slate-200 text-slate-600 h-10 px-4">
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={updateSubCategoryMutation.isPending}
+                                    className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl h-10 shadow-md"
+                                >
+                                    {updateSubCategoryMutation.isPending
                                         ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Saving…</span>
                                         : <span className="flex items-center gap-2"><Edit className="h-4 w-4" /> Save Changes</span>}
                                 </Button>

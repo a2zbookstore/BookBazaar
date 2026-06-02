@@ -68,6 +68,17 @@ export const categories = pgTable("categories", {
   sort_order: integer("sort_order")
 });
 
+// Subcategories table (children of a category)
+export const subcategories = pgTable("subcategories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  sort_order: integer("sort_order"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Books table
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
@@ -75,6 +86,7 @@ export const books = pgTable("books", {
   author: varchar("author", { length: 300 }).notNull(),
   isbn: varchar("isbn", { length: 20 }),
   categoryId: integer("category_id").references(() => categories.id),
+  subCategoryId: integer("sub_category_id").references(() => subcategories.id, { onDelete: "set null" }),
   description: text("description"),
   condition: varchar("condition", { length: 50 }).notNull(), // New, Like New, Very Good, Good, Fair
   binding: varchar("binding", { length: 50 }).default("No Binding"), // Softcover, Hardcover, No Binding
@@ -309,12 +321,22 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const categoriesRelations = relations(categories, ({ many }) => ({
   books: many(books),
   bookCategories: many(bookCategories),
+  subcategories: many(subcategories),
+}));
+
+export const subcategoriesRelations = relations(subcategories, ({ one, many }) => ({
+  category: one(categories, { fields: [subcategories.categoryId], references: [categories.id] }),
+  books: many(books),
 }));
 
 export const booksRelations = relations(books, ({ one, many }) => ({
   category: one(categories, {
     fields: [books.categoryId],
     references: [categories.id],
+  }),
+  subCategory: one(subcategories, {
+    fields: [books.subCategoryId],
+    references: [subcategories.id],
   }),
   bookCategories: many(bookCategories),
   orderItems: many(orderItems),
@@ -416,6 +438,13 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type SubCategory = typeof subcategories.$inferSelect;
+export const insertSubCategorySchema = createInsertSchema(subcategories).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertSubCategory = z.infer<typeof insertSubCategorySchema>;
 
 export type Book = typeof books.$inferSelect;
 export const insertBookSchema = createInsertSchema(books).omit({

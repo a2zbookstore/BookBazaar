@@ -61,6 +61,9 @@ import {
   InsertBanner,
   banners,
   giftCart,
+  subcategories,
+  type SubCategory,
+  type InsertSubCategory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql, count, gte, lt, inArray } from "drizzle-orm";
@@ -80,6 +83,12 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(id: number, adminId?: number, ipAddress?: string): Promise<void>;
+
+  // Subcategory operations
+  getSubCategories(categoryId?: number): Promise<SubCategory[]>;
+  createSubCategory(subCategory: InsertSubCategory): Promise<SubCategory>;
+  updateSubCategory(id: number, subCategory: Partial<InsertSubCategory>): Promise<SubCategory>;
+  deleteSubCategory(id: number): Promise<void>;
 
   // Book operations
   getBooks(options?: {
@@ -429,6 +438,28 @@ export class DatabaseStorage implements IStorage {
       ipAddress,
       notes: `Deleted category: ${categoryData.name}`,
     });
+  }
+
+  // Subcategory operations
+  async getSubCategories(categoryId?: number): Promise<SubCategory[]> {
+    if (categoryId !== undefined) {
+      return await db.select().from(subcategories).where(eq(subcategories.categoryId, categoryId)).orderBy(asc(subcategories.sort_order), asc(subcategories.name));
+    }
+    return await db.select().from(subcategories).orderBy(asc(subcategories.categoryId), asc(subcategories.sort_order), asc(subcategories.name));
+  }
+
+  async createSubCategory(subCategory: InsertSubCategory): Promise<SubCategory> {
+    const [newSubCategory] = await db.insert(subcategories).values(subCategory).returning();
+    return newSubCategory;
+  }
+
+  async updateSubCategory(id: number, subCategory: Partial<InsertSubCategory>): Promise<SubCategory> {
+    const [updated] = await db.update(subcategories).set(subCategory).where(eq(subcategories.id, id)).returning();
+    return updated;
+  }
+
+  async deleteSubCategory(id: number): Promise<void> {
+    await db.delete(subcategories).where(eq(subcategories.id, id));
   }
 
   // Book operations
