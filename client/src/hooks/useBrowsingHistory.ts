@@ -35,28 +35,36 @@ export function useBrowsingHistory() {
   const [history, setHistory] = useState<BrowsingHistory>(getStoredHistory);
 
   const trackBookView = useCallback((bookId: number, categoryId?: number) => {
-    setHistory((prev) => {
-      const filtered = prev.entries.filter((e) => e.bookId !== bookId);
-      const updated: BrowsingHistory = {
-        ...prev,
-        entries: [{ bookId, categoryId, timestamp: Date.now() }, ...filtered].slice(0, MAX_HISTORY),
-      };
-      saveHistory(updated);
-      return updated;
-    });
+    const current = getStoredHistory();
+    const filtered = current.entries.filter((e) => e.bookId !== bookId);
+    const updated: BrowsingHistory = {
+      ...current,
+      entries: [{ bookId, categoryId, timestamp: Date.now() }, ...filtered].slice(0, MAX_HISTORY),
+    };
+    saveHistory(updated);
+    setHistory(updated);
   }, []);
 
   const trackSearch = useCallback((query: string) => {
     if (!query.trim()) return;
-    setHistory((prev) => {
-      const filtered = prev.searches.filter((s) => s.toLowerCase() !== query.toLowerCase());
-      const updated: BrowsingHistory = {
-        ...prev,
-        searches: [query, ...filtered].slice(0, 20),
-      };
-      saveHistory(updated);
-      return updated;
-    });
+    const current = getStoredHistory();
+    const filtered = current.searches.filter((s) => s.toLowerCase() !== query.toLowerCase());
+    const updated: BrowsingHistory = {
+      ...current,
+      searches: [query, ...filtered].slice(0, 20),
+    };
+    saveHistory(updated);
+    setHistory(updated);
+  }, []);
+
+  const removeSearch = useCallback((query: string) => {
+    const current = getStoredHistory();
+    const updated: BrowsingHistory = {
+      ...current,
+      searches: current.searches.filter((s) => s.toLowerCase() !== query.toLowerCase()),
+    };
+    saveHistory(updated);
+    setHistory(updated);
   }, []);
 
   // Get most browsed category IDs (ranked by frequency)
@@ -99,6 +107,7 @@ export function useBrowsingHistory() {
   return {
     trackBookView,
     trackSearch,
+    removeSearch,
     recentlyViewed,
     suggestedBooks,
     topCategoryIds,

@@ -24,6 +24,11 @@ export default function GiftItemsPage() {
   const [engraveEnabled, setEngraveEnabled] = useState(true);
   const [engravingMessage, setEngravingMessage] = useState("");
 
+  // Fetch gift feature status
+  const { data: giftFeatureData } = useQuery<{ enabled: boolean }>({
+    queryKey: ["/api/gift-feature-status"],
+  });
+
   const { data: giftCategories = [], isLoading: isCategoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
   });
@@ -115,6 +120,35 @@ export default function GiftItemsPage() {
 
   // Check if user has books in cart (excluding gifts)
   const hasBookInCart = cartCount > 0;
+
+  // If gift feature is disabled, show a friendly message
+  if (giftFeatureData !== undefined && !giftFeatureData.enabled) {
+    return (
+      <>
+        <SEO
+          title="Free Gifts | A2Z BOOKSHOP"
+          description="Gift options are currently unavailable."
+          url="https://a2zbookshop.com/gift-items"
+          type="website"
+        />
+        <div className="container-custom py-16 text-center">
+          <Breadcrumb items={[{ label: "Free Gifts" }]} />
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+              <Gift className="w-10 h-10 text-gray-300" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-700">Gift Options Unavailable</h1>
+            <p className="text-gray-500 max-w-md">
+              Our gift feature is currently not available. Please check back later!
+            </p>
+            <Link href="/catalog">
+              <Button className="mt-2">Browse Books</Button>
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

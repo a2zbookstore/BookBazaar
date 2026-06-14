@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart, Heart, Menu } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,17 @@ import Logo from "@/components/Logo";
 import CountrySelector from "@/components/CountrySelector";
 import { SiWhatsapp } from "react-icons/si";
 import ProfileMenu from "./ui/profileMenu";
+import CategoryMegaMenu from "@/components/CategoryMegaMenu";
+import MobileCategoryDrawer from "@/components/MobileCategoryDrawer";
 
 export default function Header() {
     const [location, setLocation] = useLocation();
     const { user, isAuthenticated, isLoading } = useAuth();
     const { cartCount, isCartAnimating, wishlistCount } = useGlobalContext();
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+    const [isMobileCategoryOpen, setIsMobileCategoryOpen] = useState(false);
+    const categoryMenuRef = useRef<HTMLDivElement>(null);
 
 
     useEffect(() => {
@@ -37,7 +42,23 @@ export default function Header() {
 
     }, []);
 
-
+    useEffect(() => {
+        if (!isCategoryMenuOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setIsCategoryMenuOpen(false);
+        };
+        const onMouseDown = (e: MouseEvent) => {
+            if (categoryMenuRef.current && !categoryMenuRef.current.contains(e.target as Node)) {
+                setIsCategoryMenuOpen(false);
+            }
+        };
+        document.addEventListener("keydown", onKeyDown);
+        document.addEventListener("mousedown", onMouseDown);
+        return () => {
+            document.removeEventListener("keydown", onKeyDown);
+            document.removeEventListener("mousedown", onMouseDown);
+        };
+    }, [isCategoryMenuOpen]);
 
     const isActive = (path: string) => {
         if (path === "/" && location === "/") return true;
@@ -47,7 +68,7 @@ export default function Header() {
 
     return (
         <header className={`fixed-header bg-white border-b border-gray-200 w-full transition-all duration-300 z-30 ${isScrolled ? 'header-shadow bg-white/95 backdrop-blur-sm' : ''}`}>
-            <div className="container-custom px-3 md:px-6 ">
+            <div className="container-custom px-3 md:px-6  ">
                 {/* Top Row - Logo, Search, Right Actions */}
                 <div className={`flex items-center justify-between w-full transition-all duration-300 h-16 md:h-22 `}>
                     {/* Logo */}
@@ -59,15 +80,38 @@ export default function Header() {
                             <Logo size="2xl" variant="default" showText={true} />
                         </div>
                     </Link>
-                    {/* Search Bar */}
-                    <div className="hidden md:flex flex-1 max-w-6xl mx-8">
-                        <SearchInput
-                            placeholder="Search Books, Authors, Publisher, Category, ISBN..."
-                            className="w-full h-8"
-                            enableTypingAnimation={true}
-                            staticKeyword="Search "
-                        />
+                    {/* Categories + Search — grouped together */}
+                    <div className="hidden md:flex justify-center gap-2 items-center flex-1 max-w-xl mx-4 relative z-20">
+                        <div className="relative flex-shrink-0 mt-1" ref={categoryMenuRef}>
+                        <button
+                            type="button"
+                            onClick={() => setIsCategoryMenuOpen((open) => !open)}
+                            aria-haspopup="true"
+                            aria-expanded={isCategoryMenuOpen}
+                            title="Categories"
+                            className="flex items-center p-2 rounded-full  text-white bg-primary-aqua hover:bg-secondary-aqua transition-colors h-8"
+                        >
+                            <Menu className="h-5 w-5" />
+                        </button>
+
+                        {isCategoryMenuOpen && (
+                                <div className="absolute left-0 top-full mt-2 w-[90vw] max-w-5xl bg-white rounded-2xl shadow-2xl ring-1 ring-black/[0.06] z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="p-5 sm:p-6 lg:p-8">
+                                        <CategoryMegaMenu onNavigate={() => setIsCategoryMenuOpen(false)} />
+                                    </div>
+                                </div>
+                        )}
+                        </div>
+                        <div className="flex-1">
+                            <SearchInput
+                                placeholder="Search Books, Authors, Publisher, Category, ISBN..."
+                                className="w-full h-8 rounded-l-none"
+                                enableTypingAnimation={true}
+                                staticKeyword="Search "
+                            />
+                        </div>
                     </div>
+
 
                     <div className="flex items-center gap-2">
                         <a
@@ -140,15 +184,28 @@ export default function Header() {
                         )}
                     </div>
                 </div>
-                {/* Mobile Search Bar */}
-                <div className="md:hidden my-4 flex items-center w-full justify-between "> 
-                    <CountrySelector className="lg:hidden" compact={true} />
-                    <SearchInput
-                        placeholder="Search books, authors, ISBN..."
-                        className="flex-1 h-10"
-                    />
 
+
+                {/* Mobile Search Bar */}
+                <div className="md:hidden pb-3 flex items-center w-full gap-2">
+                    <CountrySelector className="flex-shrink-0" compact={true} />
+                    <div className="flex-1 min-w-0">
+                        <SearchInput
+                            placeholder="Search books, authors, ISBN..."
+                            className="w-full"
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsMobileCategoryOpen(true)}
+                        title="Browse Categories"
+                        className="flex-shrink-0 flex items-center p-2 rounded-full bg-primary-aqua text-white hover:bg-secondary-aqua transition-colors"
+                    >
+                        <Menu className="h-5 w-5" />
+                    </button>
                 </div>
+
+                <MobileCategoryDrawer open={isMobileCategoryOpen} onClose={() => setIsMobileCategoryOpen(false)} />
 
             </div>
         </header>

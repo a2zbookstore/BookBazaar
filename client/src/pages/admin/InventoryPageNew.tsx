@@ -5,7 +5,7 @@ import {
   FileText, CloudUpload, ChevronDown, X, BookOpen, Filter,
   SlidersHorizontal, RefreshCw, Image as ImageIcon, Star, Zap,
   TrendingUp, Tag, ChevronLeft, ChevronRight, Eye, EyeOff,
-  ArrowUpDown, ArrowUp, ArrowDown,
+  ArrowUpDown, ArrowUp, ArrowDown, CheckCircle2, AlertCircle, Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Book, Category, SubCategory } from "@/types";
 import BannerUploadPage from "./BannerUploadPage";
-import CategoriesManagement from "@/components/admin/CategoriesManagement";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const getImageSrc = (imageUrl: string | null | undefined): string => {
@@ -83,7 +82,6 @@ export default function InventoryPageNew() {
   const [isImageUploading3, setIsImageUploading3] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [importResults, setImportResults] = useState<any>(null);
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const [deletingBookId, setDeletingBookId] = useState<number | null>(null);
@@ -95,8 +93,44 @@ export default function InventoryPageNew() {
   const [stockFilter, setStockFilter] = useState<string>("");
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
+  const [selectedTag, setSelectedTag] = useState<string>("");
 
   const [bookForm, setBookForm] = useState<BookForm>(EMPTY_FORM);
+  type IsbnStatus = 'idle' | 'checking' | 'valid' | 'invalid' | 'duplicate';
+  const [isbnStatus, setIsbnStatus] = useState<IsbnStatus>('idle');
+
+  // Validate ISBN-10 or ISBN-13 format
+  function isValidIsbnFormat(isbn: string): boolean {
+    const clean = isbn.replace(/[\s\-]/g, '');
+    if (clean.length === 10) return /^\d{9}[\dXx]$/.test(clean);
+    if (clean.length === 13) return /^\d{13}$/.test(clean);
+    return false;
+  }
+
+  // Reset ISBN status when dialog closes
+  useEffect(() => {
+    if (!isDialogOpen) setIsbnStatus('idle');
+  }, [isDialogOpen]);
+
+  // Debounced ISBN uniqueness check
+  useEffect(() => {
+    const isbn = bookForm.isbn.trim();
+    if (!isbn) { setIsbnStatus('idle'); return; }
+    if (!isValidIsbnFormat(isbn)) { setIsbnStatus('invalid'); return; }
+    setIsbnStatus('checking');
+    const timer = setTimeout(async () => {
+      try {
+        const excludeParam = editingBook ? `&excludeId=${editingBook.id}` : '';
+        const res = await fetch(`/api/books/check-isbn?isbn=${encodeURIComponent(isbn)}${excludeParam}`, { credentials: 'include' });
+        if (!res.ok) { setIsbnStatus('idle'); return; }
+        const data = await res.json();
+        setIsbnStatus(data.exists ? 'duplicate' : 'valid');
+      } catch {
+        setIsbnStatus('idle');
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [bookForm.isbn, editingBook]);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -121,9 +155,10 @@ export default function InventoryPageNew() {
   queryParams.set("sortOrder", sortOrder);
   queryParams.set("includeOutOfStock", stockFilter === "outOfStock" ? "true" : stockFilter === "inStock" ? "false" : "true");
   queryParams.set("includeHidden", "true");
+  if (selectedTag) queryParams.set(selectedTag, "true");
 
   const { data: booksResponse, isLoading, error } = useQuery<BooksResponse>({
-    queryKey: ["/api/books", { search, categoryId: selectedCategory, condition: selectedCondition, binding: selectedBinding, minPrice, maxPrice, sortBy, sortOrder, stockFilter, limit: itemsPerPage, offset: (currentPage - 1) * itemsPerPage }],
+    queryKey: ["/api/books", { search, categoryId: selectedCategory, condition: selectedCondition, binding: selectedBinding, minPrice, maxPrice, sortBy, sortOrder, stockFilter, selectedTag, limit: itemsPerPage, offset: (currentPage - 1) * itemsPerPage }],
     queryFn: async () => {
       const res = await fetch(`/api/books?${queryParams.toString()}`, { credentials: "include" });
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
@@ -158,8 +193,10 @@ export default function InventoryPageNew() {
         price: data.price?.trim() ? parseFloat(data.price).toString() : "0",
         costPrice: data.costPrice?.trim() ? parseFloat(data.costPrice).toString() : null,
         stock: data.stock || 0, imageUrl: data.imageUrl || "",
+        imageUrl2: data.imageUrl2 || "", imageUrl3: data.imageUrl3 || "",
         publishedYear: data.publishedYear || null, publisher: data.publisher || "",
         pages: data.pages || null, language: data.language || "English",
+        edition: data.edition || "",
         weight: data.weight?.trim() ? parseFloat(data.weight).toString() : null,
         dimensions: data.dimensions || "",
         featured: data.featured, bestseller: data.bestseller, trending: data.trending,
@@ -186,8 +223,10 @@ export default function InventoryPageNew() {
         price: data.price?.trim() ? parseFloat(data.price).toString() : "0",
         costPrice: data.costPrice?.trim() ? parseFloat(data.costPrice).toString() : null,
         stock: data.stock || 0, imageUrl: data.imageUrl || "",
+        imageUrl2: data.imageUrl2 || "", imageUrl3: data.imageUrl3 || "",
         publishedYear: data.publishedYear || null, publisher: data.publisher || "",
         pages: data.pages || null, language: data.language || "English",
+        edition: data.edition || "",
         weight: data.weight?.trim() ? parseFloat(data.weight).toString() : null,
         dimensions: data.dimensions || "",
         featured: data.featured, bestseller: data.bestseller, trending: data.trending,
@@ -326,7 +365,7 @@ export default function InventoryPageNew() {
     } finally { setIsMigrating(false); }
   };
 
-  const activeFiltersCount = [selectedCategory, selectedCondition, selectedBinding, stockFilter, minPrice, maxPrice].filter(Boolean).length;
+  const activeFiltersCount = [selectedCategory, selectedCondition, selectedBinding, stockFilter, minPrice, maxPrice, selectedTag].filter(Boolean).length;
 
   const handleSortChange = (field: string) => {
     if (sortBy === field) {
@@ -501,6 +540,20 @@ export default function InventoryPageNew() {
                   </SelectContent>
                 </Select>
 
+                <Select value={selectedTag || undefined} onValueChange={v => { setSelectedTag(v === "all" ? "" : v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-40 bg-gray-50 border-gray-100 h-9 text-xs">
+                    <SelectValue placeholder="All Labels" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Labels</SelectItem>
+                    <SelectItem value="bestseller">🔥 Bestseller</SelectItem>
+                    <SelectItem value="newArrival">✨ New Arrival</SelectItem>
+                    <SelectItem value="trending">📈 Trending</SelectItem>
+                    <SelectItem value="featured">⭐ Featured</SelectItem>
+                    <SelectItem value="boxSet">📦 Box Set</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 {/* Price range */}
                 <div className="flex items-center gap-1.5">
                   <Input
@@ -524,7 +577,7 @@ export default function InventoryPageNew() {
 
                 {activeFiltersCount > 0 && (
                   <button
-                    onClick={() => { setSelectedCategory(""); setSelectedCondition(""); setSelectedBinding(""); setStockFilter(""); setMinPrice(""); setMaxPrice(""); setCurrentPage(1); }}
+                    onClick={() => { setSelectedCategory(""); setSelectedCondition(""); setSelectedBinding(""); setStockFilter(""); setMinPrice(""); setMaxPrice(""); setSelectedTag(""); setCurrentPage(1); }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-xs hover:bg-red-50 transition-colors whitespace-nowrap"
                   >
                     <X className="h-3 w-3" /> Clear All
@@ -782,8 +835,36 @@ export default function InventoryPageNew() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="isbn" className="text-xs font-semibold text-secondary-black uppercase tracking-wide">ISBN</Label>
-                <Input id="isbn" value={bookForm.isbn} onChange={e => setBookForm(p => ({ ...p, isbn: e.target.value }))} className="mt-1" />
+                <Label htmlFor="isbn" className="text-xs font-semibold text-secondary-black uppercase tracking-wide">
+                  ISBN <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-1">
+                  <Input
+                    id="isbn"
+                    value={bookForm.isbn}
+                    onChange={e => setBookForm(p => ({ ...p, isbn: e.target.value }))}
+                    placeholder="e.g. 9780743273565"
+                    className={`pr-8 ${
+                      isbnStatus === 'valid' ? 'border-green-500 focus-visible:ring-green-400' :
+                      isbnStatus === 'invalid' || isbnStatus === 'duplicate' ? 'border-red-500 focus-visible:ring-red-400' :
+                      ''
+                    }`}
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                    {isbnStatus === 'checking' && <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />}
+                    {isbnStatus === 'valid' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                    {(isbnStatus === 'invalid' || isbnStatus === 'duplicate') && <AlertCircle className="h-4 w-4 text-red-500" />}
+                  </div>
+                </div>
+                {isbnStatus === 'invalid' && (
+                  <p className="mt-1 text-xs text-red-500">Invalid ISBN — must be 10 or 13 digits</p>
+                )}
+                {isbnStatus === 'duplicate' && (
+                  <p className="mt-1 text-xs text-red-500">This ISBN already exists in the catalogue</p>
+                )}
+                {isbnStatus === 'valid' && (
+                  <p className="mt-1 text-xs text-green-600">ISBN is valid and available</p>
+                )}
               </div>
               <div>
                 <Label className="text-xs font-semibold text-secondary-black uppercase tracking-wide">Categories</Label>
@@ -825,7 +906,6 @@ export default function InventoryPageNew() {
                       </div>
                     )}
                   </div>
-                  <Button type="button" variant="outline" size="sm" className="shrink-0 mt-0" onClick={() => setIsCategoryDialogOpen(true)}>+ Add</Button>
                 </div>
               </div>
               {/* Subcategory */}
@@ -991,7 +1071,15 @@ export default function InventoryPageNew() {
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-2 border-t">
               <Button type="button" variant="outline" className="rounded-full" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={createBookMutation.isPending || updateBookMutation.isPending} className="rounded-full bg-primary-aqua hover:bg-secondary-aqua px-6">
+              <Button
+                type="submit"
+                disabled={
+                  createBookMutation.isPending || updateBookMutation.isPending ||
+                  (!editingBook && isbnStatus !== 'valid') ||
+                  (!!editingBook && bookForm.isbn.trim() !== '' && (isbnStatus === 'invalid' || isbnStatus === 'duplicate' || isbnStatus === 'checking'))
+                }
+                className="rounded-full bg-primary-aqua hover:bg-secondary-aqua px-6"
+              >
                 {createBookMutation.isPending || updateBookMutation.isPending
                   ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Saving…</>
                   : editingBook ? "Update Book" : "Add Book"
@@ -1006,13 +1094,6 @@ export default function InventoryPageNew() {
       <Dialog open={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={e => e.preventDefault()}>
           <BannerUploadPage />
-        </DialogContent>
-      </Dialog>
-
-      {/* Category Dialog */}
-      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <CategoriesManagement />
         </DialogContent>
       </Dialog>
 

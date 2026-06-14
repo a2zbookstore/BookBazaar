@@ -6,6 +6,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import pg from "pg";
 import { storage } from "./storage";
 import { getDatabaseUrl } from "./db";
 
@@ -29,10 +30,20 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
+  const pool = new pg.Pool({
+    connectionString: getDatabaseUrl(),
+    max: 3,
+    idleTimeoutMillis: 10000,  // release idle connections before Neon drops them
+    connectionTimeoutMillis: 5000,
+  });
+  pool.on("error", (err) => {
+    // Prevent unhandled error crash on ECONNRESET from Neon idle timeouts
+    console.warn("[session-pool] idle connection error (ignored):", err.message);
+  });
   const sessionStore = new pgStore({
-    conString: getDatabaseUrl(),
+    pool,
     createTableIfMissing: false,
-    ttl: sessionTtl,
+    ttl: sessionTtl / 1000,
     tableName: "sessions",
   });
   return session({

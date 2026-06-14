@@ -93,6 +93,7 @@ export interface IStorage {
   // Book operations
   getBooks(options?: {
     categoryId?: number;
+    subCategoryId?: number;
     condition?: string;
     featured?: boolean;
     bestseller?: boolean;
@@ -465,6 +466,7 @@ export class DatabaseStorage implements IStorage {
   // Book operations
   async getBooks(options: {
     categoryId?: number;
+    subCategoryId?: number;
     condition?: string;
     binding?: string;
     featured?: boolean;
@@ -485,6 +487,7 @@ export class DatabaseStorage implements IStorage {
   } = {}): Promise<{ books: (Book & { categories: Category[] })[]; total: number }> {
     const {
       categoryId,
+      subCategoryId,
       condition,
       binding,
       featured,
@@ -519,6 +522,7 @@ export class DatabaseStorage implements IStorage {
     if (categoryId) conditions.push(
       sql`(${books.categoryId} = ${categoryId} OR ${books.id} IN (SELECT book_id FROM book_categories WHERE category_id = ${categoryId}))`
     );
+    if (subCategoryId) conditions.push(eq(books.subCategoryId, subCategoryId));
     if (condition) conditions.push(eq(books.condition, condition));
     if (binding) conditions.push(eq(books.binding, binding));
     if (featured !== undefined) conditions.push(eq(books.featured, featured));
@@ -2014,9 +2018,35 @@ export class DatabaseStorage implements IStorage {
 
   // Banner storage
   async createBanner(data: InsertBanner): Promise<Banner> {
-    // Use Drizzle ORM for insert
+    // Find all existing rows for this page_type, ordered newest first
+    const existing = await db.select({ id: banners.id })
+      .from(banners)
+      .where(eq(banners.page_type, data.page_type))
+      .orderBy(desc(banners.created_at));
+
+    if (existing.length > 0) {
+      // Update the newest row in place
+      const [banner] = await db.update(banners)
+        .set({
+          image_urls: data.image_urls,
+          link_urls: data.link_urls ?? null,
+          is_active: data.is_active ?? true,
+        })
+        .where(eq(banners.id, existing[0].id))
+        .returning();
+
+      // Delete all older duplicate rows for this page_type
+      if (existing.length > 1) {
+        const oldIds = existing.slice(1).map(r => r.id);
+        await db.delete(banners).where(inArray(banners.id, oldIds));
+      }
+
+      return banner;
+    }
+
     const [banner] = await db.insert(banners).values({
       image_urls: data.image_urls,
+      link_urls: data.link_urls ?? null,
       page_type: data.page_type,
       is_active: data.is_active ?? true,
     }).returning();
@@ -2029,9 +2059,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBannersByPageType(pageType: string): Promise<Banner[]> {
+    // Return only the single most-recent banner row for this page type
     return await db.select().from(banners)
       .where(eq(banners.page_type, pageType))
-      .orderBy(desc(banners.created_at));
+      .orderBy(desc(banners.created_at))
+      .limit(1);
   }
 
   async getAllBannerPageTypes(): Promise<string[]> {

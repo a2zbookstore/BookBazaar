@@ -40,6 +40,7 @@ export interface Category {
   description?: string;
   createdAt: string;
   sort_order?: number;
+  showOnHomepage?: boolean;
 }
 
 export interface SubCategory {

@@ -60,7 +60,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <div
-        className="flex-1 flex flex-col min-h-0 overflow-hidden mt-[calc(100px+38px)] sm:mt-[calc(70px+8px)]"
+        className="flex-1 flex flex-col min-h-0 overflow-hidden mt-16[calc(100px+38px)] sm:mt-[1calc(70px+8px)]"
         onClick={() => sidebarOpen && setSidebarOpen(false)}
       >
         {/* Top Bar */}
