@@ -3336,6 +3336,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { storeName, storeEmail, storeDescription, storePhone, currency, storeAddress } = req.body;
 
+      // Preserve giftFeatureEnabled from existing settings
+      const existing = await storage.getStoreSettings();
       const updatedSettings = await storage.upsertStoreSettings({
         storeName,
         storeEmail,
@@ -3343,12 +3345,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storePhone,
         currency,
         storeAddress,
+        giftFeatureEnabled: existing?.giftFeatureEnabled ?? true,
       });
 
       res.json(updatedSettings);
     } catch (error) {
       console.error("Error updating store settings:", error);
       res.status(500).json({ message: "Failed to update store settings" });
+    }
+  });
+
+  // Public: check if gift feature is enabled
+  app.get('/api/gift-feature-status', async (req: any, res) => {
+    try {
+      const settings = await storage.getStoreSettings();
+      res.json({ enabled: settings?.giftFeatureEnabled ?? true });
+    } catch (error) {
+      console.error("Error fetching gift feature status:", error);
+      res.status(500).json({ message: "Failed to fetch gift feature status" });
+    }
+  });
+
+  // Admin: toggle gift feature on/off
+  app.put('/api/admin/gift-feature-toggle', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { enabled } = req.body;
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ message: "enabled must be a boolean" });
+      }
+      const settings = await storage.getStoreSettings();
+      const updated = await storage.upsertStoreSettings({
+        storeName: settings?.storeName ?? "A2Z BOOKSHOP",
+        storeEmail: settings?.storeEmail ?? "hello@a2zbookshop.com",
+        storeDescription: settings?.storeDescription ?? null,
+        storePhone: settings?.storePhone ?? null,
+        currency: settings?.currency ?? "EUR",
+        storeAddress: settings?.storeAddress ?? null,
+        giftFeatureEnabled: enabled,
+      });
+      res.json({ enabled: updated.giftFeatureEnabled });
+    } catch (error) {
+      console.error("Error toggling gift feature:", error);
+      res.status(500).json({ message: "Failed to toggle gift feature" });
     }
   });
 
@@ -3589,6 +3627,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/toggleCategoryHomepage", async (req: any, res) => {
+    try {
+      const sessionUserId = (req.session as any).userId;
+      const isCustomerAuth = (req.session as any).isCustomerAuth;
+      let userId = null;
+
+      if (sessionUserId && isCustomerAuth) {
+        userId = sessionUserId;
+      } else if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = getUserId(req);
+      }
+
+      const user = await storage.getUser(userId);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id, showOnHomepage } = req.body;
+      if (!id || typeof showOnHomepage !== "boolean") {
+        return res.status(400).json({ message: "id and showOnHomepage (boolean) are required" });
+      }
+
+      const updatedCategory = await storage.updateCategory(id, { showOnHomepage });
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error("Error toggling category homepage visibility:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
   app.post("/api/deleteCategory", async (req: any, res) => {
     try {
       const sessionUserId = (req.session as any).userId;
@@ -3722,6 +3790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const {
         categoryId,
+        subCategoryId,
         condition,
         binding,
         featured,
@@ -3743,6 +3812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const options = {
         categoryId: categoryId ? parseInt(categoryId as string) : undefined,
+        subCategoryId: subCategoryId ? parseInt(subCategoryId as string) : undefined,
         condition: condition as string,
         binding: binding as string,
         featured: featured === "true" ? true : featured === "false" ? false : undefined,
@@ -3775,7 +3845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search suggestions endpoint
+  // Search suggestions endpoint (legacy - kept for compatibility)
   app.get("/api/books/search-suggestions", async (req, res) => {
     try {
       const { q } = req.query;
@@ -3788,6 +3858,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching search suggestions:", error);
       res.status(500).json({ message: "Failed to fetch suggestions" });
+    }
+  });
+
+  // Rich search preview endpoint - returns books with cover images
+  app.get("/api/books/search-preview", async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string' || q.length < 2) {
+        return res.json({ books: [] });
+      }
+
+      const result = await storage.getBooks({
+        search: q,
+        limit: 6,
+        sortBy: "bestseller",
+        sortOrder: "desc",
+        includeOutOfStock: false,
+      });
+
+      const books = result.books.map((b: any) => ({
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        imageUrl: b.imageUrl || null,
+        price: b.price,
+      }));
+
+      res.json({ books });
+    } catch (error) {
+      console.error("Error fetching search preview:", error);
+      res.status(500).json({ message: "Failed to fetch search preview" });
+    }
+  });
+
+  // ── ISBN uniqueness check ──────────────────────────────────────────────────
+  app.get('/api/books/check-isbn', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { isbn, excludeId } = req.query;
+      if (!isbn || typeof isbn !== 'string') {
+        return res.status(400).json({ message: 'ISBN is required' });
+      }
+      const cleanIsbn = isbn.replace(/[\s\-]/g, '').toLowerCase();
+      const result = await storage.getBooks({
+        search: cleanIsbn,
+        limit: 20,
+        includeOutOfStock: true,
+        includeHidden: true,
+      });
+      const duplicate = result.books.find((b: any) => {
+        const bookIsbn = (b.isbn || '').replace(/[\s\-]/g, '').toLowerCase();
+        return bookIsbn === cleanIsbn &&
+          (!excludeId || b.id !== parseInt(excludeId as string, 10));
+      });
+      res.json({ exists: !!duplicate });
+    } catch (error) {
+      console.error('Error checking ISBN:', error);
+      res.status(500).json({ message: 'Failed to check ISBN' });
     }
   });
 
@@ -5155,6 +5282,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin route for ZIP bundle import (Excel + images)
+  const zipUpload = multer({
+    storage: multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, os.tmpdir()),
+      filename: (_req, _file, cb) => cb(null, `zip-import-${Date.now()}.zip`),
+    }),
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+    fileFilter: (_req, file, cb) => {
+      if (file.mimetype === 'application/zip' ||
+          file.mimetype === 'application/x-zip-compressed' ||
+          file.originalname.endsWith('.zip')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only .zip files are allowed'));
+      }
+    },
+  });
+
+  app.post('/api/admin/import-books-zip', zipUpload.single('file'), requireAdminAuth, async (req: any, res) => {
+    const zipPath = req.file?.path;
+    try {
+      if (!req.file || !zipPath) {
+        return res.status(400).json({ message: 'No ZIP file uploaded' });
+      }
+      const { ZipImporter } = await import('./zipImporter');
+      const result = await ZipImporter.importFromZip(zipPath);
+      res.json(result);
+    } catch (error) {
+      console.error('ZIP import error:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to import ZIP bundle' });
+    } finally {
+      // Clean up uploaded ZIP
+      if (zipPath) {
+        try { fs.unlinkSync(zipPath); } catch { /* ignore */ }
+      }
+    }
+  });
+
   // Admin export route using session authentication
   // Admin route to migrate existing local images to Cloudinary
   app.post("/api/admin/migrate-images", requireAdminAuth, async (req, res) => {
@@ -6226,6 +6391,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching coupon usage:", error);
       res.status(500).json({ message: "Failed to fetch coupon usage" });
+    }
+  });
+
+  // Public coupon info (no order amount required — used for catalog filtering)
+  app.get("/api/coupons/info/:code", async (req, res) => {
+    try {
+      const code = req.params.code?.trim().toUpperCase();
+      if (!code) return res.status(400).json({ message: "Coupon code is required" });
+      const coupon = await storage.getCouponByCode(code);
+      if (!coupon || !coupon.isActive) return res.status(404).json({ message: "Coupon not found" });
+      const now = new Date();
+      if (new Date(coupon.endDate) < now) return res.status(400).json({ message: "Coupon expired" });
+      res.json({
+        code: coupon.code,
+        description: coupon.description,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        minimumOrderAmount: coupon.minimumOrderAmount ? parseFloat(coupon.minimumOrderAmount) : 0,
+        maximumDiscountAmount: coupon.maximumDiscountAmount ? parseFloat(coupon.maximumDiscountAmount) : null,
+      });
+    } catch (error) {
+      console.error("Error fetching coupon info:", error);
+      res.status(500).json({ message: "Failed to fetch coupon info" });
     }
   });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation, useParams } from "wouter";
+import { useLocation, useParams, useSearch } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -134,6 +134,26 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const autoApplyRef = React.useRef(false);
+
+  // Pre-fill coupon from URL param (e.g. /checkout?coupon=SAVE20) or from localStorage (set by catalog banner)
+  const checkoutSearch = useSearch();
+  useEffect(() => {
+    const urlCoupon = new URLSearchParams(checkoutSearch).get('coupon');
+    if (urlCoupon) {
+      setCouponCode(urlCoupon.toUpperCase());
+      autoApplyRef.current = true;
+      return;
+    }
+    const storedCoupon = localStorage.getItem('pendingCoupon');
+    if (storedCoupon) {
+      setCouponCode(storedCoupon.toUpperCase());
+      localStorage.removeItem('pendingCoupon');
+      localStorage.removeItem('pendingCouponInfo');
+      autoApplyRef.current = true;
+    }
+  }, [checkoutSearch]);
   const [notificationEmail, setNotificationEmail] = useState("");
   const [notificationEmailError, setNotificationEmailError] = useState("");
   const { mode, bookId, quantity } = useParams();
@@ -323,6 +343,21 @@ export default function CheckoutPage() {
     tax: tax,
     total: total
   });
+
+  // Auto-apply coupon when pre-filled from banner/URL, once cart and amounts are ready
+  useEffect(() => {
+    if (
+      autoApplyRef.current &&
+      couponCode &&
+      !appliedCoupon &&
+      cartItems.length > 0 &&
+      convertedAmounts.subtotal > 0
+    ) {
+      autoApplyRef.current = false;
+      applyCoupon();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couponCode, cartItems.length, convertedAmounts.subtotal]);
 
   // Version ref to prevent stale async conversions from overwriting current values
   const conversionVersionRef = useRef(0);

@@ -7,8 +7,10 @@ import FiltersSidebar from "@/components/FiltersSidebar";
 import SortFilterHeader from "@/components/SortFilterHeader";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Book, Category } from "@/types";
+import { Book, Category, SubCategory } from "@/types";
 import { ArrowLeft, ArrowRight, Filter } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
+import { SUPPORTED_CURRENCIES } from "@/lib/currencyUtils";
 
 interface BooksResponse {
   books: Book[];
@@ -17,73 +19,104 @@ interface BooksResponse {
 
 export default function CatalogPage() {
   const [location, setLocation] = useLocation();
-  const [search, setSearch] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const searchParams = useSearch();
+  // URL is the single source of truth for all filters
+  const params = new URLSearchParams(searchParams);
+
+  const search             = params.get('search') || '';
+  const selectedCategories = params.get('categoryId') ? [params.get('categoryId')!] : [];
+  const selectedSubCategories = params.get('subCategoryId') ? [params.get('subCategoryId')!] : [];
+  const selectedConditions = params.get('condition')  ? [params.get('condition')!]  : [];
+  const TAG_KEYS = ['bestseller', 'trending', 'newArrival', 'featured', 'boxSet'] as const;
+  const selectedTags = TAG_KEYS.filter(k => params.get(k) === 'true');
+  const minPrice           = params.get('minPrice')   || '';
+  const maxPrice           = params.get('maxPrice')   || '';
+  const sortBy             = params.get('sortBy')     || 'createdAt';
+  const sortOrder          = params.get('sortOrder')  || 'desc';
+  const urlCoupon          = params.get('coupon')     || '';
+
+  // Capture coupon from URL → localStorage, then remove it from the URL
+  useEffect(() => {
+    if (urlCoupon) {
+      localStorage.setItem('pendingCoupon', urlCoupon.toUpperCase());
+      const next = new URLSearchParams(searchParams);
+      next.delete('coupon');
+      const qs = next.toString();
+      setLocation('/catalog' + (qs ? '?' + qs : ''), { replace: true });
+    }
+  }, [urlCoupon]);
+
+  // Show the coupon notice as long as localStorage has one
+  const [savedCoupon, setSavedCoupon] = useState<string>(() => localStorage.getItem('pendingCoupon') || '');
+  const [couponInfo, setCouponInfo] = useState<{ minimumOrderAmount: number; discountType: string; discountValue: string; description?: string | null; maximumDiscountAmount?: number | null } | null>(() => {
+    const stored = localStorage.getItem('pendingCouponInfo');
+    return stored ? JSON.parse(stored) : null;
+  });
+  useEffect(() => {
+    // Refresh whenever we save a new one
+    if (urlCoupon) setSavedCoupon(urlCoupon.toUpperCase());
+  }, [urlCoupon]);
+
+  // Fetch coupon details when we have a saved coupon code
+  useEffect(() => {
+    const code = savedCoupon || localStorage.getItem('pendingCoupon');
+    if (!code) return;
+    fetch(`/api/coupons/info/${encodeURIComponent(code)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setCouponInfo(data);
+          localStorage.setItem('pendingCouponInfo', JSON.stringify(data));
+          // Auto-apply minPrice filter based on minimum order amount
+          if (data.minimumOrderAmount > 0 && !params.get('minPrice')) {
+            updateParams({ minPrice: String(data.minimumOrderAmount) });
+          }
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedCoupon]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 15;
-  const searchParams = useSearch();
-  const queryParams = new URLSearchParams();
 
+  // Currency for price display in the active filter banner
+  const { userCurrency, exchangeRates } = useCurrency();
+  const currencySymbol = SUPPORTED_CURRENCIES.find(c => c.code === userCurrency)?.symbol ?? '$';
+  const usdToDisplay = (usdVal: string): string => {
+    if (!usdVal || userCurrency === 'USD' || !exchangeRates) return usdVal;
+    const rate = exchangeRates[userCurrency] ?? 1;
+    return Math.round(Number(usdVal) * rate).toLocaleString();
+  };
 
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    const searchQuery = params.get("search") || "";
-    const categoryIdQuery = params.get("categoryId") || "";
-    const condition = Object.fromEntries(params.entries());
+  // Reset to page 1 whenever the filter params change
+  useEffect(() => { setCurrentPage(1); }, [searchParams]);
 
-    if (condition.featured === 'true') queryParams.set('featured', 'true');
-    if (condition.bestseller === 'true') { queryParams.set('bestseller', 'true'); }
-    if (condition.trending === 'true') queryParams.set('trending', 'true');
-    if (condition.newArrival === 'true') queryParams.set('newArrival', 'true');
-    if (condition.boxSet === 'true') queryParams.set('boxSet', 'true');
-    searchQuery ? setSearch(searchQuery) : setSearch('');
-    categoryIdQuery ? setSelectedCategories([categoryIdQuery]) : setSelectedCategories([]);
-
+  // Helper: push filter changes into the URL
+  const updateParams = (updates: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, val]) => {
+      if (val === null || val === '') next.delete(key);
+      else next.set(key, val);
+    });
+    const qs = next.toString();
+    setLocation('/catalog' + (qs ? '?' + qs : ''));
     setCurrentPage(1);
-    if (searchQuery) {
-      setSelectedCategories([]);
-      setSelectedConditions([]);
-      setMinPrice('');
-      setMaxPrice('');
-    }
-  }, [searchParams]);
+  };
 
-  // useEffect(() => {
-  //   // Reset to first page when filters change
-  //   setCurrentPage(1);
-  // }, [params]);
-
-  // Build query parameters
-  if (search) queryParams.set('search', search);
-  if (selectedCategories.length > 0) queryParams.set('categoryId', selectedCategories[0]); // For now, just use first category
-  if (selectedConditions.length > 0) queryParams.set('condition', selectedConditions[0]); // For now, just use first condition
-  if (minPrice) queryParams.set('minPrice', minPrice);
-  if (maxPrice) queryParams.set('maxPrice', maxPrice);
-
-  // Check URL params for special filters
-  const urlParams = new URLSearchParams(location.split('?')[1] || '');
-  
-  if (urlParams.get('featured') === 'true') queryParams.set('featured', 'true');
-  if (urlParams.get('bestseller') === 'true') queryParams.set('bestseller', 'true');
-  if (urlParams.get('trending') === 'true') queryParams.set('trending', 'true');
-  if (urlParams.get('newArrival') === 'true') queryParams.set('newArrival', 'true');
-  if (urlParams.get('boxSet') === 'true') queryParams.set('boxSet', 'true');
-
-  queryParams.set('sortBy', sortBy);
-  queryParams.set('sortOrder', sortOrder);
-  queryParams.set('limit', itemsPerPage.toString());
+  // Build query params for the API directly from the URL string
+  const queryParams = new URLSearchParams(searchParams);
+  queryParams.delete('coupon'); // coupon is not an API filter
+  if (!queryParams.has('sortBy'))    queryParams.set('sortBy', 'createdAt');
+  if (!queryParams.has('sortOrder')) queryParams.set('sortOrder', 'desc');
+  queryParams.set('limit',  itemsPerPage.toString());
   queryParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
 
   const apiUrl = `/api/books?${queryParams.toString()}`;
 
-  const { data: booksResponse, isLoading } = useQuery<BooksResponse>({
-    queryKey: ['/api/books', location, search, selectedCategories, selectedConditions, minPrice, maxPrice, sortBy, sortOrder, currentPage],
+  const { data: booksResponse, isLoading, isFetching } = useQuery<BooksResponse>({
+    queryKey: ['/api/books', searchParams, currentPage],
     queryFn: async () => {
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch books');
@@ -97,34 +130,56 @@ export default function CatalogPage() {
     queryKey: ["/api/categories"],
   });
 
+  const selectedCategoryId = selectedCategories[0] || null;
+
+  const { data: subcategories = [] } = useQuery<SubCategory[]>({
+    queryKey: ["/api/subcategories", selectedCategoryId],
+    queryFn: async () => {
+      if (!selectedCategoryId) return [];
+      const res = await fetch(`/api/subcategories?categoryId=${selectedCategoryId}`);
+      if (!res.ok) throw new Error('Failed to fetch subcategories');
+      return res.json();
+    },
+    enabled: !!selectedCategoryId,
+  });
+
   const books = booksResponse?.books || [];
   const totalBooks = booksResponse?.total || 0;
   const totalPages = Math.ceil(totalBooks / itemsPerPage);
   const conditions = ["New", "Like New", "Very Good", "Good", "Fair"];
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    setSelectedCategories(prev =>
-      checked
-        ? [...prev, categoryId]
-        : prev.filter(id => id !== categoryId)
-    );
-    setCurrentPage(1);
+    // Changing category clears any existing subcategory selection
+    updateParams({ categoryId: checked ? categoryId : null, subCategoryId: null });
+  };
+
+  const handleSubCategoryChange = (subCategoryId: string, checked: boolean) => {
+    updateParams({ subCategoryId: checked ? subCategoryId : null });
   };
 
   const handleConditionChange = (condition: string, checked: boolean) => {
-    setSelectedConditions(prev =>
-      checked
-        ? [...prev, condition]
-        : prev.filter(c => c !== condition)
-    );
-    setCurrentPage(1);
+    updateParams({ condition: checked ? condition : null });
+  };
+
+  const handleTagChange = (tag: string, checked: boolean) => {
+    updateParams({ [tag]: checked ? 'true' : null });
+  };
+
+  const handleApplyFilters = ({ categories, subcategories, conditions: conds, tags, minPrice: min, maxPrice: max }: import('@/components/FiltersSidebar').AppliedFilters) => {
+    const TAG_KEYS = ['bestseller', 'trending', 'newArrival', 'featured', 'boxSet'];
+    updateParams({
+      categoryId:    categories[0]    ?? null,
+      subCategoryId: subcategories[0] ?? null,
+      condition:     conds[0]         ?? null,
+      minPrice:      min              || null,
+      maxPrice:      max              || null,
+      ...Object.fromEntries(TAG_KEYS.map(k => [k, tags.includes(k) ? 'true' : null])),
+    });
   };
 
   const handleSortChange = (value: string) => {
     const [newSortBy, newSortOrder] = value.split('-');
-    setSortBy(newSortBy);
-    setSortOrder(newSortOrder);
-    setCurrentPage(1);
+    updateParams({ sortBy: newSortBy, sortOrder: newSortOrder });
   };
 
   const sortOptions = [
@@ -137,39 +192,33 @@ export default function CatalogPage() {
   ];
 
   const clearFilters = () => {
-    setSearch('');
-    setSelectedCategories([]);
-    setSelectedConditions([]);
-    setMinPrice('');
-    setMaxPrice('');
-    setSortBy('createdAt');
-    setSortOrder('desc');
-    setCurrentPage(1);
     setLocation('/catalog');
+    setCurrentPage(1);
   };
 
   // Dynamic SEO based on filters
+  const activeCategory = categories.find(c => c.id.toString() === (selectedCategories[0] || ''));
+  const activeSubCategory = subcategories.find(s => s.id.toString() === (selectedSubCategories[0] || ''));
+
   const getPageTitle = () => {
     if (search) return `Search Results for "${search}"`;
-    if (urlParams.get('featured') === 'true') return 'Featured Books';
-    if (urlParams.get('bestseller') === 'true') return 'Bestselling Books';
-    if (urlParams.get('trending') === 'true') return 'Trending Books';
-    if (urlParams.get('newArrival') === 'true') return 'New Arrivals';
-    if (urlParams.get('boxSet') === 'true') return 'Box Sets';
-    if (selectedCategories.length > 0) {
-      const category = categories.find(c => c.id.toString() === selectedCategories[0]);
-      return category ? `${category.name} Books` : 'Book Catalog';
-    }
+    if (params.get('featured') === 'true') return 'Featured Books';
+    if (params.get('bestseller') === 'true') return 'Bestselling Books';
+    if (params.get('trending') === 'true') return 'Trending Books';
+    if (params.get('newArrival') === 'true') return 'New Arrivals';
+    if (params.get('boxSet') === 'true') return 'Box Sets';
+    if (activeSubCategory && activeCategory) return `${activeCategory.name} – ${activeSubCategory.name} Books`;
+    if (activeCategory) return `${activeCategory.name} Books`;
     return 'All Books - Browse Our Complete Collection';
   };
 
   const getPageDescription = () => {
     if (search) return `Find books matching "${search}". Browse our extensive collection with ${totalBooks} results.`;
-    if (selectedCategories.length > 0) {
-      const category = categories.find(c => c.id.toString() === selectedCategories[0]);
-      return category
-        ? `Explore our ${category.name} collection. ${totalBooks} books available with fast delivery.`
-        : 'Browse thousands of books across all categories at A2Z Bookshop.';
+    if (activeSubCategory && activeCategory) {
+      return `Explore our ${activeCategory.name} › ${activeSubCategory.name} collection. ${totalBooks} books available with fast delivery.`;
+    }
+    if (activeCategory) {
+      return `Explore our ${activeCategory.name} collection. ${totalBooks} books available with fast delivery.`;
     }
     return 'Browse thousands of books across all categories. Fiction, non-fiction, bestsellers and more. Best prices with fast delivery.';
   };
@@ -177,28 +226,19 @@ export default function CatalogPage() {
   const getPageKeywords = () => {
     const baseKeywords = 'buy books online, online bookstore, book catalog';
     if (search) return `${search}, ${baseKeywords}`;
-    if (selectedCategories.length > 0) {
-      const category = categories.find(c => c.id.toString() === selectedCategories[0]);
-      return category ? `${category.name} books, buy ${category.name}, ${baseKeywords}` : baseKeywords;
+    if (activeSubCategory && activeCategory) {
+      return `${activeSubCategory.name} books, ${activeCategory.name} ${activeSubCategory.name}, ${baseKeywords}`;
+    }
+    if (activeCategory) {
+      return `${activeCategory.name} books, buy ${activeCategory.name}, ${baseKeywords}`;
     }
     return `${baseKeywords}, fiction, non-fiction, bestsellers`;
   };
 
   const getCanonicalUrl = () => {
     const base = 'https://a2zbookshop.com/catalog';
-    if (search) return `${base}?search=${encodeURIComponent(search)}`;
-    const featured = urlParams.get('featured');
-    const bestseller = urlParams.get('bestseller');
-    const trending = urlParams.get('trending');
-    const newArrival = urlParams.get('newArrival');
-    const boxSet = urlParams.get('boxSet');
-    if (featured === 'true') return `${base}?featured=true`;
-    if (bestseller === 'true') return `${base}?bestseller=true`;
-    if (trending === 'true') return `${base}?trending=true`;
-    if (newArrival === 'true') return `${base}?newArrival=true`;
-    if (boxSet === 'true') return `${base}?boxSet=true`;
-    if (selectedCategories.length > 0) return `${base}?categoryId=${selectedCategories[0]}`;
-    return base;
+    const qs = searchParams ? '?' + searchParams : '';
+    return base + qs;
   };
 
   return (
@@ -213,28 +253,93 @@ export default function CatalogPage() {
       <div className="container-custom">
         <Breadcrumb items={[{ label: "Catalog" }]} />
 
+        {/* Coupon notice — shown when a coupon is saved in session */}
+        {savedCoupon && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800">
+            <span className="text-base">🎟️</span>
+            <span>
+              Coupon <strong>{savedCoupon}</strong>
+              {couponInfo && (
+                <>
+                  {' — '}
+                  {couponInfo.discountType === 'percentage'
+                    ? `${couponInfo.discountValue}% off`
+                    : `₹${couponInfo.discountValue} off`}
+                  {couponInfo.minimumOrderAmount > 0 && ` on orders above ₹${couponInfo.minimumOrderAmount}`}
+                </>
+              )}
+              {' '}saved — will be auto-applied at checkout.
+            </span>
+            <button
+              onClick={() => {
+                localStorage.removeItem('pendingCoupon');
+                localStorage.removeItem('pendingCouponInfo');
+                setSavedCoupon('');
+                setCouponInfo(null);
+                if (params.get('minPrice') && couponInfo?.minimumOrderAmount &&
+                    params.get('minPrice') === String(couponInfo.minimumOrderAmount)) {
+                  updateParams({ minPrice: null });
+                }
+              }}
+              className="ml-auto text-xs underline underline-offset-2 hover:text-green-900"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
+        {/* Active filter banner — shown when arriving via banner/category/subcategory links */}
+        {(() => {
+          const labels: string[] = [];
+          if (activeCategory) {
+            labels.push(activeSubCategory
+              ? `${activeCategory.name} › ${activeSubCategory.name}`
+              : activeCategory.name);
+          }
+          if (params.get('featured') === 'true')   labels.push('Featured Books');
+          if (params.get('bestseller') === 'true')  labels.push('Bestsellers');
+          if (params.get('trending') === 'true')    labels.push('Trending');
+          if (params.get('newArrival') === 'true')  labels.push('New Arrivals');
+          if (params.get('boxSet') === 'true')      labels.push('Box Sets');
+          if (params.get('minPrice') || params.get('maxPrice')) {
+            const min = params.get('minPrice') || '0';
+            const max = params.get('maxPrice');
+            labels.push(max
+              ? `Price: ${currencySymbol}${usdToDisplay(min)} – ${currencySymbol}${usdToDisplay(max)}`
+              : `Price: from ${currencySymbol}${usdToDisplay(min)}`);
+          }
+          if (!labels.length) return null;
+          return (
+            <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+              <span className="font-semibold shrink-0">Showing:</span>
+              <span className="flex flex-wrap gap-x-1">
+                {labels.map((l, i) => (
+                  <span key={i} className="whitespace-nowrap">
+                    {i > 0 && <span className="text-amber-400 mx-0.5">·</span>}
+                    {l}
+                  </span>
+                ))}
+              </span>
+              <button onClick={clearFilters} className="ml-auto shrink-0 text-xs underline underline-offset-2 hover:text-amber-900">Clear</button>
+            </div>
+          );
+        })()}
+
         {/* Floating Filters Sidebar */}
         <FiltersSidebar
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
           categories={categories}
           selectedCategories={selectedCategories}
-          onCategoryChange={handleCategoryChange}
+          subcategories={subcategories}
+          selectedSubCategories={selectedSubCategories}
           minPrice={minPrice}
           maxPrice={maxPrice}
-          onMinPriceChange={(value) => {
-            setMinPrice(value);
-            setCurrentPage(1);
-          }}
-          onMaxPriceChange={(value) => {
-            setMaxPrice(value);
-            setCurrentPage(1);
-          }}
           conditions={conditions}
           selectedConditions={selectedConditions}
-          onConditionChange={handleConditionChange}
+          selectedTags={selectedTags}
           onClearFilters={clearFilters}
-          onApplyFilters={() => setCurrentPage(1)}
+          onApplyFilters={handleApplyFilters}
         />
 
 
@@ -250,9 +355,9 @@ export default function CatalogPage() {
             >
               <Filter className="h-4 w-4" />
               Filters
-              {(selectedCategories.length > 0 || selectedConditions.length > 0 || minPrice || maxPrice) && (
+              {(selectedCategories.length > 0 || selectedSubCategories.length > 0 || selectedConditions.length > 0 || minPrice || maxPrice) && (
                 <span className="ml-1 px-2 py-0.5 text-xs bg-primary-aqua text-white rounded-full">
-                  {selectedCategories.length + selectedConditions.length + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0)}
+                  {selectedCategories.length + selectedSubCategories.length + selectedConditions.length + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0)}
                 </span>
               )}
             </Button>
@@ -285,15 +390,29 @@ export default function CatalogPage() {
           )}
 
           {/* Books Grid */}
-          {isLoading ? (
+          {isLoading || isFetching ? (
             <div className="catalog-books-grid grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
               {[...Array(10)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="bg-gray-200 aspect-[3/4] rounded-lg mb-2 sm:mb-4"></div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <div className="bg-gray-200 h-3 sm:h-4 rounded"></div>
-                    <div className="bg-gray-200 h-2 sm:h-3 rounded w-2/3"></div>
-                    <div className="bg-gray-200 h-2 sm:h-3 rounded w-1/2"></div>
+                <div key={i} className="rounded-xl border bg-white shadow-sm overflow-hidden animate-pulse">
+                  {/* cover image */}
+                  <div className="bg-gray-200 h-[180px] sm:h-[260px] w-full" />
+                  {/* details */}
+                  <div className="px-2 sm:px-4 pt-2 pb-3 space-y-2">
+                    {/* title — 2 lines */}
+                    <div className="h-3 bg-gray-200 rounded w-full" />
+                    <div className="h-3 bg-gray-200 rounded w-4/5" />
+                    {/* author */}
+                    <div className="h-2.5 bg-gray-100 rounded w-3/5" />
+                    {/* price row */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <div className="h-4 bg-gray-200 rounded w-1/3" />
+                      <div className="h-3 bg-gray-100 rounded w-1/4" />
+                    </div>
+                    {/* shipping row */}
+                    <div className="flex justify-between pt-0.5">
+                      <div className="h-2.5 bg-gray-100 rounded w-2/5" />
+                      <div className="h-2.5 bg-gray-100 rounded w-1/4" />
+                    </div>
                   </div>
                 </div>
               ))}

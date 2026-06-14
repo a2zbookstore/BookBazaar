@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Category header marquee */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  display: flex;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
+}
+.marquee-container:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
 /* Book card ribbon badge animations */
 @keyframes slideInLeft {
   from {
@@ -110,7 +124,14 @@
 }
 
 /* Global mobile fixes */
-html, body {
+html {
+  overflow: hidden; /* html never scrolls — no html scrollbar, ever */
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  overflow-y: auto;   /* body is the ONE and only scroll container */
   overflow-x: hidden;
   width: 100%;
   height: 100%;
@@ -129,7 +150,10 @@ html, body {
 /* Mobile Optimizations */
 @media (max-width: 768px) {
   /* Fix viewport and prevent horizontal scroll */
-  html, body, #root {
+  html {
+    max-width: 100vw; /* overflow: hidden already set globally */
+  }
+  body, #root {
     width: 100%;
     overflow-x: hidden;
     max-width: 100vw;
@@ -233,7 +257,6 @@ html, body {
   
   /* Better button spacing */
   .flex {
-    flex-wrap: wrap;
     gap: 0.5rem;
   }
   
@@ -400,6 +423,13 @@ button:active, .button:active {
     -webkit-backdrop-filter: blur(10px);
   }
 
+  /* Push header below PreHeader on sm+ screens */
+  @media (min-width: 640px) {
+    .fixed-header {
+      top: 36px !important;
+    }
+  }
+
   .header-shadow {
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1) !important;
   }
@@ -470,6 +500,25 @@ button:active, .button:active {
     transform: scale(1);
     color: hsl(0, 0%, 33.3%); /* Back to original */
   }
+}
+
+@keyframes cartWalk {
+  0%   { transform: translateX(0)    rotate(0deg)   scaleX(1); }
+  15%  { transform: translateX(3px)  rotate(-8deg)  scaleX(1); }
+  30%  { transform: translateX(6px)  rotate(0deg)   scaleX(1); }
+  45%  { transform: translateX(9px)  rotate(8deg)   scaleX(1); }
+  60%  { transform: translateX(6px)  rotate(0deg)   scaleX(1); }
+  75%  { transform: translateX(3px)  rotate(-8deg)  scaleX(1); }
+  90%  { transform: translateX(1px)  rotate(4deg)   scaleX(1); }
+  100% { transform: translateX(0)    rotate(0deg)   scaleX(1); }
+}
+
+.cart-walk {
+  animation: cartWalk 0.6s ease-in-out;
+}
+
+.cart-walk-loop {
+  animation: cartWalk 0.6s ease-in-out infinite;
 }
 
 .cart-pulse-animation {
@@ -705,6 +754,24 @@ button:active, .button:active {
 }
 .animate-rotate-bounce {
   animation: rotateBounce 1.2s cubic-bezier(.68,-0.55,.27,1.55) both;
+}
+
+/* Swipe hint gesture animation for BookCarousel */
+@keyframes swipeHint {
+  0%   { transform: translateX(60px); opacity: 0; }
+  15%  { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { transform: translateX(-60px); opacity: 0; }
+}
+@keyframes swipeHintRipple {
+  0%   { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.swipe-hint-finger {
+  animation: swipeHint 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.swipe-hint-ripple {
+  animation: swipeHintRipple 1.4s ease-out infinite;
 }
 
 

@@ -43,6 +43,47 @@ interface BookCoverData {
   source: 'google' | 'openlibrary' | 'fallback';
 }
 
+export interface SuccessRecord {
+  rowNumber: number;
+  action: 'created' | 'updated';
+  title?: string;
+  author?: string;
+  isbn?: string;
+  price?: number;
+  category?: string;
+  subcategory?: string;
+  condition?: string;
+  binding?: string;
+  stock?: number;
+  publisher?: string;
+  publishedYear?: number;
+  language?: string;
+  imageUrl?: string;
+  imageUrl2?: string;
+  imageUrl3?: string;
+}
+
+export interface FailedRecord {
+  rowNumber: number;
+  title?: string;
+  author?: string;
+  isbn?: string;
+  price?: number;
+  reason: string;
+}
+
+export interface DetailedImportResult {
+  success: number;
+  failed: number;
+  errors: string[];
+  created: number;
+  updated: number;
+  imagesFromZip?: number;
+  imagesFetched?: number;
+  imagesNone?: number;
+  reportBase64: string;
+}
+
 export class BookImporter {
   private static async fetchBookCover(isbn: string): Promise<BookCoverData | null> {
     const cleanISBN = isbn.replace(/[^0-9X]/g, '');
@@ -123,13 +164,7 @@ export class BookImporter {
     }
   }
 
-  static async importFromExcel(filePath: string): Promise<{
-    success: number;
-    failed: number;
-    errors: string[];
-    created: number;
-    updated: number;
-  }> {
+  static async importFromExcel(filePath: string): Promise<DetailedImportResult> {
     const results = {
       success: 0,
       failed: 0,
@@ -137,6 +172,8 @@ export class BookImporter {
       created: 0,
       updated: 0,
     };
+    const successRows: SuccessRecord[] = [];
+    const failedRows: FailedRecord[] = [];
 
     try {
       // Read Excel/CSV file
@@ -174,13 +211,18 @@ export class BookImporter {
       const allSubcategories = await storage.getSubCategories();
       const subcategoryMap = new Map(allSubcategories.map(sub => [sub.name.toLowerCase(), sub]));
 
+      // Preload existing ISBNs from DB for duplicate checking
+      const { books: existingBooks } = await storage.getBooks({ limit: 100000, includeHidden: true, includeOutOfStock: true });
+      const existingIsbnSet = new Set(existingBooks.filter(b => b.isbn).map(b => b.isbn!.trim()));
+      const seenIsbnSet = new Set<string>(); // tracks ISBNs within this batch
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const rowNumber = i + headerRowIndex + 2; // Excel row number
-
+        let bookData: BookRow = {};
         try {
           // Map row data to book object
-          const bookData: BookRow = {};
+          bookData = {};
           headers.forEach((header, index) => {
             const value = row[index];
             const normalizedHeader = header.toLowerCase().trim();
@@ -353,6 +395,18 @@ export class BookImporter {
           bookData.language = bookData.language || 'English';
           bookData.description = bookData.description || `${bookData.title} - A comprehensive book in our collection.`;
 
+          // ISBN uniqueness check (skip when updating an existing record by ID)
+          if (bookData.isbn && !(bookData.id && bookData.id > 0)) {
+            const normalizedIsbn = bookData.isbn.trim();
+            if (seenIsbnSet.has(normalizedIsbn)) {
+              throw new Error(`Row ${rowNumber}: Duplicate ISBN "${normalizedIsbn}" in this upload`);
+            }
+            if (existingIsbnSet.has(normalizedIsbn)) {
+              throw new Error(`Row ${rowNumber}: ISBN "${normalizedIsbn}" already exists in the database`);
+            }
+            seenIsbnSet.add(normalizedIsbn);
+          }
+
           // Get category ID - resolve from primary category or first of multi-category list
           let categoryId = 1; // Default to first category
           let resolvedCategoryIds: number[] = [];
@@ -453,7 +507,7 @@ export class BookImporter {
 
             results.success++;
             results.updated++;
-
+            successRows.push({ rowNumber, action: 'updated', title: bookData.title, author: bookData.author, isbn: bookData.isbn, price: bookData.price, category: bookData.category, subcategory: bookData.subcategory, condition: bookData.condition, binding: bookData.binding, stock: bookData.stock, publisher: bookData.publisher, publishedYear: bookData.publishedYear, language: bookData.language, imageUrl: insertBook.imageUrl ?? undefined, imageUrl2: insertBook.imageUrl2 ?? undefined, imageUrl3: insertBook.imageUrl3 ?? undefined });
             console.log(`✅ Successfully updated: ${bookData.title} by ${bookData.author} (ID: ${bookData.id})`);
           } else {
             const createdBook = await storage.createBook(insertBook);
@@ -465,7 +519,7 @@ export class BookImporter {
 
             results.success++;
             results.created++;
-
+            successRows.push({ rowNumber, action: 'created', title: bookData.title, author: bookData.author, isbn: bookData.isbn, price: bookData.price, category: bookData.category, subcategory: bookData.subcategory, condition: bookData.condition, binding: bookData.binding, stock: bookData.stock, publisher: bookData.publisher, publishedYear: bookData.publishedYear, language: bookData.language, imageUrl: insertBook.imageUrl ?? undefined, imageUrl2: insertBook.imageUrl2 ?? undefined, imageUrl3: insertBook.imageUrl3 ?? undefined });
             console.log(`✅ Successfully created: ${bookData.title} by ${bookData.author}`);
             console.log(`   Book ID: ${createdBook.id}, ISBN: ${bookData.isbn || 'N/A'}, Price: $${bookData.price}`);
           }
@@ -474,6 +528,7 @@ export class BookImporter {
           results.failed++;
           const errorMsg = error instanceof Error ? error.message : `Row ${rowNumber}: Unknown error`;
           results.errors.push(errorMsg);
+          failedRows.push({ rowNumber, title: bookData.title, author: bookData.author, isbn: bookData.isbn, price: bookData.price, reason: errorMsg });
           console.error(`Failed to import row ${rowNumber}:`, error);
         }
       }
@@ -483,6 +538,303 @@ export class BookImporter {
       console.error('Import failed:', error);
     }
 
-    return results;
+    return { ...results, reportBase64: BookImporter.buildReportExcel(successRows, failedRows).toString('base64') };
+  }
+
+  /**
+   * Import books from an Excel file, using a pre-built image map from a ZIP bundle.
+   * Images in the map take priority over URLs in the spreadsheet, which in turn take
+   * priority over the automatic Google Books / OpenLibrary fetch.
+   */
+  static async importFromZip(
+    excelPath: string,
+    imageMap: Record<string, { slot1?: Buffer; slot2?: Buffer; slot3?: Buffer }>
+  ): Promise<DetailedImportResult> {
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as string[],
+      created: 0,
+      updated: 0,
+      imagesFetched: 0,
+      imagesNone: 0,
+    };
+    const successRows: SuccessRecord[] = [];
+    const failedRows: FailedRecord[] = [];
+
+    try {
+      const ext = excelPath.split('.').pop()?.toLowerCase();
+      const workbook = ext === 'csv'
+        ? XLSX.readFile(excelPath, { type: 'file', raw: false })
+        : XLSX.readFile(excelPath);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+
+      if (data.length < 2) {
+        throw new Error('Excel file must have at least a header row and one data row');
+      }
+
+      const KNOWN_HEADERS = new Set(['id','title','author','isbn','price','cost price','category','categories',
+        'subcategory','condition','binding','description','publisher','published year','pages','language',
+        'edition','weight','dimensions','stock','featured','bestseller','trending','new arrival',
+        'box set','hidden','image url','image url 2','image url 3']);
+      const firstRowIsHeader = (data[0] as string[]).some(
+        v => v && KNOWN_HEADERS.has(String(v).toLowerCase().trim())
+      );
+      const headerRowIndex = firstRowIsHeader ? 0 : 1;
+
+      const headers = data[headerRowIndex] as string[];
+      const rows = data.slice(headerRowIndex + 1) as any[][];
+
+      const categories = await storage.getCategories();
+      const categoryMap = new Map(categories.map(cat => [cat.name.toLowerCase(), cat.id]));
+
+      const allSubcategories = await storage.getSubCategories();
+      const subcategoryMap = new Map(allSubcategories.map(sub => [sub.name.toLowerCase(), sub]));
+
+      // Preload existing ISBNs from DB for duplicate checking
+      const { books: existingBooks } = await storage.getBooks({ limit: 100000, includeHidden: true, includeOutOfStock: true });
+      const existingIsbnSet = new Set(existingBooks.filter(b => b.isbn).map(b => b.isbn!.trim()));
+      const seenIsbnSet = new Set<string>(); // tracks ISBNs within this batch
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + headerRowIndex + 2;
+        let bookData: BookRow = {};
+        try {
+          // Reuse the same header-mapping logic as importFromExcel
+          bookData = {};
+          headers.forEach((header, index) => {
+            const value = row[index];
+            const normalizedHeader = header.toLowerCase().trim();
+            switch (normalizedHeader) {
+              case 'id': bookData.id = parseInt(value) || undefined; break;
+              case 'title': case 'name': bookData.title = value?.toString().trim(); break;
+              case 'author': bookData.author = value?.toString().trim(); break;
+              case 'isbn': case 'item code': case 'item_code': bookData.isbn = value?.toString().trim(); break;
+              case 'price': case 'selling price': case 'selling_price': bookData.price = parseFloat(value) || 0; break;
+              case 'cost price': case 'cost_price': case 'costprice': bookData.costPrice = parseFloat(value) || undefined; break;
+              case 'category': bookData.category = value?.toString().trim(); break;
+              case 'categories': bookData.categories = value?.toString().trim(); break;
+              case 'subcategory': case 'sub_category': case 'sub category': bookData.subcategory = value?.toString().trim(); break;
+              case 'condition': bookData.condition = value?.toString().trim() || 'Good'; break;
+              case 'binding': bookData.binding = value?.toString().trim() || 'No Binding'; break;
+              case 'description': bookData.description = value?.toString().trim(); break;
+              case 'publisher': bookData.publisher = value?.toString().trim(); break;
+              case 'published_year': case 'published year': case 'year': bookData.publishedYear = parseInt(value) || undefined; break;
+              case 'pages': bookData.pages = parseInt(value) || undefined; break;
+              case 'language': bookData.language = value?.toString().trim() || 'English'; break;
+              case 'edition': bookData.edition = value?.toString().trim(); break;
+              case 'weight': bookData.weight = parseFloat(value) || undefined; break;
+              case 'dimensions': bookData.dimensions = value?.toString().trim(); break;
+              case 'stock': case 'quantity': case 'qty': bookData.stock = parseInt(value) || 1; break;
+              case 'featured': bookData.featured = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1; break;
+              case 'bestseller': case 'best_seller': case 'best seller': bookData.bestseller = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1; break;
+              case 'trending': bookData.trending = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1; break;
+              case 'new_arrival': case 'new arrival': case 'newarrival': bookData.newArrival = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1; break;
+              case 'box_set': case 'box set': case 'boxset': bookData.boxSet = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1; break;
+              case 'hidden': case 'is_hidden': case 'is hidden': bookData.isHidden = value === true || value?.toString().toLowerCase() === 'yes' || value?.toString().toLowerCase() === 'true' || value === 1; break;
+              case 'image_url': case 'image url': case 'imageurl': bookData.imageUrl = value?.toString().trim(); break;
+              case 'image_url_2': case 'image url 2': case 'imageurl2': bookData.imageUrl2 = value?.toString().trim(); break;
+              case 'image_url_3': case 'image url 3': case 'imageurl3': bookData.imageUrl3 = value?.toString().trim(); break;
+            }
+          });
+
+          if (!bookData.title) {
+            throw new Error(`Row ${rowNumber}: Title is required`);
+          }
+
+          bookData.author = bookData.author || 'Unknown Author';
+          bookData.price = bookData.price || 19.99;
+          bookData.condition = bookData.condition || 'New';
+          bookData.stock = bookData.stock || 10;
+          bookData.language = bookData.language || 'English';
+          bookData.description = bookData.description || `${bookData.title} - A comprehensive book in our collection.`;
+
+          // ISBN uniqueness check (skip when updating an existing record by ID)
+          if (bookData.isbn && !(bookData.id && bookData.id > 0)) {
+            const normalizedIsbn = bookData.isbn.trim();
+            if (seenIsbnSet.has(normalizedIsbn)) {
+              throw new Error(`Row ${rowNumber}: Duplicate ISBN "${normalizedIsbn}" in this upload`);
+            }
+            if (existingIsbnSet.has(normalizedIsbn)) {
+              throw new Error(`Row ${rowNumber}: ISBN "${normalizedIsbn}" already exists in the database`);
+            }
+            seenIsbnSet.add(normalizedIsbn);
+          }
+
+          // Category resolution
+          let categoryId = 1;
+          let resolvedCategoryIds: number[] = [];
+          if (bookData.categories) {
+            for (const catName of bookData.categories.split(',').map(s => s.trim().toLowerCase())) {
+              const foundId = categoryMap.get(catName);
+              if (foundId) resolvedCategoryIds.push(foundId);
+            }
+          }
+          if (bookData.category) {
+            const foundCategoryId = categoryMap.get(bookData.category.toLowerCase());
+            if (foundCategoryId) {
+              categoryId = foundCategoryId;
+              if (!resolvedCategoryIds.includes(foundCategoryId)) resolvedCategoryIds.push(foundCategoryId);
+            }
+          } else if (resolvedCategoryIds.length > 0) {
+            categoryId = resolvedCategoryIds[0];
+          }
+
+          let subCategoryId: number | null = null;
+          if (bookData.subcategory) {
+            const matchedSub = subcategoryMap.get(bookData.subcategory.toLowerCase());
+            if (matchedSub) subCategoryId = matchedSub.id;
+          }
+
+          const isbn = bookData.isbn;
+          const bundle = isbn ? imageMap[isbn] : undefined;
+
+          // --- Image slot 1 (imageUrl) ---
+          let imageUrl: string | null = null;
+          if (bundle?.slot1) {
+            // Priority 1: image from ZIP
+            imageUrl = await this.downloadAndSaveImageBuffer(bundle.slot1, isbn || `book-${rowNumber}`, 1);
+          } else if (bookData.imageUrl) {
+            // Priority 2: URL from Excel
+            imageUrl = bookData.imageUrl;
+          } else if (isbn) {
+            // Priority 3: auto-fetch
+            const coverData = await this.fetchBookCover(isbn);
+            if (coverData) {
+              imageUrl = await this.downloadAndSaveImage(coverData.imageUrl, isbn);
+              if (imageUrl) results.imagesFetched++;
+            }
+          }
+          if (!imageUrl) results.imagesNone++;
+
+          // --- Image slot 2 (imageUrl2) ---
+          let imageUrl2: string | null = bookData.imageUrl2 || null;
+          if (bundle?.slot2) {
+            imageUrl2 = await this.downloadAndSaveImageBuffer(bundle.slot2, isbn || `book-${rowNumber}`, 2);
+          }
+
+          // --- Image slot 3 (imageUrl3) ---
+          let imageUrl3: string | null = bookData.imageUrl3 || null;
+          if (bundle?.slot3) {
+            imageUrl3 = await this.downloadAndSaveImageBuffer(bundle.slot3, isbn || `book-${rowNumber}`, 3);
+          }
+
+          const insertBook: InsertBook = {
+            title: bookData.title,
+            author: bookData.author,
+            isbn: isbn || null,
+            price: bookData.price.toString(),
+            categoryId,
+            subCategoryId,
+            condition: bookData.condition || 'Good',
+            binding: bookData.binding || 'No Binding',
+            description: bookData.description || null,
+            publisher: bookData.publisher || null,
+            publishedYear: bookData.publishedYear || null,
+            pages: bookData.pages || null,
+            language: bookData.language || 'English',
+            edition: bookData.edition || null,
+            weight: bookData.weight != null ? bookData.weight.toString() : null,
+            dimensions: bookData.dimensions || null,
+            stock: bookData.stock || 1,
+            featured: bookData.featured || false,
+            bestseller: bookData.bestseller || false,
+            trending: bookData.trending || false,
+            newArrival: bookData.newArrival || false,
+            boxSet: bookData.boxSet || false,
+            isHidden: bookData.isHidden || false,
+            costPrice: bookData.costPrice != null ? bookData.costPrice.toString() : null,
+            imageUrl: imageUrl || null,
+            imageUrl2: imageUrl2 || null,
+            imageUrl3: imageUrl3 || null,
+          };
+
+          if (bookData.id && bookData.id > 0) {
+            await storage.updateBook(bookData.id, insertBook);
+            if (resolvedCategoryIds.length > 0) await storage.setBookCategories(bookData.id, resolvedCategoryIds);
+            results.success++;
+            results.updated++;
+            successRows.push({ rowNumber, action: 'updated', title: bookData.title, author: bookData.author, isbn: bookData.isbn, price: bookData.price, category: bookData.category, subcategory: bookData.subcategory, condition: bookData.condition, binding: bookData.binding, stock: bookData.stock, publisher: bookData.publisher, publishedYear: bookData.publishedYear, language: bookData.language, imageUrl: insertBook.imageUrl ?? undefined, imageUrl2: insertBook.imageUrl2 ?? undefined, imageUrl3: insertBook.imageUrl3 ?? undefined });
+          } else {
+            const createdBook = await storage.createBook(insertBook);
+            if (resolvedCategoryIds.length > 0) await storage.setBookCategories(createdBook.id, resolvedCategoryIds);
+            results.success++;
+            results.created++;
+            successRows.push({ rowNumber, action: 'created', title: bookData.title, author: bookData.author, isbn: bookData.isbn, price: bookData.price, category: bookData.category, subcategory: bookData.subcategory, condition: bookData.condition, binding: bookData.binding, stock: bookData.stock, publisher: bookData.publisher, publishedYear: bookData.publishedYear, language: bookData.language, imageUrl: insertBook.imageUrl ?? undefined, imageUrl2: insertBook.imageUrl2 ?? undefined, imageUrl3: insertBook.imageUrl3 ?? undefined });
+          }
+        } catch (error) {
+          results.failed++;
+          const errorMsg = error instanceof Error ? error.message : `Row ${rowNumber}: Unknown error`;
+          results.errors.push(errorMsg);
+          failedRows.push({ rowNumber, title: bookData.title, author: bookData.author, isbn: bookData.isbn, price: bookData.price, reason: errorMsg });
+        }
+      }
+    } catch (error) {
+      results.errors.push(error instanceof Error ? error.message : 'Unknown error occurred');
+    }
+
+    return { ...results, reportBase64: BookImporter.buildReportExcel(successRows, failedRows).toString('base64') };
+  }
+
+  static buildReportExcel(successRows: SuccessRecord[], failedRows: FailedRecord[]): Buffer {
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Success
+    const successData = successRows.map(r => ({
+      'Row #': r.rowNumber,
+      'Action': r.action === 'created' ? 'Created' : 'Updated',
+      'Title': r.title || '',
+      'Author': r.author || '',
+      'ISBN': r.isbn || '',
+      'Price': r.price ?? '',
+      'Category': r.category || '',
+      'Subcategory': r.subcategory || '',
+      'Condition': r.condition || '',
+      'Binding': r.binding || '',
+      'Stock': r.stock ?? '',
+      'Publisher': r.publisher || '',
+      'Published Year': r.publishedYear ?? '',
+      'Language': r.language || '',
+      'Image URL': r.imageUrl || '',
+      'Image URL 2': r.imageUrl2 || '',
+      'Image URL 3': r.imageUrl3 || '',
+    }));
+    const ws1 = XLSX.utils.json_to_sheet(successData.length > 0 ? successData : [{ 'Note': 'No books were imported successfully' }]);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Import Success');
+
+    // Sheet 2: Failed
+    const failedData = failedRows.map(r => ({
+      'Row #': r.rowNumber,
+      'Title': r.title || '',
+      'Author': r.author || '',
+      'ISBN': r.isbn || '',
+      'Price': r.price ?? '',
+      'Failure Reason': r.reason,
+    }));
+    const ws2 = XLSX.utils.json_to_sheet(failedData.length > 0 ? failedData : [{ 'Note': 'No failures' }]);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Import Failed');
+
+    return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+  }
+
+  private static async downloadAndSaveImageBuffer(
+    buffer: Buffer,
+    isbn: string,
+    slot: number
+  ): Promise<string | null> {
+    try {
+      const uploadResult = await CloudinaryService.uploadImage(
+        buffer,
+        'a2z-bookshop/books',
+        `book-${isbn}-slot${slot}-${Date.now()}`
+      );
+      return uploadResult.secure_url;
+    } catch (error) {
+      console.error(`Failed to upload ZIP image for ${isbn} slot ${slot}:`, error);
+      return null;
+    }
   }
 }

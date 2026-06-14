@@ -22,6 +22,8 @@ import {
   ClipboardList,
   Receipt,
   Shield,
+  Tag,
+  FileArchive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,6 +50,8 @@ const menuSections = [
     title: "Management",
     items: [
       { href: "/admin/inventory", icon: BookOpen, label: "Inventory" },
+      { href: "/admin/categories", icon: Tag, label: "Categories" },
+      { href: "/admin/import-books-zip", icon: FileArchive, label: "Bulk Upload (ZIP)" },
       { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
       { href: "/admin/book-requests", icon: ClipboardList, label: "Book Requests" },
       { href: "/admin/customers", icon: Users, label: "Customers" },

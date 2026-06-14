@@ -18,7 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useShipping } from "@/hooks/useShipping";
 import { calculateDeliveryDate } from "@/lib/deliveryUtils";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import SmallBannerStrip from "@/components/SmallBannerStrip";
 
 
 // Image helper function
@@ -85,6 +86,8 @@ export default function CartPage() {
   const { userCurrency, convertPrice, formatAmount, exchangeRates } = useCurrency();
   const { shippingCost, shippingRate, isLoading: isShippingLoading } = useShipping();
   const [giftItem, setGiftItem] = useState<any>(null);
+  const { data: giftFeatureData } = useQuery<{ enabled: boolean }>({ queryKey: ["/api/gift-feature-status"] });
+  const giftFeatureEnabled = giftFeatureData?.enabled ?? true;
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   const [removingItemId, setRemovingItemId] = useState<number | null>(null);
   const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
@@ -544,8 +547,8 @@ export default function CartPage() {
         noindex
       />
       <div className="container mx-auto px-4">
+        <SmallBannerStrip pageName="cart" />
         <Breadcrumb items={[{ label: "Cart" }]} />
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
@@ -776,8 +779,8 @@ export default function CartPage() {
               </Card>
             )} */}
 
-            {/* Gift Reminder Banner - Show only if user has books but no gift selected */}
-            {!hasNonGiftBooks && cartItems.length > 0 && (
+            {/* Gift Reminder Banner - Show only if gift feature is enabled and user has books but no gift selected */}
+            {giftFeatureEnabled && !hasNonGiftBooks && cartItems.length > 0 && (
               <Card className="rounded-xl bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 border-2 border-purple-300 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -791,7 +794,7 @@ export default function CartPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
                           <h3 className="text-sm sm:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent break-words">
-                            Don't forget your FREE gift! 
+                            Don't forget your FREE gift!
                           </h3>
                           <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 animate-pulse flex-shrink-0" />
                         </div>

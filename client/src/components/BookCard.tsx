@@ -37,6 +37,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
   const [isConverting, setIsConverting] = useState(false);
   const [shippingCost, setShippingCost] = useState<string>('');
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isCartWalking, setIsCartWalking] = useState(false);
   const {
     location,
   } = useUserLocation();
@@ -142,6 +143,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
+    setIsCartWalking(true);
     setIsAddingToCart(true);
     try {
       await addToCart(book.id);
@@ -175,8 +177,10 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
     }
   };
 
-  const handleBuyNow = async () => {
-    setLocation(`/checkout/buyNow/${book.id}/1`);
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`/checkout/buyNow/${book.id}/1`, '_blank', 'noopener,noreferrer');
   }
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -198,13 +202,13 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
 
   return (
     <div className="group relative bg-white shadow-lg hover:shadow-lg transition-shadow duration-300 overflow-hidden border rounded-xl w-full">
-      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10 flex flex-col items-center gap-1">
+      <div className="absolute top-2 right-2 z-20 flex flex-col justify-center items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <button
           onClick={handleShare}
-          className="p-1 rounded-full bg-white/80 hover:bg-white shadow text-gray-500 hover:text-primary-aqua transition-colors"
+          className="p-1.5 rounded-full bg-white shadow-md text-gray-400 hover:text-primary-aqua transition-colors"
           aria-label="Share book"
         >
-          <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Share2 className="h-3.5 w-3.5" />
         </button>
         <WishlistHeart bookId={book.id} />
       </div>
@@ -220,11 +224,11 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
               e.currentTarget.src = 'https://via.placeholder.com/300x400/f0f0f0/666?text=No+Image';
             }}
           />
-          {/* Stacked ribbon badges with spring + glint animation */}
+          {/* Stacked ribbon badges */}
           <div className="absolute top-2 left-0 flex flex-col gap-1.5 z-10">
-            {book.featured && (
-              <div className="badge-tag badge-featured inline-flex items-center gap-1 bg-amber-500 text-white font-bold text-[9px] sm:text-[11px] px-2 py-0.5 sm:px-3 sm:py-1 rounded-r-md shadow-md">
-                <span className="text-[8px] sm:text-[10px]">✦</span> Featured
+            {book.newArrival && (
+              <div className="badge-tag inline-flex items-center gap-1 bg-emerald-500 text-white font-bold text-[9px] sm:text-[11px] px-2 py-0.5 sm:px-3 sm:py-1 rounded-r-md shadow-md">
+                <span className="text-[8px] sm:text-[10px]">🆕</span> New
               </div>
             )}
             {book.bestseller && (
@@ -242,159 +246,113 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
           </h3>
           <p className="text-[9px] sm:text-sm text-gray-600 mb-1 sm:mb-2 truncate">{book.author}</p>
 
-          <div className="flex items-center justify-between mb-1 sm:mb-2">
-            <div className="min-w-0 truncate">
-              {isGift ? (
-                <span>
-                  <span className="text-xs text-gray-400 line-through mr-2">
-                    {displayPrice || formatAmount(parseFloat(book.price), 'USD')}
-                  </span>
-                  <Badge className="bg-green-500 text-white font-bold">FREE</Badge>
-                </span>
-              ) : (
-                isConverting ? (
-                  <span className="text-sm">
-                    <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
-                  </span>) : (
-                  <span className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="text-xs sm:text-lg font-bold text-secondary-aqua">
-                      {displayPrice || formatAmount(parseFloat(book.price), 'USD')}
+          {/* Swap zone: info slides out, buttons slide in on hover */}
+          <div className="relative overflow-hidden">
+
+            {/* INFO LAYER — price slides left, delivery slides right */}
+            <div className="flex flex-col gap-1 pb-2 sm:pb-3">
+              {/* Price row */}
+              <div className="transition-transform duration-300 ease-in-out group-hover:-translate-x-full">
+                <div className="min-w-0 truncate">
+                  {isGift ? (
+                    <span>
+                      <span className="text-xs text-gray-400 line-through mr-2">
+                        {displayPrice || formatAmount(parseFloat(book.price), 'USD')}
+                      </span>
+                      <Badge className="bg-green-500 text-white font-bold">FREE</Badge>
                     </span>
-                    {displayCostPrice && (
-                      <span className="text-[9px] sm:text-sm text-gray-400 line-through">
-                        {displayCostPrice}
+                  ) : (
+                    isConverting ? (
+                      <span className="text-sm">
+                        <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
                       </span>
-                    )}
-                    {book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price) && (
-                      <span className="text-[9px] sm:text-xs font-bold text-white bg-green-500 px-1 py-0.5 rounded">
-                        {Math.round(((parseFloat(book.costPrice) - parseFloat(book.price)) / parseFloat(book.costPrice)) * 100)}% off
+                    ) : (
+                      <span className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-xs sm:text-lg font-bold text-secondary-aqua">
+                          {displayPrice || formatAmount(parseFloat(book.price), 'USD')}
+                        </span>
+                        {displayCostPrice && (
+                          <span className="text-[9px] sm:text-sm text-gray-400 line-through">
+                            {displayCostPrice}
+                          </span>
+                        )}
+                        {book.costPrice && parseFloat(book.costPrice) > parseFloat(book.price) && (
+                          <span className="text-[9px] sm:text-xs font-bold text-white bg-green-500 px-1 py-0.5 rounded">
+                            {Math.round(((parseFloat(book.costPrice) - parseFloat(book.price)) / parseFloat(book.costPrice)) * 100)}% off
+                          </span>
+                        )}
                       </span>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Shipping row */}
+              <div className="flex justify-between text-[8px] sm:text-xs text-gray-500 transition-transform duration-300 ease-in-out group-hover:translate-x-full">
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <Truck className="h-2 w-2 sm:h-3 sm:w-3 text-green-600" />
+                  <span className="text-secondary-black font-medium truncate">
+                    {isShippingLoading ? (
+                      <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
+                    ) : shippingCost}
+                  </span>
+                </div>
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <Clock className="h-2 w-2 sm:h-3 sm:w-3 text-blue-600" />
+                  <span className="text-secondary-black">
+                    {isShippingLoading ? (
+                      <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
+                    ) : (
+                      shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
+                        `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days` :
+                        '5-7 days'
                     )}
                   </span>
-
-                )
-              )}
-            </div>
-            {book.condition && (
-              <Badge variant="outline" className="text-[8px] sm:text-xs px-1 py-0 sm:px-2 sm:py-1">
-                {book.condition}
-              </Badge>
-            )}
-          </div>
-
-          {/* Rating - Enhanced with Half Stars */}
-          <div className="flex flex-nowrap whitespace-nowrap items-center mb-1 sm:mb-2 bg-gradient-to-r from-amber-50 to-orange-50 px-1 sm:px-2 py-1 sm:py-1.5 rounded-lg border border-amber-100">
-            <div className="flex shrink-0">
-              {/* Full Stars */}
-              {[...Array(fullStars)].map((_, i) => (
-                <Star
-                  key={`full-${i}`}
-                  className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-amber-400 fill-amber-400 drop-shadow-sm transition-transform hover:scale-110"
-                />
-              ))}
-              {/* Half Star */}
-              {hasHalfStar && (
-                <div className="relative shrink-0">
-                  <Star className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-gray-300 fill-gray-300" />
-                  <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
-                    <Star className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-amber-400 fill-amber-400 drop-shadow-sm" />
-                  </div>
                 </div>
-              )}
-              {/* Empty Stars */}
-              {[...Array(emptyStars)].map((_, i) => (
-                <Star
-                  key={`empty-${i}`}
-                  className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-gray-300 fill-gray-200"
-                />
-              ))}
+              </div>
             </div>
-            <span className="text-[8px] sm:text-xs font-semibold text-gray-700 ml-1 sm:ml-2 shrink-0">
-              {bookRating.toFixed(1)}
-            </span>
-            <span className="text-[8px] sm:text-xs text-gray-500 ml-0.5 sm:ml-1 shrink-0">
-              ({reviewCount})
-            </span>
-          </div>
 
-          {/* Shipping and Return Info */}
-          <div className="flex justify-between text-[8px] sm:text-xs text-gray-500 mb-2 sm:mb-3">
-            <div className="flex items-center gap-0.5 sm:gap-1">
-              <Truck className="h-2 w-2 sm:h-3 sm:w-3 text-green-600" />
-              <span className="text-secondary-black font-medium truncate">
-                {isShippingLoading ? (
-                  <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
-                ) : shippingCost}
-              </span>
-            </div>
-            <div className="flex items-center gap-0.5 sm:gap-1">
-              <Clock className="h-2 w-2 sm:h-3 sm:w-3 text-blue-600" />
-              <span className="text-secondary-black">
-                {isShippingLoading ? (
-                  <span className="inline-block h-[1em] w-16 align-middle rounded bg-gray-300 animate-pulse" />
-                ) : (
-                  shippingRate?.minDeliveryDays && shippingRate?.maxDeliveryDays ?
-                    `${shippingRate.minDeliveryDays}-${shippingRate.maxDeliveryDays} days` :
-                    '5-7 days'
-                )}
-              </span>
+            {/* BUTTONS LAYER — absolutely fills the same space, slides in on hover */}
+            <div className="absolute inset-0 flex items-center gap-1 sm:gap-2 pointer-events-none group-hover:pointer-events-auto pb-2 sm:pb-3">
+              <Button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                className="
+                  w-[30%] aspect-square
+                  bg-primary-aqua hover:bg-secondary-aqua
+                  text-white
+                  rounded-full
+                  shadow-md
+                  transition-all duration-300 ease-in-out
+                  -translate-x-full group-hover:translate-x-0
+                  flex items-center justify-center
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart
+                    className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 ${isAddingToCart ? 'cart-walk-loop' : isCartWalking ? 'cart-walk' : ''}`}
+                    onAnimationEnd={() => { if (!isAddingToCart) setIsCartWalking(false); }}
+                  />
+              </Button>
+              <Button
+                onClick={handleBuyNow}
+                disabled={isAddingToCart}
+                className="
+                  flex-1 min-w-0
+                  bg-red-500 hover:bg-red-600
+                  text-white text-[9px] sm:text-xs font-semibold
+                  rounded-full py-1.5 sm:py-2
+                  shadow-md
+                  transition-all duration-300 ease-in-out
+                  translate-x-full group-hover:translate-x-0
+                  flex items-center justify-center gap-1
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span>Buy Now</span>
+              </Button>
             </div>
           </div>
         </div>
       </a>
-
-      {/* Buttons */}
-      <div className="flex gap-1 sm:gap-2 px-2 sm:px-4 pb-2 sm:pb-4 min-w-0">
-        <Button
-          onClick={handleAddToCart}
-          disabled={isAddingToCart}
-          className="
-              flex-1 min-w-0
-              bg-primary-aqua hover:bg-secondary-aqua
-              text-white text-[9px] sm:text-sm font-medium
-              rounded-full py-1 sm:py-2
-              shadow-md hover:shadow-lg
-              transition-all
-              flex items-center justify-center gap-1 sm:gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed"
-
-        >
-          {isAddingToCart ? (
-            <>
-              <span className="sm:hidden">...</span>
-              <span className="hidden sm:inline">Adding...</span>
-            </>
-          ) : (
-            <>
-              <span className="sm:hidden "><ShoppingCart className="h-6 w-6" /> </span>
-              <span className="hidden sm:inline">
-
-                <div className="flex items-center gap-1">
-                  Add
-                  <ShoppingCart className="h-6 w-6" />
-                </div>
-              </span>
-            </>
-          )}
-        </Button>
-
-        <Button
-          onClick={handleBuyNow}
-          disabled={isAddingToCart}
-          className="
-              flex-1 min-w-0
-              bg-red-500 hover:bg-red-600
-              text-white text-[9px] sm:text-sm font-medium
-              rounded-full py-1 sm:py-2
-              shadow-md hover:shadow-lg
-              transition-all
-              flex items-center justify-center gap-1 sm:gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span className="sm:hidden text-[12px] font-bold">Buy </span>
-          <span className="hidden sm:inline">Buy Now</span>
-        </Button>
-      </div>
     </div>
   );
 }

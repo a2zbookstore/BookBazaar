@@ -12,6 +12,7 @@ export interface BannerItem {
   subtitle?: string;
   link?: string;
   buttonText?: string;
+  clickUrl?: string;
 }
 
 interface BannerCarouselProps {
@@ -47,6 +48,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
   }, [emblaApi]);
 
   useEffect(() => {
+    
     if (!emblaApi) return;
     onSelect();
     emblaApi.on("select", onSelect);
@@ -63,6 +65,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
             id: `${data[0].id}_${idx}`,
             image: img,
             alt: data[0].page_type,
+            clickUrl: data[0].link_urls?.[idx] || undefined,
           }));
           setBanners(items);
         } else {
@@ -96,7 +99,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
 
   return (
     <div
-      className={`relative ${height} overflow-hidden rounded-2xl shadow-xl group ${className}`}
+      className={`relative ${height} overflow-hidden shadow-xl group ${className}`}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
@@ -105,13 +108,25 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
         <div className="embla__container flex h-full">
           {banners.map((banner, index) => (
             <div key={banner.id} className="embla__slide flex-[0_0_100%] relative h-full">
-              <img
-                src={banner.image}
-                alt={banner.alt || banner.title || "Banner"}
-                className="w-full h-full object-cover object-center block select-none"
-                loading={index === 0 ? "eager" : "lazy"}
-                draggable={false}
-              />
+              {banner.clickUrl ? (
+                <Link href={banner.clickUrl} className="block w-full h-full">
+                  <img
+                    src={banner.image}
+                    alt={banner.alt || banner.title || "Banner"}
+                    className="w-full h-full object-cover object-center block select-none cursor-pointer"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    draggable={false}
+                  />
+                </Link>
+              ) : (
+                <img
+                  src={banner.image}
+                  alt={banner.alt || banner.title || "Banner"}
+                  className="w-full h-full object-cover object-center block select-none"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  draggable={false}
+                />
+              )}
 
               {/* Overlay — only when text/button present */}
               {(banner.title || banner.subtitle || banner.buttonText) && (

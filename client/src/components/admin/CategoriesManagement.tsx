@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Tag, Hash, AlignLeft, ArrowUpDown, Loader2, FolderOpen, X, ChevronDown, ChevronRight, Layers } from "lucide-react";
+import { Plus, Edit, Trash2, Tag, Hash, AlignLeft, ArrowUpDown, Loader2, FolderOpen, X, ChevronDown, ChevronRight, Layers, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -137,7 +137,7 @@ const SubCategoryFormFields = ({
                 </SelectContent>
             </Select>
         </Field>
-        {/* <Field label="Subcategory Name" icon={<Layers className="h-3.5 w-3.5" />}>
+        <Field label="Subcategory Name" icon={<Layers className="h-3.5 w-3.5" />}>
             <div className="relative">
                 <Layers className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                 <Input
@@ -147,17 +147,16 @@ const SubCategoryFormFields = ({
                     required
                     placeholder="e.g., Space Opera"
                 />
-
             </div>
-        </Field> */}
-        <Field label="URL Slug" icon={<Hash className="h-3.5 w-3.5" />} hint="Auto-generated from name.">
+        </Field>
+        <Field label="URL Slug" icon={<Hash className="h-3.5 w-3.5" />} hint="Auto-generated from name. You can override it.">
             <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                 <Input
                     className="pl-9 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-200 h-10 font-mono text-sm"
                     value={values.slug}
                     onChange={(e) => onChange("slug", e.target.value)}
-                    placeholder="space-opera"
+                    placeholder="auto-generated"
                 />
             </div>
         </Field>
@@ -265,6 +264,18 @@ export default function CategoriesManagement() {
         },
     });
 
+    const toggleHomepageMutation = useMutation({
+        mutationFn: async ({ id, showOnHomepage }: { id: number; showOnHomepage: boolean }) => {
+            await apiRequest("POST", "/api/toggleCategoryHomepage", { id, showOnHomepage });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+        },
+        onError: (error) => {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to update category", variant: "destructive" });
+        },
+    });
+
     // ── Subcategory mutations ──
     const createSubCategoryMutation = useMutation({
         mutationFn: async (data: SubCategoryForm) => {
@@ -337,6 +348,14 @@ export default function CategoriesManagement() {
 
     const handleSubCategorySubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const trimmedName = subCategoryForm.name.trim().toLowerCase();
+        const isDuplicate = allSubCategories.some(
+            s => s.name.trim().toLowerCase() === trimmedName
+        );
+        if (isDuplicate) {
+            toast({ title: "Duplicate name", description: `A subcategory named "${subCategoryForm.name.trim()}" already exists. Please use a unique name.`, variant: "destructive" });
+            return;
+        }
         const slug = subCategoryForm.slug || toSlug(subCategoryForm.name);
         createSubCategoryMutation.mutate({ ...subCategoryForm, slug });
     };
@@ -349,6 +368,14 @@ export default function CategoriesManagement() {
     const handleEditSubCategorySubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!subCategoryToEdit) return;
+        const trimmedName = subCategoryToEdit.name.trim().toLowerCase();
+        const isDuplicate = allSubCategories.some(
+            s => s.name.trim().toLowerCase() === trimmedName && s.id !== subCategoryToEdit.id
+        );
+        if (isDuplicate) {
+            toast({ title: "Duplicate name", description: `A subcategory named "${subCategoryToEdit.name.trim()}" already exists. Please use a unique name.`, variant: "destructive" });
+            return;
+        }
         const slug = subCategoryToEdit.slug || toSlug(subCategoryToEdit.name);
         updateSubCategoryMutation.mutate({ ...subCategoryToEdit, slug } as any);
     };
@@ -470,6 +497,21 @@ export default function CategoriesManagement() {
                                             className="flex items-center gap-1.5 shrink-0"
                                             onClick={e => e.stopPropagation()}
                                         >
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => toggleHomepageMutation.mutate({ id: category.id, showOnHomepage: !(category.showOnHomepage ?? true) })}
+                                                disabled={toggleHomepageMutation.isPending}
+                                                title={category.showOnHomepage === false ? "Hidden from homepage — click to show" : "Visible on homepage — click to hide"}
+                                                className={`h-7 px-2 text-xs rounded-lg gap-1 ${category.showOnHomepage === false ? "border-gray-200 text-gray-400 hover:bg-gray-50 hover:border-gray-400" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400"}`}
+                                            >
+                                                {toggleHomepageMutation.isPending
+                                                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                                                    : category.showOnHomepage === false
+                                                        ? <><EyeOff className="h-3 w-3" /><span className="hidden sm:inline">Homepage</span></>
+                                                        : <><Eye className="h-3 w-3" /><span className="hidden sm:inline">Homepage</span></>
+                                                }
+                                            </Button>
                                             <Button
                                                 variant="outline"
                                                 size="sm"

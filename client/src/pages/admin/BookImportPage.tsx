@@ -13,6 +13,22 @@ interface ImportResult {
   success: number;
   failed: number;
   errors: string[];
+  created?: number;
+  updated?: number;
+  reportBase64?: string;
+}
+
+function downloadReport(base64: string, filename: string) {
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function BookImportPage() {
@@ -231,6 +247,16 @@ export default function BookImportPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {importResult.reportBase64 && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => downloadReport(importResult.reportBase64!, `import-report-${Date.now()}.xlsx`)}
+              >
+                Download Import Report (.xlsx)
+              </Button>
             )}
           </CardContent>
         </Card>

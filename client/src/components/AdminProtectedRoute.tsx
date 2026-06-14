@@ -75,9 +75,9 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
 
   return (
     <div>
-      <div className="fixed top-0 left-0 right-0 z-40">
+      {/* <div className="fixed top-0 left-0 right-0 z-40">
         <Header />
-      </div>
+      </div> */}
       <AdminLayout>
         {children}
       </AdminLayout>

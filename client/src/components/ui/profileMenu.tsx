@@ -94,7 +94,9 @@ export default function ProfileMenu(user?: any) {
                               hover:bg-primary-aqua hover:text-white focus:bg-primary-aqua
                             focus:text-white
                             "
-                            onClick={() => setLocation(location || "/")}
+                            onSelect={() => {
+                                setTimeout(() => setLocation(location || "/"), 0);
+                            }}
                         >
                             <Icon className="h-4 w-4 md:h-5 md:w-5" />
                             <span>{label}</span>
@@ -111,7 +113,8 @@ export default function ProfileMenu(user?: any) {
                           text-red-600 outline-none hover:text-white
                           hover:bg-red-500 hover:border-red-600
                         "
-                        onClick={async () => {
+                        onSelect={() => {
+                            setTimeout(async () => {
                             setIsAuthTransitioning(true);
                             try {
                                 await fetch("/api/auth/logout", { method: "POST" });
@@ -121,6 +124,7 @@ export default function ProfileMenu(user?: any) {
                             await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
                             setIsAuthTransitioning(false);
                             setLocation("/");
+                            }, 0);
                         }}
                     >
                         <LogOut className="h-4 w-4 md:h-5 md:w-5" />

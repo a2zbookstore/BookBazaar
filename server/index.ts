@@ -7,12 +7,15 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { cleanupOldAnalytics } from "./analyticsCleanup";
 import { securityMiddleware } from "./securityMiddleware";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Helmet security headers - including CSP
+const isDevelopment = process.env.NODE_ENV === 'development';
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -37,6 +40,8 @@ app.use(helmet({
         "ipapi.co",
         "ipinfo.io",
         "nominatim.openstreetmap.org",
+        // Allow Vite HMR WebSocket connection in development so hot reload works
+        ...(isDevelopment ? ["ws:", "wss:"] : []),
       ],
       frameSrc: ["js.stripe.com", "www.paypal.com", "api.razorpay.com"],
       fontSrc: ["'self'", "data:", "fonts.gstatic.com"],
@@ -163,6 +168,15 @@ process.on('SIGINT', () => {
 (async () => {
   try {
     log('Starting server initialization...');
+
+    // Ensure new banner columns exist (safe to run every startup — IF NOT EXISTS)
+    try {
+      await db.execute(sql`ALTER TABLE banners ADD COLUMN IF NOT EXISTS link_urls text[]`);
+      log('Banner schema migration: link_urls column ensured.');
+    } catch (migrationErr) {
+      // Non-fatal: column may already exist or DB may not have banners table yet
+      log(`Banner migration skipped: ${migrationErr}`);
+    }
     
     const server = await registerRoutes(app);
 

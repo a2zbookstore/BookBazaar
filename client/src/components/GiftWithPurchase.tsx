@@ -20,6 +20,14 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  // Fetch gift feature status
+  const { data: giftFeatureData } = useQuery<{ enabled: boolean }>({
+    queryKey: ["/api/gift-feature-status"],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   // Fetch gift categories from database (public endpoint)
   const { data: giftCategories = [], isLoading: categoriesLoading } = useQuery<GiftCategory[]>({
     queryKey: ["/api/gift-categories"],
@@ -30,6 +38,11 @@ export default function GiftWithPurchase({ hasItemsInCart, onGiftAdded }: GiftWi
 
   // Gift items deprecated - using categories directly
   const isLoading = categoriesLoading;
+
+  // If gift feature is disabled, render nothing
+  if (giftFeatureData !== undefined && !giftFeatureData.enabled) {
+    return null;
+  }
 
   // Filter active categories and sort by sortOrder
   const activeCategories = giftCategories

@@ -65,7 +65,8 @@ export const categories = pgTable("categories", {
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
-  sort_order: integer("sort_order")
+  sort_order: integer("sort_order"),
+  showOnHomepage: boolean("show_on_homepage").default(true),
 });
 
 // Subcategories table (children of a category)
@@ -194,6 +195,7 @@ export const storeSettings = pgTable("store_settings", {
   storePhone: varchar("store_phone", { length: 50 }),
   currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
   storeAddress: text("store_address"),
+  giftFeatureEnabled: boolean("gift_feature_enabled").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -684,6 +686,7 @@ export type InsertCouponUsage = z.infer<typeof insertCouponUsageSchema>;
 export const banners = pgTable("banners", {
   id: serial("id").primaryKey(),
   image_urls: text("image_urls").array().notNull(),
+  link_urls: text("link_urls").array(),
   page_type: varchar("page_type", { length: 50 }).notNull(),
   is_active: boolean("is_active").default(true),
   created_at: timestamp("created_at").defaultNow(),

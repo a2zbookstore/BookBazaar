@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Package, Gift, Upload, X, ImagePlus, BookOpen, BookMarked, Pen, Hash, DollarSign, AlignLeft, ChevronRight, Sparkles, Settings } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Gift, Upload, X, ImagePlus, BookOpen, BookMarked, Pen, Hash, DollarSign, AlignLeft, ChevronRight, Sparkles, Settings, ToggleLeft, ToggleRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { GiftCategory } from "../../../../shared/schema";
@@ -54,6 +54,33 @@ export default function GiftCategoriesPage() {
   // Fetch distinct types from DB
   const { data: dbTypes = [] } = useQuery<string[]>({
     queryKey: ["/api/admin/gift-category-types"],
+  });
+
+  // Fetch gift feature status
+  const { data: giftFeatureData } = useQuery<{ enabled: boolean }>({
+    queryKey: ["/api/gift-feature-status"],
+  });
+  const giftFeatureEnabled = giftFeatureData?.enabled ?? true;
+
+  // Toggle gift feature mutation
+  const giftFeatureToggleMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      return apiRequest('PUT', '/api/admin/gift-feature-toggle', { enabled });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/gift-feature-status"] });
+      toast({
+        title: "Success",
+        description: `Gift feature ${giftFeatureEnabled ? 'disabled' : 'enabled'} successfully!`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update gift feature status",
+        variant: "destructive",
+      });
+    },
   });
 
   // Form state
@@ -498,6 +525,34 @@ export default function GiftCategoriesPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {/* ── Gift Feature Toggle ── */}
+      <div className={`flex items-center justify-between rounded-2xl border p-4 sm:p-5 ${giftFeatureEnabled ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'}`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${giftFeatureEnabled ? 'bg-emerald-100' : 'bg-gray-200'}`}>
+            <Gift className={`w-5 h-5 ${giftFeatureEnabled ? 'text-emerald-600' : 'text-gray-400'}`} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Gift Feature</p>
+            <p className="text-xs text-gray-500">
+              {giftFeatureEnabled
+                ? 'Active — customers can see and select gifts on the cart & gift page'
+                : 'Inactive — gift options are hidden from customers'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`text-xs font-medium ${giftFeatureEnabled ? 'text-emerald-700' : 'text-gray-400'}`}>
+            {giftFeatureEnabled ? 'Enabled' : 'Disabled'}
+          </span>
+          <Switch
+            checked={giftFeatureEnabled}
+            onCheckedChange={(checked) => giftFeatureToggleMutation.mutate(checked)}
+            disabled={giftFeatureToggleMutation.isPending}
+            className="data-[state=checked]:bg-emerald-500"
+          />
+        </div>
+      </div>
+
       {/* ── Page Header ── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 p-6 sm:p-8">
         <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-indigo-100/50 to-transparent rounded-full -translate-y-1/4 translate-x-1/4 pointer-events-none" />
