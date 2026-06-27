@@ -699,6 +699,25 @@ export const insertBannerSchemaDrizzle = createInsertSchema(banners).omit({
 export type InsertBanner = typeof banners.$inferInsert;
 export type Banner = typeof banners.$inferSelect;
 
+// ── Promo Banners — individual records per banner, grouped by category ──
+export const promoBanners = pgTable("promo_banners", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  group_name: varchar("group_name", { length: 100 }).notNull(), // e.g. "category_11"
+  image_url: text("image_url").notNull(),
+  link_url: text("link_url"),
+  is_active: boolean("is_active").default(true),
+  sort_order: integer("sort_order").default(0),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertPromoBannerSchema = createInsertSchema(promoBanners).omit({
+  id: true,
+  created_at: true,
+});
+export type InsertPromoBanner = typeof promoBanners.$inferInsert;
+export type PromoBanner = typeof promoBanners.$inferSelect;
+
 // Audit Logs table for tracking all database changes
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),

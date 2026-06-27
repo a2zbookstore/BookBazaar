@@ -145,8 +145,6 @@ export default function Header() {
 
                         </div>
 
-
-
                         <Link
                             href="/cart"
                             className={`transition-colors relative mx-1 sm:mx-3 sm:p-2 rounded-lg hover:bg-primary-aqua/10 border border-transparent hover:border-primary-aqua/20 ${isCartAnimating ? "cart-pulse-animation" : "text-secondary-black hover:text-primary-aqua cart-normal"}`}
@@ -178,8 +176,6 @@ export default function Header() {
                                 >
                                     Register
                                 </Button>
-
-
                             </div>
                         )}
                     </div>

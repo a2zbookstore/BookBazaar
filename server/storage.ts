@@ -60,13 +60,16 @@ import {
   Banner,
   InsertBanner,
   banners,
+  promoBanners,
+  type PromoBanner,
+  type InsertPromoBanner,
   giftCart,
   subcategories,
   type SubCategory,
   type InsertSubCategory,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, like, and, or, sql, count, gte, lt, inArray } from "drizzle-orm";
+import { eq, desc, asc, like, and, or, sql, count, gte, lt, inArray, isNull } from "drizzle-orm";
 import { fuzzyMatch, getFuzzyMatchScore, findBestFuzzyMatches, normalizeText } from "./fuzzySearch";
 import { logAudit } from "./auditLog";
 
@@ -2059,17 +2062,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBannersByPageType(pageType: string): Promise<Banner[]> {
-    // Return only the single most-recent banner row for this page type
+    // Return only the single most-recent ACTIVE banner row for this page type
+    // Treat NULL is_active as true (banners saved before the column was added)
     return await db.select().from(banners)
-      .where(eq(banners.page_type, pageType))
+      .where(and(eq(banners.page_type, pageType), or(eq(banners.is_active, true), isNull(banners.is_active))))
       .orderBy(desc(banners.created_at))
       .limit(1);
+  }
+
+  async updateBannerActive(id: number, isActive: boolean): Promise<Banner | null> {
+    const [updated] = await db.update(banners)
+      .set({ is_active: isActive })
+      .where(eq(banners.id, id))
+      .returning();
+    return updated ?? null;
+  }
+
+  async deleteBanner(id: number): Promise<boolean> {
+    const result = await db.delete(banners).where(eq(banners.id, id)).returning();
+    return result.length > 0;
   }
 
   async getAllBannerPageTypes(): Promise<string[]> {
     const rows = await db.select({ page_type: banners.page_type }).from(banners);
     const uniqueTypes = Array.from(new Set(rows.map(r => r.page_type)));
     return uniqueTypes;
+  }
+
+  // ── Promo Banner storage (individual records per banner) ──
+  async createPromoBanner(data: InsertPromoBanner): Promise<PromoBanner> {
+    const [row] = await db.insert(promoBanners).values(data).returning();
+    return row;
+  }
+
+  async getPromoBannersByGroup(groupName: string): Promise<PromoBanner[]> {
+    return db.select().from(promoBanners)
+      .where(and(eq(promoBanners.group_name, groupName), eq(promoBanners.is_active, true)))
+      .orderBy(promoBanners.sort_order, desc(promoBanners.created_at));
+  }
+
+  async getAllPromoBanners(): Promise<PromoBanner[]> {
+    return db.select().from(promoBanners).orderBy(promoBanners.group_name, promoBanners.sort_order, desc(promoBanners.created_at));
+  }
+
+  async updatePromoBanner(id: number, data: Partial<InsertPromoBanner>): Promise<PromoBanner | null> {
+    const [row] = await db.update(promoBanners).set(data).where(eq(promoBanners.id, id)).returning();
+    return row ?? null;
+  }
+
+  async deletePromoBanner(id: number): Promise<boolean> {
+    const result = await db.delete(promoBanners).where(eq(promoBanners.id, id)).returning();
+    return result.length > 0;
   }
 
   async addGiftToCart(entry) {

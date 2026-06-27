@@ -24,6 +24,7 @@ import {
   Shield,
   Tag,
   FileArchive,
+  Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -64,6 +65,7 @@ const menuSections = [
     items: [
       { href: "/admin/coupons", icon: Percent, label: "Coupons" },
       { href: "/admin/gift-categories", icon: Gift, label: "Gift Categories" },
+      { href: "/admin/promo-banners", icon: Image, label: "Promo Banners" },
       { href: "/admin/email-customers", icon: Send, label: "Email Customers" },
       { href: "/admin/messages", icon: Mail, label: "Messages" },
     ],

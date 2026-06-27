@@ -64,6 +64,7 @@ const SecurityPage        = lazy(() => import("@/pages/admin/SecurityPage"));
 const EmailCustomersPage  = lazy(() => import("@/pages/admin/EmailCustomersPage"));
 const CategoriesPage      = lazy(() => import("@/pages/admin/CategoriesPage"));
 const BookImportZipPage   = lazy(() => import("@/pages/admin/BookImportZipPage"));
+const PromoBannersPage    = lazy(() => import("@/pages/admin/PromoBannersPage"));
 
 // Animated book-themed loader shown while a lazy chunk is downloading
 function PageLoader() {
@@ -143,6 +144,7 @@ function AppRouter() {
         <Route path="/admin/email-customers"><AdminProtectedRoute><EmailCustomersPage /></AdminProtectedRoute></Route>
         <Route path="/admin/categories"><AdminProtectedRoute><CategoriesPage /></AdminProtectedRoute></Route>
         <Route path="/admin/import-books-zip"><AdminProtectedRoute><BookImportZipPage /></AdminProtectedRoute></Route>
+        <Route path="/admin/promo-banners"><AdminProtectedRoute><PromoBannersPage /></AdminProtectedRoute></Route>
 
         <Route component={NotFound} />
       </Switch>

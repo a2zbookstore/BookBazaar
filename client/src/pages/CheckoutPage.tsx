@@ -1404,7 +1404,7 @@ export default function CheckoutPage() {
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                   <div className="space-y-4">
 
-                    <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#635BFF]/30 bg-[#635BFF]/5 ">
+                    {/* <div className="flex items-center space-x-3 p-4 border rounded-xl border-[#635BFF]/30 bg-[#635BFF]/5 ">
                       <RadioGroupItem value="stripe" id="stripe" />
                       <div className="flex items-center space-x-2 flex-1">
                         <CreditCard className="w-5 h-5 text-[#635BFF]" />
@@ -1414,7 +1414,7 @@ export default function CheckoutPage() {
                           <p className="text-xs text-gray-500 mt-1">Visa, Mastercard, Amex, and more</p>
                         </Label>
                       </div>
-                    </div>
+                    </div> */}
 
                     <div className="flex items-center space-x-3 p-4 border rounded-xl">
                       <RadioGroupItem value="razorpay-international" id="razorpay-international" />
