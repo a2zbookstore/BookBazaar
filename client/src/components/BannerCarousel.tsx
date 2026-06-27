@@ -17,6 +17,8 @@ export interface BannerItem {
 
 interface BannerCarouselProps {
   pageName: string;
+  /** Optional fallback page names tried in order if `pageName` has no banners */
+  fallbackPageNames?: string[];
   autoPlayInterval?: number;
   showIndicators?: boolean;
   showNavigation?: boolean;
@@ -26,6 +28,7 @@ interface BannerCarouselProps {
 
 const BannerCarousel: React.FC<BannerCarouselProps> = ({
   pageName,
+  fallbackPageNames = [],
   autoPlayInterval = 5000,
   showIndicators = true,
   showNavigation = true,
@@ -57,27 +60,40 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
 
   useEffect(() => {
     setIsLoading(true);
-    fetch(`/api/bannersbyName?page_type=${encodeURIComponent(pageName)}`)
-      .then(res => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const items: BannerItem[] = data[0].image_urls.map((img: string, idx: number) => ({
-            id: `${data[0].id}_${idx}`,
-            image: img,
-            alt: data[0].page_type,
-            clickUrl: data[0].link_urls?.[idx] || undefined,
-          }));
-          setBanners(items);
-        } else {
-          setBanners([]);
+    const namesToTry = [pageName, ...fallbackPageNames];
+    let cancelled = false;
+
+    const tryNext = async (names: string[]) => {
+      for (const name of names) {
+        try {
+          const res = await fetch(`/api/bannersbyName?page_type=${encodeURIComponent(name)}`);
+          const data = await res.json();
+          if (cancelled) return;
+          if (Array.isArray(data) && data.length > 0 && data[0].image_urls?.length > 0) {
+            const items: BannerItem[] = data[0].image_urls.map((img: string, idx: number) => ({
+              id: `${data[0].id}_${idx}`,
+              image: img,
+              alt: data[0].page_type,
+              clickUrl: data[0].link_urls?.[idx] || undefined,
+            }));
+            setBanners(items);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // try next
         }
-        setIsLoading(false);
-      })
-      .catch(() => {
+      }
+      if (!cancelled) {
         setBanners([]);
         setIsLoading(false);
-      });
-  }, [pageName]);
+      }
+    };
+
+    tryNext(namesToTry);
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageName, fallbackPageNames?.join(',')]);
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
@@ -165,10 +181,10 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
         <>
           <button
             onClick={scrollPrev}
-            className={`absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-10
-              w-9 h-9 md:w-11 md:h-11 rounded-full
+            className={`hidden md:flex absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-10
+              w-8 h-8 md:w-11 md:h-11 rounded-full
               bg-white/20 backdrop-blur-md border border-white/30
-              flex items-center justify-center
+              items-center justify-center
               text-white shadow-lg
               hover:bg-white/35 active:scale-90
               transition-all duration-200
@@ -176,15 +192,15 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
               group-hover:opacity-100`}
             aria-label="Previous banner"
           >
-            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" strokeWidth={2.5} />
+            <ChevronLeft className="h-4 w-4 md:h-6 md:w-6" strokeWidth={2.5} />
           </button>
 
           <button
             onClick={scrollNext}
-            className={`absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-10
-              w-9 h-9 md:w-11 md:h-11 rounded-full
+            className={`hidden md:flex absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-10
+              w-8 h-8 md:w-11 md:h-11 rounded-full
               bg-white/20 backdrop-blur-md border border-white/30
-              flex items-center justify-center
+              items-center justify-center
               text-white shadow-lg
               hover:bg-white/35 active:scale-90
               transition-all duration-200
@@ -192,22 +208,22 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
               group-hover:opacity-100`}
             aria-label="Next banner"
           >
-            <ChevronRight className="h-5 w-5 md:h-6 md:w-6" strokeWidth={2.5} />
+            <ChevronRight className="h-4 w-4 md:h-6 md:w-6" strokeWidth={2.5} />
           </button>
         </>
       )}
 
       {/* ── Pill indicators ── */}
       {showIndicators && banners.length > 1 && (
-        <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+        <div className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 items-center gap-1.5 z-10">
           {banners.map((_, index) => (
             <button
               key={index}
               onClick={() => scrollTo(index)}
               aria-label={`Go to banner ${index + 1}`}
-              className={`rounded-full transition-all duration-300 ease-out
+              className={`p-0 rounded-full transition-all duration-300 ease-out
                 ${index === selectedIndex
-                  ? "bg-white w-6 md:w-8 h-2 shadow-md"
+                  ? "bg-white w-8 h-2 shadow-md"
                   : "bg-white/45 hover:bg-white/70 w-2 h-2"
                 }`}
             />
@@ -217,7 +233,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({
 
       {/* ── Slide counter badge (top-right) ── */}
       {banners.length > 1 && (
-        <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 text-white text-xs font-semibold tabular-nums select-none">
+        <div className="absolute top-2 right-2 md:top-3 md:right-3 z-10 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 text-white text-[10px] md:text-xs font-semibold tabular-nums select-none">
           {selectedIndex + 1} / {banners.length}
         </div>
       )}

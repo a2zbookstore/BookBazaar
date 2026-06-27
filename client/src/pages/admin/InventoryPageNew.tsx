@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
@@ -112,11 +112,19 @@ export default function InventoryPageNew() {
     if (!isDialogOpen) setIsbnStatus('idle');
   }, [isDialogOpen]);
 
+  // Reset ISBN status when boxSet toggles (duplicate is irrelevant for box sets)
+  useEffect(() => {
+    if (isbnStatus === 'duplicate') setIsbnStatus('idle');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookForm.boxSet]);
+
   // Debounced ISBN uniqueness check
   useEffect(() => {
     const isbn = bookForm.isbn.trim();
     if (!isbn) { setIsbnStatus('idle'); return; }
     if (!isValidIsbnFormat(isbn)) { setIsbnStatus('invalid'); return; }
+    // Box sets may share an ISBN with individual books — skip uniqueness check
+    if (bookForm.boxSet) { setIsbnStatus('valid'); return; }
     setIsbnStatus('checking');
     const timer = setTimeout(async () => {
       try {
@@ -130,7 +138,7 @@ export default function InventoryPageNew() {
       }
     }, 600);
     return () => clearTimeout(timer);
-  }, [bookForm.isbn, editingBook]);
+  }, [bookForm.isbn, bookForm.boxSet, editingBook]);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -803,20 +811,26 @@ export default function InventoryPageNew() {
 
       {/* ── Add/Edit Book Dialog ── */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0" onInteractOutside={e => e.preventDefault()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 [&>button:last-child]:hidden" onInteractOutside={e => e.preventDefault()}>
           {/* Dialog Header */}
           <div
             className="sticky top-0 z-10 px-6 py-4 border-b"
             style={{ background: "linear-gradient(135deg, hsl(188,100%,22%) 0%, hsl(188,79%,35%) 100%)" }}
           >
-            <DialogHeader>
-              <DialogTitle className="text-white text-lg font-bold">
-                {editingBook ? `Edit: ${editingBook.title}` : "Add New Book"}
-              </DialogTitle>
-              <p className="text-white/70 text-xs mt-0.5">
-                {editingBook ? "Update book details in your inventory" : "Fill in the details to add a new book"}
-              </p>
-            </DialogHeader>
+            <div className="flex items-start justify-between gap-3">
+              <DialogHeader>
+                <DialogTitle className="text-white text-lg font-bold">
+                  {editingBook ? `Edit: ${editingBook.title}` : "Add New Book"}
+                </DialogTitle>
+                <p className="text-white/70 text-xs mt-0.5">
+                  {editingBook ? "Update book details in your inventory" : "Fill in the details to add a new book"}
+                </p>
+              </DialogHeader>
+              <DialogClose className="rounded-lg p-1.5 text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0 mt-0.5">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -859,7 +873,7 @@ export default function InventoryPageNew() {
                 {isbnStatus === 'invalid' && (
                   <p className="mt-1 text-xs text-red-500">Invalid ISBN — must be 10 or 13 digits</p>
                 )}
-                {isbnStatus === 'duplicate' && (
+                {isbnStatus === 'duplicate' && !bookForm.boxSet && (
                   <p className="mt-1 text-xs text-red-500">This ISBN already exists in the catalogue</p>
                 )}
                 {isbnStatus === 'valid' && (

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Breadcrumb from "@/components/Breadcrumb";
+import BannerCarousel from "@/components/BannerCarousel";
 import BookCard from "@/components/BookCard";
 import FiltersSidebar from "@/components/FiltersSidebar";
 import SortFilterHeader from "@/components/SortFilterHeader";
@@ -373,6 +374,20 @@ export default function CatalogPage() {
               showResults={false}
             />
           </div>
+
+          {selectedCategoryId && activeCategory && (            
+            <div className="mb-4">
+              <BannerCarousel
+                key={`category_${selectedCategoryId}_${activeCategory.name}`}
+                pageName={`category_${selectedCategoryId}`}
+                fallbackPageNames={[activeCategory.name, activeCategory.name.toLowerCase()]}
+                autoPlayInterval={5000}
+                showIndicators={true}
+                showNavigation={true}
+                height="h-32 sm:h-44 md:h-60"
+              />
+            </div>
+          )}
 
           {/* Results Count */}
           <p className="text-secondary-black mb-4">

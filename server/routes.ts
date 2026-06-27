@@ -6729,6 +6729,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // List all banners (admin)
+  app.get("/api/admin/banners", requireAdminAuth, async (req: any, res) => {
+    try {
+      const allBanners = await storage.getBanners();
+      res.json(allBanners);
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  // Delete a banner (admin)
+  app.delete("/api/admin/banners/:id", requireAdminAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid banner id" });
+      const deleted = await storage.deleteBanner(id);
+      if (!deleted) return res.status(404).json({ message: "Banner not found" });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting banner:", error);
+      res.status(500).json({ message: "Failed to delete banner" });
+    }
+  });
+
+  // Toggle banner active/inactive (admin)
+  app.patch("/api/admin/banners/:id/toggle", requireAdminAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid banner id" });
+      const { is_active } = req.body;
+      if (typeof is_active !== "boolean") return res.status(400).json({ message: "is_active must be a boolean" });
+      const updated = await storage.updateBannerActive(id, is_active);
+      if (!updated) return res.status(404).json({ message: "Banner not found" });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling banner:", error);
+      res.status(500).json({ message: "Failed to toggle banner" });
+    }
+  });
+
   // Get all unique banner page types
   app.get("/api/banner-page-types", async (req: any, res) => {
     try {
@@ -6751,6 +6792,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching banners:", error);
       res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  // ── Promo Banner routes (individual per-banner management) ──
+
+  // Public: fetch active promo banners for a group
+  app.get("/api/promo-banners", async (req: any, res) => {
+    try {
+      const group = req.query.group as string;
+      if (!group) return res.status(400).json({ message: "group query param required" });
+      const rows = await storage.getPromoBannersByGroup(group);
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching promo banners:", error);
+      res.status(500).json({ message: "Failed to fetch promo banners" });
+    }
+  });
+
+  // Admin: list all promo banners (all groups)
+  app.get("/api/admin/promo-banners", requireAdminAuth, async (_req: any, res) => {
+    try {
+      const rows = await storage.getAllPromoBanners();
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching all promo banners:", error);
+      res.status(500).json({ message: "Failed to fetch promo banners" });
+    }
+  });
+
+  // Admin: upload image to Cloudinary promo-banners folder
+  app.post("/api/admin/promo-banners/upload", imageUpload.single("image"), requireAdminAuth, async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No image file provided" });
+      const uploadResult = await CloudinaryService.uploadImage(
+        req.file.buffer,
+        "a2z-bookshop/promo-banners",
+        `promo-${Date.now()}-${Math.round(Math.random() * 1e9)}`
+      );
+      res.json({ imageUrl: uploadResult.secure_url, public_id: uploadResult.public_id });
+    } catch (error) {
+      console.error("Error uploading promo banner image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  // Admin: create a new promo banner
+  app.post("/api/admin/promo-banners", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { title, group_name, image_url, link_url, is_active, sort_order } = req.body;
+      if (!title || !group_name || !image_url) {
+        return res.status(400).json({ message: "title, group_name and image_url are required" });
+      }
+      const row = await storage.createPromoBanner({
+        title,
+        group_name,
+        image_url,
+        link_url: link_url || null,
+        is_active: is_active !== false,
+        sort_order: sort_order ?? 0,
+      });
+      res.json(row);
+    } catch (error) {
+      console.error("Error creating promo banner:", error);
+      res.status(500).json({ message: "Failed to create promo banner" });
+    }
+  });
+
+  // Admin: update a promo banner (title / group / link / active / sort)
+  app.patch("/api/admin/promo-banners/:id", requireAdminAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
+      const updated = await storage.updatePromoBanner(id, req.body);
+      if (!updated) return res.status(404).json({ message: "Banner not found" });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating promo banner:", error);
+      res.status(500).json({ message: "Failed to update promo banner" });
+    }
+  });
+
+  // Admin: delete a single promo banner
+  app.delete("/api/admin/promo-banners/:id", requireAdminAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
+      const ok = await storage.deletePromoBanner(id);
+      if (!ok) return res.status(404).json({ message: "Banner not found" });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting promo banner:", error);
+      res.status(500).json({ message: "Failed to delete promo banner" });
     }
   });
 

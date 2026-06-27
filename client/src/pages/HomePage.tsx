@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Book, Category } from "@/types";
 import { Clock, Sparkles, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import BannerCarousel from "@/components/BannerCarousel";
+import HeroBannerGrid from "@/components/HeroBannerGrid";
 import BookCarousel from "@/components/BookCarousel";
+import PocketBannerSection from "@/components/PocketBannerSection";
 import LuckyDrawSpinner from "@/components/LuckyDrawSpinner";
 import { useBrowsingHistory } from "@/hooks/useBrowsingHistory";
 
@@ -365,14 +367,8 @@ export default function HomePage() {
       {/* Lucky Draw Spinner Widget */}
       {/* <LuckyDrawSpinner /> */}
 
-      <div className="hidden md:block my-8">
-        <BannerCarousel
-          pageName="home"
-          autoPlayInterval={5000}
-          showIndicators={true}
-          showNavigation={true}
-          height="h-48 md:h-64"
-        />
+      <div className="my-4 md:my-8">
+        <HeroBannerGrid mainPageName="home" sidePageName="home_side" stripPageName="home_strip" />
       </div>
 
       {/* ── Personalised: For You ── */}
@@ -471,12 +467,21 @@ export default function HomePage() {
           const variants: Array<'default' | 'warm' | 'cool' | 'neutral' | 'soft'> = ['default', 'warm', 'cool', 'neutral', 'soft'];
           const variant = variants[index % variants.length];
           return (
-            <CategoryCarousel
-              key={category.id}
-              category={category}
-              variant={variant}
-              forceVisible={index < 3}
-            />
+            <React.Fragment key={category.id}>
+              {/* Pocket-style banner images for this category */}
+              <div className="mt-6 md:mt-10 mb-3 md:mb-4">
+                <PocketBannerSection
+                  pageName={`category_${category.id}`}
+                  fallbackPageNames={[category.name, category.name.toLowerCase()]}
+                  categoryName={category.name}
+                />
+              </div>
+              <CategoryCarousel
+                category={category}
+                variant={variant}
+                forceVisible={index < 3}
+              />
+            </React.Fragment>
           );
         })
       )}

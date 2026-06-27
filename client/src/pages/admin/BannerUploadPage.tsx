@@ -3,12 +3,71 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { Upload, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface BannerRow {
+    id: number;
+    page_type: string;
+    image_urls: string[];
+    is_active: boolean;
+    created_at: string;
+}
 
 export default function BannerUploadPage() {
     const { toast } = useToast();
     const [pageName, setPageName] = useState("");
+    const [allBanners, setAllBanners] = useState<BannerRow[]>([]);
+    const [togglingId, setTogglingId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
+    // Load all banners for the toggle list
+    const loadAllBanners = () => {
+        fetch("/api/admin/banners", { credentials: "include" })
+            .then(r => r.json())
+            .then(d => setAllBanners(Array.isArray(d) ? d : []))
+            .catch(() => {});
+    };
+
+    useEffect(() => { loadAllBanners(); }, []);
+
+    const handleToggle = async (banner: BannerRow) => {
+        setTogglingId(banner.id);
+        try {
+            const res = await fetch(`/api/admin/banners/${banner.id}/toggle`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ is_active: !banner.is_active }),
+                credentials: "include",
+            });
+            if (!res.ok) throw new Error("Toggle failed");
+            const updated: BannerRow = await res.json();
+            setAllBanners(prev => prev.map(b => b.id === updated.id ? updated : b));
+            toast({ title: updated.is_active ? "Banner Enabled" : "Banner Disabled", description: `"${updated.page_type}" is now ${updated.is_active ? "visible" : "hidden"}.` });
+        } catch {
+            toast({ title: "Error", description: "Could not toggle banner.", variant: "destructive" });
+        } finally {
+            setTogglingId(null);
+        }
+    };
+
+    const handleDelete = async (banner: BannerRow) => {
+        if (!window.confirm(`Delete banner "${banner.page_type}"? This cannot be undone.`)) return;
+        setDeletingId(banner.id);
+        try {
+            const res = await fetch(`/api/admin/banners/${banner.id}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+            if (!res.ok) throw new Error("Delete failed");
+            setAllBanners(prev => prev.filter(b => b.id !== banner.id));
+            toast({ title: "Banner Deleted", description: `"${banner.page_type}" has been deleted.` });
+        } catch {
+            toast({ title: "Error", description: "Could not delete banner.", variant: "destructive" });
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const [bannerImages, setBannerImages] = useState(["", "", "", "", ""]);
     const [bannerLinks, setBannerLinks] = useState(["", "", "", "", ""]);
@@ -100,6 +159,7 @@ export default function BannerUploadPage() {
                 title: "Banners Saved",
                 description: `${filledImages.length} banner(s) saved for "${pageName.trim()}".`,
             });
+            loadAllBanners();
         } catch (err: any) {
             toast({
                 title: "Save Failed",
@@ -195,6 +255,52 @@ export default function BannerUploadPage() {
                     </Button>
                 </div>
             </form>
+
+            {/* ── All Banners — On/Off Toggle ── */}
+            <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-3">All Banners — On / Off</h3>
+                {allBanners.length === 0 ? (
+                    <p className="text-sm text-gray-400">No banners uploaded yet.</p>
+                ) : (
+                    <div className="divide-y border rounded-lg overflow-hidden">
+                        {allBanners.map(banner => (
+                            <div key={banner.id} className="flex items-center gap-3 px-4 py-3 bg-white">
+                                {/* Thumbnail */}
+                                {banner.image_urls?.[0] && (
+                                    <img src={banner.image_urls[0]} alt="" className="w-16 h-10 object-cover rounded shrink-0" />
+                                )}
+                                {/* Page type */}
+                                <span className="flex-1 text-sm font-medium truncate">{banner.page_type}</span>
+                                {/* Status badge */}
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${banner.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                                    {banner.is_active ? "ON" : "OFF"}
+                                </span>
+                                {/* Toggle button */}
+                                <button
+                                    onClick={() => handleToggle(banner)}
+                                    disabled={togglingId === banner.id}
+                                    className="text-gray-400 hover:text-primary-aqua transition-colors disabled:opacity-50"
+                                    aria-label={banner.is_active ? "Disable banner" : "Enable banner"}
+                                >
+                                    {banner.is_active
+                                        ? <ToggleRight className="h-8 w-8 text-green-500" />
+                                        : <ToggleLeft className="h-8 w-8 text-gray-400" />
+                                    }
+                                </button>
+                                {/* Delete button */}
+                                <button
+                                    onClick={() => handleDelete(banner)}
+                                    disabled={deletingId === banner.id}
+                                    className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                    aria-label="Delete banner"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -208,6 +314,7 @@ interface PageNameComboBoxProps {
 }
 function PageNameComboBox({ pageName, setPageName }: PageNameComboBoxProps) {
     const [options, setOptions] = useState<string[]>([]);
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
     const [inputValue, setInputValue] = useState<string>(pageName);
     const [isInput, setIsInput] = useState(false);
 
@@ -217,6 +324,12 @@ function PageNameComboBox({ pageName, setPageName }: PageNameComboBoxProps) {
             .then((pageTypes: string[]) => {
                 setOptions(pageTypes);
             });
+        fetch("/api/categories")
+            .then(res => res.json())
+            .then((cats: { id: number; name: string }[]) => {
+                setCategories(Array.isArray(cats) ? cats : []);
+            })
+            .catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -227,12 +340,25 @@ function PageNameComboBox({ pageName, setPageName }: PageNameComboBoxProps) {
         }
     }, [inputValue, options]);
 
+    // Build a combined option list: existing page types + category_<id> entries
+    const categoryPageKeys = categories.map(c => `category_${c.id}`);
+    const allOptions = Array.from(new Set([...options, ...categoryPageKeys]));
+
+    const getLabel = (opt: string) => {
+        const match = opt.match(/^category_(\d+)$/);
+        if (match) {
+            const cat = categories.find(c => c.id.toString() === match[1]);
+            return cat ? `Category: ${cat.name}` : opt;
+        }
+        return opt;
+    };
+
     return (
         <div className="relative">
             {!isInput ? (
                 <select
                     className="w-full border rounded px-2 py-1 mb-2"
-                    value={options.includes(pageName) ? pageName : ""}
+                    value={allOptions.includes(pageName) ? pageName : ""}
                     onChange={e => {
                         if (e.target.value !== "new") {
                             setPageName(e.target.value);
@@ -245,9 +371,20 @@ function PageNameComboBox({ pageName, setPageName }: PageNameComboBoxProps) {
                     }}
                 >
                     <option value="" disabled>Select existing page...</option>
-                    {options.map(opt => (
+                    {/* Static pages */}
+                    {options.filter(o => !o.startsWith("category_")).map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
                     ))}
+                    {/* Category pages */}
+                    {categories.length > 0 && (
+                        <optgroup label="── Categories ──">
+                            {categories.map(cat => (
+                                <option key={`category_${cat.id}`} value={`category_${cat.id}`}>
+                                    Category: {cat.name}
+                                </option>
+                            ))}
+                        </optgroup>
+                    )}
                     <option value="new">Add new Page</option>
                 </select>
             ) : (

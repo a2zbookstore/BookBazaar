@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronUp, ChevronDown } from "lucide-react";
-import { generateBookSlug } from "@/lib/slugUtils";
-import type { Book, Category, SubCategory } from "@/types";
+import { ChevronRight } from "lucide-react";
+import type { Category, SubCategory } from "@/types";
 
 interface CategoryMegaMenuProps {
   /** Called after a category or subcategory is selected (e.g. to close the menu). */
@@ -12,21 +11,14 @@ interface CategoryMegaMenuProps {
   mobile?: boolean;
 }
 
-const BOOKS_PER_PAGE = 1;
-
 /**
- * Full-width "sitemap" mega menu — every category and its subcategories are
- * visible simultaneously in a responsive column grid so users can navigate
- * anywhere in one click without first selecting a category.
- *
- * Layout:
- *  • Left  — category + subcategory grid
- *  • Right — featured book covers vertical carousel
+ * Full-width "sitemap" mega menu — every category is shown as a bold heading
+ * with its subcategories listed beneath in a responsive masonry grid, so users
+ * can see the whole catalogue at a glance and jump anywhere in one click
+ * (eBay-style "All Categories" panel).
  */
 export default function CategoryMegaMenu({ onNavigate, mobile = false }: CategoryMegaMenuProps) {
   const [, setLocation] = useLocation();
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [resetKey, setResetKey] = useState(0);
 
   const { data: categories = [], isLoading: loadingCategories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -36,24 +28,7 @@ export default function CategoryMegaMenu({ onNavigate, mobile = false }: Categor
     queryKey: ["/api/subcategories"],
   });
 
-  const { data: featuredData, isLoading: loadingFeatured } = useQuery<{ books: Book[] }>({
-    queryKey: ["/api/books?featured=true&limit=10"],
-  });
-  const featuredBooks = featuredData?.books ?? [];
-
-  const isLoading = loadingCategories || loadingSubCategories || loadingFeatured;
-
-  // Auto-advance every 5 s; resets when user manually navigates (resetKey bump)
-  useEffect(() => {
-    if (featuredBooks.length <= BOOKS_PER_PAGE) return;
-    const id = setInterval(() => {
-      setCarouselIndex((i) =>
-        i + BOOKS_PER_PAGE >= featuredBooks.length ? 0 : i + BOOKS_PER_PAGE
-      );
-    }, 5000);
-    return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featuredBooks.length, resetKey]);
+  const isLoading = loadingCategories || loadingSubCategories;
 
   // Group subcategories by categoryId for O(1) lookup
   const subCategoriesByCategory = useMemo(() => {
@@ -78,24 +53,18 @@ export default function CategoryMegaMenu({ onNavigate, mobile = false }: Categor
     () =>
       sortedCategories.map((c) => ({
         category: c,
-        subs: subCategoriesByCategory.get(c.id) ?? [],
+        subs: (subCategoriesByCategory.get(c.id) ?? [])
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name)),
       })),
     [sortedCategories, subCategoriesByCategory],
   );
 
-  // Manual nav — bumps resetKey so the 5s timer restarts from this position
-  const navTo = (nextIndex: number) => {
-    setCarouselIndex(nextIndex);
-    setResetKey((k) => k + 1);
-  };
   const goToCatalog = () => { setLocation(`/catalog`); onNavigate?.(); };
+  const goToTag = (tag: string) => { setLocation(`/catalog?${tag}=true`); onNavigate?.(); };
   const goToCategory = (categoryId: number) => { setLocation(`/catalog?categoryId=${categoryId}`); onNavigate?.(); };
   const goToSubcategory = (categoryId: number, subCategoryId: number) => {
     setLocation(`/catalog?categoryId=${categoryId}&subCategoryId=${subCategoryId}`);
-    onNavigate?.();
-  };
-  const goToBook = (book: Book) => {
-    setLocation(`/books/${generateBookSlug(book.title, book.id)}`);
     onNavigate?.();
   };
 
@@ -116,57 +85,24 @@ export default function CategoryMegaMenu({ onNavigate, mobile = false }: Categor
       );
     }
     return (
-      <div className="flex gap-6 h-[360px] animate-pulse">
-        {/* Left skeleton — mirrors the category grid */}
-        <div className="flex-1 min-w-0 flex flex-col gap-3">
-          {/* header row */}
-          <div className="flex items-center justify-between flex-shrink-0">
-            <div className="h-3 w-28 rounded bg-gray-200" />
-            <div className="h-3 w-24 rounded bg-gray-200" />
-          </div>
-          {/* grid of fake category columns */}
-          <div className="flex-1 overflow-hidden">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
-              {Array.from({ length: 15 }).map((_, colIdx) => (
-                <div key={colIdx} className="min-w-0 space-y-2">
-                  {/* category heading — matches text-base */}
-                  <div className="h-4 w-full rounded bg-gray-200 mb-3" />
-                  {/* subcategory lines — matches text-sm */}
-                  {Array.from({ length: 4 }).map((_, rowIdx) => (
-                    <div
-                      key={rowIdx}
-                      className="h-3 rounded bg-gray-100"
-                      style={{ width: `${70 + ((colIdx * 3 + rowIdx * 7) % 25)}%` }}
-                    />
-                  ))}
-                </div>
+      <div className="animate-pulse">
+        <div className="flex items-center justify-between mb-5">
+          <div className="h-3 w-28 rounded bg-gray-200" />
+          <div className="h-3 w-24 rounded bg-gray-200" />
+        </div>
+        <div className="columns-2 md:columns-3 xl:columns-4 gap-x-10">
+          {Array.from({ length: 12 }).map((_, colIdx) => (
+            <div key={colIdx} className="break-inside-avoid mb-8 space-y-2.5">
+              <div className="h-4 w-2/3 rounded bg-gray-200 mb-3" />
+              {Array.from({ length: 4 }).map((_, rowIdx) => (
+                <div
+                  key={rowIdx}
+                  className="h-3 rounded bg-gray-100"
+                  style={{ width: `${55 + ((colIdx * 3 + rowIdx * 7) % 35)}%` }}
+                />
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Right skeleton — mirrors the featured panel */}
-        <div className="w-[20%] flex-shrink-0 border-l border-gray-100 pl-5 flex flex-col gap-2">
-          {/* "Featured" label */}
-          <div className="h-2.5 w-14 rounded bg-gray-200 flex-shrink-0" />
-          {/* up arrow placeholder */}
-          <div className="h-6 w-6 rounded bg-gray-100 mx-auto flex-shrink-0" />
-          {/* book cover */}
-          <div className="flex-1 min-h-0 rounded bg-gray-200" />
-          {/* title lines */}
-          <div className="flex-shrink-0 space-y-1.5">
-            <div className="h-2.5 w-full rounded bg-gray-200" />
-            <div className="h-2.5 w-3/4 rounded bg-gray-200" />
-            <div className="h-2 w-1/2 rounded bg-gray-100 mt-0.5" />
-          </div>
-          {/* dot indicators */}
-          <div className="flex justify-center gap-1 flex-shrink-0">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className={`h-1.5 rounded-full bg-gray-200 ${i === 0 ? "w-4" : "w-1.5"}`} />
-            ))}
-          </div>
-          {/* down arrow placeholder */}
-          <div className="h-6 w-6 rounded bg-gray-100 mx-auto flex-shrink-0" />
+          ))}
         </div>
       </div>
     );
@@ -197,16 +133,16 @@ export default function CategoryMegaMenu({ onNavigate, mobile = false }: Categor
               <span className="text-primary-aqua text-xs opacity-0 group-hover/cat:opacity-100 transition-opacity">›</span>
             </button>
             {subs.length > 0 && (
-              <div className="pl-4 border-l-2 border-gray-100 ml-1 space-y-0.5 py-1">
+              <div className="pl-4 border-l-2 border-gray-100 ml-1 py-1 grid grid-cols-2 gap-x-2">
                 {subs.map((sub) => (
                   <button
                     key={sub.id}
                     type="button"
                     onClick={() => goToSubcategory(category.id, sub.id)}
-                    className="group/sub flex items-center gap-1 w-full text-left text-sm text-gray-500 hover:text-primary-aqua transition-colors py-1 px-1 rounded hover:bg-primary-aqua/5 truncate"
+                    className="group/sub flex items-start gap-1.5 w-full text-left text-sm text-gray-500 hover:text-primary-aqua transition-colors py-1 px-1 rounded hover:bg-primary-aqua/5 leading-snug"
                   >
-                    <span className="w-0 overflow-hidden group-hover/sub:w-2.5 transition-all duration-150 text-primary-aqua opacity-0 group-hover/sub:opacity-100 flex-shrink-0">›</span>
-                    <span className="truncate flex-1">{sub.name}</span>
+                    <span className="mt-1.5 h-1 w-1 rounded-full bg-gray-300 group-hover/sub:bg-primary-aqua flex-shrink-0 transition-colors" />
+                    <span className="flex-1">{sub.name}</span>
                   </button>
                 ))}
               </div>
@@ -217,151 +153,98 @@ export default function CategoryMegaMenu({ onNavigate, mobile = false }: Categor
     );
   }
 
+  // ── Desktop layout: full-width eBay-style "All Categories" sitemap ──
   return (
-    <div className="flex gap-6 h-[360px]">
+    <div className="flex flex-col max-h-[72vh]">
+      {/* header */}
+      <div className="flex items-center justify-between flex-shrink-0 pb-4">
+        <p className="text-xs uppercase tracking-widest text-gray-400 font-semibold">All Categories</p>
+        <button
+          type="button"
+          onClick={goToCatalog}
+          className="text-sm font-medium text-primary-aqua hover:underline"
+        >
+          Browse all books
+        </button>
+      </div>
 
-      {/* ── Left: category grid ── */}
-      <div className="flex-1 min-w-0 flex flex-col gap-3">
-        {/* header */}
-        <div className="flex items-center justify-between flex-shrink-0">
-          <p className="text-xs uppercase tracking-widest text-gray-400 font-semibold">All Categories</p>
-          <button
-            type="button"
-            onClick={goToCatalog}
-            className="text-sm font-medium text-primary-aqua hover:underline"
-          >
-            Browse all books
-          </button>
-        </div>
-        {/* scrollable grid */}
-        <div className="flex-1 overflow-y-auto min-h-0 pr-1">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6 pb-1">
-            {visibleCategories.map(({ category, subs }) => (
-              <div key={category.id} className="min-w-0">
+      {/* masonry grid — every category heading + its subcategories, full names */}
+      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
+        <div className="columns-2 md:columns-3 xl:columns-4 gap-x-10">
+          {visibleCategories.map(({ category, subs }) => (
+            <div key={category.id} className="break-inside-avoid mb-8">
+              <button
+                type="button"
+                onClick={() => goToCategory(category.id)}
+                className="group/cat w-full text-left text-[15px] font-bold text-gray-900 hover:text-primary-aqua transition-colors mb-3 flex items-center gap-1"
+              >
+                <span className="flex-1">{category.name}</span>
+                <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 opacity-0 -translate-x-1 group-hover/cat:opacity-100 group-hover/cat:translate-x-0 transition-all text-primary-aqua" />
+              </button>
+              {subs.length > 0 ? (
+                <ul className="space-y-2">
+                  {subs.map((sub) => (
+                    <li key={sub.id}>
+                      <button
+                        type="button"
+                        onClick={() => goToSubcategory(category.id, sub.id)}
+                        className="text-left text-sm text-gray-500 hover:text-primary-aqua hover:underline underline-offset-2 transition-colors leading-snug"
+                      >
+                        {sub.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
                 <button
                   type="button"
                   onClick={() => goToCategory(category.id)}
-                  className="group/cat w-full text-left text-base font-semibold text-gray-900 hover:text-primary-aqua transition-all duration-200 truncate mb-2 pb-1.5 border-b border-gray-100 hover:border-primary-aqua/40 flex items-center gap-1"
+                  className="text-sm text-gray-400 hover:text-primary-aqua transition-colors"
                 >
-                  <span className="flex-1 truncate transition-transform duration-200 group-hover/cat:translate-x-0.5">{category.name}</span>
-                  <span className="opacity-0 group-hover/cat:opacity-100 transition-opacity duration-200 text-primary-aqua text-xs">›</span>
+                  View all
                 </button>
-                <div className="space-y-0.5 pl-2 border-l-2 border-gray-100">
-                  {subs.length === 0 && <span className="text-sm text-gray-300 italic">No subcategories</span>}
-                  {subs.map((sub) => (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => goToSubcategory(category.id, sub.id)}
-                      className="group/sub flex items-center gap-1 w-full text-left text-sm text-gray-500 hover:text-primary-aqua transition-all duration-150 py-0.5 px-1 rounded hover:bg-primary-aqua/8 truncate"
-                    >
-                      <span className="w-0 overflow-hidden group-hover/sub:w-2.5 transition-all duration-150 text-primary-aqua opacity-0 group-hover/sub:opacity-100 flex-shrink-0">›</span>
-                      <span className="truncate flex-1 transition-transform duration-150 group-hover/sub:translate-x-0.5">{sub.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── Right: featured book covers carousel ── */}
-      {featuredBooks.length > 0 && (
-        <div className="w-[20%] flex-shrink-0 border-l border-gray-100 pl-5 flex flex-col gap-2">
-          <p className="text-[10px] uppercase tracking-widest text-primary font-semibold flex-shrink-0">
-            Featured
-          </p>
-
-          {/* up arrow */}
-          <button
-            type="button"
-            onClick={() => navTo(Math.max(0, carouselIndex - BOOKS_PER_PAGE))}
-            disabled={carouselIndex === 0 && featuredBooks.length <= BOOKS_PER_PAGE}
-            aria-label="Previous books"
-            className="flex-shrink-0 flex items-center justify-center h-6 rounded text-gray-300 hover:text-primary-aqua disabled:opacity-20 disabled:cursor-default transition-colors"
-          >
-            <ChevronUp className="h-4 w-4" />
-          </button>
-
-          {/* single book cover */}
-          <div className="flex-1 min-h-0 flex flex-col gap-2">
-            {(() => {
-              const book = featuredBooks[carouselIndex];
-              if (!book) return null;
-              return (
-                <button
-                  key={book.id}
-                  type="button"
-                  onClick={() => goToBook(book)}
-                  className="group relative flex-1 min-h-0 w-full rounded overflow-hidden shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary-aqua/50"
-                >
-                  {book.imageUrl ? (
-                    <img
-                      src={book.imageUrl}
-                      alt={book.title}
-                      className="w-full h-full object-contain"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-b from-gray-200 to-gray-300 flex items-end p-2">
-                      <span className="text-[9px] text-gray-600 leading-tight line-clamp-4 font-medium">
-                        {book.title}
-                      </span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                </button>
-              );
-            })()}
-            {/* title + author below the cover */}
-            {featuredBooks[carouselIndex] && (
-              <div className="flex-shrink-0">
-                <p className="text-[11px] font-semibold text-gray-800 leading-tight line-clamp-2">
-                  {featuredBooks[carouselIndex].title}
-                </p>
-                {featuredBooks[carouselIndex].author && (
-                  <p className="text-[10px] text-gray-400 truncate mt-0.5">
-                    {featuredBooks[carouselIndex].author}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* dot indicators */}
-          <div className="flex justify-center gap-1 flex-shrink-0">
-            {Array.from({ length: Math.ceil(featuredBooks.length / BOOKS_PER_PAGE) }).map((_, p) => (
-              <button
-                key={p}
-                type="button"
-                aria-label={`Go to page ${p + 1}`}
-                onClick={() => navTo(p * BOOKS_PER_PAGE)}
-                className={`h-1.5 rounded-full transition-all ${
-                  p === Math.floor(carouselIndex / BOOKS_PER_PAGE)
-                    ? "w-4 bg-primary-aqua"
-                    : "w-1.5 bg-gray-200 hover:bg-gray-300"
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* down arrow */}
-          <button
-            type="button"
-            onClick={() => navTo(
-              carouselIndex + BOOKS_PER_PAGE >= featuredBooks.length
-                ? 0
-                : carouselIndex + BOOKS_PER_PAGE
-            )}
-            aria-label="Next books"
-            className="flex-shrink-0 flex items-center justify-center h-6 rounded text-gray-300 hover:text-primary-aqua transition-colors"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-
+      {/* footer row — quick links like the eBay "All Categories" panel */}
+      <div className="flex-shrink-0 border-t border-gray-100 mt-2 pt-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-10 gap-y-2">
+        <button
+          type="button"
+          onClick={goToCatalog}
+          className="group/foot flex items-center gap-1 text-left text-sm font-semibold text-gray-900 hover:text-primary-aqua transition-colors"
+        >
+          All Categories
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/foot:translate-x-0.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => goToTag("newArrival")}
+          className="group/foot flex items-center gap-1 text-left text-sm font-semibold text-gray-900 hover:text-primary-aqua transition-colors"
+        >
+          New Arrivals
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/foot:translate-x-0.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => goToTag("bestseller")}
+          className="group/foot flex items-center gap-1 text-left text-sm font-semibold text-gray-900 hover:text-primary-aqua transition-colors"
+        >
+          Bestsellers
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/foot:translate-x-0.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => goToTag("featured")}
+          className="group/foot flex items-center gap-1 text-left text-sm font-semibold text-gray-900 hover:text-primary-aqua transition-colors"
+        >
+          Featured Books
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/foot:translate-x-0.5" />
+        </button>
+      </div>
     </div>
   );
 }
+

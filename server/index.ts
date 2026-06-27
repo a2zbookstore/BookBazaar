@@ -177,6 +177,25 @@ process.on('SIGINT', () => {
       // Non-fatal: column may already exist or DB may not have banners table yet
       log(`Banner migration skipped: ${migrationErr}`);
     }
+
+    // Ensure promo_banners table exists
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS promo_banners (
+          id          SERIAL PRIMARY KEY,
+          title       VARCHAR(200) NOT NULL,
+          group_name  VARCHAR(100) NOT NULL,
+          image_url   TEXT NOT NULL,
+          link_url    TEXT,
+          is_active   BOOLEAN DEFAULT TRUE,
+          sort_order  INTEGER DEFAULT 0,
+          created_at  TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      log('Promo banners table ensured.');
+    } catch (err) {
+      log(`Promo banners migration skipped: ${err}`);
+    }
     
     const server = await registerRoutes(app);
 

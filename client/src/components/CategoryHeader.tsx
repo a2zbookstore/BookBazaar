@@ -1,8 +1,19 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import type { Category } from "@/types";
 
 export default function CategoryHeader() {
+  const [isMd, setIsMd] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setIsMd(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   const [location, setLocation] = useLocation();
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -44,7 +55,13 @@ export default function CategoryHeader() {
   );
 
   return (
-    <div className="fixed left-0 right-0 z-30 bg-red-600 top-[122px] md:top-[100px] overflow-hidden marquee-container">
+    <div
+      className="fixed left-0 right-0 z-30 bg-red-600 overflow-hidden marquee-container"
+      style={{
+        top: `calc(${isMd ? 100 : 122}px - var(--ph-offset, 0px))`,
+        transition: 'top 400ms cubic-bezier(0.4,0,0.2,1)',
+      }}
+    >
       <div className="animate-marquee">
         {loopItems.map((item, i) => renderItem(item, i))}
       </div>

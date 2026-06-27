@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Tag, Hash, AlignLeft, ArrowUpDown, Loader2, FolderOpen, X, ChevronDown, ChevronRight, Layers, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, Tag, Hash, AlignLeft, ArrowUpDown, Loader2, FolderOpen, X, ChevronDown, ChevronRight, Layers, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -41,6 +41,23 @@ const initialSubCategoryForm: SubCategoryForm = {
     categoryId: "",
     sort_order: "",
 };
+
+/* ── batch row for multi-add dialog ── */
+interface SubCategoryBatchRow {
+    id: string;
+    name: string;
+    slug: string;
+    sort_order: string;
+    status: "idle" | "saving" | "done" | "error";
+    error?: string;
+}
+const newBatchRow = (): SubCategoryBatchRow => ({
+    id: Math.random().toString(36).slice(2),
+    name: "",
+    slug: "",
+    sort_order: "",
+    status: "idle",
+});
 
 /* ── reusable labelled input wrapper ── */
 function Field({ label, hint, icon, children }: { label: string; hint?: string; icon?: React.ReactNode; children: React.ReactNode }) {
@@ -200,6 +217,11 @@ export default function CategoriesManagement() {
     const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<number>>(new Set());
     const [isSubCategoryDialogOpen, setIsSubCategoryDialogOpen] = useState(false);
     const [subCategoryForm, setSubCategoryForm] = useState<SubCategoryForm>(initialSubCategoryForm);
+    // Multi-add batch state
+    const [batchCategoryId, setBatchCategoryId] = useState<number | "">("");
+    const [batchRows, setBatchRows] = useState<SubCategoryBatchRow[]>([newBatchRow()]);
+    const [batchSubmitting, setBatchSubmitting] = useState(false);
+    const lastRowRef = useRef<HTMLInputElement>(null);
     const [editSubCategoryDialogOpen, setEditSubCategoryDialogOpen] = useState(false);
     const [subCategoryToEdit, setSubCategoryToEdit] = useState<SubCategory | null>(null);
     const [deleteSubLoadingId, setDeleteSubLoadingId] = useState<number | null>(null);
@@ -342,22 +364,91 @@ export default function CategoriesManagement() {
     };
 
     const handleAddSubCategory = (categoryId: number) => {
-        setSubCategoryForm({ ...initialSubCategoryForm, categoryId });
+        setBatchCategoryId(categoryId);
+        setBatchRows([newBatchRow()]);
+        setBatchSubmitting(false);
         setIsSubCategoryDialogOpen(true);
     };
 
-    const handleSubCategorySubmit = (e: React.FormEvent) => {
+    const updateBatchRow = (id: string, patch: Partial<SubCategoryBatchRow>) => {
+        setBatchRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
+    };
+
+    const handleBatchRowNameChange = (id: string, name: string) => {
+        setBatchRows(prev => prev.map(r => {
+            if (r.id !== id) return r;
+            const autoSlug = r.slug === toSlug(r.name) || r.slug === "";
+            return { ...r, name, slug: autoSlug ? toSlug(name) : r.slug };
+        }));
+    };
+
+    const addBatchRow = () => {
+        setBatchRows(prev => [...prev, newBatchRow()]);
+        setTimeout(() => lastRowRef.current?.focus(), 50);
+    };
+
+    const removeBatchRow = (id: string) => {
+        setBatchRows(prev => prev.length > 1 ? prev.filter(r => r.id !== id) : prev);
+    };
+
+    const handleBatchSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const trimmedName = subCategoryForm.name.trim().toLowerCase();
-        const isDuplicate = allSubCategories.some(
-            s => s.name.trim().toLowerCase() === trimmedName
-        );
-        if (isDuplicate) {
-            toast({ title: "Duplicate name", description: `A subcategory named "${subCategoryForm.name.trim()}" already exists. Please use a unique name.`, variant: "destructive" });
+        const filled = batchRows.filter(r => r.name.trim() !== "");
+        if (filled.length === 0) return;
+
+        // Check for duplicates within the batch
+        const batchNames = filled.map(r => r.name.trim().toLowerCase());
+        const hasBatchDupe = batchNames.some((n, i) => batchNames.indexOf(n) !== i);
+        if (hasBatchDupe) {
+            toast({ title: "Duplicate names", description: "Each subcategory in the list must have a unique name.", variant: "destructive" });
             return;
         }
-        const slug = subCategoryForm.slug || toSlug(subCategoryForm.name);
-        createSubCategoryMutation.mutate({ ...subCategoryForm, slug });
+        // Check against existing
+        const existing = allSubCategories.map(s => s.name.trim().toLowerCase());
+        const dupeWithExisting = filled.find(r => existing.includes(r.name.trim().toLowerCase()));
+        if (dupeWithExisting) {
+            toast({ title: "Duplicate name", description: `"${dupeWithExisting.name.trim()}" already exists.`, variant: "destructive" });
+            return;
+        }
+
+        setBatchSubmitting(true);
+        let successCount = 0;
+        const updatedRows = [...batchRows];
+
+        for (const row of filled) {
+            const idx = updatedRows.findIndex(r => r.id === row.id);
+            updatedRows[idx] = { ...updatedRows[idx], status: "saving" };
+            setBatchRows([...updatedRows]);
+            try {
+                await apiRequest("POST", "/api/createSubCategory", {
+                    name: row.name.trim(),
+                    slug: row.slug || toSlug(row.name),
+                    description: "",
+                    categoryId: Number(batchCategoryId),
+                    sort_order: row.sort_order === "" ? undefined : Number(row.sort_order),
+                });
+                updatedRows[idx] = { ...updatedRows[idx], status: "done" };
+                successCount++;
+            } catch (err) {
+                updatedRows[idx] = { ...updatedRows[idx], status: "error", error: err instanceof Error ? err.message : "Failed" };
+            }
+            setBatchRows([...updatedRows]);
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
+        setBatchSubmitting(false);
+
+        if (successCount === filled.length) {
+            toast({ title: `${successCount} subcategor${successCount === 1 ? "y" : "ies"} created`, description: "All subcategories were added successfully." });
+            setIsSubCategoryDialogOpen(false);
+        } else {
+            toast({ title: `${successCount} of ${filled.length} created`, description: "Some subcategories failed — check the list.", variant: "destructive" });
+        }
+    };
+
+    // kept for legacy use (not called anymore for create, only referenced)
+    const handleSubCategorySubmit = (e: React.FormEvent) => {
+        e.preventDefault();
     };
 
     const handleEditSubCategory = (sub: SubCategory) => {
@@ -620,7 +711,7 @@ export default function CategoriesManagement() {
 
             {/* ── Create Dialog ── */}
             <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl overflow-hidden border-0 shadow-2xl">
+                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl border-0 shadow-2xl [&>button:last-child]:hidden">
                     {/* header */}
                     <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-950 px-6 pt-6 pb-5 text-white">
                         <div className="flex items-center justify-between">
@@ -635,6 +726,10 @@ export default function CategoriesManagement() {
                                     </div>
                                 </DialogTitle>
                             </DialogHeader>
+                            <DialogClose className="rounded-lg p-1.5 text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Close</span>
+                            </DialogClose>
                         </div>
                     </div>
                     {/* body */}
@@ -666,19 +761,25 @@ export default function CategoriesManagement() {
 
             {/* ── Edit Dialog ── */}
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl overflow-hidden border-0 shadow-2xl">
+                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl border-0 shadow-2xl [&>button:last-child]:hidden">
                     <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-950 px-6 pt-6 pb-5 text-white">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-3 text-white">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
-                                    <Edit className="h-5 w-5 text-indigo-300" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-base">Edit Category</p>
-                                    <p className="text-xs text-slate-400 font-normal truncate max-w-[200px]">{categoryToEdit?.name}</p>
-                                </div>
-                            </DialogTitle>
-                        </DialogHeader>
+                        <div className="flex items-center justify-between">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-3 text-white">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
+                                        <Edit className="h-5 w-5 text-indigo-300" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-base">Edit Category</p>
+                                        <p className="text-xs text-slate-400 font-normal truncate max-w-[200px]">{categoryToEdit?.name}</p>
+                                    </div>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <DialogClose className="rounded-lg p-1.5 text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Close</span>
+                            </DialogClose>
+                        </div>
                     </div>
                     {categoryToEdit && (
                         <form onSubmit={handleEditSubmit} className="px-6 py-5 space-y-4 bg-white">
@@ -707,50 +808,144 @@ export default function CategoriesManagement() {
                 </DialogContent>
             </Dialog>
 
-            {/* ── Create Subcategory Dialog ── */}
-            <Dialog open={isSubCategoryDialogOpen} onOpenChange={setIsSubCategoryDialogOpen}>
-                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl overflow-hidden border-0 shadow-2xl">
-                    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-violet-950 px-6 pt-6 pb-5 text-white">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-3 text-white">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
-                                    <Layers className="h-5 w-5 text-violet-300" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-base">New Subcategory</p>
-                                    <p className="text-xs text-slate-400 font-normal">Add a subcategory to a category</p>
-                                </div>
-                            </DialogTitle>
-                        </DialogHeader>
+            {/* ── Create Subcategory Dialog (multi-add) ── */}
+            <Dialog open={isSubCategoryDialogOpen} onOpenChange={(open) => { if (!batchSubmitting) setIsSubCategoryDialogOpen(open); }}>
+                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-lg rounded-2xl border-0 shadow-2xl [&>button:last-child]:hidden">
+                    {/* header */}
+                    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-violet-950 px-6 pt-6 pb-5 text-white shrink-0">
+                        <div className="flex items-center justify-between">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-3 text-white">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
+                                        <Layers className="h-5 w-5 text-violet-300" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-base">Add Subcategories</p>
+                                        <p className="text-xs text-slate-400 font-normal">Add one or more at once</p>
+                                    </div>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <DialogClose disabled={batchSubmitting} className="rounded-lg p-1.5 text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40">
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Close</span>
+                            </DialogClose>
+                        </div>
                     </div>
-                    <form onSubmit={handleSubCategorySubmit} className="px-6 py-5 space-y-4 bg-white">
-                        <SubCategoryFormFields
-                            values={subCategoryForm}
-                            categories={categories}
-                            onChange={(field, value) => {
-                                if (field === "name") {
-                                    setSubCategoryForm(prev => ({
-                                        ...prev,
-                                        name: value,
-                                        slug: prev.slug === toSlug(prev.name) ? toSlug(value) : prev.slug,
-                                    }));
-                                } else {
-                                    setSubCategoryForm(prev => ({ ...prev, [field]: value }));
-                                }
-                            }}
-                        />
-                        <div className="flex gap-3 pt-1">
-                            <Button type="button" variant="outline" onClick={() => setIsSubCategoryDialogOpen(false)} className="flex-none rounded-xl border-slate-200 text-slate-600 h-10 px-4">
+
+                    <form onSubmit={handleBatchSubmit} className="bg-white flex flex-col">
+                        {/* category selector */}
+                        <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+                            <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                                <Tag className="h-3.5 w-3.5" /> Parent Category
+                            </Label>
+                            <Select
+                                value={batchCategoryId ? String(batchCategoryId) : ""}
+                                onValueChange={(v) => setBatchCategoryId(Number(v))}
+                                required
+                            >
+                                <SelectTrigger className="rounded-xl border-slate-200 h-10">
+                                    <SelectValue placeholder="Select a category…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map(c => (
+                                        <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* rows */}
+                        <div className="px-6 py-4 space-y-2.5 overflow-y-auto max-h-[42vh]">
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Subcategory Names</p>
+                            {batchRows.map((row, idx) => (
+                                <div key={row.id} className="flex items-center gap-2">
+                                    {/* status icon */}
+                                    <div className="w-5 shrink-0 flex items-center justify-center">
+                                        {row.status === "saving" && <Loader2 className="h-3.5 w-3.5 text-violet-500 animate-spin" />}
+                                        {row.status === "done" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+                                        {row.status === "error" && <X className="h-3.5 w-3.5 text-red-500" />}
+                                    </div>
+                                    {/* name input */}
+                                    <div className="flex-1 relative">
+                                        <input
+                                            ref={idx === batchRows.length - 1 ? lastRowRef : undefined}
+                                            type="text"
+                                            className={`w-full h-9 rounded-xl border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 ${
+                                                row.status === "done" ? "border-emerald-300 bg-emerald-50 text-emerald-700" :
+                                                row.status === "error" ? "border-red-300 bg-red-50" :
+                                                "border-slate-200 bg-white"
+                                            }`}
+                                            placeholder={`Subcategory ${idx + 1}`}
+                                            value={row.name}
+                                            onChange={e => handleBatchRowNameChange(row.id, e.target.value)}
+                                            disabled={row.status === "done" || row.status === "saving" || batchSubmitting}
+                                            onKeyDown={e => {
+                                                if (e.key === "Enter") { e.preventDefault(); addBatchRow(); }
+                                            }}
+                                        />
+                                        {row.slug && row.status === "idle" && (
+                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono pointer-events-none">{row.slug}</span>
+                                        )}
+                                        {row.status === "error" && (
+                                            <span className="absolute -bottom-4 left-0 text-[10px] text-red-500">{row.error}</span>
+                                        )}
+                                    </div>
+                                    {/* sort order */}
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        className="w-14 h-9 rounded-xl border border-slate-200 px-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-violet-300"
+                                        placeholder="#"
+                                        title="Sort order"
+                                        value={row.sort_order}
+                                        onChange={e => updateBatchRow(row.id, { sort_order: e.target.value })}
+                                        disabled={row.status === "done" || row.status === "saving" || batchSubmitting}
+                                    />
+                                    {/* remove */}
+                                    <button
+                                        type="button"
+                                        onClick={() => removeBatchRow(row.id)}
+                                        disabled={batchRows.length === 1 || row.status === "saving" || batchSubmitting}
+                                        className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                            {/* add row */}
+                            <button
+                                type="button"
+                                onClick={addBatchRow}
+                                disabled={batchSubmitting}
+                                className="mt-1 flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium transition-colors disabled:opacity-40"
+                            >
+                                <Plus className="h-3.5 w-3.5" /> Add another
+                            </button>
+                        </div>
+
+                        {/* footer */}
+                        <div className="flex gap-3 px-6 pb-5 pt-3 border-t border-slate-100">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsSubCategoryDialogOpen(false)}
+                                disabled={batchSubmitting}
+                                className="flex-none rounded-xl border-slate-200 text-slate-600 h-10 px-4"
+                            >
                                 Cancel
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={createSubCategoryMutation.isPending}
+                                disabled={batchSubmitting || !batchCategoryId || batchRows.every(r => r.name.trim() === "")}
                                 className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl h-10 shadow-md"
                             >
-                                {createSubCategoryMutation.isPending
+                                {batchSubmitting
                                     ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Creating…</span>
-                                    : <span className="flex items-center gap-2"><Plus className="h-4 w-4" /> Create Subcategory</span>}
+                                    : (() => {
+                                        const count = batchRows.filter(r => r.name.trim() !== "").length;
+                                        return <span className="flex items-center gap-2"><Plus className="h-4 w-4" /> Create {count > 1 ? `${count} Subcategories` : "Subcategory"}</span>;
+                                    })()
+                                }
                             </Button>
                         </div>
                     </form>
@@ -759,19 +954,25 @@ export default function CategoriesManagement() {
 
             {/* ── Edit Subcategory Dialog ── */}
             <Dialog open={editSubCategoryDialogOpen} onOpenChange={setEditSubCategoryDialogOpen}>
-                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl overflow-hidden border-0 shadow-2xl">
+                <DialogContent className="p-0 gap-0 max-w-[92vw] sm:max-w-md rounded-2xl border-0 shadow-2xl [&>button:last-child]:hidden">
                     <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-violet-950 px-6 pt-6 pb-5 text-white">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-3 text-white">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
-                                    <Edit className="h-5 w-5 text-violet-300" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-base">Edit Subcategory</p>
-                                    <p className="text-xs text-slate-400 font-normal truncate max-w-[200px]">{subCategoryToEdit?.name}</p>
-                                </div>
-                            </DialogTitle>
-                        </DialogHeader>
+                        <div className="flex items-center justify-between">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-3 text-white">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/20">
+                                        <Edit className="h-5 w-5 text-violet-300" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-base">Edit Subcategory</p>
+                                        <p className="text-xs text-slate-400 font-normal truncate max-w-[200px]">{subCategoryToEdit?.name}</p>
+                                    </div>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <DialogClose className="rounded-lg p-1.5 text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Close</span>
+                            </DialogClose>
+                        </div>
                     </div>
                     {subCategoryToEdit && (
                         <form onSubmit={handleEditSubCategorySubmit} className="px-6 py-5 space-y-4 bg-white">
