@@ -2412,6 +2412,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         author: item.author || "Unknown Author"
       }));
 
+      // Resolve the account that owns this order. For guests (no session user),
+      // silently create a passwordless account keyed by the customer's email so
+      // the order is tied to an account.
+      let resolvedUserId: string | null = sessionUserId || orderData.userId || null;
+      if (!resolvedUserId && primaryCustomerEmail) {
+        try {
+          const [guestFirstName, ...guestLastNameParts] = (orderData.customerName || "").split(" ");
+          const guestUser = await storage.getOrCreateGuestUserByEmail({
+            email: primaryCustomerEmail,
+            firstName: guestFirstName || primaryCustomerEmail,
+            lastName: guestLastNameParts.join(" "),
+          });
+          resolvedUserId = guestUser.id;
+        } catch (guestError) {
+          console.error("Guest account creation failed (continuing as guest):", guestError);
+        }
+      }
+
       // Create order in database
       const order = await storage.createOrder({
         customerName: orderData.customerName,
@@ -2426,7 +2444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: "stripe",
         paymentId: paymentIntentId,
         paymentStatus: paymentStatus,
-        userId: sessionUserId || orderData.userId || null,
+        userId: resolvedUserId,
       }, normalizedItems);
 
       // Record coupon usage if a DB coupon was applied
@@ -2435,7 +2453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.applyCoupon(
             Number(orderData.couponId),
             order.id,
-            sessionUserId || null,
+            resolvedUserId,
             primaryCustomerEmail,
             parseFloat(orderData.couponDiscountAmount)
           );
@@ -3156,6 +3174,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log("Creating order with cart items:", cartItems.length);
+
+      // For plain guest checkout (no account, no register password), silently
+      // create a passwordless account keyed by the customer's email so the order
+      // is tied to an account. Done after cart resolution so guest items from the
+      // request body are still used.
+      if (!userId && primaryCustomerEmail) {
+        try {
+          const [guestFirstName, ...guestLastNameParts] = (customerName || "").split(" ");
+          const guestUser = await storage.getOrCreateGuestUserByEmail({
+            email: primaryCustomerEmail,
+            firstName: guestFirstName || primaryCustomerEmail,
+            lastName: guestLastNameParts.join(" "),
+          });
+          userId = guestUser.id;
+          user = guestUser;
+        } catch (guestError) {
+          console.error("Guest account creation failed (continuing as guest):", guestError);
+        }
+      }
 
       // Create order in database
       const order = await storage.createOrder({

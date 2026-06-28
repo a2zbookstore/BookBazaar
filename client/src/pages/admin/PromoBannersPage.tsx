@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Upload, Trash2, ToggleLeft, ToggleRight, Pencil, Check, X } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────
 // BannerLinkBuilder — copied from BannerUploadPage for consistency
@@ -298,19 +298,46 @@ interface PromoBanner {
 
 export default function PromoBannersPage() {
   const { toast } = useToast();
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const [allBanners, setAllBanners] = useState<PromoBanner[]>([]);
+  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({}); // id → name
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [filterGroup, setFilterGroup] = useState<string>("all");
+
+  // Group title edit state (one title shared across the group)
+  const [editingGroupName, setEditingGroupName] = useState<string | null>(null);
+  const [editGroupTitle, setEditGroupTitle] = useState("");
+  const [editGroupSaving, setEditGroupSaving] = useState(false);
+
+  // Per-slot edit state (image / link / order only — title handled at group level)
+  const [editingSlotId, setEditingSlotId] = useState<number | null>(null);
+  const [editSlotDraft, setEditSlotDraft] = useState<{ image_url: string; link_url: string; sort_order: number } | null>(null);
+  const [editSlotSaving, setEditSlotSaving] = useState(false);
+  const editFileRef = useRef<HTMLInputElement>(null);
+  const [editUploading, setEditUploading] = useState(false);
 
   // New banner form
-  const [title, setTitle] = useState("");
+  const [formKey, setFormKey] = useState(0);
+  const [title, setTitle] = useState(""); // only used for category placement
   const [groupName, setGroupName] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [linkUrl, setLinkUrl] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [slots, setSlots] = useState([
+    { imageUrl: "", linkUrl: "", uploading: false },
+    { imageUrl: "", linkUrl: "", uploading: false },
+    { imageUrl: "", linkUrl: "", uploading: false },
+  ]);
+  const slotRef0 = useRef<HTMLInputElement>(null);
+  const slotRef1 = useRef<HTMLInputElement>(null);
+  const slotRef2 = useRef<HTMLInputElement>(null);
+  const slotRefs = [slotRef0, slotRef1, slotRef2];
   const [saving, setSaving] = useState(false);
+
+  // Derived placement info
+  const activePlacement = groupName === "home_strip" ? "home_strip"
+    : groupName === "home_side" ? "home_side"
+    : groupName.startsWith("category_") ? "category" : "";
+  const slotCount = (activePlacement === "home_strip" || activePlacement === "category") ? 3
+    : activePlacement === "home_side" ? 2 : 1;
 
   const loadBanners = () => {
     fetch("/api/admin/promo-banners", { credentials: "include" })
@@ -319,9 +346,116 @@ export default function PromoBannersPage() {
       .catch(() => {});
   };
 
-  useEffect(() => { loadBanners(); }, []);
+  const groupLabel = (g: string) => {
+    if (g === "home_strip") return "Strip (below hero)";
+    if (g === "home_side") return "Side panel";
+    if (g.startsWith("category_")) return categoryMap[g] || g;
+    return g;
+  };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const openGroupEdit = (groupName: string, banners: PromoBanner[]) => {
+    const raw = banners[0]?.title || "";
+    const base = raw.replace(/\s*—\s*\d+$/, "").trim();
+    setEditingGroupName(groupName);
+    setEditGroupTitle(base);
+    setEditingSlotId(null);
+    setEditSlotDraft(null);
+  };
+  const closeGroupEdit = () => { setEditingGroupName(null); setEditGroupTitle(""); };
+
+  const handleGroupTitleSave = async (groupBanners: PromoBanner[]) => {
+    if (!editingGroupName || !editGroupTitle.trim()) return;
+    setEditGroupSaving(true);
+    try {
+      await Promise.all(groupBanners.map((b, i) => {
+        const newTitle = groupBanners.length > 1 ? `${editGroupTitle.trim()} — ${i + 1}` : editGroupTitle.trim();
+        return fetch(`/api/admin/promo-banners/${b.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ title: newTitle }),
+        }).then(r => { if (!r.ok) throw new Error(); return r.json(); });
+      }));
+      setAllBanners(prev => prev.map(b => {
+        if (b.group_name !== editingGroupName) return b;
+        const idx = groupBanners.findIndex(gb => gb.id === b.id);
+        const newTitle = groupBanners.length > 1 ? `${editGroupTitle.trim()} — ${idx + 1}` : editGroupTitle.trim();
+        return { ...b, title: newTitle };
+      }));
+      toast({ title: "Title updated!" });
+      closeGroupEdit();
+    } catch {
+      toast({ title: "Update failed", variant: "destructive" });
+    } finally {
+      setEditGroupSaving(false);
+    }
+  };
+
+  const openSlotEdit = (b: PromoBanner) => {
+    setEditingSlotId(b.id);
+    setEditSlotDraft({ image_url: b.image_url, link_url: b.link_url || "", sort_order: b.sort_order });
+  };
+  const closeSlotEdit = () => { setEditingSlotId(null); setEditSlotDraft(null); };
+
+  const handleEditUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editSlotDraft) return;
+    if (!file.type.startsWith("image/")) { toast({ title: "Invalid file", variant: "destructive" }); return; }
+    if (file.size > 5 * 1024 * 1024) { toast({ title: "File too large", variant: "destructive" }); return; }
+    setEditUploading(true);
+    const fd = new FormData();
+    fd.append("image", file);
+    try {
+      const res = await fetch("/api/admin/promo-banners/upload", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error();
+      const { imageUrl: url } = await res.json();
+      setEditSlotDraft(d => d ? { ...d, image_url: url } : d);
+      toast({ title: "Uploaded" });
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setEditUploading(false);
+      if (editFileRef.current) editFileRef.current.value = "";
+    }
+  };
+
+  const handleSlotSave = async () => {
+    if (!editingSlotId || !editSlotDraft) return;
+    if (!editSlotDraft.image_url.trim()) { toast({ title: "Image URL required", variant: "destructive" }); return; }
+    setEditSlotSaving(true);
+    try {
+      const res = await fetch(`/api/admin/promo-banners/${editingSlotId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ image_url: editSlotDraft.image_url, link_url: editSlotDraft.link_url || null, sort_order: editSlotDraft.sort_order }),
+      });
+      if (!res.ok) throw new Error();
+      const updated: PromoBanner = await res.json();
+      setAllBanners(prev => prev.map(x => x.id === updated.id ? updated : x));
+      toast({ title: "Slot updated!" });
+      closeSlotEdit();
+    } catch {
+      toast({ title: "Update failed", variant: "destructive" });
+    } finally {
+      setEditSlotSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBanners();
+    fetch("/api/categories")
+      .then(r => r.json())
+      .then((cats: { id: number; name: string }[]) => {
+        if (!Array.isArray(cats)) return;
+        const map: Record<string, string> = {};
+        cats.forEach(c => { map[`category_${c.id}`] = c.name; });
+        setCategoryMap(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSlotUpload = async (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -330,39 +464,68 @@ export default function PromoBannersPage() {
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "File too large", description: "Image must be < 5 MB.", variant: "destructive" }); return;
     }
-    setUploading(true);
+    setSlots(prev => prev.map((s, i) => i === idx ? { ...s, uploading: true } : s));
     const fd = new FormData();
     fd.append("image", file);
     try {
       const res = await fetch("/api/admin/promo-banners/upload", { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) throw new Error();
       const { imageUrl: url } = await res.json();
-      setImageUrl(url);
+      setSlots(prev => prev.map((s, i) => i === idx ? { ...s, imageUrl: url, uploading: false } : s));
       toast({ title: "Uploaded", description: "Image ready." });
     } catch {
       toast({ title: "Upload failed", variant: "destructive" });
+      setSlots(prev => prev.map((s, i) => i === idx ? { ...s, uploading: false } : s));
     } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
+      const ref = slotRefs[idx];
+      if (ref.current) ref.current.value = "";
     }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !groupName.trim() || !imageUrl) {
-      toast({ title: "Missing fields", description: "Title, group and image are all required.", variant: "destructive" }); return;
+    if (!groupName.trim()) {
+      toast({ title: "Missing group", description: "Please select where this banner appears.", variant: "destructive" }); return;
+    }
+    if (!title.trim()) {
+      toast({ title: "Missing title", description: "Please enter a title for this banner set.", variant: "destructive" }); return;
+    }
+    const activeSlots = slots.slice(0, slotCount).filter(s => s.imageUrl.trim());
+    if (activeSlots.length === 0) {
+      toast({ title: "No images", description: "Please upload at least one banner image.", variant: "destructive" }); return;
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/promo-banners", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ title: title.trim(), group_name: groupName.trim(), image_url: imageUrl, link_url: linkUrl || null, is_active: true, sort_order: 0 }),
-      });
-      if (!res.ok) throw new Error();
-      toast({ title: "Banner saved!" });
-      setTitle(""); setGroupName(""); setImageUrl(""); setLinkUrl("");
+      await Promise.all(
+        activeSlots.map((slot) => {
+          const slotIndex = slots.findIndex(s => s === slot);
+          const savedTitle = slotCount > 1
+            ? `${title.trim()} — ${slotIndex + 1}`
+            : title.trim();
+          return fetch("/api/admin/promo-banners", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              title: savedTitle,
+              group_name: groupName.trim(),
+              image_url: slot.imageUrl,
+              link_url: slot.linkUrl || null,
+              is_active: true,
+              sort_order: slotIndex * 10,
+            }),
+          }).then(r => { if (!r.ok) throw new Error(); });
+        })
+      );
+      toast({ title: activeSlots.length > 1 ? `${activeSlots.length} banners saved!` : "Banner saved!" });
+      setTitle("");
+      setGroupName("");
+      setSlots([
+        { imageUrl: "", linkUrl: "", uploading: false },
+        { imageUrl: "", linkUrl: "", uploading: false },
+        { imageUrl: "", linkUrl: "", uploading: false },
+      ]);
+      setFormKey(k => k + 1);
       loadBanners();
     } catch {
       toast({ title: "Save failed", variant: "destructive" });
@@ -412,109 +575,303 @@ export default function PromoBannersPage() {
 
         {/* ── Upload form ── */}
         <form onSubmit={handleSave} className="space-y-4">
-          {/* Title */}
-          <div>
-            <Label htmlFor="promoTitle">Banner Title *</Label>
-            <Input id="promoTitle" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Routledge Classics — 40% OFF" required className="mt-1" />
-          </div>
-
-          {/* Group */}
+          {/* Group — always first */}
           <div>
             <Label>Banner Group *</Label>
             <p className="text-xs text-gray-500 mb-1">Choose where this banner should appear on the site.</p>
             <GroupSelector
+              key={formKey}
               value={groupName}
               onChange={setGroupName}
               onCategoryName={(name) => { if (!title.trim()) setTitle(name); }}
             />
           </div>
 
-          {/* Image */}
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <Label htmlFor="promoImage" className="text-sm font-medium">Banner Image *</Label>
-            <div className="space-y-2 mt-2">
-              <div className="flex gap-2">
-                <Input
-                  id="promoImage"
-                  type="text"
-                  value={imageUrl}
-                  onChange={e => setImageUrl(e.target.value)}
-                  placeholder="https://res.cloudinary.com/... or upload below"
-                  className="flex-1"
-                />
-                <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="whitespace-nowrap">
-                  <Upload className="h-4 w-4 mr-2" />
-                  {uploading ? "Uploading..." : "Upload"}
-                </Button>
-              </div>
-
-              {/* Link builder */}
-              <BannerLinkBuilder value={linkUrl} onChange={setLinkUrl} />
-
-              {/* Preview */}
-              {imageUrl && (
-                <div className="w-32 h-20 border rounded overflow-hidden">
-                  <img src={imageUrl} alt="Preview" className="w-full h-full object-cover"
-                    onError={e => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x100?text=No+Image"; }} />
-                </div>
-              )}
+          {/* Title — shown for all placements once a group is selected */}
+          {activePlacement && (
+            <div>
+              <Label htmlFor="promoTitle">Banner Title *</Label>
+              <p className="text-xs text-gray-500 mb-1">Shown in the admin list so you can identify this banner.</p>
+              <Input
+                id="promoTitle"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder={activePlacement === "category" ? "e.g. Routledge Classics — 40% OFF" : activePlacement === "home_strip" ? "e.g. Summer Sale Strip" : "e.g. Featured Publishers"}
+                required
+                className="mt-1"
+              />
             </div>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
-          </div>
+          )}
+
+          {/* Image slots — shown only once a group is selected */}
+          {slotCount > 0 && (
+            <div className="space-y-3">
+              {activePlacement === "home_strip" && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                  Upload up to <strong>3 images</strong> — they appear side-by-side in the strip below the hero.
+                  Slots left blank are skipped. Left slot = position 1.
+                </p>
+              )}
+              {activePlacement === "home_side" && (
+                <p className="text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded px-3 py-2">
+                  Upload <strong>2 images</strong> — they stack vertically to the right of the hero carousel on desktop.
+                  Slots left blank are skipped. Top slot = position 1.
+                </p>
+              )}
+              {activePlacement === "category" && (
+                <p className="text-xs text-sky-700 bg-sky-50 border border-sky-200 rounded px-3 py-2">
+                  Upload up to <strong>3 images</strong> — they appear in a row at the top of the category page.
+                  Slots left blank are skipped. Left slot = position 1.
+                </p>
+              )}
+
+              {Array.from({ length: slotCount }).map((_, idx) => (
+                <div key={idx} className="border rounded-lg p-4 bg-gray-50">
+                  {slotCount > 1 && (
+                    <p className="text-sm font-semibold text-gray-600 mb-2">
+                      {activePlacement === "home_side"
+                        ? (idx === 0 ? "Banner 1 — Top" : "Banner 2 — Bottom")
+                        : (idx === 0 ? "Banner 1 — Left" : idx === 1 ? "Banner 2 — Centre" : "Banner 3 — Right")}
+                      {idx > 0 && <span className="ml-2 text-xs font-normal text-gray-400">(optional)</span>}
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        value={slots[idx].imageUrl}
+                        onChange={e => setSlots(prev => prev.map((s, i) => i === idx ? { ...s, imageUrl: e.target.value } : s))}
+                        placeholder="https://res.cloudinary.com/... or upload"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => slotRefs[idx].current?.click()}
+                        disabled={slots[idx].uploading}
+                        className="whitespace-nowrap"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {slots[idx].uploading ? "Uploading..." : "Upload"}
+                      </Button>
+                    </div>
+                    <BannerLinkBuilder
+                      value={slots[idx].linkUrl}
+                      onChange={url => setSlots(prev => prev.map((s, i) => i === idx ? { ...s, linkUrl: url } : s))}
+                    />
+                    {slots[idx].imageUrl && (
+                      <div className="w-32 h-20 border rounded overflow-hidden">
+                        <img
+                          src={slots[idx].imageUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={e => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x100?text=No+Image"; }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Hidden file inputs — one per slot */}
+              <input ref={slotRef0} type="file" accept="image/*" onChange={e => handleSlotUpload(0, e)} className="hidden" />
+              <input ref={slotRef1} type="file" accept="image/*" onChange={e => handleSlotUpload(1, e)} className="hidden" />
+              <input ref={slotRef2} type="file" accept="image/*" onChange={e => handleSlotUpload(2, e)} className="hidden" />
+            </div>
+          )}
 
           <div className="flex justify-end pt-2">
-            <Button type="submit" className="bg-primary-aqua hover:bg-secondary-aqua" disabled={saving}>
-              {saving ? "Saving..." : "Save Banner"}
+            <Button type="submit" className="bg-primary-aqua hover:bg-secondary-aqua" disabled={saving || !groupName}>
+              {saving ? "Saving..." : slotCount === 3 ? "Save All 3 Banners" : slotCount === 2 ? "Save Both Banners" : "Save Banner"}
             </Button>
           </div>
         </form>
 
         {/* ── All banners list ── */}
         <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-3">All Promo Banners — On / Off</h3>
-          {allBanners.length === 0 ? (
-            <p className="text-sm text-gray-400">No promo banners uploaded yet.</p>
-          ) : (
-            <div className="divide-y border rounded-lg overflow-hidden">
-              {allBanners.map(banner => (
-                <div key={banner.id} className="flex items-center gap-3 px-4 py-3 bg-white">
-                  {/* Thumbnail */}
-                  {banner.image_url && (
-                    <img src={banner.image_url} alt="" className="w-16 h-10 object-cover rounded shrink-0" />
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <h3 className="text-lg font-semibold">All Promo Banners — On / Off</h3>
+            <div className="ml-auto flex gap-1 flex-wrap">
+              {["all", "home_strip", "home_side"].concat(
+                [...new Set(allBanners.filter(b => b.group_name.startsWith("category_")).map(b => b.group_name))]
+              ).map(g => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setFilterGroup(g)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                    filterGroup === g
+                      ? "bg-primary-aqua text-white border-primary-aqua"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-primary-aqua"
+                  }`}
+                >
+                  {g === "all" ? "All" : groupLabel(g)}
+                  {g !== "all" && (
+                    <span className="ml-1 opacity-70">
+                      ({allBanners.filter(b => b.group_name === g).length})
+                    </span>
                   )}
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{banner.title}</p>
-                    <p className="text-xs text-gray-400 font-mono truncate">{banner.group_name}</p>
-                  </div>
-                  {/* Status badge */}
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${banner.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                    {banner.is_active ? "ON" : "OFF"}
-                  </span>
-                  {/* Toggle */}
-                  <button
-                    onClick={() => handleToggle(banner)}
-                    disabled={togglingId === banner.id}
-                    className="text-gray-400 hover:text-primary-aqua transition-colors disabled:opacity-50 shrink-0"
-                    aria-label={banner.is_active ? "Disable" : "Enable"}
-                  >
-                    {banner.is_active
-                      ? <ToggleRight className="h-8 w-8 text-green-500" />
-                      : <ToggleLeft className="h-8 w-8 text-gray-400" />}
-                  </button>
-                  {/* Delete */}
-                  <button
-                    onClick={() => handleDelete(banner)}
-                    disabled={deletingId === banner.id}
-                    className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 shrink-0"
-                    aria-label="Delete banner"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                </div>
+                </button>
               ))}
             </div>
+          </div>
+          {filterGroup === "home_strip" && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3">
+              <strong>Home Strip</strong> — shows up to 3 banners in a row directly below the hero carousel.
+              Lower <em>Display Order</em> = appears first. Only <strong>ON</strong> banners are shown on the homepage.
+            </p>
           )}
+          {(() => {
+            const filtered = filterGroup === "all" ? allBanners : allBanners.filter(b => b.group_name === filterGroup);
+            if (filtered.length === 0) return (
+              <p className="text-sm text-gray-400">{allBanners.length === 0 ? "No promo banners uploaded yet." : "No banners in this group."}</p>
+            );
+
+            // Group by group_name, preserve insertion order
+            const groupOrder: string[] = [];
+            const groups: Record<string, PromoBanner[]> = {};
+            filtered.forEach(b => {
+              if (!groups[b.group_name]) { groups[b.group_name] = []; groupOrder.push(b.group_name); }
+              groups[b.group_name].push(b);
+            });
+
+            return (
+              <div className="space-y-3">
+                {groupOrder.map(gName => {
+                  const groupBanners = groups[gName].sort((a, b) => a.sort_order - b.sort_order);
+                  const baseTitle = (groupBanners[0]?.title || "").replace(/\s*—\s*\d+$/, "").trim();
+                  const isEditingTitle = editingGroupName === gName;
+
+                  return (
+                    <div key={gName} className="border rounded-lg overflow-hidden">
+                      {/* ── Group header ── */}
+                      <div className="flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b">
+                        <div className="flex-1 min-w-0">
+                          {isEditingTitle ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editGroupTitle}
+                                onChange={e => setEditGroupTitle(e.target.value)}
+                                className="h-7 text-sm py-0 w-56"
+                                autoFocus
+                                onKeyDown={e => { if (e.key === "Enter") handleGroupTitleSave(groupBanners); if (e.key === "Escape") closeGroupEdit(); }}
+                              />
+                              <button onClick={() => handleGroupTitleSave(groupBanners)} disabled={editGroupSaving}
+                                className="text-green-600 hover:text-green-700 disabled:opacity-50" aria-label="Save title">
+                                <Check className="h-4 w-4" />
+                              </button>
+                              <button onClick={closeGroupEdit} className="text-gray-400 hover:text-gray-600" aria-label="Cancel">
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-sm font-semibold text-gray-700 truncate">{baseTitle}</span>
+                              <button onClick={() => openGroupEdit(gName, groupBanners)}
+                                className="text-gray-400 hover:text-primary-aqua shrink-0" aria-label="Edit title">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-400 mt-0.5">{groupLabel(gName)} · {groupBanners.length} slot{groupBanners.length !== 1 ? "s" : ""}</p>
+                        </div>
+                      </div>
+
+                      {/* ── Slots ── */}
+                      <div className="divide-y">
+                        {groupBanners.map((banner, slotIdx) => (
+                          <div key={banner.id} className="bg-white">
+                            <div className="flex items-center gap-3 px-4 py-2.5">
+                              {/* Thumbnail */}
+                              {banner.image_url && (
+                                <img src={banner.image_url} alt="" className="w-14 h-9 object-cover rounded shrink-0" />
+                              )}
+                              {/* Slot info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-gray-500">
+                                  {groupBanners.length > 1
+                                    ? (slotIdx === 0 ? "Slot 1" : slotIdx === 1 ? "Slot 2" : "Slot 3")
+                                    : "Single banner"}
+                                  <span className="ml-2 text-gray-300">· order: {banner.sort_order}</span>
+                                </p>
+                                {banner.link_url && (
+                                  <p className="text-xs text-primary-aqua truncate font-mono">{banner.link_url}</p>
+                                )}
+                              </div>
+                              {/* Status */}
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${banner.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                                {banner.is_active ? "ON" : "OFF"}
+                              </span>
+                              {/* Edit slot */}
+                              <button
+                                onClick={() => editingSlotId === banner.id ? closeSlotEdit() : openSlotEdit(banner)}
+                                className={`shrink-0 transition-colors ${editingSlotId === banner.id ? "text-primary-aqua" : "text-gray-400 hover:text-primary-aqua"}`}
+                                aria-label="Edit slot"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              {/* Toggle */}
+                              <button onClick={() => handleToggle(banner)} disabled={togglingId === banner.id}
+                                className="text-gray-400 hover:text-primary-aqua transition-colors disabled:opacity-50 shrink-0">
+                                {banner.is_active ? <ToggleRight className="h-7 w-7 text-green-500" /> : <ToggleLeft className="h-7 w-7 text-gray-400" />}
+                              </button>
+                              {/* Delete */}
+                              <button onClick={() => handleDelete(banner)} disabled={deletingId === banner.id}
+                                className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 shrink-0">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            {/* Slot edit panel */}
+                            {editingSlotId === banner.id && editSlotDraft && (
+                              <div className="border-t bg-gray-50 px-4 py-3 space-y-3">
+                                <div>
+                                  <Label className="text-xs">Image URL</Label>
+                                  <div className="flex gap-2 mt-1">
+                                    <Input value={editSlotDraft.image_url}
+                                      onChange={e => setEditSlotDraft(d => d ? { ...d, image_url: e.target.value } : d)}
+                                      className="flex-1 text-sm font-mono" />
+                                    <Button type="button" variant="outline" size="sm" onClick={() => editFileRef.current?.click()} disabled={editUploading}>
+                                      <Upload className="h-3.5 w-3.5 mr-1" />{editUploading ? "..." : "Upload"}
+                                    </Button>
+                                  </div>
+                                  {editSlotDraft.image_url && (
+                                    <img src={editSlotDraft.image_url} alt="" className="mt-2 w-28 h-16 object-cover rounded border"
+                                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                  )}
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Link URL <span className="font-normal text-gray-400">(optional)</span></Label>
+                                  <Input value={editSlotDraft.link_url}
+                                    onChange={e => setEditSlotDraft(d => d ? { ...d, link_url: e.target.value } : d)}
+                                    placeholder="/catalog?categoryId=5" className="mt-1 text-sm font-mono" />
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Display Order</Label>
+                                  <Input type="number" min={0} value={editSlotDraft.sort_order}
+                                    onChange={e => setEditSlotDraft(d => d ? { ...d, sort_order: parseInt(e.target.value) || 0 } : d)}
+                                    className="mt-1 text-sm w-24" />
+                                </div>
+                                <div className="flex gap-2 pt-1">
+                                  <Button size="sm" onClick={handleSlotSave} disabled={editSlotSaving} className="bg-primary-aqua hover:bg-secondary-aqua gap-1">
+                                    <Check className="h-3.5 w-3.5" />{editSlotSaving ? "Saving..." : "Save"}
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={closeSlotEdit} className="gap-1">
+                                    <X className="h-3.5 w-3.5" />Cancel
+                                  </Button>
+                                </div>
+                                <input ref={editFileRef} type="file" accept="image/*" onChange={handleEditUpload} className="hidden" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
     </div>
   );

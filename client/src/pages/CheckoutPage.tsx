@@ -432,13 +432,11 @@ export default function CheckoutPage() {
     queryKey: ["/api/razorpay/config"],
   });
 
-  // Pre-fill user data
+  // Pre-fill user data for logged-in users. Guests are allowed to check out
+  // without signing in — their order is tied to an account created from the
+  // mandatory email on the server side.
   useEffect(() => {
     if (isAuthLoading) return;
-    if (!user) {
-      setLocation("/login?redirect=/");
-      return;
-    }
     if (user) {
       setCustomerName(`${user.firstName || ""} ${user.lastName || ""}`.trim());
       setCustomerEmail(user.email || "");
