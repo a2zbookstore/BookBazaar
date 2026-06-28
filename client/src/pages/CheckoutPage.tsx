@@ -296,7 +296,27 @@ export default function CheckoutPage() {
     return Math.max(0, convertedAmounts.total - discount);
   };
 
-  // Load gift item from localStorage and auto-remove if no books
+  const calculateBaseDiscount = () => {
+    if (!appliedCoupon) return 0;
+
+    if (appliedCoupon.discountType === 'percentage') {
+      const discountAmount = (subtotal * Number(appliedCoupon.discountValue)) / 100;
+      if (appliedCoupon.maximumDiscountAmount && convertedAmounts.subtotal > 0) {
+        // maximumDiscountAmount is expressed in user currency; convert to base via subtotal ratio
+        const maxBase = Number(appliedCoupon.maximumDiscountAmount) * (subtotal / convertedAmounts.subtotal);
+        return Math.min(discountAmount, maxBase);
+      }
+      return discountAmount;
+    } else {
+      // Fixed amount is in user currency — convert to base via subtotal ratio
+      const ratio = convertedAmounts.subtotal > 0 ? subtotal / convertedAmounts.subtotal : 1;
+      const discountAmount = Number(appliedCoupon.discountValue) * ratio;
+      return Math.min(discountAmount, subtotal);
+    }
+  };
+
+  const calculateFinalBaseTotal = () => Math.max(0, total - calculateBaseDiscount());
+
   useEffect(() => {
     const savedGift = localStorage.getItem('giftDetails');
     if (savedGift && cartItems.length > 0 && hasNonGiftBooks) {
@@ -689,8 +709,8 @@ export default function CheckoutPage() {
       let currency;
       let paymentDescription;
 
-      // International payment in USD only
-      finalAmount = total;
+      // International payment in USD only — must include any applied coupon discount
+      finalAmount = calculateFinalBaseTotal();
       currency = "USD";
       paymentDescription = "International Book Order Payment";
 
@@ -754,11 +774,11 @@ export default function CheckoutPage() {
                 subtotal: subtotal.toFixed(2),
                 shipping: shippingCost.toFixed(2),
                 tax: tax.toFixed(2),
-                total: total.toFixed(2),
+                total: calculateFinalBaseTotal().toFixed(2),
                 paymentMethod: "razorpay-international",
                 notificationEmail: notificationEmail || undefined,
                 couponId: appliedCoupon?.id ?? null,
-                couponDiscountAmount: appliedCoupon?.id ? calculateDiscount() : null,
+                couponDiscountAmount: appliedCoupon?.id ? calculateBaseDiscount() : null,
                 items: cartItems.map(item => ({
                   bookId: item.book.id,
                   quantity: item.quantity,
@@ -871,7 +891,7 @@ export default function CheckoutPage() {
           apiRequest("POST", "/api/stripe/payment-failed-email", {
             customerEmail,
             customerName,
-            amount: String(total),
+            amount: String(calculateFinalBaseTotal()),
             currency: "USD",
             paymentMethod: "International Card (Razorpay)",
             errorMessage: response.error?.description || response.error?.reason || "Payment could not be processed",
@@ -918,12 +938,12 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Calculate INR amount
+    // Calculate INR amount — must include any applied coupon discount
     let inrAmount: number;
     if (userCurrency === "INR") {
-      inrAmount = convertedAmounts.total;
+      inrAmount = calculateFinalTotal();
     } else if (exchangeRates && exchangeRates["INR"]) {
-      inrAmount = Math.round(total * exchangeRates["INR"] * 100) / 100;
+      inrAmount = Math.round(calculateFinalBaseTotal() * exchangeRates["INR"] * 100) / 100;
     } else {
       toast({
         title: "Payment Error",
@@ -1464,7 +1484,7 @@ export default function CheckoutPage() {
                         securely.
                       </p>
                       <StripeCheckoutForm
-                        amount={total}
+                        amount={calculateFinalBaseTotal()}
                         customerEmail={customerEmail}
                         customerName={customerName}
                         customerPhone={customerPhone}
@@ -1473,7 +1493,7 @@ export default function CheckoutPage() {
                         subtotal={subtotal.toFixed(2)}
                         shipping={shippingCost.toFixed(2)}
                         tax={tax.toFixed(2)}
-                        total={total.toFixed(2)}
+                        total={calculateFinalBaseTotal().toFixed(2)}
                         items={cartItems.map((item) => ({
                           bookId: item.book?.id,
                           quantity: item.quantity,
@@ -1482,7 +1502,7 @@ export default function CheckoutPage() {
                           author: item.book?.author,
                         }))}
                         notificationEmail={notificationEmail || undefined}
-                        appliedCoupon={appliedCoupon?.id ? { id: appliedCoupon.id, discountAmount: calculateDiscount() } : undefined}
+                        appliedCoupon={appliedCoupon?.id ? { id: appliedCoupon.id, discountAmount: calculateBaseDiscount() } : undefined}
                         onSuccess={(orderId) => {
                           clearCart();
                           queryClient.invalidateQueries({
@@ -1540,7 +1560,7 @@ export default function CheckoutPage() {
                         You will be redirected to PayPal to complete your payment securely. Supports PayPal balance, bank accounts, and saved cards.
                       </p>
                       <PayPalCheckoutButton
-                        amount={total}
+                        amount={calculateFinalBaseTotal()}
                         currency="USD"
                         customerData={{
                           name: customerName,
