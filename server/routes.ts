@@ -12,7 +12,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireAdminAuth } from "./adminAuth";
 import { passport } from "./oauthService";
 import { BookImporter } from "./bookImporter";
-import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail, sendReturnRequestEmail, sendContactReplyEmail } from "./emailService";
+import { sendOrderConfirmationEmail, sendStatusUpdateEmail, sendOrderCancellationEmail, testEmailConfiguration, testZohoConnection, sendEmail, sendWelcomeEmail, sendNewsletterConfirmationEmail, sendPaymentFailedEmail, sendReturnRequestEmail, sendContactReplyEmail, sendGuestAccountCreatedEmail } from "./emailService";
 import { CloudinaryService } from "./cloudinaryService";
 import { generateSitemap, generateRobotsTxt } from "./seo";
 import { generateGoogleProductFeed, generateGoogleProductFeedCSV } from "./productFeed";
@@ -2416,15 +2416,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // silently create a passwordless account keyed by the customer's email so
       // the order is tied to an account.
       let resolvedUserId: string | null = sessionUserId || orderData.userId || null;
+      let guestAccountCreated = false;
       if (!resolvedUserId && primaryCustomerEmail) {
         try {
           const [guestFirstName, ...guestLastNameParts] = (orderData.customerName || "").split(" ");
-          const guestUser = await storage.getOrCreateGuestUserByEmail({
+          const { user: guestUser, isNew } = await storage.getOrCreateGuestUserByEmail({
             email: primaryCustomerEmail,
             firstName: guestFirstName || primaryCustomerEmail,
             lastName: guestLastNameParts.join(" "),
           });
           resolvedUserId = guestUser.id;
+          guestAccountCreated = isNew;
         } catch (guestError) {
           console.error("Guest account creation failed (continuing as guest):", guestError);
         }
@@ -2476,6 +2478,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (emailError) {
         console.error("Failed to send order confirmation email:", emailError);
+      }
+
+      // If this checkout silently created a brand-new passwordless account
+      // for the guest, tell them how to claim it via "Forgot Password".
+      if (guestAccountCreated && primaryCustomerEmail) {
+        try {
+          await sendGuestAccountCreatedEmail({
+            customerEmail: primaryCustomerEmail,
+            customerName: orderData.customerName,
+            orderNumber: order.orderNumber || `#${order.id}`,
+          });
+        } catch (guestEmailError) {
+          console.error("Failed to send guest-account-created email:", guestEmailError);
+        }
       }
 
       res.json({
@@ -3179,16 +3195,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // create a passwordless account keyed by the customer's email so the order
       // is tied to an account. Done after cart resolution so guest items from the
       // request body are still used.
+      let guestAccountCreated = false;
       if (!userId && primaryCustomerEmail) {
         try {
           const [guestFirstName, ...guestLastNameParts] = (customerName || "").split(" ");
-          const guestUser = await storage.getOrCreateGuestUserByEmail({
+          const { user: guestUser, isNew } = await storage.getOrCreateGuestUserByEmail({
             email: primaryCustomerEmail,
             firstName: guestFirstName || primaryCustomerEmail,
             lastName: guestLastNameParts.join(" "),
           });
           userId = guestUser.id;
           user = guestUser;
+          guestAccountCreated = isNew;
         } catch (guestError) {
           console.error("Guest account creation failed (continuing as guest):", guestError);
         }
@@ -3242,6 +3260,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (emailError) {
         console.error("Failed to send order confirmation email:", emailError);
         // Don't fail the order if email fails
+      }
+
+      // If this checkout silently created a brand-new passwordless account
+      // for the guest, tell them how to claim it via "Forgot Password".
+      if (guestAccountCreated && primaryCustomerEmail) {
+        try {
+          await sendGuestAccountCreatedEmail({
+            customerEmail: primaryCustomerEmail,
+            customerName,
+            orderNumber: order.orderNumber || `#${order.id}`,
+          });
+        } catch (guestEmailError) {
+          console.error("Failed to send guest-account-created email:", guestEmailError);
+        }
       }
 
       res.json({ success: true, orderId: order.id, orderNumber: order.orderNumber });

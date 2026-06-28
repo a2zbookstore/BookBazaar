@@ -1331,6 +1331,152 @@ export const sendOrderConfirmationEmail = async (data: OrderEmailData): Promise<
   }
 };
 
+export const sendGuestAccountCreatedEmail = async (data: {
+  customerEmail: string;
+  customerName: string;
+  orderNumber?: string | null;
+}): Promise<boolean> => {
+  try {
+    const sanitizedEmail = sanitizeEmail(data.customerEmail);
+    if (!isValidEmail(sanitizedEmail)) {
+      console.error('Invalid customer email for guest-account-created email:', data.customerEmail);
+      return false;
+    }
+
+    const transporter = createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not available - skipping guest-account-created email');
+      return false;
+    }
+
+    const displayName = (data.customerName || '').trim() || 'there';
+    const orderRef = data.orderNumber ? String(data.orderNumber) : '';
+    const loginUrl = 'https://a2zbookshop.com/login';
+
+    const html = generateGuestAccountCreatedHTML({
+      name: displayName,
+      email: sanitizedEmail,
+      orderRef,
+      loginUrl,
+    });
+
+    const text = `Hi ${displayName},
+
+Thanks for your order${orderRef ? ` (${orderRef})` : ''} at A2Z BOOKSHOP!
+
+To make tracking this order and any future orders easier, we've created an account for you using your email: ${sanitizedEmail}
+
+How to access your account:
+1) Go to ${loginUrl}
+2) Click "Forgot Password"
+3) Enter ${sanitizedEmail} and follow the link we send to set a new password
+4) Log in with ${sanitizedEmail} and your new password
+
+Once you're in, you'll be able to view your order history, track this order, and manage future orders from one place.
+
+Need help? Reply to support@a2zbookshop.com.
+
+A2Z BOOKSHOP Team
+https://a2zbookshop.com`;
+
+    const mailOptions = {
+      from: {
+        name: 'A2Z BOOKSHOP',
+        address: getZohoEmail('notifications'),
+      },
+      to: sanitizedEmail,
+      subject: `Your A2Z BOOKSHOP account is ready — track your order ${orderRef}`.trim(),
+      html,
+      text,
+      headers: {
+        'X-Entity-ID': 'a2zbookshop-guest-account-created',
+      },
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Guest-account-created email sent to ${sanitizedEmail}:`, info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending guest-account-created email:', error);
+    return false;
+  }
+};
+
+function generateGuestAccountCreatedHTML(data: { name: string; email: string; orderRef: string; loginUrl: string }): string {
+  const { name, email, orderRef, loginUrl } = data;
+  const year = new Date().getFullYear();
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your A2Z BOOKSHOP account is ready</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;color:#1f2937;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
+    We created an account for you so you can track your order and view past orders.
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f4f6;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#0f766e 0%,#0891b2 100%);padding:36px 32px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#a5f3fc;font-weight:700;">A2Z BOOKSHOP</p>
+              <h1 style="margin:0;font-size:24px;color:#ffffff;font-weight:800;line-height:1.3;">Your account is ready</h1>
+              <p style="margin:10px 0 0;font-size:14px;color:#cffafe;">Track this order and future orders in one place</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 14px;font-size:16px;font-weight:600;color:#0f172a;">Hi ${name},</p>
+              <p style="margin:0 0 18px;font-size:15px;line-height:1.7;color:#374151;">
+                Thanks for your order${orderRef ? ` <strong>${orderRef}</strong>` : ''} at A2Z BOOKSHOP! Since you checked out as a guest, we've created an account for you using your email so you can easily track this order and any future orders.
+              </p>
+
+              <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:18px 20px;margin:0 0 24px;">
+                <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#0f766e;">Your account email</p>
+                <p style="margin:0;font-size:16px;font-weight:700;color:#0f172a;word-break:break-all;">${email}</p>
+              </div>
+
+              <h2 style="margin:0 0 12px;font-size:16px;font-weight:700;color:#0f172a;">How to log in</h2>
+              <ol style="margin:0 0 24px;padding-left:20px;color:#374151;font-size:15px;line-height:1.8;">
+                <li>Go to the <a href="${loginUrl}" style="color:#0891b2;text-decoration:underline;font-weight:600;">A2Z BOOKSHOP login page</a>.</li>
+                <li>Click <strong>"Forgot Password"</strong>.</li>
+                <li>Enter <strong>${email}</strong> and submit. We'll email you a secure reset link.</li>
+                <li>Open the link, set a new password, then log in with this email and your new password.</li>
+              </ol>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 24px;">
+                <tr>
+                  <td align="center" style="background:linear-gradient(135deg,#0f766e 0%,#0891b2 100%);border-radius:50px;">
+                    <a href="${loginUrl}" style="display:inline-block;padding:14px 36px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;">Go to Login →</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:14px;line-height:1.7;color:#475569;">
+                Once you're logged in, you'll be able to view your order history, track this order, and manage future orders from your account dashboard.
+              </p>
+              <p style="margin:0;font-size:13px;line-height:1.7;color:#64748b;">
+                If you didn't place this order, you can safely ignore this email — no password is set on the account.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#0f172a;padding:24px 32px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:13px;color:#cbd5e1;">Need help? Email <a href="mailto:support@a2zbookshop.com" style="color:#7dd3fc;text-decoration:none;">support@a2zbookshop.com</a></p>
+              <p style="margin:0;font-size:11px;color:#64748b;">© ${year} A2Z BOOKSHOP. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 // Send status update email
 export const sendStatusUpdateEmail = async (data: StatusUpdateEmailData): Promise<boolean> => {
   try {

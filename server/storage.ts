@@ -80,7 +80,7 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   createEmailUser(user: { email?: string; phone?: string; firstName: string; lastName: string; passwordHash: string }): Promise<User>;
-  getOrCreateGuestUserByEmail(user: { email: string; firstName: string; lastName: string }): Promise<User>;
+  getOrCreateGuestUserByEmail(user: { email: string; firstName: string; lastName: string }): Promise<{ user: User; isNew: boolean }>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -403,13 +403,9 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Returns the existing user for an email, or silently creates a passwordless
-  // "guest" account keyed by that email so guest-checkout orders are tied to an
-  // account. Such accounts have no password — the customer can set one later via
-  // the "forgot password" flow to access their order history.
-  async getOrCreateGuestUserByEmail(userData: { email: string; firstName: string; lastName: string }): Promise<User> {
+  async getOrCreateGuestUserByEmail(userData: { email: string; firstName: string; lastName: string }): Promise<{ user: User; isNew: boolean }> {
     const existing = await this.getUserByEmail(userData.email);
-    if (existing) return existing;
+    if (existing) return { user: existing, isNew: false };
 
     const userId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const [user] = await db
@@ -425,7 +421,7 @@ export class DatabaseStorage implements IStorage {
         role: "customer",
       })
       .returning();
-    return user;
+    return { user, isNew: true };
   }
 
   // Category operations
