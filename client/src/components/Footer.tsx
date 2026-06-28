@@ -26,6 +26,7 @@ const footerLinks = {
     { href: "/faq", label: "FAQ" },
     { href: "/privacy-policy", label: "Privacy Policy" },
     { href: "/data-deletion", label: "Data Deletion" },
+    { href: "/contact", label: "Contact Us" },
   ],
 };
 

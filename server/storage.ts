@@ -80,6 +80,7 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   createEmailUser(user: { email?: string; phone?: string; firstName: string; lastName: string; passwordHash: string }): Promise<User>;
+  getOrCreateGuestUserByEmail(user: { email: string; firstName: string; lastName: string }): Promise<User>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -396,6 +397,31 @@ export class DatabaseStorage implements IStorage {
         passwordHash: userData.passwordHash,
         authProvider: userData.phone ? "phone" : "email",
         isEmailVerified: true,
+        role: "customer",
+      })
+      .returning();
+    return user;
+  }
+
+  // Returns the existing user for an email, or silently creates a passwordless
+  // "guest" account keyed by that email so guest-checkout orders are tied to an
+  // account. Such accounts have no password — the customer can set one later via
+  // the "forgot password" flow to access their order history.
+  async getOrCreateGuestUserByEmail(userData: { email: string; firstName: string; lastName: string }): Promise<User> {
+    const existing = await this.getUserByEmail(userData.email);
+    if (existing) return existing;
+
+    const userId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: userId,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        passwordHash: null,
+        authProvider: "email",
+        isEmailVerified: false,
         role: "customer",
       })
       .returning();
@@ -772,10 +798,38 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Book not found");
       }
 
-      // Delete related cart items
-      await db.delete(cartItems).where(eq(cartItems.bookId, id));
+      const [orderRef] = await db
+        .select({ id: orderItems.id })
+        .from(orderItems)
+        .where(eq(orderItems.bookId, id))
+        .limit(1);
 
-      // Delete the book
+      // Always clean up "live" references that aren't part of historical records.
+      await db.delete(cartItems).where(eq(cartItems.bookId, id));
+      await db.delete(wishlistItems).where(eq(wishlistItems.bookId, id));
+
+      if (orderRef) {
+        // Soft delete: hide the book and zero out stock so it disappears from
+        // the storefront while preserving order history integrity.
+        await db
+          .update(books)
+          .set({ isHidden: true, stock: 0, updatedAt: new Date() })
+          .where(eq(books.id, id));
+
+        await logAudit({
+          tableName: 'books',
+          recordId: id,
+          action: 'UPDATE',
+          adminId,
+          oldData: book,
+          newData: { ...book, isHidden: true, stock: 0 },
+          ipAddress,
+          notes: `Archived book (has order history, cannot hard delete): ${book.title}`,
+        });
+        return;
+      }
+
+      // No order history -> safe to hard delete.
       const result = await db.delete(books).where(eq(books.id, id));
 
       if (result.rowCount === 0) {

@@ -267,7 +267,7 @@ export default function BookCard({ book, isGift = false }: BookCardProps) {
                         <span className="inline-block h-[1em] w-20 align-middle rounded bg-gray-300 animate-pulse" />
                       </span>
                     ) : (
-                      <span className="flex items-baseline gap-1.5 flex-wrap">
+                      <span className="flex items-baseline gap-1.5 flex-nowrap overflow-hidden">
                         <span className="text-xs sm:text-lg font-bold text-secondary-aqua">
                           {displayPrice || formatAmount(parseFloat(book.price), 'USD')}
                         </span>

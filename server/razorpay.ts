@@ -176,6 +176,24 @@ export async function verifyRazorpayPayment(req: Request, res: Response) {
             }
           }
 
+          // For plain guest checkout, silently create a passwordless account keyed
+          // by the customer's email so the order is tied to an account. The cart
+          // fallback below still uses the items from the request payload.
+          if (!userId && primaryCustomerEmail) {
+            try {
+              const [guestFirstName, ...guestLastNameParts] = (customerName || "").split(" ");
+              const guestUser = await storage.getOrCreateGuestUserByEmail({
+                email: primaryCustomerEmail,
+                firstName: guestFirstName || primaryCustomerEmail,
+                lastName: guestLastNameParts.join(" "),
+              });
+              userId = guestUser.id;
+              user = guestUser;
+            } catch (guestError) {
+              console.error("Guest account creation failed (continuing as guest):", guestError);
+            }
+          }
+
           // Get cart items for the order
           let cartItems = [];
           console.log("Getting cart items for order creation, userId:", userId);
