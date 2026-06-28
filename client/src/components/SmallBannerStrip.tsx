@@ -87,7 +87,7 @@ const SmallBannerStrip: React.FC<SmallBannerStripProps> = ({
     <img
       src={banner.imageUrl}
       alt={`Promotional banner ${current + 1}`}
-      className="w-full h-auto object-contain block"
+      className="w-full h-24 sm:h-28 md:h-32 object-cover block"
       draggable={false}
     />
   );

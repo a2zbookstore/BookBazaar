@@ -547,7 +547,7 @@ export default function CartPage() {
         noindex
       />
       <div className="container mx-auto px-4">
-        <SmallBannerStrip pageName="cart" />
+        {/* <SmallBannerStrip pageName="cart" /> */}
         <Breadcrumb items={[{ label: "Cart" }]} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
